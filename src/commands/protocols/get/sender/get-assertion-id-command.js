@@ -3,7 +3,7 @@ import {
     ERROR_TYPE,
     GET_STATES,
     PENDING_STORAGE_REPOSITORIES,
-    ZERO_BYTES32,
+    EVM_ZERO,
 } from '../../../../constants/constants.js';
 
 class GetAssertionIdCommand extends Command {
@@ -30,7 +30,7 @@ class GetAssertionIdCommand extends Command {
         );
         let assertionId;
         if (!Object.values(GET_STATES).includes(state)) {
-            if (state === ZERO_BYTES32) {
+            if (state === EVM_ZERO.BYTES32) {
                 await this.handleError(
                     operationId,
                     blockchain,
@@ -104,7 +104,7 @@ class GetAssertionIdCommand extends Command {
                             tokenId,
                         );
                 }
-                if (unfinalizedAssertionId !== ZERO_BYTES32) {
+                if (unfinalizedAssertionId !== EVM_ZERO.BYTES32) {
                     const updateCommitWindowOpen = await this.isUpdateCommitWindowOpen(
                         blockchain,
                         contract,
@@ -125,7 +125,11 @@ class GetAssertionIdCommand extends Command {
                     }
                 }
             }
-            if (assertionId === null || assertionId === ZERO_BYTES32 || assertionId === undefined) {
+            if (
+                assertionId === null ||
+                assertionId === EVM_ZERO.BYTES32 ||
+                assertionId === undefined
+            ) {
                 assertionId = latestFinalizedAssertionId;
             }
         }

@@ -9,7 +9,7 @@ import {
     SOLIDITY_ERROR_STRING_PREFIX,
     SOLIDITY_PANIC_CODE_PREFIX,
     SOLIDITY_PANIC_REASONS,
-    ZERO_PREFIX,
+    EVM_ZERO,
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
@@ -820,7 +820,7 @@ class Web3Service {
     }
 
     _decodeInputData(inputData, contractInterface) {
-        if (inputData === ZERO_PREFIX) {
+        if (inputData === EVM_ZERO.PREFIX) {
             return 'Empty input data.';
         }
 
@@ -837,7 +837,7 @@ class Web3Service {
         }
 
         // Handle empty error data
-        if (errorData === ZERO_PREFIX) {
+        if (errorData === EVM_ZERO.PREFIX) {
             return 'Empty error data.';
         }
 
@@ -881,7 +881,7 @@ class Web3Service {
     }
 
     _decodeResultData(fragment, resultData, contractInterface) {
-        if (resultData === ZERO_PREFIX) {
+        if (resultData === EVM_ZERO.PREFIX) {
             return 'Empty input data.';
         }
 

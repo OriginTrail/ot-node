@@ -11,7 +11,7 @@ import {
     DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
     CONTRACT_EVENT_TO_GROUP_MAPPING,
     GROUPED_CONTRACT_EVENTS,
-    ZERO_BYTES32,
+    EVM_ZERO,
 } from '../constants/constants.js';
 
 const fetchEventsFailedCount = {};
@@ -564,7 +564,7 @@ class BlockchainEventListenerService {
                     blockchain,
                     knowledgeAssetId,
                 );
-                if (paranetId && paranetId !== ZERO_BYTES32) {
+                if (paranetId && paranetId !== EVM_ZERO.BYTES32) {
                     // eslint-disable-next-line no-await-in-loop
                     const paranetExists = await this.repositoryModuleManager.paranetExists(
                         paranetId,

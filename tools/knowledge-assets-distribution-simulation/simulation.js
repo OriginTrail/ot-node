@@ -11,7 +11,7 @@ import sharp from 'sharp';
 import { readFile } from 'fs/promises';
 import { createRequire } from 'module';
 import { create as createLibP2PKey, createFromPrivKey } from 'peer-id';
-import { HASH_RING_SIZE, UINT128_MAX_BN } from '../../src/constants/constants.js';
+import { HASH_RING_SIZE, MAX_BN } from '../../src/constants/constants.js';
 import BlockchainModuleManagerMock from './mocks/blockchain-module-manager-mock.js';
 import HashingService from '../../src/service/hashing-service.js';
 import ProximityScoringService from '../../src/service/proximity-scoring-service.js';
@@ -498,7 +498,7 @@ async function runSimulation(
 
                 let dividend = node.distance;
                 let divisor = maxDistance;
-                if (dividend.gt(UINT128_MAX_BN) || divisor.gt(UINT128_MAX_BN)) {
+                if (dividend.gt(MAX_BN.UINT128) || divisor.gt(MAX_BN.UINT128)) {
                     dividend = dividend.div(distanceScaleFactor);
                     divisor = divisor.div(distanceScaleFactor);
                 }

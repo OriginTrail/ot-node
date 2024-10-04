@@ -4,7 +4,7 @@ import {
     // ERROR_TYPE,
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
-    ZERO_BYTES32,
+    EVM_ZERO,
     PARANET_ACCESS_POLICY,
 } from '../../../../constants/constants.js';
 
@@ -116,7 +116,7 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
                 tokenId,
             );
         }
-        if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
+        if (!blockchainAssertionId || blockchainAssertionId === EVM_ZERO.BYTES32) {
             return Command.retry();
         }
         this.logger.info(

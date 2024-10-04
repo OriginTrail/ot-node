@@ -8,27 +8,25 @@ export const FALLBACK_PROVIDER_QUORUM = 1;
 
 export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
 
-export const UINT256_MAX_BN = ethers.constants.MaxUint256;
-
-export const UINT128_MAX_BN = BigNumber.from(2).pow(128).sub(1);
-
-export const UINT64_MAX_BN = BigNumber.from(2).pow(64).sub(1);
-
-export const UINT40_MAX_BN = BigNumber.from(2).pow(40).sub(1);
-
-export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
+export const MAX_BN = {
+    UINT256: ethers.constants.MaxUint256,
+    UINT128: BigNumber.from(2).pow(128).sub(1),
+    UINT64: BigNumber.from(2).pow(64).sub(1),
+    UINT40: BigNumber.from(2).pow(40).sub(1),
+    UINT32: BigNumber.from(2).pow(32).sub(1),
+};
 
 export const HASH_RING_SIZE = ethers.constants.MaxUint256;
 
-export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
+export const STAKE_UINT256_MULTIPLIER_BN = MAX_BN.UINT256.div(500000000);
 
-export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
+export const UINT256_UINT32_DIVISOR_BN = MAX_BN.UINT256.div(MAX_BN.UINT32);
 
-export const ZERO_PREFIX = '0x';
-
-export const ZERO_BYTES32 = ethers.constants.HashZero;
-
-export const ZERO_ADDRESS = ethers.constants.AddressZero;
+export const EVM_ZERO = {
+    PREFIX: '0x',
+    BYTES32: ethers.constants.HashZero,
+    ADDRESS: ethers.constants.AddressZero,
+};
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
@@ -187,6 +185,17 @@ export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 export const TRANSACTION_PRIORITY = {
     HIGH: 1,
     REGULAR: 2,
+};
+
+// TODO: this should be removed we won't have proofs & commits
+export const CONTRACT_FUNCTION_PRIORITY = {
+    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
+        TRANSACTION_PRIORITY.REGULAR,
+    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.REGULAR,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
+        TRANSACTION_PRIORITY.HIGH,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
+    sendProof: TRANSACTION_PRIORITY.REGULAR,
 };
 
 export const COMMAND_RETRIES = {
