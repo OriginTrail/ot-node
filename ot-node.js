@@ -250,7 +250,8 @@ class OTNode {
 
                         if (
                             process.env.NODE_ENV === 'development' ||
-                            process.env.NODE_ENV === 'test'
+                            process.env.NODE_ENV === 'test' ||
+                            process.env.NODE_ENV === 'testnet'
                         ) {
                             const blockchainConfig =
                                 blockchainModuleManager.getModuleConfiguration(blockchain);
@@ -259,17 +260,18 @@ class OTNode {
                                 { stdio: 'inherit' },
                             );
                             await setTimeout(10000);
-                            execSync(
-                                `npm run set-ask -- --rpcEndpoint=${
-                                    blockchainConfig.rpcEndpoints[0]
-                                } --ask=${
-                                    blockchainConfig.initialAskAmount +
-                                    (Math.random() - 0.5) * blockchainConfig.initialAskAmount
-                                } --privateKey=${
-                                    blockchainConfig.operationalWallets[0].privateKey
-                                } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
-                                { stdio: 'inherit' },
-                            );
+                            if (process.env.NODE_ENV !== 'testnet')
+                                execSync(
+                                    `npm run set-ask -- --rpcEndpoint=${
+                                        blockchainConfig.rpcEndpoints[0]
+                                    } --ask=${
+                                        blockchainConfig.initialAskAmount +
+                                        (Math.random() - 0.5) * blockchainConfig.initialAskAmount
+                                    } --privateKey=${
+                                        blockchainConfig.operationalWallets[0].privateKey
+                                    } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                    { stdio: 'inherit' },
+                                );
                         }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
