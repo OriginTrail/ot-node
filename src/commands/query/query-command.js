@@ -1,6 +1,6 @@
 import Command from '../command.js';
 import {
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     QUERY_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
@@ -20,7 +20,7 @@ class QueryCommand extends Command {
     async execute(command) {
         const { queryType, operationId } = command.data;
 
-        let { query, repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT } = command.data;
+        let { query, repository = TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT } = command.data;
 
         let data;
 
@@ -92,8 +92,9 @@ class QueryCommand extends Command {
                 return paranetRepoName;
             }
         }
-        const isTripleStoreRepoValid =
-            Object.values(TRIPLE_STORE_REPOSITORIES).includes(repository);
+        const isTripleStoreRepoValid = Object.values(TRIPLE_STORE.REPOSITORIES).includes(
+            repository,
+        );
         if (isTripleStoreRepoValid) {
             return repository;
         }

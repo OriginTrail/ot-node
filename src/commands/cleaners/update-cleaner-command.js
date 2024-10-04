@@ -4,7 +4,7 @@ import {
     OPERATIONS,
     UPDATE_CLEANUP_TIME_DELAY,
     UPDATE_CLEANUP_TIME_MILLS,
-    ARCHIVE_UPDATE_FOLDER,
+    ARCHIVE,
 } from '../../constants/constants.js';
 
 class UpdateCleanerCommand extends CleanerCommand {
@@ -17,7 +17,7 @@ class UpdateCleanerCommand extends CleanerCommand {
     }
 
     getArchiveFolderName() {
-        return ARCHIVE_UPDATE_FOLDER;
+        return ARCHIVE.UPDATE_FOLDER;
     }
 
     async deleteRows(ids) {

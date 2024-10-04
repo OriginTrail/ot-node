@@ -3,7 +3,7 @@ import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
-    ZERO_BYTES32,
+    EVM_ZERO,
 } from '../../constants/constants.js';
 
 class ValidateAssetCommand extends Command {
@@ -49,7 +49,7 @@ class ValidateAssetCommand extends Command {
                 tokenId,
             );
         }
-        if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
+        if (!blockchainAssertionId || blockchainAssertionId === EVM_ZERO.BYTES32) {
             return Command.retry();
         }
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);

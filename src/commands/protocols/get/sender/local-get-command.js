@@ -3,7 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     GET_STATES,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     PENDING_STORAGE_REPOSITORIES,
 } from '../../../../constants/constants.js';
 
@@ -129,10 +129,10 @@ class LocalGetCommand extends Command {
 
         if (!response?.assertion?.length) {
             for (const repository of [
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
+                TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
+                TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
+                TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
             ]) {
                 // eslint-disable-next-line no-await-in-loop
                 response.assertion = await this.tripleStoreService.getAssertion(

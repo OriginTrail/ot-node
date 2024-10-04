@@ -1,5 +1,5 @@
 import { assertionMetadata } from 'assertion-tools';
-import { BYTES_IN_KILOBYTE, ZERO_ADDRESS } from '../constants/constants.js';
+import { BYTES_IN_KILOBYTE, EVM_ZERO } from '../constants/constants.js';
 
 class ValidationService {
     constructor(ctx) {
@@ -21,7 +21,7 @@ class ValidationService {
                 contract,
                 tokenId,
             );
-            if (!result || result === ZERO_ADDRESS) {
+            if (!result || result === EVM_ZERO.ADDRESS) {
                 isValid = false;
             }
         } catch (err) {

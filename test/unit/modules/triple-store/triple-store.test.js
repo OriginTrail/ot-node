@@ -2,7 +2,7 @@
 import chai from 'chai';
 import { readFile } from 'fs/promises';
 import { formatAssertion, calculateRoot } from 'assertion-tools';
-import { TRIPLE_STORE_REPOSITORIES } from '../../../src/constants/constants.js';
+import { TRIPLE_STORE } from '../../../src/constants/constants.js';
 import Logger from '../../../src/logger/logger.js';
 import TripleStoreModuleManager from '../../../src/modules/triple-store/triple-store-module-manager.js';
 import DataService from '../../../src/service/data-service.js';
@@ -22,14 +22,14 @@ async function _insertAndGet(content) {
 
     await tripleStoreModuleManager.insertAssertion(
         implementationName,
-        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+        TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
         assertionId,
         assertion.join('\n'),
     );
 
     const nquads = await tripleStoreModuleManager.getAssertion(
         implementationName,
-        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+        TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
         assertionId,
     );
 

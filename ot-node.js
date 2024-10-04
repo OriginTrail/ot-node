@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION, PARANET_ACCESS_POLICY } from './src/constants/constants.js';
+import { MIN_NODE_VERSION, PARANET } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
@@ -416,7 +416,7 @@ class OTNode {
                 blockchain,
                 paranetId,
             );
-            if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+            if (nodesAccessPolicy === PARANET.ACCESS_POLICY.CURATED) {
                 // eslint-disable-next-line no-await-in-loop
                 const identityId = await blockchainModuleManager.getIdentityId(blockchain);
                 // eslint-disable-next-line no-await-in-loop

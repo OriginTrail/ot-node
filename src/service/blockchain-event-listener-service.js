@@ -3,7 +3,7 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
     CONTRACT_EVENT_FETCH_INTERVALS,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
     CONTRACT_EVENTS,
@@ -11,7 +11,7 @@ import {
     DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
     CONTRACT_EVENT_TO_GROUP_MAPPING,
     GROUPED_CONTRACT_EVENTS,
-    ZERO_BYTES32,
+    EVM_ZERO,
 } from '../constants/constants.js';
 
 const fetchEventsFailedCount = {};
@@ -523,8 +523,8 @@ class BlockchainEventListenerService {
             // eslint-disable-next-line no-await-in-loop
             await Promise.all([
                 this.pendingStorageService.moveAndDeletePendingState(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                     PENDING_STORAGE_REPOSITORIES.PUBLIC,
                     blockchain,
                     contract,
@@ -535,8 +535,8 @@ class BlockchainEventListenerService {
                     stateIndex,
                 ),
                 this.pendingStorageService.moveAndDeletePendingState(
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
+                    TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
                     PENDING_STORAGE_REPOSITORIES.PRIVATE,
                     blockchain,
                     contract,
@@ -564,7 +564,7 @@ class BlockchainEventListenerService {
                     blockchain,
                     knowledgeAssetId,
                 );
-                if (paranetId && paranetId !== ZERO_BYTES32) {
+                if (paranetId && paranetId !== EVM_ZERO.BYTES32) {
                     // eslint-disable-next-line no-await-in-loop
                     const paranetExists = await this.repositoryModuleManager.paranetExists(
                         paranetId,

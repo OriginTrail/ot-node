@@ -1,5 +1,5 @@
 import Command from '../command.js';
-import { ERROR_TYPE, PARANET_SYNC_FREQUENCY_MILLS } from '../../constants/constants.js';
+import { ERROR_TYPE, PARANET } from '../../constants/constants.js';
 
 class StartParanetSyncCommands extends Command {
     constructor(ctx) {
@@ -42,7 +42,7 @@ class StartParanetSyncCommands extends Command {
                 this.commandExecutor.add({
                     name: 'paranetSyncCommand',
                     data: commandData,
-                    period: PARANET_SYNC_FREQUENCY_MILLS,
+                    period: PARANET.SYNC_FREQUENCY_MILLS,
                 }),
             );
         });

@@ -2,7 +2,7 @@ import Command from '../../../command.js';
 import {
     ERROR_TYPE,
     PENDING_STORAGE_REPOSITORIES,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
 } from '../../../../constants/constants.js';
 
 class DeletePendingStateCommand extends Command {
@@ -46,8 +46,8 @@ class DeletePendingStateCommand extends Command {
                 );
                 await Promise.all([
                     this.pendingStorageService.moveAndDeletePendingState(
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                        TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
+                        TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                         PENDING_STORAGE_REPOSITORIES.PUBLIC,
                         blockchain,
                         contract,
@@ -58,8 +58,8 @@ class DeletePendingStateCommand extends Command {
                         stateIndex,
                     ),
                     this.pendingStorageService.moveAndDeletePendingState(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                        TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
+                        TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
                         PENDING_STORAGE_REPOSITORIES.PRIVATE,
                         blockchain,
                         contract,

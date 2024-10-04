@@ -58,7 +58,7 @@ async function sign() {
         },
         primaryType: 'Transaction',
         domain: {
-            name: 'OTP EVM claim',
+            name: 'NEURO EVM claim',
             version: '1',
             chainId: '2160',
             salt: '0x0542e99b538e30d713d3e020f18fa6717eb2c5452bd358e0dd791628260a36f0',

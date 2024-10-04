@@ -8,27 +8,25 @@ export const FALLBACK_PROVIDER_QUORUM = 1;
 
 export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
 
-export const UINT256_MAX_BN = ethers.constants.MaxUint256;
-
-export const UINT128_MAX_BN = BigNumber.from(2).pow(128).sub(1);
-
-export const UINT64_MAX_BN = BigNumber.from(2).pow(64).sub(1);
-
-export const UINT40_MAX_BN = BigNumber.from(2).pow(40).sub(1);
-
-export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
+export const MAX_BN = {
+    UINT256: ethers.constants.MaxUint256,
+    UINT128: BigNumber.from(2).pow(128).sub(1),
+    UINT64: BigNumber.from(2).pow(64).sub(1),
+    UINT40: BigNumber.from(2).pow(40).sub(1),
+    UINT32: BigNumber.from(2).pow(32).sub(1),
+};
 
 export const HASH_RING_SIZE = ethers.constants.MaxUint256;
 
-export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
+export const STAKE_UINT256_MULTIPLIER_BN = MAX_BN.UINT256.div(500000000);
 
-export const UINT256_UINT32_DIVISOR_BN = UINT256_MAX_BN.div(UINT32_MAX_BN);
+export const UINT256_UINT32_DIVISOR_BN = MAX_BN.UINT256.div(MAX_BN.UINT32);
 
-export const ZERO_PREFIX = '0x';
-
-export const ZERO_BYTES32 = ethers.constants.HashZero;
-
-export const ZERO_ADDRESS = ethers.constants.AddressZero;
+export const EVM_ZERO = {
+    PREFIX: '0x',
+    BYTES32: ethers.constants.HashZero,
+    ADDRESS: ethers.constants.AddressZero,
+};
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
@@ -41,27 +39,44 @@ export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 5;
 
 export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 300 * 1000;
 
-export const SOLIDITY_ERROR_STRING_PREFIX = '0x08c379a0';
-
-export const SOLIDITY_PANIC_CODE_PREFIX = '0x4e487b71';
-
-export const SOLIDITY_PANIC_REASONS = {
-    0x1: 'Assertion error',
-    0x11: 'Arithmetic operation underflowed or overflowed outside of an unchecked block',
-    0x12: 'Division or modulo division by zero',
-    0x21: 'Tried to convert a value into an enum, but the value was too big or negative',
-    0x22: 'Incorrectly encoded storage byte array',
-    0x31: '.pop() was called on an empty array',
-    0x32: 'Array accessed at an out-of-bounds or negative index',
-    0x41: 'Too much memory was allocated, or an array was created that is too large',
-    0x51: 'Called a zero-initialized variable of internal function type',
+export const SOLIDITY = {
+    ERROR_STRING_PREFIX: '0x08c379a0',
+    PANIC_CODE_PREFIX: '0x4e487b71',
+    PANIC_REASONS: {
+        0x1: 'Assertion error',
+        0x11: 'Arithmetic operation underflowed or overflowed outside of an unchecked block',
+        0x12: 'Division or modulo division by zero',
+        0x21: 'Tried to convert a value into an enum, but the value was too big or negative',
+        0x22: 'Incorrectly encoded storage byte array',
+        0x31: '.pop() was called on an empty array',
+        0x32: 'Array accessed at an out-of-bounds or negative index',
+        0x41: 'Too much memory was allocated, or an array was created that is too large',
+        0x51: 'Called a zero-initialized variable of internal function type',
+    },
 };
 
-export const LIBP2P_KEY_DIRECTORY = 'libp2p';
+export const LIBP2P_KEY = {
+    DIRECTORY: 'libp2p',
+    FILENAME: 'privateKey',
+};
 
-export const LIBP2P_KEY_FILENAME = 'privateKey';
-
-export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
+export const TRIPLE_STORE = {
+    CONNECT: {
+        MAX_RETRIES: 10,
+        RETRY_FREQUENCY: 10,
+    },
+    REPOSITORIES: {
+        PUBLIC_CURRENT: 'publicCurrent',
+        PUBLIC_HISTORY: 'publicHistory',
+        PRIVATE_CURRENT: 'privateCurrent',
+        PRIVATE_HISTORY: 'privateHistory',
+    },
+    IMPLEMENTATION: {
+        BLAZEGRAPH: 'Blazegraph',
+        GRAPHDB: 'GraphDB',
+        FUSEKI: 'Fuseki',
+    },
+};
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
@@ -70,8 +85,6 @@ export const MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS = 60 * 60 *
 export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 50;
 
 export const TRANSACTION_QUEUE_CONCURRENCY = 1;
-
-export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
 export const MAX_FILE_SIZE = 10000000;
 
@@ -86,18 +99,18 @@ export const DEFAULT_GET_STATE = GET_STATES.LATEST;
 // TODO: Fix this and whereve it is used
 export const CONTENT_ASSET_HASH_FUNCTION_ID = 1;
 
-export const PARANET_SYNC_KA_COUNT = 50;
-
-export const PARANET_ACCESS_POLICY = {
-    OPEN: 0,
-    CURATED: 1,
-};
-
-export const TRIPLE_STORE_REPOSITORIES = {
-    PUBLIC_CURRENT: 'publicCurrent',
-    PUBLIC_HISTORY: 'publicHistory',
-    PRIVATE_CURRENT: 'privateCurrent',
-    PRIVATE_HISTORY: 'privateHistory',
+export const PARANET = {
+    SYNC_KA_COUNT: 50,
+    SYNC_FREQUENCY_MILLS: 5 * 60 * 1000,
+    NODES_ACCESS_POLICIES: ['OPEN', 'CURATED'],
+    ACCESS_POLICY: {
+        OPEN: 0,
+        CURATED: 1,
+    },
+    SYNC_PARAMETERS: {
+        GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
+        GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
+    },
 };
 
 export const PENDING_STORAGE_REPOSITORIES = {
@@ -127,23 +140,21 @@ export const MEDIA_TYPES = {
 // TODO: Make this 20 not only in const
 export const MIN_NODE_VERSION = 16;
 
-export const NETWORK_API_RATE_LIMIT = {
-    TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 100,
+export const NETWORK_API = {
+    RATE_LIMIT: {
+        TIME_WINDOW_MILLS: 1 * 60 * 1000,
+        MAX_NUMBER: 100,
+    },
+    SPAM_DETECTION: {
+        TIME_WINDOW_MILLS: 1 * 60 * 1000,
+        MAX_NUMBER: 150,
+    },
+    BLACK_LIST_TIME_WINDOW_MINUTES: 60,
 };
-
-export const NETWORK_API_SPAM_DETECTION = {
-    TIME_WINDOW_MILLS: 1 * 60 * 1000,
-    MAX_NUMBER: 150,
-};
-
-export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
 export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
-
-export const PARANET_SYNC_FREQUENCY_MILLS = 5 * 60 * 1000;
 
 export const SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES = 15;
 
@@ -189,13 +200,19 @@ export const TRANSACTION_PRIORITY = {
     REGULAR: 2,
 };
 
-export const COMMAND_RETRIES = {
-    SUBMIT_UPDATE_COMMIT: 5,
+// TODO: this should be removed we won't have proofs & commits
+export const CONTRACT_FUNCTION_PRIORITY = {
+    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
+        TRANSACTION_PRIORITY.REGULAR,
+    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.REGULAR,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
+        TRANSACTION_PRIORITY.HIGH,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
+    sendProof: TRANSACTION_PRIORITY.REGULAR,
 };
 
-export const PARANET_SYNC_PARAMETERS = {
-    GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
-    GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
+export const COMMAND_RETRIES = {
+    SUBMIT_UPDATE_COMMIT: 5,
 };
 
 export const COMMAND_TX_GAS_INCREASE_FACTORS = {
@@ -218,7 +235,7 @@ export const NEURO_DEFAULT_GAS_PRICE = {
 };
 
 export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
-    'otp:2043': {
+    'neuro:2043': {
         SUBMIT_UPDATE_COMMIT: 30,
     },
 };
@@ -235,12 +252,6 @@ export const WEBSOCKET_PROVIDER_OPTIONS = {
     },
 };
 
-export const TRIPLE_STORE_IMPLEMENTATION = {
-    BLAZEGRAPH: 'Blazegraph',
-    GRAPHDB: 'GraphDB',
-    FUSEKI: 'Fuseki',
-};
-
 export const NETWORK_MESSAGE_TYPES = {
     REQUESTS: {
         PROTOCOL_INIT: 'PROTOCOL_INIT',
@@ -252,8 +263,6 @@ export const NETWORK_MESSAGE_TYPES = {
         BUSY: 'BUSY',
     },
 };
-
-export const PARANET_NODES_ACCESS_POLICIES = ['OPEN', 'CURATED'];
 
 export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
     PUBLISH: {
@@ -507,22 +516,16 @@ export const OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
 
 export const REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER = 1000;
 
-export const ARCHIVE_COMMANDS_FOLDER = 'commands';
-
-export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
-
-export const ARCHIVE_GET_FOLDER = 'get';
-
-export const ARCHIVE_GET_RESPONSES_FOLDER = 'get_responses';
-
-export const ARCHIVE_PUBLISH_FOLDER = 'publish';
-
-export const ARCHIVE_PUBLISH_RESPONSES_FOLDER = 'publish_responses';
-
-export const ARCHIVE_UPDATE_FOLDER = 'update';
-
-export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
-
+export const ARCHIVE = {
+    COMMANDS_FOLDER: 'commands',
+    BLOCKCHAIN_EVENTS_FOLDER: 'blockchain_events',
+    GET_FOLDER: 'get',
+    GET_RESPONSES_FOLDER: 'get_responses',
+    PUBLISH_FOLDER: 'publish',
+    PUBLISH_RESPONSES_FOLDER: 'publish_responses',
+    UPDATE_FOLDER: 'update',
+    UPDATE_RESPONSES_FOLDER: 'update_responses',
+};
 /**
  * How many commands will run in parallel
  * @type {number}
@@ -691,7 +694,7 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
 };
 
 export const BLOCK_TIME_MILLIS = {
-    OTP: 12_000,
+    NEURO: 12_000,
     HARDHAT: 5_000,
     GNOSIS: 5_000,
     DEFAULT: 12_000,

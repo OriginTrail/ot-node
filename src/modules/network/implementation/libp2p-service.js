@@ -16,12 +16,9 @@ import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import ip from 'ip';
 import { TimeoutController } from 'timeout-abort-controller';
 import {
-    NETWORK_API_RATE_LIMIT,
-    NETWORK_API_SPAM_DETECTION,
+    NETWORK_API,
     NETWORK_MESSAGE_TYPES,
-    NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES,
-    LIBP2P_KEY_DIRECTORY,
-    LIBP2P_KEY_FILENAME,
+    LIBP2P_KEY,
     NODE_ENVIRONMENTS,
     BYTES_IN_MEGABYTE,
 } from '../../../constants/constants.js';
@@ -144,13 +141,13 @@ class Libp2pService {
                 appRootPath.path,
                 '..',
                 this.config.appDataPath,
-                LIBP2P_KEY_DIRECTORY,
+                LIBP2P_KEY.DIRECTORY,
             );
         } else {
-            directoryPath = join(appRootPath.path, this.config.appDataPath, LIBP2P_KEY_DIRECTORY);
+            directoryPath = join(appRootPath.path, this.config.appDataPath, LIBP2P_KEY.DIRECTORY);
         }
 
-        const fullPath = join(directoryPath, LIBP2P_KEY_FILENAME);
+        const fullPath = join(directoryPath, LIBP2P_KEY.FILENAME);
         return { fullPath, directoryPath };
     }
 
@@ -173,13 +170,13 @@ class Libp2pService {
 
     _initializeRateLimiters() {
         const basicRateLimiter = new InMemoryRateLimiter({
-            interval: NETWORK_API_RATE_LIMIT.TIME_WINDOW_MILLS,
-            maxInInterval: NETWORK_API_RATE_LIMIT.MAX_NUMBER,
+            interval: NETWORK_API.RATE_LIMIT.TIME_WINDOW_MILLS,
+            maxInInterval: NETWORK_API.RATE_LIMIT.MAX_NUMBER,
         });
 
         const spamDetection = new InMemoryRateLimiter({
-            interval: NETWORK_API_SPAM_DETECTION.TIME_WINDOW_MILLS,
-            maxInInterval: NETWORK_API_SPAM_DETECTION.MAX_NUMBER,
+            interval: NETWORK_API.SPAM_DETECTION.TIME_WINDOW_MILLS,
+            maxInInterval: NETWORK_API.SPAM_DETECTION.MAX_NUMBER,
         });
 
         this.rateLimiter = {
@@ -583,7 +580,7 @@ class Libp2pService {
 
         if (this.blackList[peerIdString]) {
             const remainingMinutes = Math.floor(
-                NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES -
+                NETWORK_API.BLACK_LIST_TIME_WINDOW_MINUTES -
                     (Date.now() - this.blackList[peerIdString]) / (1000 * 60),
             );
 
@@ -600,7 +597,7 @@ class Libp2pService {
         if (await this.rateLimiter.spamDetection.limit(peerIdString)) {
             this.blackList[peerIdString] = Date.now();
             this.logger.debug(
-                `Blocking request from ${peerIdString}. Spammer detected and blacklisted for ${NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES} minutes.`,
+                `Blocking request from ${peerIdString}. Spammer detected and blacklisted for ${NETWORK_API.BLACK_LIST_TIME_WINDOW_MINUTES} minutes.`,
             );
 
             return true;

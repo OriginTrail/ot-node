@@ -1,10 +1,5 @@
 import { xor as uint8ArrayXor } from 'uint8arrays/xor';
-import {
-    HASH_RING_SIZE,
-    UINT40_MAX_BN,
-    UINT64_MAX_BN,
-    UINT256_MAX_BN,
-} from '../constants/constants.js';
+import { HASH_RING_SIZE, MAX_BN } from '../constants/constants.js';
 
 class ProximityScoringService {
     constructor(ctx) {
@@ -132,7 +127,7 @@ class ProximityScoringService {
             ? maxNeighborhoodDistance
             : idealMaxDistanceInNeighborhood;
 
-        const maxMultiplier = UINT256_MAX_BN.div(distance);
+        const maxMultiplier = MAX_BN.UINT256.div(distance);
 
         let scaledDistanceScaleFactor = distanceScaleFactor;
         let compensationFactor = 1;
@@ -146,21 +141,21 @@ class ProximityScoringService {
         const adjustedDivisor = divisor.div(compensationFactor);
 
         let normalizedDistance = scaledDistance.div(adjustedDivisor);
-        if (normalizedDistance.gt(UINT64_MAX_BN)) {
+        if (normalizedDistance.gt(MAX_BN.UINT64)) {
             this.logger.warn(
-                `Invalid normalized distance: ${normalizedDistance.toString()}. Max value: ${UINT64_MAX_BN.toString()}`,
+                `Invalid normalized distance: ${normalizedDistance.toString()}. Max value: ${MAX_BN.UINT64.toString()}`,
             );
-            normalizedDistance = normalizedDistance.mod(UINT64_MAX_BN.add(1));
+            normalizedDistance = normalizedDistance.mod(MAX_BN.UINT64.add(1));
         }
 
         let normalizedStake = stakeScaleFactor
             .mul(mappedStake.sub(mappedMinStake))
             .div(mappedMaxStake.sub(mappedMinStake));
-        if (normalizedStake.gt(UINT64_MAX_BN)) {
+        if (normalizedStake.gt(MAX_BN.UINT64)) {
             this.logger.warn(
-                `Invalid normalized stake: ${normalizedDistance.toString()}. Max value: ${UINT64_MAX_BN.toString()}`,
+                `Invalid normalized stake: ${normalizedDistance.toString()}. Max value: ${MAX_BN.UINT64.toString()}`,
             );
-            normalizedStake = normalizedStake.mod(UINT64_MAX_BN.add(1));
+            normalizedStake = normalizedStake.mod(MAX_BN.UINT64.add(1));
         }
 
         const oneEther = await this.blockchainModuleManager.toBigNumber(
@@ -190,7 +185,7 @@ class ProximityScoringService {
     }
 
     toUint40(value, maxValue) {
-        const result = value.mul(UINT40_MAX_BN).div(maxValue);
+        const result = value.mul(MAX_BN.UINT40).div(maxValue);
         return result;
     }
 }

@@ -776,11 +776,11 @@
             },
             "blockchain": {
                 "enabled": true,
-                "defaultImplementation": "otp:2043",
+                "defaultImplementation": "neuro:2043",
                 "implementation": {
-                    "otp:2043": {
+                    "neuro:2043": {
                         "enabled": false,
-                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
+                        "package": "./blockchain/implementation/neuroweb/neuroweb-service.js",
                         "config": {
                             "hubContractAddress": "0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA",
                             "rpcEndpoints": [

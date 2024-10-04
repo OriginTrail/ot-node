@@ -4,7 +4,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     SERVICE_AGREEMENT_SOURCES,
 } from '../../../../../constants/constants.js';
 
@@ -62,7 +62,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         );
 
         await this.tripleStoreService.localStoreAsset(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
             assertionId,
             assertion,
             blockchain,
