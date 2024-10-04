@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import BaseMigration from './base-migration.js';
-import { TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { TRIPLE_STORE } from '../constants/constants.js';
 
 const fixedServiceAgreements = [];
 const fixedHistoricalAssertions = [];
@@ -101,7 +101,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
         const historicalAssertionIds = assertionIds.slice(0, -1);
 
         const publicHistoricalAssertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+            TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
             serviceAgreement.blockchain,
             serviceAgreement.assetStorageContractAddress,
             serviceAgreement.tokenId,
@@ -118,7 +118,7 @@ class ServiceAgreementsDataInspector extends BaseMigration {
 
         const privateHistoricalAssertionLinks =
             await this.tripleStoreService.getAssetAssertionLinks(
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
                 serviceAgreement.blockchain,
                 serviceAgreement.assetStorageContractAddress,
                 serviceAgreement.tokenId,

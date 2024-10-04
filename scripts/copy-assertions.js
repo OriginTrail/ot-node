@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import rc from 'rc';
 import appRootPath from 'app-root-path';
 import path from 'path';
-import { TRIPLE_STORE_REPOSITORIES, SCHEMA_CONTEXT } from '../src/constants/constants.js';
+import { TRIPLE_STORE, SCHEMA_CONTEXT } from '../src/constants/constants.js';
 import TripleStoreModuleManager from '../src/modules/triple-store/triple-store-module-manager.js';
 import DataService from '../src/service/data-service.js';
 import Logger from '../src/logger/logger.js';
@@ -29,15 +29,15 @@ for (const implementationName of tripleStoreModuleManager.getImplementationNames
     }
 }
 
-const fromRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT;
-const fromImplementation = repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT];
+const fromRepository = TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT;
+const fromImplementation = repositoryImplementations[TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT];
 const fromRepositoryName =
     tripleStoreModuleManager.getImplementation(fromImplementation).module.repositories[
         fromRepository
     ].name;
 
-const toRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT;
-const toImplementation = repositoryImplementations[TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT];
+const toRepository = TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT;
+const toImplementation = repositoryImplementations[TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT];
 const toRepositoryName =
     tripleStoreModuleManager.getImplementation(toImplementation).module.repositories[toRepository]
         .name;

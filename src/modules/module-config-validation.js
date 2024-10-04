@@ -1,4 +1,4 @@
-import { REQUIRED_MODULES, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { REQUIRED_MODULES, TRIPLE_STORE } from '../constants/constants.js';
 
 class ModuleConfigValidation {
     constructor(ctx) {
@@ -47,7 +47,7 @@ class ModuleConfigValidation {
                 occurences[repository] += 1;
             }
         }
-        for (const repository of Object.values(TRIPLE_STORE_REPOSITORIES)) {
+        for (const repository of Object.values(TRIPLE_STORE.REPOSITORIES)) {
             if (occurences[repository] !== 1)
                 throw Error(`Exactly one config for repository ${repository} needs to be defined.`);
         }

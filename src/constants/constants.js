@@ -39,27 +39,44 @@ export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 5;
 
 export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 300 * 1000;
 
-export const SOLIDITY_ERROR_STRING_PREFIX = '0x08c379a0';
-
-export const SOLIDITY_PANIC_CODE_PREFIX = '0x4e487b71';
-
-export const SOLIDITY_PANIC_REASONS = {
-    0x1: 'Assertion error',
-    0x11: 'Arithmetic operation underflowed or overflowed outside of an unchecked block',
-    0x12: 'Division or modulo division by zero',
-    0x21: 'Tried to convert a value into an enum, but the value was too big or negative',
-    0x22: 'Incorrectly encoded storage byte array',
-    0x31: '.pop() was called on an empty array',
-    0x32: 'Array accessed at an out-of-bounds or negative index',
-    0x41: 'Too much memory was allocated, or an array was created that is too large',
-    0x51: 'Called a zero-initialized variable of internal function type',
+export const SOLIDITY = {
+    ERROR_STRING_PREFIX: '0x08c379a0',
+    PANIC_CODE_PREFIX: '0x4e487b71',
+    PANIC_REASONS: {
+        0x1: 'Assertion error',
+        0x11: 'Arithmetic operation underflowed or overflowed outside of an unchecked block',
+        0x12: 'Division or modulo division by zero',
+        0x21: 'Tried to convert a value into an enum, but the value was too big or negative',
+        0x22: 'Incorrectly encoded storage byte array',
+        0x31: '.pop() was called on an empty array',
+        0x32: 'Array accessed at an out-of-bounds or negative index',
+        0x41: 'Too much memory was allocated, or an array was created that is too large',
+        0x51: 'Called a zero-initialized variable of internal function type',
+    },
 };
 
-export const LIBP2P_KEY_DIRECTORY = 'libp2p';
+export const LIBP2P_KEY = {
+    DIRECTORY: 'libp2p',
+    FILENAME: 'privateKey',
+};
 
-export const LIBP2P_KEY_FILENAME = 'privateKey';
-
-export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
+export const TRIPLE_STORE = {
+    CONNECT: {
+        MAX_RETRIES: 10,
+        RETRY_FREQUENCY: 10,
+    },
+    REPOSITORIES: {
+        PUBLIC_CURRENT: 'publicCurrent',
+        PUBLIC_HISTORY: 'publicHistory',
+        PRIVATE_CURRENT: 'privateCurrent',
+        PRIVATE_HISTORY: 'privateHistory',
+    },
+    IMPLEMENTATION: {
+        BLAZEGRAPH: 'Blazegraph',
+        GRAPHDB: 'GraphDB',
+        FUSEKI: 'Fuseki',
+    },
+};
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
@@ -68,8 +85,6 @@ export const MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS = 60 * 60 *
 export const MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH = 50;
 
 export const TRANSACTION_QUEUE_CONCURRENCY = 1;
-
-export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
 export const MAX_FILE_SIZE = 10000000;
 
@@ -89,13 +104,6 @@ export const PARANET_SYNC_KA_COUNT = 50;
 export const PARANET_ACCESS_POLICY = {
     OPEN: 0,
     CURATED: 1,
-};
-
-export const TRIPLE_STORE_REPOSITORIES = {
-    PUBLIC_CURRENT: 'publicCurrent',
-    PUBLIC_HISTORY: 'publicHistory',
-    PRIVATE_CURRENT: 'privateCurrent',
-    PRIVATE_HISTORY: 'privateHistory',
 };
 
 export const PENDING_STORAGE_REPOSITORIES = {
@@ -242,12 +250,6 @@ export const WEBSOCKET_PROVIDER_OPTIONS = {
         keepalive: true,
         keepaliveInterval: 30 * 1000, // ms
     },
-};
-
-export const TRIPLE_STORE_IMPLEMENTATION = {
-    BLAZEGRAPH: 'Blazegraph',
-    GRAPHDB: 'GraphDB',
-    FUSEKI: 'Fuseki',
 };
 
 export const NETWORK_MESSAGE_TYPES = {

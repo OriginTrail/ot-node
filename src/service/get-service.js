@@ -6,7 +6,7 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     PARANET_NODES_ACCESS_POLICIES,
 } from '../constants/constants.js';
 
@@ -103,8 +103,8 @@ class GetService extends OperationService {
                 if (!paranetLatestAsset) {
                     repository =
                         paranetNodesAccessPolicy === 'OPEN'
-                            ? TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY
-                            : TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
+                            ? TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY
+                            : TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY;
                     publicAssertionId = assertionId;
                 } else {
                     const paranetUAL = this.ualService.deriveUAL(
@@ -154,7 +154,7 @@ class GetService extends OperationService {
                 );
 
                 await this.tripleStoreService.localStoreAsset(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
                     assertionId,
                     responseData.nquads,
                     blockchain,

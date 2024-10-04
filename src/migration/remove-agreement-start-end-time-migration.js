@@ -1,5 +1,5 @@
 import BaseMigration from './base-migration.js';
-import { TRIPLE_STORE_REPOSITORIES, SCHEMA_CONTEXT } from '../constants/constants.js';
+import { TRIPLE_STORE, SCHEMA_CONTEXT } from '../constants/constants.js';
 
 class RemoveAgreementStartEndTimeMigration extends BaseMigration {
     constructor(migrationName, logger, config, tripleStoreService) {
@@ -8,7 +8,7 @@ class RemoveAgreementStartEndTimeMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        const repositories = Object.values(TRIPLE_STORE_REPOSITORIES);
+        const repositories = Object.values(TRIPLE_STORE.REPOSITORIES);
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
 

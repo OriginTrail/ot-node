@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import BaseMigration from './base-migration.js';
-import { TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { TRIPLE_STORE } from '../constants/constants.js';
 
 class ServiceAgreementsInvalidDataMigration extends BaseMigration {
     constructor(migrationName, logger, config, repositoryModuleManager, tripleStoreService) {
@@ -50,7 +50,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
             if (serviceAgreement.currentAssertionId !== serviceAgreement.correctAssertionId) {
                 const assertionLinkedInPublicCurrentRepository =
                     await this.tripleStoreService.assetAssertionLinkExists(
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -59,7 +59,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
                 if (assertionLinkedInPublicCurrentRepository) {
                     await this.tripleStoreService.updateAssetAssertionLink(
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -70,7 +70,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
                 const assertionLinkedInPrivateCurrentRepository =
                     await this.tripleStoreService.assetAssertionLinkExists(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                        TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -79,7 +79,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
                 if (assertionLinkedInPrivateCurrentRepository) {
                     await this.tripleStoreService.updateAssetAssertionLink(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                        TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -92,7 +92,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
             // Fix wrong keyword for the Asset Metadata in the Triple Store
             if (serviceAgreement.currentKeyword !== serviceAgreement.correctKeyword) {
                 const assetInPublicCurrentRepository = await this.tripleStoreService.assetExists(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
                     serviceAgreement.blockchain,
                     serviceAgreement.contract,
                     serviceAgreement.tokenId,
@@ -100,7 +100,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
                 if (assetInPublicCurrentRepository) {
                     await this.tripleStoreService.updateAssetNonAssertionMetadata(
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                        TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -109,7 +109,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
                 }
 
                 const assetInPrivateCurrentRepository = await this.tripleStoreService.assetExists(
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                    TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
                     serviceAgreement.blockchain,
                     serviceAgreement.contract,
                     serviceAgreement.tokenId,
@@ -117,7 +117,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
                 if (assetInPrivateCurrentRepository) {
                     await this.tripleStoreService.updateAssetNonAssertionMetadata(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                        TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -126,7 +126,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
                 }
 
                 const assetInPublicHistoricalRepository = await this.tripleStoreService.assetExists(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                     serviceAgreement.blockchain,
                     serviceAgreement.contract,
                     serviceAgreement.tokenId,
@@ -134,7 +134,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
                 if (assetInPublicHistoricalRepository) {
                     await this.tripleStoreService.updateAssetNonAssertionMetadata(
-                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                        TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -144,7 +144,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
                 const assetInPrivateHistoricalRepository =
                     await this.tripleStoreService.assetExists(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                        TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -152,7 +152,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
                 if (assetInPrivateHistoricalRepository) {
                     await this.tripleStoreService.updateAssetNonAssertionMetadata(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                        TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
                         serviceAgreement.blockchain,
                         serviceAgreement.contract,
                         serviceAgreement.tokenId,
@@ -174,7 +174,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
             for (const assertionId of state.missingPublicHistoricalAssertions) {
                 await this.tripleStoreService.insertAssetAssertionLink(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                     state.blockchain,
                     state.contract,
                     state.tokenId,
@@ -184,7 +184,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
             for (const assertionId of state.missingPrivateHistoricalAssertions) {
                 await this.tripleStoreService.insertAssetAssertionLink(
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
                     state.blockchain,
                     state.contract,
                     state.tokenId,
@@ -194,7 +194,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
             for (const assertionId of state.redundantPublicHistoricalAssertions) {
                 await this.tripleStoreService.deleteAssetAssertionLink(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                     state.blockchain,
                     state.contract,
                     state.tokenId,
@@ -204,7 +204,7 @@ class ServiceAgreementsInvalidDataMigration extends BaseMigration {
 
             for (const assertionId of state.redundantPrivateHistoricalAssertions) {
                 await this.tripleStoreService.deleteAssetAssertionLink(
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
                     state.blockchain,
                     state.contract,
                     state.tokenId,

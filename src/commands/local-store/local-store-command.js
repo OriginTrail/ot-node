@@ -3,7 +3,7 @@ import {
     ERROR_TYPE,
     LOCAL_STORE_TYPES,
     PENDING_STORAGE_REPOSITORIES,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -51,7 +51,7 @@ class LocalStoreCommand extends Command {
                 if (cachedData.public.assertion && cachedData.public.assertionId) {
                     storePromises.push(
                         this.tripleStoreService.localStoreAsset(
-                            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                            TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
                             cachedData.public.assertionId,
                             cachedData.public.assertion,
                             blockchain,
@@ -64,7 +64,7 @@ class LocalStoreCommand extends Command {
                 if (cachedData.private.assertion && cachedData.private.assertionId) {
                     storePromises.push(
                         this.tripleStoreService.localStoreAsset(
-                            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                            TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
                             cachedData.private.assertionId,
                             cachedData.private.assertion,
                             blockchain,

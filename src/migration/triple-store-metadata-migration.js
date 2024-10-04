@@ -2,7 +2,7 @@
 import { formatAssertion } from 'assertion-tools';
 import path from 'path';
 import BaseMigration from './base-migration.js';
-import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { SCHEMA_CONTEXT, TRIPLE_STORE } from '../constants/constants.js';
 
 class TripleStoreMetadataMigration extends BaseMigration {
     constructor(
@@ -29,8 +29,8 @@ class TripleStoreMetadataMigration extends BaseMigration {
     }
 
     async updatePublicCurrentMetadata() {
-        const currentRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT;
-        const historyRepository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+        const currentRepository = TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT;
+        const historyRepository = TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY;
         const migrationFolderPath = this.fileService.getMigrationFolderPath();
         const migrationInfoFileName = `${this.migrationName}_${currentRepository}`;
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
@@ -76,8 +76,8 @@ class TripleStoreMetadataMigration extends BaseMigration {
     }
 
     async updatePrivateCurrentMetadata() {
-        const currentRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT;
-        const historyRepository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
+        const currentRepository = TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT;
+        const historyRepository = TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY;
         const migrationFolderPath = this.fileService.getMigrationFolderPath();
         const migrationInfoFileName = `${this.migrationName}_${currentRepository}`;
         const migrationInfoPath = path.join(migrationFolderPath, migrationInfoFileName);
@@ -511,7 +511,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
 
                 await this._updateMigrationInfoFile(currentRepository, migrationInfoCopy);
 
-                if (currentRepository === TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT) {
+                if (currentRepository === TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT) {
                     const privateAssertionId =
                         this.dataService.getPrivateAssertionId(publicAssertion);
                     if (privateAssertionId) {
@@ -576,7 +576,7 @@ class TripleStoreMetadataMigration extends BaseMigration {
                 assertion: [{ '@id': `assertion:${latestPublicAssertionId}` }],
             };
 
-            if (currentRepository === TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT) {
+            if (currentRepository === TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT) {
                 const latestPrivateAssertionId =
                     this.dataService.getPrivateAssertionId(latestPublicAssertion);
                 if (latestPrivateAssertionId) {

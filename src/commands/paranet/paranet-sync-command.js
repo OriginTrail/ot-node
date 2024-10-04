@@ -8,7 +8,7 @@ import {
     OPERATION_ID_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
     PARANET_SYNC_PARAMETERS,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     PARANET_SYNC_KA_COUNT,
     OPERATION_STATUS,
     PARANET_NODES_ACCESS_POLICIES,
@@ -107,7 +107,7 @@ class ParanetSyncCommand extends Command {
                                         stateIndex,
                                         paranetId,
                                         tokenId,
-                                        TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                                        TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                                         false,
                                         // It should never delete as it never was in storage
                                         // But maybe will because this is unfinalized
@@ -129,7 +129,7 @@ class ParanetSyncCommand extends Command {
                                     assertionIds.length - 1,
                                     paranetId,
                                     tokenId,
-                                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                                    TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
                                     true,
                                     false,
                                     paranetUAL,
@@ -236,7 +236,7 @@ class ParanetSyncCommand extends Command {
                                 stateIndex,
                                 paranetId,
                                 tokenId,
-                                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                                TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                                 false,
                                 // It should never delete as it never was in storage
                                 // But maybe will because this is not finalized
@@ -259,7 +259,7 @@ class ParanetSyncCommand extends Command {
                             assertionIds.length - 1,
                             paranetId,
                             tokenId,
-                            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                            TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
                             true,
                             false,
                             paranetUAL,

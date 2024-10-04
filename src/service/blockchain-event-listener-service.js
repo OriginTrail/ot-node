@@ -3,7 +3,7 @@ import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
     CONTRACT_EVENT_FETCH_INTERVALS,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     NODE_ENVIRONMENTS,
     PENDING_STORAGE_REPOSITORIES,
     CONTRACT_EVENTS,
@@ -523,8 +523,8 @@ class BlockchainEventListenerService {
             // eslint-disable-next-line no-await-in-loop
             await Promise.all([
                 this.pendingStorageService.moveAndDeletePendingState(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
+                    TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
                     PENDING_STORAGE_REPOSITORIES.PUBLIC,
                     blockchain,
                     contract,
@@ -535,8 +535,8 @@ class BlockchainEventListenerService {
                     stateIndex,
                 ),
                 this.pendingStorageService.moveAndDeletePendingState(
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
+                    TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
+                    TRIPLE_STORE.REPOSITORIES.PRIVATE_HISTORY,
                     PENDING_STORAGE_REPOSITORIES.PRIVATE,
                     blockchain,
                     contract,

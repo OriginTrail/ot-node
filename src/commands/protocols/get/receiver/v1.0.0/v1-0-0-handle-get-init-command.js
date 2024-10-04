@@ -5,7 +5,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     PENDING_STORAGE_REPOSITORIES,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
 } from '../../../../../constants/constants.js';
 
 class HandleGetInitCommand extends HandleProtocolMessageCommand {
@@ -120,8 +120,8 @@ class HandleGetInitCommand extends HandleProtocolMessageCommand {
 
         if (!assertionExists) {
             for (const repository of [
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
+                TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
             ]) {
                 // eslint-disable-next-line no-await-in-loop
                 assertionExists = await this.tripleStoreService.assertionExists(

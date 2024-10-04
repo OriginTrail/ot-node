@@ -1,11 +1,6 @@
 import { QueryEngine as Engine } from '@comunica/query-sparql';
 import { setTimeout } from 'timers/promises';
-import {
-    SCHEMA_CONTEXT,
-    TRIPLE_STORE_CONNECT_MAX_RETRIES,
-    TRIPLE_STORE_CONNECT_RETRY_FREQUENCY,
-    MEDIA_TYPES,
-} from '../../../constants/constants.js';
+import { SCHEMA_CONTEXT, TRIPLE_STORE, MEDIA_TYPES } from '../../../constants/constants.js';
 
 class OtTripleStore {
     async initialize(config, logger) {
@@ -75,18 +70,20 @@ class OtTripleStore {
         const ensureConnectionPromises = Object.keys(this.repositories).map(async (repository) => {
             let ready = await this.healthCheck(repository);
             let retries = 0;
-            while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+            while (!ready && retries < TRIPLE_STORE.CONNECT.MAX_RETRIES) {
                 retries += 1;
                 this.logger.warn(
                     `Cannot connect to Triple store (${this.getName()}), repository: ${repository}, located at: ${
                         this.repositories[repository].url
-                    }  retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
+                    }  retry number: ${retries}/${TRIPLE_STORE.CONNECT.MAX_RETRIES}. Retrying in ${
+                        TRIPLE_STORE.CONNECT.RETRY_FREQUENCY
+                    } seconds.`,
                 );
                 /* eslint-disable no-await-in-loop */
-                await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
+                await setTimeout(TRIPLE_STORE.CONNECT.RETRY_FREQUENCY * 1000);
                 ready = await this.healthCheck(repository);
             }
-            if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
+            if (retries === TRIPLE_STORE.CONNECT.MAX_RETRIES) {
                 this.logger.error(
                     `Triple Store (${this.getName()})  not available, max retries reached.`,
                 );

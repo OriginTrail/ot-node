@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import BaseMigration from './base-migration.js';
-import { TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { TRIPLE_STORE } from '../constants/constants.js';
 
 class PrivateAssetsMetadataMigration extends BaseMigration {
     constructor(
@@ -23,7 +23,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
 
     async executeMigration() {
         const graphs = await this.tripleStoreService.select(
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
             `SELECT DISTINCT ?g 
                     WHERE {
                         GRAPH ?g { ?s ?p ?o }
@@ -36,13 +36,13 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
 
         if (!assertionIds?.length) {
             this.logger.debug(
-                `No assertions found in ${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT} repository. Skipping migration.`,
+                `No assertions found in ${TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT} repository. Skipping migration.`,
             );
             return;
         }
 
         this.logger.debug(
-            `${assertionIds.length} assertions found in ${TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT} repository.`,
+            `${assertionIds.length} assertions found in ${TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT} repository.`,
         );
         for (const blockchain of this.blockchainModuleManager.getImplementationNames()) {
             const assetStorageContractAddresses =
@@ -114,7 +114,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
         );
 
         await this.tripleStoreService.insertAssetAssertionMetadata(
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
             blockchain,
             assetStorageContractAddress,
             tokenId,
@@ -123,7 +123,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
         );
 
         const assertion = await this.tripleStoreService.getAssertion(
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
             assertionId,
         );
 
@@ -132,7 +132,7 @@ class PrivateAssetsMetadataMigration extends BaseMigration {
         if (privateAssertionId == null || !assertionIds.includes(privateAssertionId)) return;
 
         await this.tripleStoreService.insertAssetAssertionMetadata(
-            TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+            TRIPLE_STORE.REPOSITORIES.PRIVATE_CURRENT,
             blockchain,
             assetStorageContractAddress,
             tokenId,

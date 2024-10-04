@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import BaseMigration from './base-migration.js';
-import { TRIPLE_STORE_REPOSITORIES } from '../constants/constants.js';
+import { TRIPLE_STORE } from '../constants/constants.js';
 
 const CHAIN_IDS = {
     development: 31337,
@@ -23,7 +23,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
 
         const chunkSize = 10000;
 
-        for (const repository in TRIPLE_STORE_REPOSITORIES) {
+        for (const repository in TRIPLE_STORE.REPOSITORIES) {
             const getUalListQuery = `
             PREFIX schema: <http://schema.org/>
                 SELECT DISTINCT ?subject ?object
@@ -32,7 +32,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                 }`;
 
             const ualList = await this.tripleStoreService.select(
-                TRIPLE_STORE_REPOSITORIES[repository],
+                TRIPLE_STORE.REPOSITORIES[repository],
                 getUalListQuery,
             );
 
@@ -65,7 +65,7 @@ class UalExtensionTripleStoreMigration extends BaseMigration {
                     }
                 }`;
                 await this.tripleStoreService.queryVoid(
-                    TRIPLE_STORE_REPOSITORIES[repository],
+                    TRIPLE_STORE.REPOSITORIES[repository],
                     insertQuery,
                 );
                 this.logger.info(

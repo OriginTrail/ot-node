@@ -5,7 +5,7 @@ import BaseMigration from './base-migration.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     SCHEMA_CONTEXT,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     SERVICE_AGREEMENT_SOURCES,
 } from '../constants/constants.js';
 
@@ -53,7 +53,7 @@ class ServiceAgreementsMetadataMigration extends BaseMigration {
                         }
                         ORDER BY ASC(xsd:integer(?tokenId))`;
         const assetsMetadata = await this.tripleStoreService.select(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
             query,
         );
         const identities = {};

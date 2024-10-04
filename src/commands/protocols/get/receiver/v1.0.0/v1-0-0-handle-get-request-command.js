@@ -5,7 +5,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     GET_STATES,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE,
     PENDING_STORAGE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
@@ -119,8 +119,8 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         if (!nquads?.length) {
             for (const repository of [
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
+                TRIPLE_STORE.REPOSITORIES.PUBLIC_CURRENT,
+                TRIPLE_STORE.REPOSITORIES.PUBLIC_HISTORY,
             ]) {
                 // eslint-disable-next-line no-await-in-loop
                 nquads = await this.tripleStoreService.getAssertion(repository, assertionId);
