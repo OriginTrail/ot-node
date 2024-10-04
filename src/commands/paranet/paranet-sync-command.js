@@ -4,14 +4,11 @@ import { setTimeout } from 'timers/promises';
 import Command from '../command.js';
 import {
     ERROR_TYPE,
-    PARANET_SYNC_FREQUENCY_MILLS,
     OPERATION_ID_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
-    PARANET_SYNC_PARAMETERS,
     TRIPLE_STORE,
-    PARANET_SYNC_KA_COUNT,
+    PARANET,
     OPERATION_STATUS,
-    PARANET_NODES_ACCESS_POLICIES,
 } from '../../constants/constants.js';
 
 class ParanetSyncCommand extends Command {
@@ -33,7 +30,7 @@ class ParanetSyncCommand extends Command {
             command.data;
 
         const paranetNodesAccessPolicy =
-            PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
+            PARANET.NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
 
         this.logger.info(
             `Paranet sync: Starting paranet sync for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}`,
@@ -57,15 +54,15 @@ class ParanetSyncCommand extends Command {
             if (cachedMissedKaCount > 0) {
                 this.logger.info(
                     `Paranet sync: Missed KA count is ${cachedMissedKaCount} syncing ${
-                        cachedMissedKaCount > PARANET_SYNC_KA_COUNT
-                            ? PARANET_SYNC_KA_COUNT
+                        cachedMissedKaCount > PARANET.SYNC_KA_COUNT
+                            ? PARANET.SYNC_KA_COUNT
                             : cachedMissedKaCount
                     } assets, for paranet: ${paranetUAL}, operation ID: ${operationId}!`,
                 );
                 const missedParanetAssets =
                     await this.repositoryModuleManager.getMissedParanetAssetsRecords(
                         paranetUAL,
-                        PARANET_SYNC_KA_COUNT,
+                        PARANET.SYNC_KA_COUNT,
                     );
 
                 const promises = [];
@@ -185,14 +182,14 @@ class ParanetSyncCommand extends Command {
         for (
             let i = cachedKaCount + cachedMissedKaCount;
             i <= contractKaCount;
-            i += PARANET_SYNC_KA_COUNT
+            i += PARANET.SYNC_KA_COUNT
         ) {
             const nextKaArray =
                 await this.blockchainModuleManager.getParanetKnowledgeAssetsWithPagination(
                     blockchain,
                     paranetId,
                     i,
-                    PARANET_SYNC_KA_COUNT,
+                    PARANET.SYNC_KA_COUNT,
                 );
             if (!nextKaArray.length) break;
             kaToUpdate.push(...nextKaArray);
@@ -411,11 +408,11 @@ class ParanetSyncCommand extends Command {
             let attempt = 0;
             let getResult;
             do {
-                await setTimeout(PARANET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
+                await setTimeout(PARANET.SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
                 getResult = await this.operationIdService.getOperationIdRecord(operationId);
                 attempt += 1;
             } while (
-                attempt < PARANET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
+                attempt < PARANET.SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
                 getResult?.status !== OPERATION_ID_STATUS.FAILED &&
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
@@ -470,7 +467,7 @@ class ParanetSyncCommand extends Command {
             name: 'paranetSyncCommands',
             data: {},
             transactional: false,
-            period: PARANET_SYNC_FREQUENCY_MILLS,
+            period: PARANET.SYNC_FREQUENCY_MILLS,
         };
         Object.assign(command, map);
         return command;

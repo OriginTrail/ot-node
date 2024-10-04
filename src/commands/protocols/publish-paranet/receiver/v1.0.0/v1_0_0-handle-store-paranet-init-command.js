@@ -4,7 +4,7 @@ import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     NETWORK_MESSAGE_TYPES,
-    PARANET_ACCESS_POLICY,
+    PARANET,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
@@ -58,7 +58,7 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
             blockchain,
             paranetId,
         );
-        if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+        if (nodesAccessPolicy === PARANET.ACCESS_POLICY.CURATED) {
             const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
             const isCuratedNode = await this.blockchainModuleManager.isCuratedNode(
                 blockchain,

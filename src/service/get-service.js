@@ -7,7 +7,7 @@ import {
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
     TRIPLE_STORE,
-    PARANET_NODES_ACCESS_POLICIES,
+    PARANET,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -95,7 +95,7 @@ class GetService extends OperationService {
                 );
 
                 const paranetNodesAccessPolicy =
-                    PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
+                    PARANET.NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
 
                 let repository;
                 let publicAssertionId;

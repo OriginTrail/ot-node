@@ -5,7 +5,7 @@ import {
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
     EVM_ZERO,
-    PARANET_ACCESS_POLICY,
+    PARANET,
 } from '../../../../constants/constants.js';
 
 class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
@@ -57,7 +57,7 @@ class PublishParanetValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
             paranetId,
         );
-        if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+        if (nodesAccessPolicy === PARANET.ACCESS_POLICY.CURATED) {
             const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
             const isCuratedNode = await this.blockchainModuleManager.isCuratedNode(
                 blockchain,
