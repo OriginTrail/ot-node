@@ -250,24 +250,20 @@ class OTNode {
 
                         if (
                             process.env.NODE_ENV === 'development' ||
-                            process.env.NODE_ENV === 'test'
+                            process.env.NODE_ENV === 'test' ||
+                            process.env.NODE_ENV === 'testnet'
                         ) {
                             const blockchainConfig =
                                 blockchainModuleManager.getModuleConfiguration(blockchain);
+                            if (process.env.NODE_ENV !== 'testnet') {
+                                execSync(
+                                    `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.operationalWallets[0].privateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                    { stdio: 'inherit' },
+                                );
+                                await setTimeout(10000);
+                            }
                             execSync(
-                                `npm run set-stake -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --stake=${blockchainConfig.initialStakeAmount} --operationalWalletPrivateKey=${blockchainConfig.operationalWallets[0].privateKey} --managementWalletPrivateKey=${blockchainConfig.evmManagementWalletPrivateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
-                                { stdio: 'inherit' },
-                            );
-                            await setTimeout(10000);
-                            execSync(
-                                `npm run set-ask -- --rpcEndpoint=${
-                                    blockchainConfig.rpcEndpoints[0]
-                                } --ask=${
-                                    blockchainConfig.initialAskAmount +
-                                    (Math.random() - 0.5) * blockchainConfig.initialAskAmount
-                                } --privateKey=${
-                                    blockchainConfig.operationalWallets[0].privateKey
-                                } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                `npm run set-ask -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --ask=${blockchainConfig.initialAskAmount} --privateKey=${blockchainConfig.operationalWallets[0].privateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
                         }
