@@ -273,7 +273,7 @@ class OTNode {
                         blockchain,
                         identityId,
                     );
-                    const nodeId = blockchainModuleManager.convertHexToAscii(blockchain, peerId);
+                    const nodeId = blockchainModuleManager.convertAsciiToHex(blockchain, peerId);
 
                     if (nodeId !== onChainNodeId) {
                         this.logger.warn(
