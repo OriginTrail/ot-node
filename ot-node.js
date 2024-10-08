@@ -240,7 +240,6 @@ class OTNode {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const networkModuleManager = this.container.resolve('networkModuleManager');
         const peerId = networkModuleManager.getPeerId().toB58String();
-        const hashingService = this.container.resolve('hashingService');
         const createProfilesPromises = blockchainModuleManager
             .getImplementationNames()
             .map(async (blockchain) => {
@@ -274,9 +273,12 @@ class OTNode {
                         blockchain,
                         identityId,
                     );
-                    const peerIdHash = hashingService.callHashFunction(1, peerId);
+                    const nodeId = blockchainModuleManager.convertHexToAscii(
+                                blockchain,
+                                peerId,
+                    );
 
-                    if (peerIdHash !== onChainNodeId) {
+                    if (nodeId !== onChainNodeId) {
                         this.logger.warn(
                             `On blockchain ${blockchain} for identity id: ${identityId} local peer id: ${peerId} doesn't match on chain node id.`,
                         );
