@@ -1714,6 +1714,13 @@ class Web3Service {
             CONTRACTS.PARANETS_REGISTRY_CONTRACT,
         );
     }
+
+    async getNodeAddress(identityId, hashFunctionId = 1) {
+        return this.callContractFunction(this.ProfileStorageContract, 'getNodeAddress', [
+            identityId,
+            hashFunctionId,
+        ]);
+    }
 }
 
 export default Web3Service;

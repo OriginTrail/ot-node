@@ -238,14 +238,15 @@ class OTNode {
 
     async createProfiles() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const networkModuleManager = this.container.resolve('networkModuleManager');
+        const peerId = networkModuleManager.getPeerId().toB58String();
+        const hashingService = this.container.resolve('hashingService');
         const createProfilesPromises = blockchainModuleManager
             .getImplementationNames()
             .map(async (blockchain) => {
                 try {
                     if (!(await blockchainModuleManager.identityIdExists(blockchain))) {
                         this.logger.info(`Creating profile on network: ${blockchain}`);
-                        const networkModuleManager = this.container.resolve('networkModuleManager');
-                        const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
 
                         if (
@@ -269,7 +270,18 @@ class OTNode {
                         }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                    const onChainNodeId = await blockchainModuleManager.getNodeAddress(
+                        blockchain,
+                        identityId,
+                    );
+                    const peerIdHash = hashingService.callHashFunction(1, peerId);
 
+                    if (peerIdHash !== onChainNodeId) {
+                        this.logger.warn(
+                            `On blockchain ${blockchain} for identity id: ${identityId} local peer id: ${peerId} doesn't match on chain node id.`,
+                        );
+                        blockchainModuleManager.removeImplementation(blockchain);
+                    }
                     this.logger.info(`Identity ID: ${identityId}`);
                 } catch (error) {
                     this.logger.warn(
