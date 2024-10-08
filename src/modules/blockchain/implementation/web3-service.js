@@ -1715,7 +1715,7 @@ class Web3Service {
         );
     }
 
-    async getNodeAddress(identityId) {
+    async getNodeId(identityId) {
         return this.callContractFunction(this.ProfileStorageContract, 'getNodeId', [identityId]);
     }
 }
