@@ -436,10 +436,6 @@ class OTNode {
             // eslint-disable-next-line no-await-in-loop
             await paranetService.initializeParanetRecord(blockchain, paranetId);
         }
-        const repository = paranetService.getParanetRepositoryName(
-            'did:dkg:hardhat1:31337/0x8aafc28174bb6c3bdc7be92f18c2f134e876c05e/7',
-        );
-        await tripleStoreModuleManager.initializeParanetRepository(repository);
         this.config.assetSync.syncParanets = validParanets;
         tripleStoreService.initializeRepositories();
     }
