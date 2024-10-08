@@ -269,14 +269,11 @@ class OTNode {
                         }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
-                    const onChainNodeId = await blockchainModuleManager.getNodeAddress(
+                    const onChainNodeId = await blockchainModuleManager.getNodeId(
                         blockchain,
                         identityId,
                     );
-                    const nodeId = blockchainModuleManager.convertHexToAscii(
-                                blockchain,
-                                peerId,
-                    );
+                    const nodeId = blockchainModuleManager.convertHexToAscii(blockchain, peerId);
 
                     if (nodeId !== onChainNodeId) {
                         this.logger.warn(

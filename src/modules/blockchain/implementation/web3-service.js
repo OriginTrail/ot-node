@@ -1715,11 +1715,8 @@ class Web3Service {
         );
     }
 
-    async getNodeAddress(identityId, hashFunctionId = 1) {
-        return this.callContractFunction(this.ProfileStorageContract, 'getNodeAddress', [
-            identityId,
-            hashFunctionId,
-        ]);
+    async getNodeAddress(identityId) {
+        return this.callContractFunction(this.ProfileStorageContract, 'getNodeId', [identityId]);
     }
 }
 
