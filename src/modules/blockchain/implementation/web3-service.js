@@ -1714,6 +1714,10 @@ class Web3Service {
             CONTRACTS.PARANETS_REGISTRY_CONTRACT,
         );
     }
+
+    async getNodeId(identityId) {
+        return this.callContractFunction(this.ProfileStorageContract, 'getNodeId', [identityId]);
+    }
 }
 
 export default Web3Service;
