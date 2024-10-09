@@ -1,0 +1,81 @@
+{
+  "modules": {
+    "network": {
+      "enabled": true,
+      "implementation": {
+        "libp2p-service": {
+          "package": "./network/implementation/libp2p-service.js",
+          "config": {
+            "nat":{
+              "enabled":true,
+              "externalIp":"<SERVER_PUBLIC_IP>"
+            }
+          }
+        }
+      }
+    },
+    "blockchain": {
+      "implementation": {
+        "base:84532": {
+          "enabled": true,
+          "config": {
+            "sharesTokenSymbol": "<your_sharesTokenSymbol>",
+            "sharesTokenName": "<your_sharesTokenName>",
+            "rpcEndpoints": [
+              "RPC_ENDPOINT>"
+            ],
+            "evmManagementWalletPublicKey": "MANAGEMENT_KEY_PUBLIC_ADDRESS",
+            "operationalWallets": [
+              {
+                "evmAddress": "<OPERATIONAL_KEY_PUBLIC_ADDRESS>",
+                "privateKey": "OPERATIONAL_KEY_PRIVATE_ADDRESS"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "tripleStore": {
+      "implementation": {
+        "ot-blazegraph": {
+          "enabled": true,
+          "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
+          "config": {
+            "repositories": {
+              "privateCurrent": {
+                "url": "http://localhost:9999",
+                "name": "private-current",
+                "username": "admin",
+                "password": ""
+              },
+              "privateHistory": {
+                "url": "http://localhost:9999",
+                "name": "private-history",
+                "username": "admin",
+                "password": ""
+              },
+              "publicCurrent": {
+                "url": "http://localhost:9999",
+                "name": "kb",
+                "username": "admin",
+                "password": ""
+              },
+              "publicHistory": {
+                "url": "http://localhost:9999",
+                "name": "public-history",
+                "username": "admin",
+                "password": ""
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "auth": {
+    "ipWhitelist": [
+      "::1",
+      "127.0.0.1"
+    ]
+  }
+}
