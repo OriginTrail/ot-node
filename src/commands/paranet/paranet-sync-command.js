@@ -251,10 +251,13 @@ class ParanetSyncCommand extends Command {
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
 
-            const getOperationCachedData = await this.operationIdService.getCachedOperationIdData(
-                operationId,
-            );
-            if (getOperationCachedData?.message === 'Unable to find assertion on the network!') {
+            if (getResult?.status === OPERATION_ID_STATUS.FAILED) {
+                this.logger.warn(
+                    `Paranet sync: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, GET result: ${JSON.stringify(
+                        getResult,
+                    )}`,
+                );
+
                 await this.repositoryModuleManager.createMissedParanetAssetRecord({
                     blockchainId: blockchain,
                     ual,
