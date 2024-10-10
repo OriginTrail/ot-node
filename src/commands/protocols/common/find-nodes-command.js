@@ -60,7 +60,7 @@ class FindNodesCommand extends Command {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Unable to find enough nodes for operationId: ${operationId}, keyword: ${keyword}. Minimum number of nodes required: ${minAckResponses}`,
+                `Unable to find enough nodes for operationId: ${operationId}, keyword: ${keyword}. Minimum number of nodes required: ${minAckResponses}, number of nodes found: ${closestNodes.length}`,
                 this.errorType,
                 true,
             );

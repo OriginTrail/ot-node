@@ -94,6 +94,11 @@ class UALService {
                 tokenId,
                 0,
             ));
+
+        this.logger.debug(
+            `Calculating location keyword for blockchain: ${blockchain}, contract ${contract}, assertion id: ${assertionId}`,
+        );
+
         return this.blockchainModuleManager.encodePacked(
             blockchain,
             ['address', 'bytes32'],
