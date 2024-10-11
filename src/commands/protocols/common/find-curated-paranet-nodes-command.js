@@ -8,6 +8,7 @@ class FindCuratedParanetNodesCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.shardingTableService = ctx.shardingTableService;
+        this.publishParanetService = ctx.publishParanetService;
     }
 
     /**
@@ -54,6 +55,19 @@ class FindCuratedParanetNodesCommand extends Command {
             return Command.empty();
         }
 
+        if (paranetNodes.length === 0) {
+            await this.publishParanetService.markOperationAsCompleted(
+                operationId,
+                blockchain,
+                null,
+                [
+                    OPERATION_ID_STATUS.PUBLISH_PARANET.PUBLISH_PARANET_END,
+                    OPERATION_ID_STATUS.COMPLETED,
+                ],
+            );
+
+            return Command.empty();
+        }
         return this.continueSequence(
             {
                 ...command.data,
