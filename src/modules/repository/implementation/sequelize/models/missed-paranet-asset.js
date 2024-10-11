@@ -19,10 +19,6 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
                 type: DataTypes.STRING,
             },
-            knowledgeAssetId: {
-                allowNull: false,
-                type: DataTypes.STRING,
-            },
             errorMessage: {
                 allowNull: true,
                 type: DataTypes.TEXT,

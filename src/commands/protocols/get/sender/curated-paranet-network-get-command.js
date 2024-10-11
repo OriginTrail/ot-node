@@ -8,7 +8,7 @@ class CuratedParanetNetworkGetCommand extends NetworkProtocolCommand {
         this.operationService = ctx.getService;
         this.ualService = ctx.ualService;
 
-        this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
+        this.errorType = ERROR_TYPE.GET.GET_CURATED_PARANET_NETWORK_ERROR;
     }
 
     /**
