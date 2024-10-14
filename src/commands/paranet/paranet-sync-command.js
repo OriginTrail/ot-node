@@ -206,6 +206,7 @@ class ParanetSyncCommand extends Command {
             );
 
             if (paranetNodesAccessPolicy === 'OPEN') {
+                // Paranet ual not propagated here
                 await this.commandExecutor.add({
                     name: 'networkGetCommand',
                     sequence: [],
@@ -325,7 +326,7 @@ class ParanetSyncCommand extends Command {
                 contract,
                 tokenId,
             );
-
+            const { tokenId: paranetTokenId } = this.ualService.resolveUAL(paranetUAL);
             let isSuccessful = true;
             for (let stateIndex = 0; stateIndex < assertionIds.length; stateIndex += 1) {
                 isSuccessful =
@@ -339,7 +340,7 @@ class ParanetSyncCommand extends Command {
                         assertionIds,
                         stateIndex,
                         paranetId,
-                        tokenId,
+                        paranetTokenId,
                         stateIndex === assertionIds.length - 1,
                         paranetUAL,
                         paranetNodesAccessPolicy,
