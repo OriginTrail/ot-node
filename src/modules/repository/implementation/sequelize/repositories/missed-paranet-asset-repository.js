@@ -1,3 +1,5 @@
+import Sequelize from 'sequelize';
+
 class MissedParanetAssetRepository {
     constructor(models) {
         this.sequelize = models.sequelize;
@@ -70,8 +72,8 @@ class MissedParanetAssetRepository {
 
         return this.model.count({
             attributes: [
-                [this.sequelize.fn('MAX', this.sequelize.col('createdAt')), 'latestCreatedAt'],
-                [this.sequelize.fn('COUNT', this.sequelize.col('ual')), 'retryCount'],
+                [Sequelize.fn('MAX', Sequelize.col('created_at')), 'latestCreatedAt'],
+                [Sequelize.fn('COUNT', Sequelize.col('ual')), 'retryCount'],
             ],
             where: {
                 paranetUal,
@@ -79,10 +81,10 @@ class MissedParanetAssetRepository {
             group: ['paranetUal', 'ual'],
             having: {
                 retryCount: {
-                    [this.sequelize.Op.lt]: retryCountLimit,
+                    [Sequelize.Op.lt]: retryCountLimit,
                 },
                 latestCreatedAt: {
-                    [this.sequelize.Op.lte]: delayDate,
+                    [Sequelize.Op.lte]: delayDate,
                 },
             },
         });

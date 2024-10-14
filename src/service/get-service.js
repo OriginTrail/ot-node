@@ -118,6 +118,7 @@ class GetService extends OperationService {
                     );
 
                     repository = this.paranetService.getParanetRepositoryName(paranetUAL);
+                    // This is missing we only have array on nquads
                     publicAssertionId = responseData.syncedAssetRecord.publicAssertionId;
 
                     if (responseData.privateNquads) {
@@ -137,7 +138,7 @@ class GetService extends OperationService {
                         ual,
                         paranetUAL,
                         responseData.syncedAssetRecord.publicAssertionId,
-                        responseData.syncedAssetRecord.privateAssertionId,
+                        responseData.syncedAssetRecord.privateAssertionId ?? '',
                         responseData.syncedAssetRecord.sender,
                         responseData.syncedAssetRecord.transactionHash,
                     );
