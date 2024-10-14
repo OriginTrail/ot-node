@@ -51,7 +51,7 @@ class GetService extends OperationService {
         } = command.data;
 
         const paranetSyncCompleteStatuses = paranetSync
-            ? [OPERATION_ID_STATUS.PARANET.PARANET_SYNC_EN]
+            ? [OPERATION_ID_STATUS.PARANET.PARANET_SYNC_END]
             : [];
 
         const keywordsStatuses = await this.getResponsesStatuses(
