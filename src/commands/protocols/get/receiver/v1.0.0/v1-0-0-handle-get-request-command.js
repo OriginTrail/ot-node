@@ -41,6 +41,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         let nquads;
 
         if (paranetUAL) {
+            // This only works with curated paranets, it needs to be changed for normal paranet
             const paranetCuratedNodes = await this.blockchainModuleManager.getParanetCuratedNodes(
                 blockchain,
                 paranetId,
