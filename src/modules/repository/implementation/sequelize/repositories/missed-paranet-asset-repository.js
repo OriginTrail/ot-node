@@ -25,8 +25,8 @@ class MissedParanetAssetRepository {
                 'ual',
                 'paranetUal',
                 'knowledgeAssetId',
-                [this.sequelize.fn('MAX', this.sequelize.col('createdAt')), 'latestCreatedAt'],
-                [this.sequelize.fn('COUNT', this.sequelize.col('ual')), 'retryCount'],
+                [this.sequelize.fn('MAX', Sequelize.col('createdAt')), 'latestCreatedAt'],
+                [this.sequelize.fn('COUNT', Sequelize.col('ual')), 'retryCount'],
             ],
             where: {
                 paranetUal,
@@ -34,10 +34,10 @@ class MissedParanetAssetRepository {
             group: ['ual', 'blockchainId', 'paranetUal', 'knowledgeAssetId'],
             having: {
                 retryCount: {
-                    [this.sequelize.Op.lt]: retryCountLimit,
+                    [Sequelize.Op.lt]: retryCountLimit,
                 },
                 latestCreatedAt: {
-                    [this.sequelize.Op.lte]: delayDate,
+                    [Sequelize.Op.lte]: delayDate,
                 },
             },
         });
