@@ -118,7 +118,7 @@ class GetService extends OperationService {
                     );
 
                     repository = this.paranetService.getParanetRepositoryName(paranetUAL);
-                    publicAssertionId = responseData.syncedAssetRecord.publicAssertionId;
+                    publicAssertionId = assertionId;
 
                     if (responseData.privateNquads) {
                         await this.tripleStoreService.localStoreAsset(
@@ -136,10 +136,10 @@ class GetService extends OperationService {
                         blockchain,
                         ual,
                         paranetUAL,
-                        responseData.syncedAssetRecord.publicAssertionId,
-                        responseData.syncedAssetRecord.privateAssertionId,
-                        responseData.syncedAssetRecord.sender,
-                        responseData.syncedAssetRecord.transactionHash,
+                        publicAssertionId,
+                        responseData.syncedAssetRecord?.privateAssertionId,
+                        responseData.syncedAssetRecord?.sender,
+                        responseData.syncedAssetRecord?.transactionHash,
                     );
                 }
 

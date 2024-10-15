@@ -57,8 +57,10 @@ class ParanetSyncCommand extends Command {
             await this.repositoryModuleManager.getParanetKnowledgeAssetsCount(paranetId, blockchain)
         )[0].dataValues.ka_count;
 
+        // This returns empty array ????
         const totalCachedMissedKaCount =
             await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
+        // This is also an array ???
         const cachedMissedKaCount =
             await this.repositoryModuleManager.getFilteredCountOfMissedAssetsOfParanet(
                 paranetUAL,
@@ -120,7 +122,7 @@ class ParanetSyncCommand extends Command {
                 blockchain,
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_NEW_KAS_SYNC_START,
             );
-
+            // All zeroes returned
             const [successulNewSyncsCount, failedNewSyncsCount] = await this.syncNewKAs(
                 cachedKaCount + cachedMissedKaCount,
                 contractKaCount,
@@ -204,6 +206,7 @@ class ParanetSyncCommand extends Command {
             );
 
             if (paranetNodesAccessPolicy === 'OPEN') {
+                // Paranet ual not propagated here
                 await this.commandExecutor.add({
                     name: 'networkGetCommand',
                     sequence: [],
@@ -271,7 +274,7 @@ class ParanetSyncCommand extends Command {
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
 
-            if (getResult?.status === OPERATION_ID_STATUS.FAILED) {
+            if (!getResult || getResult?.status === OPERATION_ID_STATUS.FAILED) {
                 this.logger.warn(
                     `Paranet sync: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, GET result: ${JSON.stringify(
                         getResult,
@@ -323,7 +326,7 @@ class ParanetSyncCommand extends Command {
                 contract,
                 tokenId,
             );
-
+            const { tokenId: paranetTokenId } = this.ualService.resolveUAL(paranetUAL);
             let isSuccessful = true;
             for (let stateIndex = 0; stateIndex < assertionIds.length; stateIndex += 1) {
                 isSuccessful =
@@ -337,7 +340,7 @@ class ParanetSyncCommand extends Command {
                         assertionIds,
                         stateIndex,
                         paranetId,
-                        tokenId,
+                        paranetTokenId,
                         stateIndex === assertionIds.length - 1,
                         paranetUAL,
                         paranetNodesAccessPolicy,
@@ -429,8 +432,9 @@ class ParanetSyncCommand extends Command {
         cachedKaCount,
     ) {
         const kasToSync = [];
-
-        for (let i = startIndex + 1; i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
+        // I think this should be updated by constants
+        for (let i = Number(startIndex); i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
+            // Empty array, offset is 1 and we should probably start with zero
             const nextKaArray =
                 await this.blockchainModuleManager.getParanetKnowledgeAssetsWithPagination(
                     blockchain,
@@ -443,7 +447,8 @@ class ParanetSyncCommand extends Command {
             const filteredKAs = [];
             for (const knowledgeAssetId of nextKaArray) {
                 const {
-                    blockchain: knowledgeAssetBlockchain,
+                    // knowledgeAssetBlockchain is not returned here I think
+                    // blockchain: knowledgeAssetBlockchain,
                     knowledgeAssetStorageContract,
                     tokenId: knowledgeAssetTokenId,
                 } = await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
@@ -462,13 +467,13 @@ class ParanetSyncCommand extends Command {
 
                 if (!statePresentInParanetRepository) {
                     const ual = this.ualService.deriveUAL(
-                        knowledgeAssetBlockchain,
+                        blockchain,
                         knowledgeAssetStorageContract,
                         knowledgeAssetTokenId,
                     );
                     filteredKAs.push([
                         ual,
-                        knowledgeAssetBlockchain,
+                        blockchain,
                         knowledgeAssetStorageContract,
                         knowledgeAssetTokenId,
                     ]);
