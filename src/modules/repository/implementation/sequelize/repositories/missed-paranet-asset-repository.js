@@ -58,7 +58,7 @@ class MissedParanetAssetRepository {
     }
 
     async getCountOfMissedAssetsOfParanet(paranetUal) {
-        const records = this.model.findAll({
+        const records = await this.model.findAll({
             where: {
                 paranetUal,
             },
