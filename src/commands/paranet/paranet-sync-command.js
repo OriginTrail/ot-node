@@ -274,7 +274,7 @@ class ParanetSyncCommand extends Command {
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
 
-            if (getResult?.status === OPERATION_ID_STATUS.FAILED) {
+            if (!getResult || getResult?.status === OPERATION_ID_STATUS.FAILED) {
                 this.logger.warn(
                     `Paranet sync: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, GET result: ${JSON.stringify(
                         getResult,
