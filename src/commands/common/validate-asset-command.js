@@ -37,7 +37,10 @@ class ValidateAssetCommand extends Command {
         );
 
         let blockchainAssertionId;
-        if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
+        if (
+            storeType === LOCAL_STORE_TYPES.TRIPLE ||
+            storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET
+        ) {
             blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
                 blockchain,
                 contract,
@@ -96,13 +99,49 @@ class ValidateAssetCommand extends Command {
             }
         }
 
+        let paranetId;
+        if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
+            const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
+                blockchain,
+                contract,
+                tokenId,
+            );
+
+            try {
+                paranetId = await this.blockchainModuleManager.getParanetId(
+                    blockchain,
+                    knowledgeAssetId,
+                );
+
+                if (!paranetId || paranetId === ZERO_BYTES32) {
+                    await this.handleError(
+                        operationId,
+                        blockchain,
+                        `Invalid paranet id for asset ${ual}. Received value from blockchain: ${paranetId}.`,
+                        this.errorType,
+                        true,
+                    );
+                    return Command.empty();
+                }
+            } catch (error) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    error.message,
+                    this.errorType,
+                    true,
+                );
+                return Command.empty();
+            }
+        }
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_END,
         );
         return this.continueSequence(
-            { ...command.data, retry: undefined, period: undefined },
+            { ...command.data, paranetId, retry: undefined, period: undefined },
             command.sequence,
         );
     }

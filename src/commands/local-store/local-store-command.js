@@ -11,6 +11,7 @@ class LocalStoreCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.tripleStoreService = ctx.tripleStoreService;
+        this.paranetService = ctx.paranetService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.operationIdService = ctx.operationIdService;
         this.dataService = ctx.dataService;
@@ -29,6 +30,7 @@ class LocalStoreCommand extends Command {
             contract,
             tokenId,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
+            paranetId,
         } = command.data;
 
         try {
@@ -65,6 +67,46 @@ class LocalStoreCommand extends Command {
                     storePromises.push(
                         this.tripleStoreService.localStoreAsset(
                             TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                            cachedData.private.assertionId,
+                            cachedData.private.assertion,
+                            blockchain,
+                            contract,
+                            tokenId,
+                            keyword,
+                        ),
+                    );
+                }
+                await Promise.all(storePromises);
+            } else if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
+                const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
+                    blockchain,
+                    paranetId,
+                );
+                const paranetUAL = this.ualService.deriveUAL(
+                    blockchain,
+                    paranetMetadata.paranetKAStorageContract,
+                    paranetMetadata.paranetKATokenId,
+                );
+                const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+
+                const storePromises = [];
+                if (cachedData.public.assertion && cachedData.public.assertionId) {
+                    storePromises.push(
+                        this.tripleStoreService.localStoreAsset(
+                            paranetRepository,
+                            cachedData.public.assertionId,
+                            cachedData.public.assertion,
+                            blockchain,
+                            contract,
+                            tokenId,
+                            keyword,
+                        ),
+                    );
+                }
+                if (cachedData.private.assertion && cachedData.private.assertionId) {
+                    storePromises.push(
+                        this.tripleStoreService.localStoreAsset(
+                            paranetRepository,
                             cachedData.private.assertionId,
                             cachedData.private.assertion,
                             blockchain,
