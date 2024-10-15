@@ -56,19 +56,21 @@ class MissedParanetAssetRepository {
     }
 
     async getCountOfMissedAssetsOfParanet(paranetUal) {
-        return this.model.count({
+        const records = this.model.findAll({
             where: {
                 paranetUal,
             },
             group: ['paranetUal', 'ual'],
         });
+
+        return records.length;
     }
 
     async getFilteredCountOfMissedAssetsOfParanet(paranetUal, retryCountLimit, retryDelayInMs) {
         const now = new Date();
         const delayDate = new Date(now.getTime() - retryDelayInMs);
 
-        return this.model.count({
+        const records = this.model.findAll({
             attributes: [
                 [this.sequelize.fn('MAX', this.sequelize.col('createdAt')), 'latestCreatedAt'],
                 [this.sequelize.fn('COUNT', this.sequelize.col('ual')), 'retryCount'],
@@ -86,6 +88,8 @@ class MissedParanetAssetRepository {
                 },
             },
         });
+
+        return records.length;
     }
 }
 
