@@ -719,6 +719,7 @@ export const QUERY_TYPES = {
  */
 export const LOCAL_STORE_TYPES = {
     TRIPLE: 'TRIPLE',
+    TRIPLE_PARANET: 'TRIPLE_PARANET',
     PENDING: 'PENDING',
 };
 
