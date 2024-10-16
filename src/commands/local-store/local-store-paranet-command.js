@@ -50,17 +50,17 @@ class LocalStoreParanetCommand extends Command {
                 tokenId,
                 keyword,
             );
-
-            await this.tripleStoreService.localStoreAsset(
-                paranetRepositoryName,
-                cachedData.cachedAssertions.private.assertionId,
-                cachedData.cachedAssertions.private.assertion,
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-            );
-
+            if (cachedData.cachedAssertions.private.assertion) {
+                await this.tripleStoreService.localStoreAsset(
+                    paranetRepositoryName,
+                    cachedData.cachedAssertions.private.assertionId,
+                    cachedData.cachedAssertions.private.assertion,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                );
+            }
             await this.repositoryModuleManager.createParanetSyncedAssetRecord(
                 blockchain,
                 ual,
