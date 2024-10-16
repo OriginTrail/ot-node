@@ -1,3 +1,5 @@
+import Sequelize from 'sequelize';
+
 class MissedParanetAssetRepository {
     constructor(models) {
         this.sequelize = models.sequelize;
@@ -17,28 +19,23 @@ class MissedParanetAssetRepository {
         const now = new Date();
         const delayDate = new Date(now.getTime() - retryDelayInMs);
 
-        const queryOptions = this.model.findAll({
+        const queryOptions = {
             attributes: [
                 'blockchainId',
                 'ual',
                 'paranetUal',
-                'knowledgeAssetId',
-                [this.sequelize.fn('MAX', this.sequelize.col('createdAt')), 'latestCreatedAt'],
-                [this.sequelize.fn('COUNT', this.sequelize.col('ual')), 'retryCount'],
+                [Sequelize.fn('MAX', Sequelize.col('created_at')), 'latestCreatedAt'],
+                [Sequelize.fn('COUNT', Sequelize.col('ual')), 'retryCount'],
             ],
             where: {
                 paranetUal,
             },
-            group: ['ual', 'blockchainId', 'paranetUal', 'knowledgeAssetId'],
-            having: {
-                retryCount: {
-                    [this.sequelize.Op.lt]: retryCountLimit,
-                },
-                latestCreatedAt: {
-                    [this.sequelize.Op.lte]: delayDate,
-                },
-            },
-        });
+            group: ['ual', 'blockchainId', 'paranetUal'],
+            having: Sequelize.and(
+                Sequelize.literal(`COUNT(ual) < ${retryCountLimit}`),
+                Sequelize.literal(`MAX(created_at) <= '${delayDate.toISOString()}'`),
+            ),
+        };
 
         if (count !== null) {
             queryOptions.limit = count;
@@ -56,36 +53,41 @@ class MissedParanetAssetRepository {
     }
 
     async getCountOfMissedAssetsOfParanet(paranetUal) {
-        return this.model.count({
+        const records = await this.model.findAll({
+            attributes: ['paranet_ual', 'ual'],
             where: {
                 paranetUal,
             },
-            group: ['paranetUal', 'ual'],
+            group: ['paranet_ual', 'ual'],
         });
+
+        return records.length;
     }
 
     async getFilteredCountOfMissedAssetsOfParanet(paranetUal, retryCountLimit, retryDelayInMs) {
         const now = new Date();
         const delayDate = new Date(now.getTime() - retryDelayInMs);
 
-        return this.model.count({
+        const records = await this.model.findAll({
             attributes: [
-                [this.sequelize.fn('MAX', this.sequelize.col('createdAt')), 'latestCreatedAt'],
-                [this.sequelize.fn('COUNT', this.sequelize.col('ual')), 'retryCount'],
+                [Sequelize.fn('MAX', Sequelize.col('created_at')), 'latestCreatedAt'],
+                [Sequelize.fn('COUNT', Sequelize.col('ual')), 'retryCount'],
             ],
             where: {
                 paranetUal,
             },
-            group: ['paranetUal', 'ual'],
+            group: ['paranet_ual', 'ual'],
             having: {
                 retryCount: {
-                    [this.sequelize.Op.lt]: retryCountLimit,
+                    [Sequelize.Op.lt]: retryCountLimit,
                 },
                 latestCreatedAt: {
-                    [this.sequelize.Op.lte]: delayDate,
+                    [Sequelize.Op.lte]: delayDate,
                 },
             },
         });
+
+        return records.length;
     }
 }
 

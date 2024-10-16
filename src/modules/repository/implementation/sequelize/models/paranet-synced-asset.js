@@ -24,15 +24,15 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
             },
             privateAssertionId: {
-                allowNull: false,
+                allowNull: true,
                 type: DataTypes.STRING,
             },
             sender: {
-                allowNull: false,
+                allowNull: true,
                 type: DataTypes.STRING,
             },
             transactionHash: {
-                allowNull: false,
+                allowNull: true,
                 type: DataTypes.STRING,
             },
             createdAt: {

@@ -1,5 +1,9 @@
 import Command from '../command.js';
-import { ERROR_TYPE, PARANET_SYNC_FREQUENCY_MILLS } from '../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    PARANET_SYNC_FREQUENCY_MILLS,
+    OPERATION_ID_STATUS,
+} from '../../constants/constants.js';
 
 class StartParanetSyncCommands extends Command {
     constructor(ctx) {
@@ -18,7 +22,9 @@ class StartParanetSyncCommands extends Command {
 
         const promises = [];
         this.config.assetSync?.syncParanets.forEach(async (paranetUAL) => {
-            const operationId = this.operationIdService.generateId();
+            const operationId = this.operationIdService.generateId(
+                OPERATION_ID_STATUS.PARANET.PARANET_SYNC_START,
+            );
 
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
             const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
