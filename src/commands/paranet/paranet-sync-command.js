@@ -183,28 +183,22 @@ class ParanetSyncCommand extends Command {
         );
 
         try {
-            await Promise.all([
-                this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    blockchain,
-                    OPERATION_ID_STATUS.GET.GET_START,
-                ),
-                this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    blockchain,
-                    OPERATION_ID_STATUS.GET.GET_INIT_START,
-                ),
-                this.repositoryModuleManager.createOperationRecord(
-                    this.getService.getOperationName(),
-                    operationId,
-                    OPERATION_STATUS.IN_PROGRESS,
-                ),
-            ]);
-
+            const getOperationId = await this.operationIdService.generateOperationId(
+                OPERATION_ID_STATUS.GET.GET_START,
+            );
+            this.operationIdService.updateOperationIdStatus(
+                getOperationId,
+                blockchain,
+                OPERATION_ID_STATUS.GET.GET_INIT_START,
+            );
+            this.repositoryModuleManager.createOperationRecord(
+                this.getService.getOperationName(),
+                getOperationId,
+                OPERATION_STATUS.IN_PROGRESS,
+            );
             this.logger.debug(
                 `Paranet sync: Get for ${ual} with operation id ${operationId} initiated.`,
             );
-
             if (paranetNodesAccessPolicy === 'OPEN') {
                 // Paranet ual not propagated here
                 await this.commandExecutor.add({
@@ -212,7 +206,7 @@ class ParanetSyncCommand extends Command {
                     sequence: [],
                     delay: 0,
                     data: {
-                        operationId,
+                        operationId: getOperationId,
                         id: ual,
                         blockchain,
                         contract,
@@ -235,7 +229,7 @@ class ParanetSyncCommand extends Command {
                     sequence: [],
                     delay: 0,
                     data: {
-                        operationId,
+                        operationId: getOperationId,
                         id: ual,
                         blockchain,
                         contract,
@@ -257,7 +251,7 @@ class ParanetSyncCommand extends Command {
             }
 
             await this.operationIdService.updateOperationIdStatus(
-                operationId,
+                getOperationId,
                 blockchain,
                 OPERATION_ID_STATUS.GET.GET_INIT_END,
             );
@@ -266,7 +260,7 @@ class ParanetSyncCommand extends Command {
             let getResult;
             do {
                 await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
-                getResult = await this.operationIdService.getOperationIdRecord(operationId);
+                getResult = await this.operationIdService.getOperationIdRecord(getOperationId);
                 attempt += 1;
             } while (
                 attempt < SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&

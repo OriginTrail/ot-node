@@ -50,10 +50,6 @@ class GetService extends OperationService {
             paranetMetadata,
         } = command.data;
 
-        const paranetSyncCompleteStatuses = paranetSync
-            ? [OPERATION_ID_STATUS.PARANET.PARANET_SYNC_END]
-            : [];
-
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,
@@ -87,7 +83,7 @@ class GetService extends OperationService {
                 operationId,
                 blockchain,
                 { assertion: responseData.nquads },
-                [...this.completedStatuses, ...paranetSyncCompleteStatuses],
+                [...this.completedStatuses],
             );
             this.logResponsesSummary(completedNumber, failedNumber);
 
@@ -183,7 +179,7 @@ class GetService extends OperationService {
                     {
                         message: 'Unable to find assertion on the network!',
                     },
-                    [...this.completedStatuses, ...paranetSyncCompleteStatuses],
+                    [...this.completedStatuses],
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
                 if (assetSync) {
