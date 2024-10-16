@@ -540,19 +540,36 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async removeMissedParanetAssetRecord(ual) {
-        return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecord(ual);
+    async removeMissedParanetAssetRecordsByUAL(ual) {
+        return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecordsByUAL(ual);
     }
 
-    async getMissedParanetAssetsRecords(paranetUal, count) {
-        return this.getRepository('missed_paranet_asset').getMissedParanetAssetsRecords(
+    async getMissedParanetAssetsRecordsWithRetryCount(
+        paranetUal,
+        retryCountLimit,
+        retryDelayInMs,
+        count,
+    ) {
+        return this.getRepository(
+            'missed_paranet_asset',
+        ).getMissedParanetAssetsRecordsWithRetryCount(
             paranetUal,
+            retryCountLimit,
+            retryDelayInMs,
             count,
         );
     }
 
     async getCountOfMissedAssetsOfParanet(ual) {
         return this.getRepository('missed_paranet_asset').getCountOfMissedAssetsOfParanet(ual);
+    }
+
+    async getFilteredCountOfMissedAssetsOfParanet(ual, retryCountLimit, retryDelayInMs) {
+        return this.getRepository('missed_paranet_asset').getFilteredCountOfMissedAssetsOfParanet(
+            ual,
+            retryCountLimit,
+            retryDelayInMs,
+        );
     }
 
     async getParanetsBlockchains() {

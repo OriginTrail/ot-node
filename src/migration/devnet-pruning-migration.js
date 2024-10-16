@@ -8,7 +8,10 @@ class DevnetPruningMigration extends BaseMigration {
     }
 
     async executeMigration() {
-        if (process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVNET) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVNET ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TESTNET
+        ) {
             this.logger.info('Pruning devenet operational tables');
             // commands are not here as parsing JSON in SQL would take too much time
             const tables = [

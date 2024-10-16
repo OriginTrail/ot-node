@@ -50,9 +50,6 @@ class GetService extends OperationService {
             paranetMetadata,
         } = command.data;
 
-        const paranetNodesAccessPolicy =
-            PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
-
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,
@@ -86,7 +83,7 @@ class GetService extends OperationService {
                 operationId,
                 blockchain,
                 { assertion: responseData.nquads },
-                this.completedStatuses,
+                [...this.completedStatuses],
             );
             this.logResponsesSummary(completedNumber, failedNumber);
 
@@ -96,6 +93,9 @@ class GetService extends OperationService {
                 this.logger.debug(
                     `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
+
+                const paranetNodesAccessPolicy =
+                    PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
 
                 let repository;
                 let publicAssertionId;
@@ -114,7 +114,7 @@ class GetService extends OperationService {
                     );
 
                     repository = this.paranetService.getParanetRepositoryName(paranetUAL);
-                    publicAssertionId = responseData.syncedAssetRecord.publicAssertionId;
+                    publicAssertionId = assertionId;
 
                     if (responseData.privateNquads) {
                         await this.tripleStoreService.localStoreAsset(
@@ -132,10 +132,10 @@ class GetService extends OperationService {
                         blockchain,
                         ual,
                         paranetUAL,
-                        responseData.syncedAssetRecord.publicAssertionId,
-                        responseData.syncedAssetRecord.privateAssertionId,
-                        responseData.syncedAssetRecord.sender,
-                        responseData.syncedAssetRecord.transactionHash,
+                        publicAssertionId,
+                        responseData.syncedAssetRecord?.privateAssertionId,
+                        responseData.syncedAssetRecord?.sender,
+                        responseData.syncedAssetRecord?.transactionHash,
                     );
                 }
 
@@ -179,7 +179,7 @@ class GetService extends OperationService {
                     {
                         message: 'Unable to find assertion on the network!',
                     },
-                    this.completedStatuses,
+                    [...this.completedStatuses],
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
                 if (assetSync) {

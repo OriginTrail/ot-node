@@ -355,7 +355,7 @@
                         "enabled": true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/release/testnet"
+                            "branch": "v8/release/testnet"
                         }
                     }
                 }
@@ -388,8 +388,7 @@
                             },
                             "port": 9000,
                             "bootstrap": [
-                                "/ip4/164.92.138.30/tcp/9000/p2p/QmbiZQm18JefDizrQwbRhPgkaLykTLyrUEpeMWuKJHXuUM",
-                                "/ip4/139.59.145.152/tcp/9000/p2p/Qme2oF6afixBjLYjF5CYeC73d5dygsTq8P7BPQp31NVkye"
+                                "/ip4/167.172.162.235/tcp/9000/p2p/QmNcjL4P5Dzq5hn6fkncYEsTcRU2g7g4N5rE2KCvHSPDav"
                             ]
                         }
                     }
@@ -442,37 +441,15 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "otp:20430": {
-                        "enabled": false,
-                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
-                        "config": {
-                            "hubContractAddress": "0xBbfF7Ea6b2Addc1f38A0798329e12C08f03750A6",
-                            "rpcEndpoints": [
-                                "https://lofar-testnet.origin-trail.network",
-                                "https://lofar-testnet.origintrail.network"
-                            ],
-                            "operatorFee": 0
-                        }
-                    },
-                    "gnosis:10200": {
-                        "enabled": false,
-                        "package": "./blockchain/implementation/gnosis/gnosis-service.js",
-
-                        "config": {
-                            "hubContractAddress": "0xC06210312C9217A0EdF67453618F5eB96668679A",
-                            "gasPriceOracleLink": "https://blockscout.chiadochain.net/api/v1/gas-price-oracle",
-                            "rpcEndpoints": ["https://rpc.chiadochain.net"],
-                            "operatorFee": 0
-                        }
-                    },
                     "base:84532": {
                         "enabled": false,
                         "package": "./blockchain/implementation/base/base-service.js",
 
                         "config": {
-                            "hubContractAddress": "0x144eDa5cbf8926327cb2cceef168A121F0E4A299",
+                            "hubContractAddress": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692",
                             "rpcEndpoints": ["https://sepolia.base.org"],
-                            "operatorFee": 0
+                            "operatorFee": 0,
+                            "initialAskAmount": 0.1
                         }
                     }
                 }
@@ -515,7 +492,7 @@
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
                             "sendTelemetryData": true,
-                            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
+                            "signalingServerUrl": "https://v8-testnet-signaling.origin-trail.network/signal"
                         }
                     }
                 }
