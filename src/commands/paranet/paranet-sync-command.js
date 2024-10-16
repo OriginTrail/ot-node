@@ -110,7 +110,7 @@ class ParanetSyncCommand extends Command {
         }
 
         // Then, check for new KAs on the blockchain
-        if (cachedKaCount + cachedMissedKaCount < contractKaCount) {
+        if (cachedKaCount + totalCachedMissedKaCount < contractKaCount) {
             this.logger.info(
                 `Paranet sync: Syncing ${
                     contractKaCount - (cachedKaCount + cachedMissedKaCount)
