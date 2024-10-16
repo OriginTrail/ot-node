@@ -57,10 +57,8 @@ class ParanetSyncCommand extends Command {
             await this.repositoryModuleManager.getParanetKnowledgeAssetsCount(paranetId, blockchain)
         )[0].dataValues.ka_count;
 
-        // This returns empty array ????
         const totalCachedMissedKaCount =
             await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
-        // This is also an array ???
         const cachedMissedKaCount =
             await this.repositoryModuleManager.getFilteredCountOfMissedAssetsOfParanet(
                 paranetUAL,
@@ -122,7 +120,6 @@ class ParanetSyncCommand extends Command {
                 blockchain,
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_NEW_KAS_SYNC_START,
             );
-            // All zeroes returned
             const [successulNewSyncsCount, failedNewSyncsCount] = await this.syncNewKAs(
                 cachedKaCount + cachedMissedKaCount,
                 contractKaCount,
@@ -200,7 +197,6 @@ class ParanetSyncCommand extends Command {
                 `Paranet sync: Get for ${ual} with operation id ${operationId} initiated.`,
             );
             if (paranetNodesAccessPolicy === 'OPEN') {
-                // Paranet ual not propagated here
                 await this.commandExecutor.add({
                     name: 'networkGetCommand',
                     sequence: [],
@@ -426,7 +422,6 @@ class ParanetSyncCommand extends Command {
         cachedKaCount,
     ) {
         const kasToSync = [];
-        // I think this should be updated by constants
         for (let i = Number(startIndex); i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
             // Empty array, offset is 1 and we should probably start with zero
             const nextKaArray =
@@ -440,15 +435,11 @@ class ParanetSyncCommand extends Command {
 
             const filteredKAs = [];
             for (const knowledgeAssetId of nextKaArray) {
-                const {
-                    // knowledgeAssetBlockchain is not returned here I think
-                    // blockchain: knowledgeAssetBlockchain,
-                    knowledgeAssetStorageContract,
-                    tokenId: knowledgeAssetTokenId,
-                } = await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
-                    blockchain,
-                    knowledgeAssetId,
-                );
+                const { knowledgeAssetStorageContract, tokenId: knowledgeAssetTokenId } =
+                    await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
+                        blockchain,
+                        knowledgeAssetId,
+                    );
 
                 const statePresentInParanetRepository =
                     await this.tripleStoreService.paranetAssetExists(
