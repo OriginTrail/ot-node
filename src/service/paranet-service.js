@@ -53,6 +53,11 @@ class ParanetService {
             `Unable to get Paranet repository name. Paranet id doesn't have UAL format: ${paranetUAL}`,
         );
     }
+
+    getParanetIdFromUAL(paranetUAL) {
+        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
+        return this.constructParanetId(blockchain, contract, tokenId);
+    }
 }
 
 export default ParanetService;

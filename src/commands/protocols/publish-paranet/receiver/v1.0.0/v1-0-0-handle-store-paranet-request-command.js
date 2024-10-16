@@ -86,16 +86,17 @@ class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
             keyword,
         );
 
-        await this.tripleStoreService.localStoreAsset(
-            paranetRepositoryName,
-            privateAssertionId,
-            cachedData.assertions.private.assertion,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-        );
-
+        if (cachedData.assertions.private?.assertion) {
+            await this.tripleStoreService.localStoreAsset(
+                paranetRepositoryName,
+                privateAssertionId,
+                cachedData.assertions.private.assertion,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+            );
+        }
         await this.repositoryModuleManager.createParanetSyncedAssetRecord(
             blockchain,
             ual,
@@ -105,6 +106,9 @@ class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
             sender,
             txHash,
         );
+
+        const paranetId = this.paranetService.getParanetIdFromUAL(paranetUAL);
+        await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,

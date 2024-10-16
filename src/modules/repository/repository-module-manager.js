@@ -300,8 +300,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('paranet').getOrCreateParanet(paranetId);
     }
 
-    async updateParanetKaCount(paranetId, blockchainId, kaCount) {
-        return this.getRepository('paranet').updateParanetKaCount(paranetId, blockchainId, kaCount);
+    async addToParanetKaCount(paranetId, blockchainId, kaCount) {
+        return this.getRepository('paranet').addToParanetKaCount(paranetId, blockchainId, kaCount);
     }
 
     async updateServiceAgreementRecord(
@@ -598,6 +598,10 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async getParanetSyncedAssetRecordByUAL(ual) {
         return this.getRepository('paranet_synced_asset').getParanetSyncedAssetRecordByUAL(ual);
+    }
+
+    async incrementParanetKaCount(paranetId, blockchainId) {
+        return this.getRepository('paranet').incrementParanetKaCount(paranetId, blockchainId);
     }
 }
 
