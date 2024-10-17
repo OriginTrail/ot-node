@@ -120,6 +120,10 @@ class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
                     paranetRepositoryName,
                     privateAssertionId,
                 );
+                await this.tripleStoreService.deleteAssertion(
+                    paranetRepositoryName,
+                    publicAssertionId,
+                );
                 throw e;
             }
         }
