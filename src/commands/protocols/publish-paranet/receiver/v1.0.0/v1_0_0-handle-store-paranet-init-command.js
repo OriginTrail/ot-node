@@ -13,6 +13,7 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
         this.publishService = ctx.publishParanetService;
         this.ualService = ctx.ualService;
         this.paranetService = ctx.paranetService;
+        this.fileService = ctx.fileService;
 
         this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_REMOTE_ERROR;
     }
@@ -92,6 +93,47 @@ class HandleStoreParanetInitCommand extends HandleProtocolMessageCommand {
                 operationId,
                 blockchain,
                 `Knowledge asset with id ${knowledgeAssetId} is not in paranet with UAL ${paranetUAL}`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
+
+        // Create the .lock file indicating start of the data replication
+        const paranetAssetLockPath = this.fileService.getParanetKnowledgeAssetLockDocumentPath(
+            paranetBlockchain,
+            paranetContract,
+            paranetTokenId,
+            blockchain,
+            contract,
+            tokenId,
+        );
+
+        const paranetAssetLockExists = await this.fileService.pathExists(paranetAssetLockPath);
+
+        if (paranetAssetLockExists) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Knowledge asset with id ${knowledgeAssetId} is being synced via Paranet Sync`,
+                this.errorType,
+                true,
+            );
+            return Command.empty();
+        }
+
+        try {
+            await this.fileService.writeContentsToFile(
+                this.fileService.getParentDirectory(paranetAssetLockPath),
+                `${blockchain}:${contract}:${tokenId}.lock`,
+                JSON.stringify({}),
+                'wx',
+            );
+        } catch (error) {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Failed to write lock for Knowledge Asset with id: ${knowledgeAssetId}. Error: ${error.message}`,
                 this.errorType,
                 true,
             );

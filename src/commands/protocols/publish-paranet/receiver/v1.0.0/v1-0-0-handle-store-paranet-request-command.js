@@ -17,6 +17,7 @@ class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
         this.paranetService = ctx.paranetService;
+        this.fileService = ctx.fileService;
 
         this.errorType = ERROR_TYPE.PUBLISH_PARANET.PUBLISH_PARANET_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -38,11 +39,6 @@ class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
         );
 
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        // const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-        //     blockchain,
-        //     contract,
-        //     tokenId,
-        // );
 
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
 
@@ -105,6 +101,23 @@ class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
             sender,
             txHash,
         );
+
+        // Delete the .lock file
+        const {
+            blockchain: paranetBlockchain,
+            contract: paranetContract,
+            tokenId: paranetTokenId,
+        } = this.ualService.resolveUAL(paranetUAL);
+        const paranetAssetLockPath = this.fileService.getParanetKnowledgeAssetLockDocumentPath(
+            paranetBlockchain,
+            paranetContract,
+            paranetTokenId,
+            blockchain,
+            contract,
+            tokenId,
+        );
+        await this.fileService.removeFile(paranetAssetLockPath);
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
