@@ -379,7 +379,6 @@ class OTNode {
         await autoUpdaterCommand.execute();
     }
 
-    // TODO: add validation for node being a part of paranet
     async initializeParanets() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const tripleStoreService = this.container.resolve('tripleStoreService');

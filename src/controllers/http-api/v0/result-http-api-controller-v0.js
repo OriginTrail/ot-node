@@ -6,14 +6,7 @@ class ResultController extends BaseController {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
 
-        this.availableOperations = [
-            'publish',
-            'get',
-            'query',
-            'local-store',
-            'update',
-            'publishParanet',
-        ];
+        this.availableOperations = ['publish', 'get', 'query', 'local-store', 'update'];
     }
 
     async handleRequest(req, res) {

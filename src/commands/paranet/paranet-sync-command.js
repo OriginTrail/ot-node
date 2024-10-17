@@ -24,7 +24,6 @@ class ParanetSyncCommand extends Command {
         this.paranetService = ctx.paranetService;
         this.getService = ctx.getService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.fileService = ctx.fileService;
 
         this.errorType = ERROR_TYPE.PARANET.PARANET_SYNC_ERROR;
     }
@@ -122,7 +121,7 @@ class ParanetSyncCommand extends Command {
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_NEW_KAS_SYNC_START,
             );
             const [successulNewSyncsCount, failedNewSyncsCount] = await this.syncNewKAs(
-                cachedKaCount + cachedMissedKaCount,
+                0,
                 contractKaCount,
                 paranetUAL,
                 paranetId,
@@ -306,7 +305,6 @@ class ParanetSyncCommand extends Command {
         paranetNodesAccessPolicy,
         operationId,
         removeMissingAssetRecord = false,
-        removeLock = false,
     ) {
         try {
             this.logger.info(
@@ -344,10 +342,6 @@ class ParanetSyncCommand extends Command {
                 await this.repositoryModuleManager.removeMissedParanetAssetRecordsByUAL(ual);
             }
 
-            if (removeLock) {
-                await this.removeLockFile(paranetUAL, blockchain, contract, tokenId);
-            }
-
             return isSuccessful;
         } catch (error) {
             this.logger.warn(
@@ -358,10 +352,6 @@ class ParanetSyncCommand extends Command {
                 ual,
                 paranetUAL,
             });
-
-            if (removeLock) {
-                await this.removeLockFile(paranetUAL, blockchain, contract, tokenId);
-            }
 
             return false;
         }
@@ -400,7 +390,7 @@ class ParanetSyncCommand extends Command {
                 paranetMetadata,
                 paranetNodesAccessPolicy,
                 operationId,
-                true,
+                true, // removeMissingAssetRecord
             );
         });
 
@@ -450,35 +440,8 @@ class ParanetSyncCommand extends Command {
                         knowledgeAssetId,
                     );
 
-                // Create the .lock file indicating the data replication start
-                const paranetAssetLockPath =
-                    this.fileService.getParanetKnowledgeAssetLockDocumentPath(
-                        blockchain,
-                        contract,
-                        tokenId,
-                        blockchain,
-                        knowledgeAssetStorageContract,
-                        knowledgeAssetTokenId,
-                    );
-
-                let paranetAssetLockExists = await this.fileService.pathExists(
-                    paranetAssetLockPath,
-                );
-                if (!paranetAssetLockExists) {
-                    try {
-                        await this.fileService.writeContentsToFile(
-                            this.fileService.getParentDirectory(paranetAssetLockPath),
-                            `${blockchain}:${knowledgeAssetStorageContract}:${knowledgeAssetTokenId}.lock`,
-                            JSON.stringify({}),
-                            'wx',
-                        );
-                    } catch (error) {
-                        paranetAssetLockExists = true;
-                    }
-                }
-
                 let statePresentInParanetRepository = false;
-                if (!paranetAssetLockExists) {
+                if (!statePresentInParanetRepository) {
                     statePresentInParanetRepository =
                         await this.tripleStoreService.paranetAssetExists(
                             blockchain,
@@ -487,9 +450,7 @@ class ParanetSyncCommand extends Command {
                             contract,
                             tokenId,
                         );
-                }
 
-                if (!paranetAssetLockExists && !statePresentInParanetRepository) {
                     const ual = this.ualService.deriveUAL(
                         blockchain,
                         knowledgeAssetStorageContract,
@@ -524,8 +485,7 @@ class ParanetSyncCommand extends Command {
                     paranetMetadata,
                     paranetNodesAccessPolicy,
                     operationId,
-                    false,
-                    true,
+                    false, // removeMissingAssetRecord
                 ),
         );
 
@@ -541,24 +501,6 @@ class ParanetSyncCommand extends Command {
         }
 
         return [successfulCount, results.length - successfulCount];
-    }
-
-    async removeLockFile(paranetUAL, blockchain, contract, tokenId) {
-        const {
-            blockchain: paranetBlockchain,
-            contract: paranetContract,
-            tokenId: paranetTokenId,
-        } = this.ualService.resolveUAL(paranetUAL);
-
-        const paranetAssetLockPath = this.fileService.getParanetKnowledgeAssetLockDocumentPath(
-            paranetBlockchain,
-            paranetContract,
-            paranetTokenId,
-            blockchain,
-            contract,
-            tokenId,
-        );
-        await this.fileService.removeFile(paranetAssetLockPath);
     }
 
     /**
