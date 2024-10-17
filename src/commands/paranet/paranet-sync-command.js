@@ -374,7 +374,6 @@ class ParanetSyncCommand extends Command {
         paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
-        cachedKaCount,
     ) {
         const missedParanetAssets =
             await this.repositoryModuleManager.getMissedParanetAssetsRecordsWithRetryCount(
@@ -409,10 +408,10 @@ class ParanetSyncCommand extends Command {
 
         const successfulCount = results.filter(Boolean).length;
         if (successfulCount > 0) {
-            await this.repositoryModuleManager.updateParanetKaCount(
+            await this.repositoryModuleManager.addToParanetKaCount(
                 paranetId,
                 blockchain,
-                cachedKaCount + successfulCount,
+                successfulCount,
             );
         }
 
@@ -430,7 +429,6 @@ class ParanetSyncCommand extends Command {
         paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
-        cachedKaCount,
     ) {
         const kasToSync = [];
         for (let i = Number(startIndex); i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
@@ -535,10 +533,10 @@ class ParanetSyncCommand extends Command {
 
         const successfulCount = results.filter(Boolean).length;
         if (successfulCount > 0) {
-            await this.repositoryModuleManager.updateParanetKaCount(
+            await this.repositoryModuleManager.addToParanetKaCount(
                 paranetId,
                 blockchain,
-                cachedKaCount + successfulCount,
+                successfulCount,
             );
         }
 

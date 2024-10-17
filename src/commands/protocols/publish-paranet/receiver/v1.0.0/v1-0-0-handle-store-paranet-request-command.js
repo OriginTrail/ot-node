@@ -72,26 +72,57 @@ class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
         const paranetRepositoryName = this.paranetService.getParanetRepositoryName(paranetUAL);
 
         // TODO: this to paranet repo
-        await this.tripleStoreService.localStoreAsset(
-            paranetRepositoryName,
-            publicAssertionId,
-            cachedData.assertions.public.assertion,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-        );
 
-        await this.tripleStoreService.localStoreAsset(
-            paranetRepositoryName,
-            privateAssertionId,
-            cachedData.assertions.private.assertion,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-        );
+        try {
+            await this.tripleStoreService.localStoreAsset(
+                paranetRepositoryName,
+                publicAssertionId,
+                cachedData.assertions.public.assertion,
+                blockchain,
+                contract,
+                tokenId,
+                keyword,
+            );
+        } catch (e) {
+            await this.tripleStoreService.deleteAssetMetadata(
+                paranetRepositoryName,
+                blockchain,
+                contract,
+                tokenId,
+            );
+            await this.tripleStoreService.deleteAssertion(paranetRepositoryName, publicAssertionId);
+            throw e;
+        }
 
+        if (cachedData.assertions.private?.assertion) {
+            try {
+                await this.tripleStoreService.localStoreAsset(
+                    paranetRepositoryName,
+                    privateAssertionId,
+                    cachedData.assertions.private.assertion,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                );
+            } catch (e) {
+                await this.tripleStoreService.deleteAssetMetadata(
+                    paranetRepositoryName,
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+                await this.tripleStoreService.deleteAssertion(
+                    paranetRepositoryName,
+                    privateAssertionId,
+                );
+                await this.tripleStoreService.deleteAssertion(
+                    paranetRepositoryName,
+                    publicAssertionId,
+                );
+                throw e;
+            }
+        }
         await this.repositoryModuleManager.createParanetSyncedAssetRecord(
             blockchain,
             ual,
@@ -118,6 +149,8 @@ class HandleStoreParanetRequestCommand extends HandleProtocolMessageCommand {
         );
         await this.fileService.removeFile(paranetAssetLockPath);
 
+        const paranetId = this.paranetService.getParanetIdFromUAL(paranetUAL);
+        await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
