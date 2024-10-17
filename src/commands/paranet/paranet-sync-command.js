@@ -461,15 +461,6 @@ class ParanetSyncCommand extends Command {
                         knowledgeAssetTokenId,
                     ]);
                 }
-                // Asset already exist in paranet repo check if it's needed to update KA count for paranet
-                // There is an issue that asset publish failed
-                // But only public part has been inserted or just metadata have been inserted
-                // We asset as synced even tho it doesn't have private inserted or just metadata have been inserted
-                else {
-                    // We should inserted it here if it's synced
-                    // Increment KA count on paranet record
-                    // Add
-                }
             }
 
             kasToSync.push(...filteredKAs);
