@@ -24,8 +24,6 @@ class ProtocolService {
         switch (name) {
             case 'store':
                 return 'publish';
-            case 'storeParanet':
-                return 'publishParanet';
             default:
                 return name;
         }
