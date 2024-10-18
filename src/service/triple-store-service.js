@@ -66,10 +66,12 @@ class TripleStoreService {
         const [currentAssetExists, assertionExists] = await Promise.all([
             this.tripleStoreModuleManager.assetExists(
                 this.repositoryImplementations[repository],
+                repository,
                 ual,
             ),
             this.tripleStoreModuleManager.assertionExists(
                 this.repositoryImplementations[repository],
+                repository,
                 assertionId,
             ),
         ]);

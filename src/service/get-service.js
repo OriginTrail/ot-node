@@ -185,9 +185,11 @@ class GetService extends OperationService {
                     this.logger.debug(
                         `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                     );
-                    this.markOperationAsFailed(operationId, blockchain, {
-                        message: `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                    });
+                    this.markOperationAsFailed(
+                        operationId,
+                        blockchain,
+                        `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    );
                 } else {
                     await this.markOperationAsCompleted(
                         operationId,
