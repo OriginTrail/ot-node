@@ -666,7 +666,6 @@ export const HTTP_API_ROUTES = {
  */
 export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
-    STORE_PARANET: ['/storeParanet/1.0.0'],
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
 };
