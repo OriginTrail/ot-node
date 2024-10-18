@@ -30,9 +30,9 @@ class ParanetRepository {
         });
     }
 
-    async updateParanetKaCount(paranetId, blockchainId, kaCount) {
-        return this.model.update(
-            { kaCount },
+    async addToParanetKaCount(paranetId, blockchainId, kaCount) {
+        return this.model.increment(
+            { ka_count: kaCount },
             {
                 where: {
                     paranetId,
@@ -60,6 +60,18 @@ class ParanetRepository {
                 blockchainId,
             },
         });
+    }
+
+    async incrementParanetKaCount(paranetId, blockchainId) {
+        return this.model.increment(
+            { ka_count: 1 },
+            {
+                where: {
+                    paranetId,
+                    blockchainId,
+                },
+            },
+        );
     }
 
     async getParanetsBlockchains() {

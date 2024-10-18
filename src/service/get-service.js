@@ -54,10 +54,6 @@ class GetService extends OperationService {
             paranetMetadata,
         } = command.data;
 
-        const paranetSyncCompleteStatuses = paranetSync
-            ? [OPERATION_ID_STATUS.PARANET.PARANET_SYNC_END]
-            : [];
-
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,
@@ -91,7 +87,7 @@ class GetService extends OperationService {
                 operationId,
                 blockchain,
                 { assertion: responseData.nquads },
-                [...this.completedStatuses, ...paranetSyncCompleteStatuses],
+                [...this.completedStatuses],
             );
             this.logResponsesSummary(completedNumber, failedNumber);
 
@@ -105,48 +101,18 @@ class GetService extends OperationService {
                 const paranetNodesAccessPolicy =
                     PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
 
+                const publicAssertionId = assertionId;
+                const paranetUAL = this.ualService.deriveUAL(blockchain, contract, paranetTokenId);
+                const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
                 let repository;
-                let publicAssertionId;
-
-                if (!paranetLatestAsset) {
-                    repository =
-                        paranetNodesAccessPolicy === 'OPEN'
-                            ? TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY
-                            : TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
-                    publicAssertionId = assertionId;
+                if (paranetLatestAsset) {
+                    repository = paranetRepository;
+                } else if (paranetNodesAccessPolicy === 'OPEN') {
+                    repository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+                } else if (paranetNodesAccessPolicy === 'CURATED') {
+                    repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
                 } else {
-                    const paranetUAL = this.ualService.deriveUAL(
-                        blockchain,
-                        contract,
-                        paranetTokenId,
-                    );
-
-                    repository = this.paranetService.getParanetRepositoryName(paranetUAL);
-                    publicAssertionId = assertionId;
-
-                    if (responseData.privateNquads) {
-                        await this.tripleStoreService.localStoreAsset(
-                            repository,
-                            responseData.syncedAssetRecord.privateAssertionId,
-                            responseData.privateNquads,
-                            blockchain,
-                            contract,
-                            tokenId,
-                            keyword,
-                            LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
-                            LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
-                        );
-                    }
-
-                    await this.repositoryModuleManager.createParanetSyncedAssetRecord(
-                        blockchain,
-                        ual,
-                        paranetUAL,
-                        publicAssertionId,
-                        responseData.syncedAssetRecord?.privateAssertionId,
-                        responseData.syncedAssetRecord?.sender,
-                        responseData.syncedAssetRecord?.transactionHash,
-                    );
+                    throw new Error('Unsupported access policy');
                 }
 
                 await this.tripleStoreService.localStoreAsset(
@@ -159,6 +125,31 @@ class GetService extends OperationService {
                     keyword,
                     LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
                     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                );
+                if (paranetNodesAccessPolicy === 'CURATED' && responseData.privateNquads) {
+                    await this.tripleStoreService.localStoreAsset(
+                        repository,
+                        responseData.syncedAssetRecord.privateAssertionId,
+                        responseData.privateNquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                    );
+                }
+                const privateAssertionId =
+                    paranetNodesAccessPolicy === 'CURATED'
+                        ? responseData.syncedAssetRecord?.privateAssertionId
+                        : null;
+
+                await this.repositoryModuleManager.createParanetSyncedAssetRecord(
+                    blockchain,
+                    ual,
+                    paranetUAL,
+                    publicAssertionId,
+                    privateAssertionId,
+                    responseData.syncedAssetRecord?.sender,
+                    responseData.syncedAssetRecord?.transactionHash,
                 );
             } else if (assetSync) {
                 this.logger.debug(
@@ -193,7 +184,7 @@ class GetService extends OperationService {
                     {
                         message: 'Unable to find assertion on the network!',
                     },
-                    [...this.completedStatuses, ...paranetSyncCompleteStatuses],
+                    [...this.completedStatuses],
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
                 if (assetSync) {

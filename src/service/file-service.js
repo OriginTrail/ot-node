@@ -2,9 +2,8 @@ import path from 'path';
 import { mkdir, writeFile, readFile, unlink, stat, readdir, rm } from 'fs/promises';
 import appRootPath from 'app-root-path';
 
-const MIGRATION_FOLDER_NAME = 'migrations';
-
 const ARCHIVE_FOLDER_NAME = 'archive';
+const MIGRATION_FOLDER_NAME = 'migrations';
 
 class FileService {
     constructor(ctx) {

@@ -49,10 +49,8 @@ class ParanetSyncCommand extends Command {
             await this.repositoryModuleManager.getParanetKnowledgeAssetsCount(paranetId, blockchain)
         )[0].dataValues.ka_count;
 
-        // This returns empty array ????
         const totalCachedMissedKaCount =
             await this.repositoryModuleManager.getCountOfMissedAssetsOfParanet(paranetUAL);
-        // This is also an array ???
         const cachedMissedKaCount =
             await this.repositoryModuleManager.getFilteredCountOfMissedAssetsOfParanet(
                 paranetUAL,
@@ -102,7 +100,7 @@ class ParanetSyncCommand extends Command {
         }
 
         // Then, check for new KAs on the blockchain
-        if (cachedKaCount + cachedMissedKaCount < contractKaCount) {
+        if (cachedKaCount + totalCachedMissedKaCount < contractKaCount) {
             this.logger.info(
                 `Paranet sync: Syncing ${
                     contractKaCount - (cachedKaCount + cachedMissedKaCount)
@@ -114,10 +112,9 @@ class ParanetSyncCommand extends Command {
                 blockchain,
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_NEW_KAS_SYNC_START,
             );
-            // All zeroes returned
             const [successulNewSyncsCount, failedNewSyncsCount] = await this.syncNewKAs(
                 blockchain,
-                cachedKaCount + cachedMissedKaCount,
+                0,
                 contractKaCount,
                 paranetUAL,
                 paranetId,
@@ -173,36 +170,29 @@ class ParanetSyncCommand extends Command {
         );
 
         try {
-            await Promise.all([
-                this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    blockchain,
-                    OPERATION_ID_STATUS.GET.GET_START,
-                ),
-                this.operationIdService.updateOperationIdStatus(
-                    operationId,
-                    blockchain,
-                    OPERATION_ID_STATUS.GET.GET_INIT_START,
-                ),
-                this.repositoryModuleManager.createOperationRecord(
-                    this.getService.getOperationName(),
-                    operationId,
-                    OPERATION_STATUS.IN_PROGRESS,
-                ),
-            ]);
-
+            const getOperationId = await this.operationIdService.generateOperationId(
+                OPERATION_ID_STATUS.GET.GET_START,
+            );
+            this.operationIdService.updateOperationIdStatus(
+                getOperationId,
+                blockchain,
+                OPERATION_ID_STATUS.GET.GET_INIT_START,
+            );
+            this.repositoryModuleManager.createOperationRecord(
+                this.getService.getOperationName(),
+                getOperationId,
+                OPERATION_STATUS.IN_PROGRESS,
+            );
             this.logger.debug(
                 `Paranet sync: Get for ${ual} with operation id ${operationId} initiated.`,
             );
-
             if (paranetNodesAccessPolicy === 'OPEN') {
-                // Paranet ual not propagated here
                 await this.commandExecutor.add({
                     name: 'networkGetCommand',
                     sequence: [],
                     delay: 0,
                     data: {
-                        operationId,
+                        operationId: getOperationId,
                         id: ual,
                         blockchain,
                         contract,
@@ -225,7 +215,7 @@ class ParanetSyncCommand extends Command {
                     sequence: [],
                     delay: 0,
                     data: {
-                        operationId,
+                        operationId: getOperationId,
                         id: ual,
                         blockchain,
                         contract,
@@ -247,7 +237,7 @@ class ParanetSyncCommand extends Command {
             }
 
             await this.operationIdService.updateOperationIdStatus(
-                operationId,
+                getOperationId,
                 blockchain,
                 OPERATION_ID_STATUS.GET.GET_INIT_END,
             );
@@ -256,7 +246,7 @@ class ParanetSyncCommand extends Command {
             let getResult;
             do {
                 await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
-                getResult = await this.operationIdService.getOperationIdRecord(operationId);
+                getResult = await this.operationIdService.getOperationIdRecord(getOperationId);
                 attempt += 1;
             } while (
                 attempt < SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
@@ -352,6 +342,7 @@ class ParanetSyncCommand extends Command {
                 ual,
                 paranetUAL,
             });
+
             return false;
         }
     }
@@ -363,7 +354,6 @@ class ParanetSyncCommand extends Command {
         paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
-        cachedKaCount,
     ) {
         const missedParanetAssets =
             await this.repositoryModuleManager.getMissedParanetAssetsRecordsWithRetryCount(
@@ -390,7 +380,7 @@ class ParanetSyncCommand extends Command {
                 paranetMetadata,
                 paranetNodesAccessPolicy,
                 operationId,
-                true,
+                true, // removeMissingAssetRecord
             );
         });
 
@@ -398,10 +388,10 @@ class ParanetSyncCommand extends Command {
 
         const successfulCount = results.filter(Boolean).length;
         if (successfulCount > 0) {
-            await this.repositoryModuleManager.updateParanetKaCount(
+            await this.repositoryModuleManager.addToParanetKaCount(
                 paranetId,
                 blockchain,
-                cachedKaCount + successfulCount,
+                successfulCount,
             );
         }
 
@@ -417,10 +407,8 @@ class ParanetSyncCommand extends Command {
         paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
-        cachedKaCount,
     ) {
         const kasToSync = [];
-        // I think this should be updated by constants
         for (let i = Number(startIndex); i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
             // Empty array, offset is 1 and we should probably start with zero
             const nextKaArray =
@@ -478,6 +466,7 @@ class ParanetSyncCommand extends Command {
                     paranetMetadata,
                     paranetNodesAccessPolicy,
                     operationId,
+                    false, // removeMissingAssetRecord
                 ),
         );
 
@@ -485,10 +474,10 @@ class ParanetSyncCommand extends Command {
 
         const successfulCount = results.filter(Boolean).length;
         if (successfulCount > 0) {
-            await this.repositoryModuleManager.updateParanetKaCount(
+            await this.repositoryModuleManager.addToParanetKaCount(
                 paranetId,
                 blockchain,
-                cachedKaCount + successfulCount,
+                successfulCount,
             );
         }
 
