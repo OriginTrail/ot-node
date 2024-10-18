@@ -146,22 +146,6 @@ class ValidateAssetCommand extends Command {
                         );
                         return Command.empty();
                     }
-                    const isKnowledgeAssetRegistered =
-                        this.blockchainModuleManager.isKnowledgeAssetRegistered(
-                            blockchain,
-                            paranetId,
-                            knowledgeAssetId,
-                        );
-                    if (!isKnowledgeAssetRegistered) {
-                        await this.handleError(
-                            operationId,
-                            blockchain,
-                            `Knowledge Asset ${knowledgeAssetId} is not part of paranet ${paranetId}.`,
-                            this.errorType,
-                            true,
-                        );
-                        return Command.empty();
-                    }
                 } else {
                     await this.handleError(
                         operationId,
