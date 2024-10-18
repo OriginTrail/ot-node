@@ -64,9 +64,9 @@ class TripleStoreService {
         let success = false;
 
         const [currentAssetExists, assertionExists] = await Promise.all([
-            this.tripleStoreModuleManager.assertionMetadataExists(
+            this.tripleStoreModuleManager.assetExists(
                 this.repositoryImplementations[repository],
-                currentAssetNquads.join('\n'),
+                ual,
             ),
             this.tripleStoreModuleManager.assertionExists(
                 this.repositoryImplementations[repository],
@@ -80,12 +80,14 @@ class TripleStoreService {
                     this.tripleStoreModuleManager.insertAssetAssertionMetadata(
                         this.repositoryImplementations[repository],
                         repository,
+                        ual,
                         currentAssetNquads.join('\n'),
                         false,
                     ),
                     this.tripleStoreModuleManager.insertAssetAssertionMetadata(
                         this.repositoryImplementations[repository],
                         repository,
+                        ual,
                         oldUalConnection.join('\n'),
                         false,
                     ),
@@ -241,6 +243,7 @@ class TripleStoreService {
         await this.tripleStoreModuleManager.insertAssetAssertionMetadata(
             this.repositoryImplementations[repository],
             repository,
+            ual,
             currentAssetNquads.join('\n'),
         );
     }

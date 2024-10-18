@@ -239,12 +239,9 @@ class OtTripleStore {
         return this.select(repository, query);
     }
 
-    async insertAssetAssertionMetadata(repository, assetNquads, checkExists) {
+    async insertAssetAssertionMetadata(repository, ual, assetNquads, checkExists) {
         if (checkExists) {
-            const existedBeforeInsertion = await this.assertionMetadataExists(
-                repository,
-                assetNquads,
-            );
+            const existedBeforeInsertion = await this.assetExists(repository, ual);
             if (existedBeforeInsertion) {
                 return;
             }
@@ -296,12 +293,6 @@ class OtTripleStore {
 
     async ask(repository, query) {
         return this.queryEngine.queryBoolean(query, this.repositories[repository].queryContext);
-    }
-
-    async assertionMetadataExists(repository, assetNQuads) {
-        const query = `ASK WHERE { GRAPH <assets:graph> { ${assetNQuads} } }`;
-
-        return this.ask(repository, query);
     }
 
     async assertionExists(repository, assertionId) {

@@ -8,12 +8,14 @@ class TripleStoreModuleManager extends BaseModuleManager {
     async insertAssetAssertionMetadata(
         implementationName,
         repository,
+        ual,
         assetNquads,
         checkExists = true,
     ) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAssetAssertionMetadata(
                 repository,
+                ual,
                 assetNquads,
                 checkExists,
             );
@@ -114,15 +116,6 @@ class TripleStoreModuleManager extends BaseModuleManager {
                 assertionId,
                 assertionNquads,
                 checkExists,
-            );
-        }
-    }
-
-    async assertionMetadataExists(implementationName, repository, assetNQuads) {
-        if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.assertionMetadataExists(
-                repository,
-                assetNQuads,
             );
         }
     }
