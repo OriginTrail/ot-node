@@ -22,6 +22,7 @@ class LocalStoreCommand extends Command {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.commandExecutor = ctx.commandExecutor;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -130,7 +131,7 @@ class LocalStoreCommand extends Command {
                         }
                     }
                 }
-                if (cachedData.private.assertion && cachedData.private.assertionId) {
+                if (cachedData.private?.assertion && cachedData.private?.assertionId) {
                     let attempts = 0;
                     while (attempts < LOCAL_INSERT_MAX_ATTEMPTS) {
                         try {
@@ -173,6 +174,17 @@ class LocalStoreCommand extends Command {
                         }
                     }
                 }
+
+                await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
+                await this.repositoryModuleManager.createParanetSyncedAssetRecord(
+                    blockchain,
+                    this.ualService.deriveUAL(blockchain, contract, tokenId),
+                    paranetUAL,
+                    cachedData.public.assertionId,
+                    cachedData.private?.assertionId,
+                    cachedData.sender,
+                    cachedData.txHash,
+                );
             } else {
                 await this.pendingStorageService.cacheAssertion(
                     PENDING_STORAGE_REPOSITORIES.PRIVATE,

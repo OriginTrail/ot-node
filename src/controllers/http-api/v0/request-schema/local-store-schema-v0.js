@@ -39,6 +39,9 @@ export default (argumentsObject) => ({
                     ],
                 },
             },
+            paranetUAL: {
+                type: 'string',
+            },
         },
     },
     minItems: 1,

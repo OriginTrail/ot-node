@@ -29,6 +29,7 @@ class ValidateAssetCommand extends Command {
             contract,
             tokenId,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
+            paranetUAL,
         } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
@@ -102,16 +103,17 @@ class ValidateAssetCommand extends Command {
 
         let paranetId;
         if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
-            const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
-                blockchain,
-                contract,
-                tokenId,
-            );
-
             try {
-                paranetId = await this.blockchainModuleManager.getParanetId(
-                    blockchain,
-                    knowledgeAssetId,
+                const {
+                    blockchain: paranetBlockchain,
+                    contract: paranetContract,
+                    tokenId: paranetTokenId,
+                } = this.ualService.resolveUAL(paranetUAL);
+
+                paranetId = this.paranetService.constructParanetId(
+                    paranetBlockchain,
+                    paranetContract,
+                    paranetTokenId,
                 );
 
                 if (!paranetId || paranetId === ZERO_BYTES32) {
