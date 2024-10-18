@@ -5,8 +5,8 @@ import {
     LOCAL_STORE_TYPES,
     PENDING_STORAGE_REPOSITORIES,
     TRIPLE_STORE_REPOSITORIES,
-    LOCAL_INSERT_MAX_ATTEMPTS,
-    LOCAL_INSERT_RETRY_DELAY,
+    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -95,7 +95,7 @@ class LocalStoreCommand extends Command {
 
                 if (cachedData.public.assertion && cachedData.public.assertionId) {
                     let attempts = 0;
-                    while (attempts < LOCAL_INSERT_MAX_ATTEMPTS) {
+                    while (attempts < LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS) {
                         try {
                             // eslint-disable-next-line no-await-in-loop
                             await this.tripleStoreService.localStoreAsset(
@@ -110,9 +110,9 @@ class LocalStoreCommand extends Command {
                             break;
                         } catch (error) {
                             attempts += 1;
-                            if (attempts < LOCAL_INSERT_MAX_ATTEMPTS) {
+                            if (attempts < LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS) {
                                 // eslint-disable-next-line no-await-in-loop
-                                await setTimeout(LOCAL_INSERT_RETRY_DELAY);
+                                await setTimeout(LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY);
                             } else {
                                 // eslint-disable-next-line no-await-in-loop
                                 await this.tripleStoreService.deleteAssetMetadata(
@@ -133,7 +133,7 @@ class LocalStoreCommand extends Command {
                 }
                 if (cachedData.private?.assertion && cachedData.private?.assertionId) {
                     let attempts = 0;
-                    while (attempts < LOCAL_INSERT_MAX_ATTEMPTS) {
+                    while (attempts < LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS) {
                         try {
                             // eslint-disable-next-line no-await-in-loop
                             await this.tripleStoreService.localStoreAsset(
@@ -148,9 +148,9 @@ class LocalStoreCommand extends Command {
                             break;
                         } catch (error) {
                             attempts += 1;
-                            if (attempts < LOCAL_INSERT_MAX_ATTEMPTS) {
+                            if (attempts < LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS) {
                                 // eslint-disable-next-line no-await-in-loop
-                                await setTimeout(LOCAL_INSERT_RETRY_DELAY);
+                                await setTimeout(LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY);
                             } else {
                                 // eslint-disable-next-line no-await-in-loop
                                 await this.tripleStoreService.deleteAssetMetadata(
