@@ -8,6 +8,10 @@ import {
     OPERATION_REQUEST_STATUS,
     TRIPLE_STORE_REPOSITORIES,
     PARANET_NODES_ACCESS_POLICIES,
+    LOCAL_INSERT_FOR_ASSET_SYNC_MAX_ATTEMPTS,
+    LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY,
+    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -129,6 +133,8 @@ class GetService extends OperationService {
                             contract,
                             tokenId,
                             keyword,
+                            LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                            LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
                         );
                     }
 
@@ -151,6 +157,8 @@ class GetService extends OperationService {
                     contract,
                     tokenId,
                     keyword,
+                    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
                 );
             } else if (assetSync) {
                 this.logger.debug(
@@ -165,6 +173,8 @@ class GetService extends OperationService {
                     contract,
                     tokenId,
                     keyword,
+                    LOCAL_INSERT_FOR_ASSET_SYNC_MAX_ATTEMPTS,
+                    LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY,
                 );
             }
         }

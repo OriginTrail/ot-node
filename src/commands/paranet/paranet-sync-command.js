@@ -29,15 +29,7 @@ class ParanetSyncCommand extends Command {
     }
 
     async execute(command) {
-        const {
-            blockchain,
-            contract,
-            tokenId,
-            operationId,
-            paranetUAL,
-            paranetId,
-            paranetMetadata,
-        } = command.data;
+        const { blockchain, operationId, paranetUAL, paranetId, paranetMetadata } = command.data;
 
         const paranetNodesAccessPolicy =
             PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
@@ -85,9 +77,9 @@ class ParanetSyncCommand extends Command {
             );
 
             const [successulMissedSyncsCount, failedMissedSyncsCount] = await this.syncMissedKAs(
+                blockchain,
                 paranetUAL,
                 paranetId,
-                blockchain,
                 paranetMetadata,
                 paranetNodesAccessPolicy,
                 operationId,
@@ -124,13 +116,11 @@ class ParanetSyncCommand extends Command {
             );
             // All zeroes returned
             const [successulNewSyncsCount, failedNewSyncsCount] = await this.syncNewKAs(
+                blockchain,
                 cachedKaCount + cachedMissedKaCount,
                 contractKaCount,
                 paranetUAL,
                 paranetId,
-                blockchain,
-                contract,
-                tokenId,
                 paranetMetadata,
                 paranetNodesAccessPolicy,
                 operationId,
@@ -367,9 +357,9 @@ class ParanetSyncCommand extends Command {
     }
 
     async syncMissedKAs(
+        blockchain,
         paranetUAL,
         paranetId,
-        blockchain,
         paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
@@ -419,13 +409,11 @@ class ParanetSyncCommand extends Command {
     }
 
     async syncNewKAs(
+        blockchain,
         startIndex,
         contractKaCount,
         paranetUAL,
         paranetId,
-        blockchain,
-        contract,
-        tokenId,
         paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
@@ -446,31 +434,21 @@ class ParanetSyncCommand extends Command {
 
             const filteredKAs = [];
             for (const knowledgeAssetId of nextKaArray) {
-                const {
-                    // knowledgeAssetBlockchain is not returned here I think
-                    // blockchain: knowledgeAssetBlockchain,
-                    knowledgeAssetStorageContract,
-                    tokenId: knowledgeAssetTokenId,
-                } = await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
+                const { knowledgeAssetStorageContract, tokenId: knowledgeAssetTokenId } =
+                    await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
+                        blockchain,
+                        knowledgeAssetId,
+                    );
+
+                const ual = this.ualService.deriveUAL(
                     blockchain,
-                    knowledgeAssetId,
+                    knowledgeAssetStorageContract,
+                    knowledgeAssetTokenId,
                 );
+                const paranetSyncedAssetRecord =
+                    await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
 
-                const statePresentInParanetRepository =
-                    await this.tripleStoreService.paranetAssetExists(
-                        blockchain,
-                        knowledgeAssetStorageContract,
-                        knowledgeAssetTokenId,
-                        contract,
-                        tokenId,
-                    );
-
-                if (!statePresentInParanetRepository) {
-                    const ual = this.ualService.deriveUAL(
-                        blockchain,
-                        knowledgeAssetStorageContract,
-                        knowledgeAssetTokenId,
-                    );
+                if (!paranetSyncedAssetRecord) {
                     filteredKAs.push([
                         ual,
                         blockchain,
