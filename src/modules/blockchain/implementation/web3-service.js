@@ -1733,6 +1733,15 @@ class Web3Service {
     async getNodeId(identityId) {
         return this.callContractFunction(this.ProfileStorageContract, 'getNodeId', [identityId]);
     }
+
+    async isKnowledgeAssetRegistered(paranetId, knowledgeAssetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'isKnowledgeAssetRegistered',
+            [paranetId, knowledgeAssetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
 }
 
 export default Web3Service;

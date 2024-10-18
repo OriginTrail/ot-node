@@ -4,6 +4,7 @@ import {
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
     ZERO_BYTES32,
+    PARANET_ACCESS_POLICY,
 } from '../../constants/constants.js';
 
 class ValidateAssetCommand extends Command {
@@ -118,6 +119,54 @@ class ValidateAssetCommand extends Command {
                         operationId,
                         blockchain,
                         `Invalid paranet id for asset ${ual}. Received value from blockchain: ${paranetId}.`,
+                        this.errorType,
+                        true,
+                    );
+                    return Command.empty();
+                }
+
+                const nodesAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
+                    blockchain,
+                    paranetId,
+                );
+                if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+                    const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+                    const isCuratedNode = await this.blockchainModuleManager.isCuratedNode(
+                        blockchain,
+                        paranetId,
+                        identityId,
+                    );
+                    if (!isCuratedNode) {
+                        await this.handleError(
+                            operationId,
+                            blockchain,
+                            `Node is not part of curated paranet ${paranetId}  because node with id ${identityId} is not a curated node.`,
+                            this.errorType,
+                            true,
+                        );
+                        return Command.empty();
+                    }
+                    const isKnowledgeAssetRegistered =
+                        this.blockchainModuleManager.isKnowledgeAssetRegistered(
+                            blockchain,
+                            paranetId,
+                            knowledgeAssetId,
+                        );
+                    if (!isKnowledgeAssetRegistered) {
+                        await this.handleError(
+                            operationId,
+                            blockchain,
+                            `Knowledge Asset ${knowledgeAssetId} is not part of paranet ${paranetId}.`,
+                            this.errorType,
+                            true,
+                        );
+                        return Command.empty();
+                    }
+                } else {
+                    await this.handleError(
+                        operationId,
+                        blockchain,
+                        `Paranet ${paranetId} is not curated paranet.`,
                         this.errorType,
                         true,
                     );
