@@ -4,7 +4,6 @@ import appRootPath from 'app-root-path';
 
 const ARCHIVE_FOLDER_NAME = 'archive';
 const MIGRATION_FOLDER_NAME = 'migrations';
-const LOCKS_FOLDER_NAME = 'locks';
 
 class FileService {
     constructor(ctx) {
@@ -23,13 +22,13 @@ class FileService {
      * @param data
      * @returns {Promise}
      */
-    async writeContentsToFile(directory, filename, data, log = true, flag = 'w') {
+    async writeContentsToFile(directory, filename, data, log = true) {
         if (log) {
             this.logger.debug(`Saving file with name: ${filename} in the directory: ${directory}`);
         }
         await mkdir(directory, { recursive: true });
         const fullpath = path.join(directory, filename);
-        await writeFile(fullpath, data, { flag });
+        await writeFile(fullpath, data);
         return fullpath;
     }
 
@@ -120,31 +119,6 @@ class FileService {
 
     getMigrationFolderPath() {
         return path.join(this.getDataFolderPath(), MIGRATION_FOLDER_NAME);
-    }
-
-    getParanetLocksFolderPath(paranetBlockchain, paranetContract, paranetTokenId) {
-        return path.join(
-            this.getDataFolderPath(),
-            LOCKS_FOLDER_NAME,
-            `${paranetBlockchain}:${paranetContract}:${paranetTokenId}`,
-        );
-    }
-
-    getParanetKnowledgeAssetLockDocumentPath(
-        paranetBlockchain,
-        paranetContract,
-        paranetTokenId,
-        blockchain,
-        contract,
-        tokenId,
-    ) {
-        const paranetLocksFolderPath = this.getParanetLocksFolderPath(
-            paranetBlockchain,
-            paranetContract,
-            paranetTokenId,
-        );
-
-        return path.join(paranetLocksFolderPath, `${blockchain}:${contract}:${tokenId}.lock`);
     }
 
     getOperationIdCachePath() {

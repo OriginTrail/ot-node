@@ -373,17 +373,6 @@ export const ERROR_TYPE = {
         START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
         PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
-    PUBLISH_PARANET: {
-        PUBLISH_PARANET_START_ERROR: 'PublishParanetStartError',
-        PUBLISH_PARANET_ROUTE_ERROR: 'PublishParanetRouteError',
-        PUBLISH_PARANET_LOCAL_STORE_ERROR: 'PublishParanetLocalStoreError',
-        PUBLISH_PARANET_LOCAL_STORE_REMOTE_ERROR: 'PublishParanetLocalStoreRemoteError',
-        PUBLISH_PARANET_FIND_NODES_ERROR: 'PublishParanetFindNodesError',
-        PUBLISH_PARANET_STORE_INIT_ERROR: 'PublishParanetStoreInitError',
-        PUBLISH_PARANET_STORE_REQUEST_ERROR: 'PublishParanetStoreRequestError',
-        PUBLISH_PARANET_ERROR: 'PublishParanetError',
-        PUBLISH_PARANET_REMOTE_ERROR: 'PublishParanetRemoteError',
-    },
     LOCAL_STORE_PARANET: {
         LOCAL_STORE_PARANET_ERROR: 'LocalStoreParanetError',
     },
@@ -506,7 +495,6 @@ export const OPERATION_ID_STATUS = {
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
-    PUBLISH_PARANET: 'publishParanet',
     UPDATE: 'update',
     GET: 'get',
 };
@@ -668,11 +656,6 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
-        'publish-paranet': {
-            method: 'post',
-            path: '/publish-paranet',
-            options: { rateLimit: true },
-        },
     },
     v1: {},
 };
@@ -719,6 +702,7 @@ export const QUERY_TYPES = {
  */
 export const LOCAL_STORE_TYPES = {
     TRIPLE: 'TRIPLE',
+    TRIPLE_PARANET: 'TRIPLE_PARANET',
     PENDING: 'PENDING',
 };
 
@@ -848,3 +832,9 @@ export const BID_SUGGESTION_RANGE_ENUM = [
 export const LOW_BID_SUGGESTION_OFFSET = 9;
 export const MED_BID_SUGGESTION_OFFSET = 11;
 export const HIGH_BID_SUGGESTION_OFFSET = 14;
+
+export const LOCAL_INSERT_FOR_ASSET_SYNC_MAX_ATTEMPTS = 5;
+export const LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY = 1000;
+
+export const LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS = 5;
+export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
