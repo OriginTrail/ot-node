@@ -180,21 +180,25 @@ class GetService extends OperationService {
                 this.logger.info(
                     `Unable to find assertion on the network for operation id: ${operationId}`,
                 );
-                await this.markOperationAsCompleted(
-                    operationId,
-                    blockchain,
-                    {
-                        message: 'Unable to find assertion on the network!',
-                    },
-                    [...this.completedStatuses],
-                );
-                this.logResponsesSummary(completedNumber, failedNumber);
                 if (assetSync) {
                     const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
                     this.logger.debug(
                         `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                     );
+                    this.markOperationAsFailed(operationId, blockchain, {
+                        message: `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    });
+                } else {
+                    await this.markOperationAsCompleted(
+                        operationId,
+                        blockchain,
+                        {
+                            message: 'Unable to find assertion on the network!',
+                        },
+                        [...this.completedStatuses],
+                    );
                 }
+                this.logResponsesSummary(completedNumber, failedNumber);
             } else {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
