@@ -116,7 +116,8 @@ class ValidateAssetCommand extends Command {
                     paranetTokenId,
                 );
                 const paranetExists = await this.blockchainModuleManager.paranetExists(
-                    paranetBlockchain.paranetId,
+                    paranetBlockchain,
+                    paranetId,
                 );
                 if (!paranetExists) {
                     await this.handleError(

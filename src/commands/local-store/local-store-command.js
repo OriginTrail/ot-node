@@ -1,4 +1,3 @@
-import { setTimeout } from 'timers/promises';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
@@ -94,85 +93,32 @@ class LocalStoreCommand extends Command {
                 const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
 
                 if (cachedData.public.assertion && cachedData.public.assertionId) {
-                    let attempts = 0;
-                    while (attempts < LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS) {
-                        try {
-                            // eslint-disable-next-line no-await-in-loop
-                            await this.tripleStoreService.localStoreAsset(
-                                paranetRepository,
-                                cachedData.public.assertionId,
-                                cachedData.public.assertion,
-                                blockchain,
-                                contract,
-                                tokenId,
-                                keyword,
-                            );
-                            break;
-                        } catch (error) {
-                            attempts += 1;
-                            if (attempts < LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS) {
-                                // eslint-disable-next-line no-await-in-loop
-                                await setTimeout(LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY);
-                            } else {
-                                // eslint-disable-next-line no-await-in-loop
-                                await this.tripleStoreService.deleteAssetMetadata(
-                                    paranetRepository,
-                                    blockchain,
-                                    contract,
-                                    tokenId,
-                                );
-                                // eslint-disable-next-line no-await-in-loop
-                                await this.tripleStoreService.deleteAssertion(
-                                    paranetRepository,
-                                    cachedData.public.assertionId,
-                                );
-                                throw error;
-                            }
-                        }
-                    }
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.tripleStoreService.localStoreAsset(
+                        paranetRepository,
+                        cachedData.public.assertionId,
+                        cachedData.public.assertion,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                        LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                        LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                    );
                 }
                 if (cachedData.private?.assertion && cachedData.private?.assertionId) {
-                    let attempts = 0;
-                    while (attempts < LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS) {
-                        try {
-                            // eslint-disable-next-line no-await-in-loop
-                            await this.tripleStoreService.localStoreAsset(
-                                paranetRepository,
-                                cachedData.private.assertionId,
-                                cachedData.private.assertion,
-                                blockchain,
-                                contract,
-                                tokenId,
-                                keyword,
-                            );
-                            break;
-                        } catch (error) {
-                            attempts += 1;
-                            if (attempts < LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS) {
-                                // eslint-disable-next-line no-await-in-loop
-                                await setTimeout(LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY);
-                            } else {
-                                // eslint-disable-next-line no-await-in-loop
-                                await this.tripleStoreService.deleteAssetMetadata(
-                                    paranetRepository,
-                                    blockchain,
-                                    contract,
-                                    tokenId,
-                                );
-                                // eslint-disable-next-line no-await-in-loop
-                                await this.tripleStoreService.deleteAssertion(
-                                    paranetRepository,
-                                    cachedData.public.assertionId,
-                                );
-                                // eslint-disable-next-line no-await-in-loop
-                                await this.tripleStoreService.deleteAssertion(
-                                    paranetRepository,
-                                    cachedData.private.assertionId,
-                                );
-                                throw error;
-                            }
-                        }
-                    }
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.tripleStoreService.localStoreAsset(
+                        paranetRepository,
+                        cachedData.private.assertionId,
+                        cachedData.private.assertion,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                        LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                        LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                    );
                 }
 
                 await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);

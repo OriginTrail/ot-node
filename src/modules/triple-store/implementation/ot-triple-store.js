@@ -239,7 +239,17 @@ class OtTripleStore {
         return this.select(repository, query);
     }
 
-    async insertAssetAssertionMetadata(repository, assetNquads) {
+    async insertAssetAssertionMetadata(repository, assetNquads, checkExists) {
+        if (checkExists) {
+            const existedBeforeInsertion = await this.assertionMetadataExists(
+                repository,
+                assetNquads,
+            );
+            if (existedBeforeInsertion) {
+                return;
+            }
+        }
+
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
@@ -250,19 +260,22 @@ class OtTripleStore {
         await this.queryVoid(repository, query);
     }
 
-    async insertAssertion(repository, assertionId, assertionNquads) {
-        const exists = await this.assertionExists(repository, assertionId);
+    async insertAssertion(repository, assertionId, assertionNquads, checkExists) {
+        if (checkExists) {
+            const existedBeforeInsertion = await this.assertionExists(repository, assertionId);
+            if (existedBeforeInsertion) {
+                return;
+            }
+        }
 
-        if (!exists) {
-            const query = `
+        const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
                 GRAPH <assertion:${assertionId}> { 
                     ${assertionNquads} 
                 } 
             }`;
-            await this.queryVoid(repository, query);
-        }
+        await this.queryVoid(repository, query);
     }
 
     async construct(repository, query) {
@@ -283,6 +296,12 @@ class OtTripleStore {
 
     async ask(repository, query) {
         return this.queryEngine.queryBoolean(query, this.repositories[repository].queryContext);
+    }
+
+    async assertionMetadataExists(repository, assetNQuads) {
+        const query = `ASK WHERE { GRAPH <assets:graph> { ${assetNQuads} } }`;
+
+        return this.ask(repository, query);
     }
 
     async assertionExists(repository, assertionId) {
