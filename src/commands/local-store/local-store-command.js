@@ -4,6 +4,8 @@ import {
     LOCAL_STORE_TYPES,
     PENDING_STORAGE_REPOSITORIES,
     TRIPLE_STORE_REPOSITORIES,
+    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -11,6 +13,7 @@ class LocalStoreCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.tripleStoreService = ctx.tripleStoreService;
+        this.paranetService = ctx.paranetService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.operationIdService = ctx.operationIdService;
         this.dataService = ctx.dataService;
@@ -18,6 +21,7 @@ class LocalStoreCommand extends Command {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.commandExecutor = ctx.commandExecutor;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -29,6 +33,7 @@ class LocalStoreCommand extends Command {
             contract,
             tokenId,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
+            paranetId,
         } = command.data;
 
         try {
@@ -75,6 +80,57 @@ class LocalStoreCommand extends Command {
                     );
                 }
                 await Promise.all(storePromises);
+            } else if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
+                const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
+                    blockchain,
+                    paranetId,
+                );
+                const paranetUAL = this.ualService.deriveUAL(
+                    blockchain,
+                    paranetMetadata.paranetKAStorageContract,
+                    paranetMetadata.paranetKATokenId,
+                );
+                const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+
+                if (cachedData.public.assertion && cachedData.public.assertionId) {
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.tripleStoreService.localStoreAsset(
+                        paranetRepository,
+                        cachedData.public.assertionId,
+                        cachedData.public.assertion,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                        LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                        LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                    );
+                }
+                if (cachedData.private?.assertion && cachedData.private?.assertionId) {
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.tripleStoreService.localStoreAsset(
+                        paranetRepository,
+                        cachedData.private.assertionId,
+                        cachedData.private.assertion,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                        LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                        LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                    );
+                }
+
+                await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
+                await this.repositoryModuleManager.createParanetSyncedAssetRecord(
+                    blockchain,
+                    this.ualService.deriveUAL(blockchain, contract, tokenId),
+                    paranetUAL,
+                    cachedData.public.assertionId,
+                    cachedData.private?.assertionId,
+                    cachedData.sender,
+                    cachedData.txHash,
+                );
             } else {
                 await this.pendingStorageService.cacheAssertion(
                     PENDING_STORAGE_REPOSITORIES.PRIVATE,

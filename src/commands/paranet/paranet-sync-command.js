@@ -29,15 +29,7 @@ class ParanetSyncCommand extends Command {
     }
 
     async execute(command) {
-        const {
-            blockchain,
-            contract,
-            tokenId,
-            operationId,
-            paranetUAL,
-            paranetId,
-            paranetMetadata,
-        } = command.data;
+        const { blockchain, operationId, paranetUAL, paranetId, paranetMetadata } = command.data;
 
         const paranetNodesAccessPolicy =
             PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
@@ -83,9 +75,9 @@ class ParanetSyncCommand extends Command {
             );
 
             const [successulMissedSyncsCount, failedMissedSyncsCount] = await this.syncMissedKAs(
+                blockchain,
                 paranetUAL,
                 paranetId,
-                blockchain,
                 paranetMetadata,
                 paranetNodesAccessPolicy,
                 operationId,
@@ -121,13 +113,11 @@ class ParanetSyncCommand extends Command {
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_NEW_KAS_SYNC_START,
             );
             const [successulNewSyncsCount, failedNewSyncsCount] = await this.syncNewKAs(
+                blockchain,
                 0,
                 contractKaCount,
                 paranetUAL,
                 paranetId,
-                blockchain,
-                contract,
-                tokenId,
                 paranetMetadata,
                 paranetNodesAccessPolicy,
                 operationId,
@@ -358,9 +348,9 @@ class ParanetSyncCommand extends Command {
     }
 
     async syncMissedKAs(
+        blockchain,
         paranetUAL,
         paranetId,
-        blockchain,
         paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
@@ -409,13 +399,11 @@ class ParanetSyncCommand extends Command {
     }
 
     async syncNewKAs(
+        blockchain,
         startIndex,
         contractKaCount,
         paranetUAL,
         paranetId,
-        blockchain,
-        contract,
-        tokenId,
         paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
@@ -440,22 +428,15 @@ class ParanetSyncCommand extends Command {
                         knowledgeAssetId,
                     );
 
-                let statePresentInParanetRepository = false;
-                if (!statePresentInParanetRepository) {
-                    statePresentInParanetRepository =
-                        await this.tripleStoreService.paranetAssetExists(
-                            blockchain,
-                            knowledgeAssetStorageContract,
-                            knowledgeAssetTokenId,
-                            contract,
-                            tokenId,
-                        );
+                const ual = this.ualService.deriveUAL(
+                    blockchain,
+                    knowledgeAssetStorageContract,
+                    knowledgeAssetTokenId,
+                );
+                const paranetSyncedAssetRecord =
+                    await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
 
-                    const ual = this.ualService.deriveUAL(
-                        blockchain,
-                        knowledgeAssetStorageContract,
-                        knowledgeAssetTokenId,
-                    );
+                if (!paranetSyncedAssetRecord) {
                     filteredKAs.push([
                         ual,
                         blockchain,
