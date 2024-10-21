@@ -29,6 +29,12 @@ class ParanetSyncedAssetRepository {
             where: { ual },
         });
     }
+
+    async paranetSyncedAssetRecordExists(ual) {
+        const paranetSyncedAssetRecord = await this.getParanetSyncedAssetRecordByUAL(ual);
+
+        return !!paranetSyncedAssetRecord;
+    }
 }
 
 export default ParanetSyncedAssetRepository;
