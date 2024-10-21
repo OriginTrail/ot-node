@@ -130,10 +130,18 @@ class ParanetSyncCommand extends Command {
                     `(${paranetId}), operation ID: ${operationId}!`,
             );
 
-            this.operationIdService.updateOperationIdStatusWithValues(
+            await this.operationIdService.updateOperationIdStatusWithValues(
                 operationId,
                 blockchain,
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_NEW_KAS_SYNC_END,
+                successulNewSyncsCount,
+                failedNewSyncsCount,
+            );
+
+            await this.operationIdService.updateOperationIdStatusWithValues(
+                operationId,
+                blockchain,
+                OPERATION_ID_STATUS.COMPLETED,
                 successulNewSyncsCount,
                 failedNewSyncsCount,
             );
