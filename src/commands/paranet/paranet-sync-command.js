@@ -433,17 +433,28 @@ class ParanetSyncCommand extends Command {
                     knowledgeAssetStorageContract,
                     knowledgeAssetTokenId,
                 );
-                const paranetSyncedAssetRecord =
-                    await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+                const isAlreadySynced =
+                    await this.repositoryModuleManager.paranetSyncedAssetRecordExists(ual);
 
-                if (!paranetSyncedAssetRecord) {
-                    filteredKAs.push([
-                        ual,
-                        blockchain,
-                        knowledgeAssetStorageContract,
-                        knowledgeAssetTokenId,
-                    ]);
+                // Skip already synced KAs
+                if (isAlreadySynced) {
+                    continue;
                 }
+
+                const isMissedAsset =
+                    await this.repositoryModuleManager.missedParanetAssetRecordExists(ual);
+
+                // Skip missed KAs as they are synced in the other function
+                if (isMissedAsset) {
+                    continue;
+                }
+
+                filteredKAs.push([
+                    ual,
+                    blockchain,
+                    knowledgeAssetStorageContract,
+                    knowledgeAssetTokenId,
+                ]);
             }
 
             kasToSync.push(...filteredKAs);
