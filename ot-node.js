@@ -3,9 +3,14 @@ import rc from 'rc';
 import EventEmitter from 'events';
 import { createRequire } from 'module';
 import { execSync } from 'child_process';
+import crypto from 'crypto';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION, PARANET_ACCESS_POLICY } from './src/constants/constants.js';
+import {
+    MIN_NODE_VERSION,
+    PARANET_ACCESS_POLICY,
+    TRIPLE_STORE_REPOSITORIES,
+} from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
@@ -101,6 +106,44 @@ class OTNode {
         this.startTelemetryModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
+
+        const implementation = 'ot-neptune';
+        const repository = TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT;
+        const tripleStoreModuleManager = this.container.resolve('tripleStoreModuleManager');
+
+        this.logger.info('------------------------------------------------------');
+        this.logger.info('------------------------------------------------------');
+        this.logger.info('------------------------INSERT------------------------');
+
+        const nquads = `
+            <http://example.org/person#Marta> <http://example.org/relation#knows> <http://example.org/person#Frank> .
+            <http://example.org/person#Charlie> <http://example.org/property#age> "28" .
+        `;
+
+        const assertionId = crypto.randomBytes(32).toString('hex');
+        const insertResult = await tripleStoreModuleManager.insertAssertion(
+            implementation,
+            repository,
+            assertionId,
+            nquads,
+        );
+        console.log('Response Data:', JSON.stringify(insertResult, null, 4));
+
+        this.logger.info('------------------------------------------------------');
+        this.logger.info('------------------------------------------------------');
+        this.logger.info('------------------------SELECT------------------------');
+
+        const query = 'SELECT * WHERE {?s ?p ?o} LIMIT 10';
+        const selectResult = await tripleStoreModuleManager.select(
+            implementation,
+            repository,
+            query,
+        );
+        console.log('Response Data:', JSON.stringify(selectResult, null, 4));
+
+        this.logger.info('------------------------------------------------------');
+        this.logger.info('------------------------------------------------------');
+        this.logger.info('------------------------------------------------------');
 
         MigrationExecutor.executeGetOldServiceAgreementsMigration(
             this.container,
