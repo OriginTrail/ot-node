@@ -44,6 +44,14 @@ class MissedParanetAssetRepository {
         return this.model.findAll(queryOptions);
     }
 
+    async missedParanetAssetRecordExists(ual) {
+        const missedParanetAssetRecord = await this.model.findOne({
+            where: { ual },
+        });
+
+        return !!missedParanetAssetRecord;
+    }
+
     async removeMissedParanetAssetRecordsByUAL(ual) {
         await this.model.destroy({
             where: {

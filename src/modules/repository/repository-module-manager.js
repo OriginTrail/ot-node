@@ -540,6 +540,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
+    async missedParanetAssetRecordExists(ual) {
+        return this.getRepository('missed_paranet_asset').missedParanetAssetRecordExists(ual);
+    }
+
     async removeMissedParanetAssetRecordsByUAL(ual) {
         return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecordsByUAL(ual);
     }
