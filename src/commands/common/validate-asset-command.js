@@ -14,6 +14,7 @@ class ValidateAssetCommand extends Command {
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
         this.validationService = ctx.validationService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.VALIDATE_ASSET_ERROR;
     }
