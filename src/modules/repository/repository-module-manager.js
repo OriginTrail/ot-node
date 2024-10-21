@@ -540,6 +540,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
+    async missedParanetAssetRecordExists(ual) {
+        return this.getRepository('missed_paranet_asset').missedParanetAssetRecordExists(ual);
+    }
+
     async removeMissedParanetAssetRecordsByUAL(ual) {
         return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecordsByUAL(ual);
     }
@@ -598,6 +602,10 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async getParanetSyncedAssetRecordByUAL(ual) {
         return this.getRepository('paranet_synced_asset').getParanetSyncedAssetRecordByUAL(ual);
+    }
+
+    async paranetSyncedAssetRecordExists(ual) {
+        return this.getRepository('paranet_synced_asset').paranetSyncedAssetRecordExists(ual);
     }
 
     async incrementParanetKaCount(paranetId, blockchainId) {
