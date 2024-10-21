@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+import { setTimeout } from 'timers/promises';
 import { formatAssertion } from 'assertion-tools';
 
 import { SCHEMA_CONTEXT, TRIPLE_STORE_REPOSITORIES, MEDIA_TYPES } from '../constants/constants.js';
@@ -32,6 +34,8 @@ class TripleStoreService {
         contract,
         tokenId,
         keyword,
+        retries = 1,
+        retryDelay = 0,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
@@ -56,29 +60,91 @@ class TripleStoreService {
             assertion: { '@id': `assertion:${assertionId}` },
         });
 
-        await Promise.all([
-            this.tripleStoreModuleManager.insertAssetAssertionMetadata(
+        let attempts = 0;
+        let success = false;
+
+        const [currentAssetExists, assertionExists] = await Promise.all([
+            this.tripleStoreModuleManager.assetExists(
                 this.repositoryImplementations[repository],
                 repository,
-                currentAssetNquads.join('\n'),
+                ual,
             ),
-            this.tripleStoreModuleManager.insertAssetAssertionMetadata(
-                this.repositoryImplementations[repository],
-                repository,
-                oldUalConnection.join('\n'),
-            ),
-            this.tripleStoreModuleManager.insertAssertion(
+            this.tripleStoreModuleManager.assertionExists(
                 this.repositoryImplementations[repository],
                 repository,
                 assertionId,
-                assertion.join('\n'),
             ),
         ]);
 
-        this.logger.info(
-            `Knowledge Asset with the UAL: ${ual}, Assertion ID: ${assertionId}, ` +
-                `has been successfully inserted to the Triple Store's ${repository} repository.`,
-        );
+        while (attempts < retries && !success) {
+            try {
+                await Promise.all([
+                    this.tripleStoreModuleManager.insertAssetAssertionMetadata(
+                        this.repositoryImplementations[repository],
+                        repository,
+                        ual,
+                        currentAssetNquads.join('\n'),
+                        false,
+                    ),
+                    this.tripleStoreModuleManager.insertAssetAssertionMetadata(
+                        this.repositoryImplementations[repository],
+                        repository,
+                        ual,
+                        oldUalConnection.join('\n'),
+                        false,
+                    ),
+                    this.tripleStoreModuleManager.insertAssertion(
+                        this.repositoryImplementations[repository],
+                        repository,
+                        assertionId,
+                        assertion.join('\n'),
+                        false,
+                    ),
+                ]);
+
+                success = true;
+
+                this.logger.info(
+                    `Knowledge Asset with UAL: ${ual}, Assertion ID: ${assertionId}, Repository: ${repository} has been successfully inserted.`,
+                );
+            } catch (error) {
+                this.logger.error(
+                    `Error during insertion. UAL: ${ual}, Assertion ID: ${assertionId}, Repository: ${repository}. Error: ${error.message}`,
+                );
+                attempts += 1;
+
+                if (attempts < retries) {
+                    this.logger.info(
+                        `Retrying insertion attempt ${
+                            attempts + 1
+                        } of ${retries} after delay of ${retryDelay} ms. UAL: ${ual}, Assertion ID: ${assertionId}, Repository: ${repository}`,
+                    );
+                    await setTimeout(retryDelay);
+                } else {
+                    this.logger.error(
+                        `Max retries reached. Rolling back data. UAL: ${ual}, Assertion ID: ${assertionId}, Repository: ${repository}`,
+                    );
+
+                    // Rollback insertions if data didn't exist before the operation
+                    if (!currentAssetExists) {
+                        this.logger.info(
+                            `Rolling back asset metadata. UAL: ${ual}, Assertion ID: ${assertionId}, Repository: ${repository}`,
+                        );
+                        await this.deleteAssetMetadata(repository, blockchain, contract, tokenId);
+                    }
+                    if (!assertionExists) {
+                        this.logger.info(
+                            `Rolling back assertion data. UAL: ${ual}, Assertion ID: ${assertionId}, Repository: ${repository}`,
+                        );
+                        await this.deleteAssertion(repository, assertionId);
+                    }
+
+                    throw new Error(
+                        `Failed to store asset after maximum retries. UAL: ${ual}, Assertion ID: ${assertionId}, Repository: ${repository}`,
+                    );
+                }
+            }
+        }
     }
 
     async moveAsset(
@@ -179,6 +245,7 @@ class TripleStoreService {
         await this.tripleStoreModuleManager.insertAssetAssertionMetadata(
             this.repositoryImplementations[repository],
             repository,
+            ual,
             currentAssetNquads.join('\n'),
         );
     }

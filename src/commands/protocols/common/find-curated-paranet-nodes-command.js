@@ -4,11 +4,11 @@ import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
 class FindCuratedParanetNodesCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.operationService = ctx.getService;
         this.networkModuleManager = ctx.networkModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.shardingTableService = ctx.shardingTableService;
-        this.publishParanetService = ctx.publishParanetService;
     }
 
     /**
@@ -54,18 +54,11 @@ class FindCuratedParanetNodesCommand extends Command {
             );
             return Command.empty();
         }
-
+        // Stop command sequence if no nodes in paranet
         if (paranetNodes.length === 0) {
-            await this.publishParanetService.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                null,
-                [
-                    OPERATION_ID_STATUS.PUBLISH_PARANET.PUBLISH_PARANET_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
-            );
-
+            await this.operationService.markOperationAsCompleted(operationId, blockchain, null, [
+                OPERATION_ID_STATUS.COMPLETED,
+            ]);
             return Command.empty();
         }
         return this.continueSequence(

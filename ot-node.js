@@ -238,14 +238,14 @@ class OTNode {
 
     async createProfiles() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const networkModuleManager = this.container.resolve('networkModuleManager');
+        const peerId = networkModuleManager.getPeerId().toB58String();
         const createProfilesPromises = blockchainModuleManager
             .getImplementationNames()
             .map(async (blockchain) => {
                 try {
                     if (!(await blockchainModuleManager.identityIdExists(blockchain))) {
                         this.logger.info(`Creating profile on network: ${blockchain}`);
-                        const networkModuleManager = this.container.resolve('networkModuleManager');
-                        const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
 
                         if (
@@ -269,7 +269,18 @@ class OTNode {
                         }
                     }
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                    const onChainNodeId = await blockchainModuleManager.getNodeId(
+                        blockchain,
+                        identityId,
+                    );
+                    const nodeId = blockchainModuleManager.convertAsciiToHex(blockchain, peerId);
 
+                    if (nodeId !== onChainNodeId) {
+                        this.logger.warn(
+                            `On blockchain ${blockchain} for identity id: ${identityId} local peer id: ${peerId} doesn't match on chain node id.`,
+                        );
+                        blockchainModuleManager.removeImplementation(blockchain);
+                    }
                     this.logger.info(`Identity ID: ${identityId}`);
                 } catch (error) {
                     this.logger.warn(
@@ -368,7 +379,6 @@ class OTNode {
         await autoUpdaterCommand.execute();
     }
 
-    // TODO: add validation for node being a part of paranet
     async initializeParanets() {
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const tripleStoreService = this.container.resolve('tripleStoreService');
@@ -436,10 +446,6 @@ class OTNode {
             // eslint-disable-next-line no-await-in-loop
             await paranetService.initializeParanetRecord(blockchain, paranetId);
         }
-        const repository = paranetService.getParanetRepositoryName(
-            'did:dkg:hardhat1:31337/0x8aafc28174bb6c3bdc7be92f18c2f134e876c05e/7',
-        );
-        await tripleStoreModuleManager.initializeParanetRepository(repository);
         this.config.assetSync.syncParanets = validParanets;
         tripleStoreService.initializeRepositories();
     }

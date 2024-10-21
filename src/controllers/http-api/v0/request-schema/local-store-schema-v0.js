@@ -32,8 +32,15 @@ export default (argumentsObject) => ({
             },
             storeType: {
                 type: {
-                    enum: [LOCAL_STORE_TYPES.TRIPLE, LOCAL_STORE_TYPES.PENDING],
+                    enum: [
+                        LOCAL_STORE_TYPES.TRIPLE,
+                        LOCAL_STORE_TYPES.TRIPLE_PARANET,
+                        LOCAL_STORE_TYPES.PENDING,
+                    ],
                 },
+            },
+            paranetUAL: {
+                type: 'string',
             },
         },
     },

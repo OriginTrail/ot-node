@@ -7,6 +7,7 @@ import {
     GET_STATES,
     TRIPLE_STORE_REPOSITORIES,
     PENDING_STORAGE_REPOSITORIES,
+    PARANET_ACCESS_POLICY,
 } from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -39,64 +40,65 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         );
 
         let nquads;
-
         if (paranetUAL) {
-            const paranetCuratedNodes = await this.blockchainModuleManager.getParanetCuratedNodes(
+            const paranetNodeAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
                 blockchain,
                 paranetId,
             );
-            const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
-                this.blockchainModuleManager.convertHexToAscii(blockchain, node.nodeId),
-            );
+            if (paranetNodeAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+                const paranetCuratedNodes =
+                    await this.blockchainModuleManager.getParanetCuratedNodes(
+                        blockchain,
+                        paranetId,
+                    );
+                const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
+                    this.blockchainModuleManager.convertHexToAscii(blockchain, node.nodeId),
+                );
 
-            if (!paranetCuratedPeerIds.includes(remotePeerId)) {
+                if (!paranetCuratedPeerIds.includes(remotePeerId)) {
+                    return {
+                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                        messageData: {
+                            errorMessage: `Remote peer ${remotePeerId} is not a part of the Paranet (${paranetId}) with UAL: ${paranetUAL}`,
+                        },
+                    };
+                }
+                const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+                const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+                const syncedAssetRecord =
+                    await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+
+                nquads = await this.tripleStoreService.getAssertion(paranetRepository, assertionId);
+
+                let privateNquads;
+                if (syncedAssetRecord.privateAssertionId) {
+                    privateNquads = await this.tripleStoreService.getAssertion(
+                        paranetRepository,
+                        syncedAssetRecord.privateAssertionId,
+                    );
+                }
+
+                if (nquads?.length) {
+                    const response = {
+                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                        messageData: { nquads, syncedAssetRecord },
+                    };
+
+                    if (privateNquads?.length) {
+                        response.messageData.privateNquads = privateNquads;
+                    }
+
+                    return response;
+                }
+
                 return {
                     messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                     messageData: {
-                        errorMessage: `Remote peer ${remotePeerId} is not a part of the Paranet (${paranetId}) with UAL: ${paranetUAL}`,
+                        errorMessage: `Unable to find assertion ${assertionId} for Paranet ${paranetId} with UAL: ${paranetUAL}`,
                     },
                 };
             }
-
-            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-            const syncedAssetRecord =
-                await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
-
-            const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
-            nquads = await this.tripleStoreService.getAssertion(
-                paranetRepository,
-                syncedAssetRecord.publicAssertionId,
-            );
-
-            let privateNquads;
-            if (syncedAssetRecord.privateAssertionId) {
-                privateNquads = await this.tripleStoreService.getAssertion(
-                    paranetRepository,
-                    syncedAssetRecord.privateAssertionId,
-                );
-            }
-
-            if (nquads?.length) {
-                const response = {
-                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                    messageData: { nquads, syncedAssetRecord },
-                };
-
-                if (privateNquads?.length) {
-                    response.messageData.privateNquads = privateNquads;
-                }
-
-                return response;
-            }
-
-            return {
-                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                messageData: {
-                    errorMessage: `Unable to find assertion ${assertionId} for Paranet ${paranetId} with UAL: ${paranetUAL}`,
-                },
-            };
         }
-
         if (
             !nquads?.length &&
             state !== GET_STATES.FINALIZED &&
