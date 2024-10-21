@@ -142,8 +142,6 @@ class GetService extends OperationService {
                         ? responseData.syncedAssetRecord?.privateAssertionId
                         : null;
 
-                const paranetId = this.paranetService.getParanetIdFromUAL(paranetUAL);
-                await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
                 await this.repositoryModuleManager.createParanetSyncedAssetRecord(
                     blockchain,
                     ual,
