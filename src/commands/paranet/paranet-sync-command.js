@@ -184,7 +184,7 @@ class ParanetSyncCommand extends Command {
                 OPERATION_STATUS.IN_PROGRESS,
             );
             this.logger.debug(
-                `Paranet sync: Get for ${ual} with operation id ${operationId} initiated.`,
+                `Paranet sync: Get for ${ual} with operation id ${getOperationId} initiated.`,
             );
             if (paranetNodesAccessPolicy === 'OPEN') {
                 await this.commandExecutor.add({
