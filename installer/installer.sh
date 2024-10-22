@@ -105,7 +105,7 @@ install_firewall() {
 
 install_prereqs() {
     export DEBIAN_FRONTEND=noninteractive
-    NODEJS_VER="16"
+    NODEJS_VER="18"
 
     perform_step install_aliases "Updating .bashrc file with OriginTrail node aliases" > /dev/null 2>&1
     perform_step rm -rf /var/lib/dpkg/lock-frontend "Removing any frontend locks" > /dev/null 2>&1
@@ -115,27 +115,25 @@ install_prereqs() {
     perform_step apt install default-jre -y "Installing default-jre" > /dev/null 2>&1
     perform_step apt install build-essential -y "Installing build-essential" > /dev/null 2>&1
 
-    # Install nodejs 16 (via NVM).
+    # Install nodejs 18 (via NVM).
     wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash > /dev/null 2>&1
     export NVM_DIR="$HOME/.nvm"
     # This loads nvm
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     # This loads nvm bash_completion
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-    nvm install v16.20.1 > /dev/null 2>&1
-    nvm use v16.20.1 > /dev/null 2>&1
+    nvm install v18.17.1 > /dev/null 2>&1
+    nvm use v18.17.1 > /dev/null 2>&1
 
-    # Set nodejs 16.20.1 as default and link node to /usr/bin/
-    nvm alias default 16.20.1 > /dev/null 2>&1
+    # Set nodejs 18.17.1 as default and link node to /usr/bin/
+    nvm alias default 18.17.1 > /dev/null 2>&1
     sudo ln -s $(which node) /usr/bin/ > /dev/null 2>&1
     sudo ln -s $(which npm) /usr/bin/ > /dev/null 2>&1
 
     apt remove unattended-upgrades -y > /dev/null 2>&1
 
-    perform_step install_firewall "Configuring firewall" > /dev/null 2>&1
     perform_step apt remove unattended-upgrades -y "Remove unattended upgrades" > /dev/null 2>&1
 }
-
 
 install_fuseki() {
     FUSEKI_VER="apache-jena-fuseki-$(git ls-remote --tags https://github.com/apache/jena | grep -o 'refs/tags/jena-[0-9]*\.[0-9]*\.[0-9]*' | sort -r | head -n 1 | grep -o '[^\/-]*$')"
