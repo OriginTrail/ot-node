@@ -72,7 +72,8 @@ class DataService {
      * @private
      */
     _parseBindingDataTypes(data) {
-        const [value, dataType] = data.split('^^');
+        // const [value, dataType] = data.split('^^');
+        const { value, type: dataType } = data;
 
         switch (dataType) {
             case XML_DATA_TYPES.DECIMAL:

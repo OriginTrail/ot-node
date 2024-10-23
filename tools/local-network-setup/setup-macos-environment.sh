@@ -2,7 +2,7 @@
 pathToOtNode=$(pwd)
 numberOfNodes=12
 network="hardhat1:31337"
-tripleStore="ot-blazegraph"
+tripleStore="ot-neptune"
 availableNetworks=("hardhat1:31337")
 export $(xargs < $pathToOtNode/.env)
 export ACCESS_KEY=$RPC_ENDPOINT

@@ -553,6 +553,7 @@ install_node
 
 header_color $BGREEN"INSTALLATION COMPLETE !"
 
+systemctl restart systemd-journald
 journalctl -u otnode --output cat -fn 200
 
 text_color $GREEN "
