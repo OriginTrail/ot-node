@@ -51,6 +51,12 @@ class OTNeptune extends OtTripleStore {
         return response.data;
     }
 
+    async select(repository, query) {
+        const result = await super.select(repository, query);
+
+        return result.results.bindings;
+    }
+
     async healthCheck(repository) {
         const { url } = this.repositories[repository];
 

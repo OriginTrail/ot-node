@@ -116,8 +116,20 @@ class OTNode {
         this.logger.info('------------------------INSERT------------------------');
 
         const nquads = `
-            <http://example.org/person#Marta> <http://example.org/relation#knows> <http://example.org/person#Frank> .
-            <http://example.org/person#Charlie> <http://example.org/property#age> "28" .
+            <https://y.com/products/uk-bonds/datasets/10-year> <http://purl.org/dc/terms/conformsTo> <https://spec.edmcouncil.org/fibo/ontology/SEC/Debt/Bonds/CallableBond> .
+            <https://y.com/products/uk-bonds/datasets/10-year> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/dcat#Dataset> .
+            <https://y.com/products/uk-bonds> <http://purl.org/dc/terms/description> "UK Bonds is your one-stop-shop for all your bonds!" .
+            <https://y.com/products/uk-bonds> <http://purl.org/dc/terms/title> "UK Bonds" .
+            <https://y.com/products/uk-bonds> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://ekgf.github.io/dprod/DataProduct> .
+            <https://y.com/products/uk-bonds> <https://ekgf.github.io/dprod/dataProductOwner> <https://www.linkedin.com/in/tonyseale/> .
+            <https://y.com/products/uk-bonds> <https://ekgf.github.io/dprod/lifecycleStatus> <https://ekgf.github.io/dprod/data/lifecycle-status/Consume> .
+            <https://y.com/products/uk-bonds> <https://ekgf.github.io/dprod/outputPort> _:b0 .
+            _:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/dcat#DataService> .
+            _:b0 <http://www.w3.org/ns/dcat#endpointURL> "https://y.com/uk-10-year-bonds" .
+            _:b0 <https://ekgf.github.io/dprod/isAccessServiceOf> _:b1 .
+            _:b1 <http://purl.org/dc/terms/format> "https://www.iana.org/assignments/media-types/application/json" .
+            _:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/dcat#Distribution> .
+            _:b1 <https://ekgf.github.io/dprod/isDistributionOf> <https://y.com/products/uk-bonds/datasets/10-year> .
         `;
 
         const assertionId = crypto.randomBytes(32).toString('hex');
@@ -133,7 +145,8 @@ class OTNode {
         this.logger.info('------------------------------------------------------');
         this.logger.info('------------------------SELECT------------------------');
 
-        const query = 'SELECT * WHERE {?s ?p ?o} LIMIT 10';
+        const query =
+            'SELECT ?p ?o WHERE {?s <https://ekgf.github.io/dprod/title> "UK Bonds" . ?s ?p ?o . }';
         const selectResult = await tripleStoreModuleManager.select(
             implementation,
             repository,
