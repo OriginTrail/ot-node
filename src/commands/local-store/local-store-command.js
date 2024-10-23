@@ -22,6 +22,7 @@ class LocalStoreCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -91,6 +92,9 @@ class LocalStoreCommand extends Command {
                     paranetMetadata.paranetKATokenId,
                 );
                 const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+
+                await this.tripleStoreModuleManager.initializeParanetRepository(paranetRepository);
+                await this.paranetService.initializeParanetRecord(blockchain, paranetId);
 
                 if (cachedData.public.assertion && cachedData.public.assertionId) {
                     // eslint-disable-next-line no-await-in-loop

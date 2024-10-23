@@ -68,7 +68,7 @@ class ParanetSyncCommand extends Command {
                 `Paranet sync: Attempting to sync ${cachedMissedKaCount} missed assets for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}!`,
             );
 
-            this.operationIdService.updateOperationIdStatus(
+            await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_MISSED_KAS_SYNC_START,
@@ -90,7 +90,7 @@ class ParanetSyncCommand extends Command {
                     `(${paranetId}), operation ID: ${operationId}!`,
             );
 
-            this.operationIdService.updateOperationIdStatusWithValues(
+            await this.operationIdService.updateOperationIdStatusWithValues(
                 operationId,
                 blockchain,
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_MISSED_KAS_SYNC_END,
@@ -107,11 +107,12 @@ class ParanetSyncCommand extends Command {
                 } new assets for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}`,
             );
 
-            this.operationIdService.updateOperationIdStatus(
+            await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
                 OPERATION_ID_STATUS.PARANET.PARANET_SYNC_NEW_KAS_SYNC_START,
             );
+
             const [successulNewSyncsCount, failedNewSyncsCount] = await this.syncNewKAs(
                 blockchain,
                 0,
@@ -368,40 +369,55 @@ class ParanetSyncCommand extends Command {
                 paranetUAL,
                 PARANET_SYNC_RETRIES_LIMIT,
                 PARANET_SYNC_RETRY_DELAY_MS,
-                PARANET_SYNC_KA_COUNT,
             );
 
-        const promises = missedParanetAssets.map((missedParanetAsset) => {
-            const {
-                blockchain: knowledgeAssetBlockchain,
-                contract: knowledgeAssetStorageContract,
-                tokenId: knowledgeAssetTokenId,
-            } = this.ualService.resolveUAL(missedParanetAsset.ual);
+        const results = [];
 
-            return this.syncAsset(
-                missedParanetAsset.ual,
-                knowledgeAssetBlockchain,
-                knowledgeAssetStorageContract,
-                knowledgeAssetTokenId,
-                paranetUAL,
-                paranetId,
-                paranetMetadata,
-                paranetNodesAccessPolicy,
-                operationId,
-                true, // removeMissingAssetRecord
-            );
-        });
+        // Loop through missedParanetAssets in batches
+        for (let i = 0; i < missedParanetAssets.length; i += PARANET_SYNC_KA_COUNT) {
+            // Get the current batch
+            const batch = missedParanetAssets.slice(i, i + PARANET_SYNC_KA_COUNT);
 
-        const results = await Promise.all(promises);
+            // Map the batch to an array of promises
+            const promises = batch.map((missedParanetAsset) => {
+                const {
+                    blockchain: knowledgeAssetBlockchain,
+                    contract: knowledgeAssetStorageContract,
+                    tokenId: knowledgeAssetTokenId,
+                } = this.ualService.resolveUAL(missedParanetAsset.ual);
+
+                return this.syncAsset(
+                    missedParanetAsset.ual,
+                    knowledgeAssetBlockchain,
+                    knowledgeAssetStorageContract,
+                    knowledgeAssetTokenId,
+                    paranetUAL,
+                    paranetId,
+                    paranetMetadata,
+                    paranetNodesAccessPolicy,
+                    operationId,
+                    true, // removeMissingAssetRecord
+                );
+            });
+
+            // Await the promises in the current batch
+            const batchResults = await Promise.all(promises);
+
+            const successfulBatchCount = batchResults.filter(Boolean).length;
+
+            if (successfulBatchCount > 0) {
+                await this.repositoryModuleManager.addToParanetKaCount(
+                    paranetId,
+                    blockchain,
+                    successfulBatchCount,
+                );
+            }
+
+            // Accumulate the results
+            results.push(...batchResults);
+        }
 
         const successfulCount = results.filter(Boolean).length;
-        if (successfulCount > 0) {
-            await this.repositoryModuleManager.addToParanetKaCount(
-                paranetId,
-                blockchain,
-                successfulCount,
-            );
-        }
 
         return [successfulCount, results.length - successfulCount];
     }
@@ -468,37 +484,53 @@ class ParanetSyncCommand extends Command {
             kasToSync.push(...filteredKAs);
         }
 
-        const promises = kasToSync.map(
-            ([
-                ual,
-                knowledgeAssetBlockchain,
-                knowledgeAssetStorageContract,
-                knowledgeAssetTokenId,
-            ]) =>
-                this.syncAsset(
+        const results = [];
+
+        // Loop through kasToSync in batches
+        for (let i = 0; i < kasToSync.length; i += PARANET_SYNC_KA_COUNT) {
+            // Get the current batch
+            const batch = kasToSync.slice(i, i + PARANET_SYNC_KA_COUNT);
+
+            // Map the batch to an array of promises
+            const promises = batch.map(
+                ([
                     ual,
                     knowledgeAssetBlockchain,
                     knowledgeAssetStorageContract,
                     knowledgeAssetTokenId,
-                    paranetUAL,
-                    paranetId,
-                    paranetMetadata,
-                    paranetNodesAccessPolicy,
-                    operationId,
-                    false, // removeMissingAssetRecord
-                ),
-        );
+                ]) =>
+                    this.syncAsset(
+                        ual,
+                        knowledgeAssetBlockchain,
+                        knowledgeAssetStorageContract,
+                        knowledgeAssetTokenId,
+                        paranetUAL,
+                        paranetId,
+                        paranetMetadata,
+                        paranetNodesAccessPolicy,
+                        operationId,
+                        false, // removeMissingAssetRecord
+                    ),
+            );
 
-        const results = await Promise.all(promises);
+            // Await the promises in the current batch
+            const batchResults = await Promise.all(promises);
+
+            const successfulBatchCount = results.filter(Boolean).length;
+
+            if (successfulBatchCount > 0) {
+                await this.repositoryModuleManager.addToParanetKaCount(
+                    paranetId,
+                    blockchain,
+                    successfulBatchCount,
+                );
+            }
+
+            // Accumulate the results
+            results.push(...batchResults);
+        }
 
         const successfulCount = results.filter(Boolean).length;
-        if (successfulCount > 0) {
-            await this.repositoryModuleManager.addToParanetKaCount(
-                paranetId,
-                blockchain,
-                successfulCount,
-            );
-        }
 
         return [successfulCount, results.length - successfulCount];
     }
