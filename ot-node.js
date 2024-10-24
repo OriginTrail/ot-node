@@ -273,11 +273,14 @@ class OTNode {
                         blockchain,
                         identityId,
                     );
-                    const nodeId = blockchainModuleManager.convertAsciiToHex(blockchain, peerId);
+                    const onChainPeerId = blockchainModuleManager.convertHexToAscii(
+                        blockchain,
+                        onChainNodeId,
+                    );
 
-                    if (nodeId !== onChainNodeId) {
+                    if (peerId !== onChainPeerId) {
                         this.logger.warn(
-                            `On blockchain ${blockchain} for identity id: ${identityId} local peer id: ${peerId} doesn't match on chain node id.`,
+                            `Local peer id: ${peerId} doesn't match on chain peer id: ${onChainPeerId} for blockchain: ${blockchain}, identity id: ${identityId}.`,
                         );
                         blockchainModuleManager.removeImplementation(blockchain);
                     }
