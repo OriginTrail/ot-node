@@ -760,6 +760,11 @@ export const CACHE_DATA_TYPES = {
     ANY: 'any',
 };
 
+export const PARANET_SYNC_SOURCES = {
+    SYNC: 'sync',
+    LOCAL_STORE: 'local_store',
+};
+
 /**
  * CACHED_FUNCTIONS:
  * ContractName: {

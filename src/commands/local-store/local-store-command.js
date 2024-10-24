@@ -6,6 +6,7 @@ import {
     TRIPLE_STORE_REPOSITORIES,
     LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+    PARANET_SYNC_SOURCES,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -134,6 +135,7 @@ class LocalStoreCommand extends Command {
                     cachedData.private?.assertionId,
                     cachedData.sender,
                     cachedData.txHash,
+                    PARANET_SYNC_SOURCES.LOCAL_STORE,
                 );
             } else {
                 await this.pendingStorageService.cacheAssertion(

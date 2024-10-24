@@ -604,6 +604,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('paranet_synced_asset').getParanetSyncedAssetRecordByUAL(ual);
     }
 
+    async getParanetSyncedAssetRecordsCountByDataSource(paranetUal, dataSource) {
+        return this.getRepository(
+            'paranet_synced_asset',
+        ).getParanetSyncedAssetRecordsCountByDataSource(paranetUal, dataSource);
+    }
+
     async paranetSyncedAssetRecordExists(ual) {
         return this.getRepository('paranet_synced_asset').paranetSyncedAssetRecordExists(ual);
     }
