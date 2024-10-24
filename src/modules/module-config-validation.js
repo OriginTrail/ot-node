@@ -40,16 +40,21 @@ class ModuleConfigValidation {
         const occurences = {};
         for (const implementation of Object.values(config.implementation)) {
             // eslint-disable-next-line no-continue
-            if (!implementation.enabled) continue;
+            if (!implementation.enabled) {
+                continue;
+            }
 
             for (const repository in implementation.config.repositories) {
-                if (!occurences[repository]) occurences[repository] = 0;
+                if (!occurences[repository]) {
+                    occurences[repository] = 0;
+                }
                 occurences[repository] += 1;
             }
         }
         for (const repository of Object.values(TRIPLE_STORE_REPOSITORIES)) {
-            if (occurences[repository] !== 1)
+            if (occurences[repository] !== 1) {
                 throw Error(`Exactly one config for repository ${repository} needs to be defined.`);
+            }
         }
     }
 

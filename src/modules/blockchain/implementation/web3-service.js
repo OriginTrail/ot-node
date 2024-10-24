@@ -965,7 +965,9 @@ class Web3Service {
 
         const topics = [];
         for (const filterName in contract.filters) {
-            if (!eventsToFilter.includes(filterName)) continue;
+            if (!eventsToFilter.includes(filterName)) {
+                continue;
+            }
             const filter = contract.filters[filterName]().topics[0];
             topics.push(filter);
         }

@@ -12,6 +12,7 @@ import {
     LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY,
     LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+    PARANET_SYNC_SOURCES,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -142,6 +143,13 @@ class GetService extends OperationService {
                         ? responseData.syncedAssetRecord?.privateAssertionId
                         : null;
 
+                const paranetId = this.paranetService.constructParanetId(
+                    blockchain,
+                    contract,
+                    paranetTokenId,
+                );
+
+                await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
                 await this.repositoryModuleManager.createParanetSyncedAssetRecord(
                     blockchain,
                     ual,
@@ -150,6 +158,7 @@ class GetService extends OperationService {
                     privateAssertionId,
                     responseData.syncedAssetRecord?.sender,
                     responseData.syncedAssetRecord?.transactionHash,
+                    PARANET_SYNC_SOURCES.SYNC,
                 );
             } else if (assetSync) {
                 this.logger.debug(
