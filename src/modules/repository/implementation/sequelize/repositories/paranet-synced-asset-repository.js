@@ -33,14 +33,12 @@ class ParanetSyncedAssetRepository {
     }
 
     async getParanetSyncedAssetRecordsCountByDataSource(paranetUal, dataSource) {
-        const records = await this.model.findAll({
+        return this.model.count({
             where: {
                 paranetUal,
                 dataSource,
             },
         });
-
-        return records.length;
     }
 
     async paranetSyncedAssetRecordExists(ual) {
