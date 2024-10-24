@@ -117,7 +117,7 @@ class ParanetSyncCommand extends Command {
 
             const [successulNewSyncsCount, failedNewSyncsCount] = await this.syncNewKAs(
                 blockchain,
-                syncedAssetsCount + missedAssetsCount + 1,
+                syncedAssetsCount + missedAssetsCount,
                 contractKaCount,
                 paranetUAL,
                 paranetId,
