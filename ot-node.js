@@ -65,6 +65,12 @@ class OTNode {
             this.config,
         );
 
+        await MigrationExecutor.executeSetParanetSyncedAssetType(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
