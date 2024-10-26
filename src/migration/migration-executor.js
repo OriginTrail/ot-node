@@ -22,6 +22,7 @@ import ServiceAgreementPruningMigration from './service-agreement-pruning-migrat
 import RemoveDuplicateServiceAgreementMigration from './remove-duplicate-service-agreement-migration.js';
 import DevnetNeuroPruningMigration from './devnet-neuro-pruning-migration.js';
 import DevnetPruningMigration from './devnet-pruning-migration.js';
+import SetParanetSyncedAssetTypeMigration from './set-paranet-synced-asset-type-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -550,6 +551,32 @@ class MigrationExecutor {
                 await migration.migrate();
             } catch (error) {
                 logger.error(`Unable to execute devnet pruning migration. Error: ${error.message}`);
+            }
+        }
+    }
+
+    static async executeSetParanetSyncedAssetType(container, logger, config) {
+        if (
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+
+        const migration = new SetParanetSyncedAssetTypeMigration(
+            'setParanetSyncedAssetTypeMigration',
+            logger,
+            config,
+            repositoryModuleManager,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute SetParanetSyncedAssetType migration. Error: ${error.message}`,
+                );
             }
         }
     }

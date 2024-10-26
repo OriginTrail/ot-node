@@ -65,6 +65,12 @@ class OTNode {
             this.config,
         );
 
+        await MigrationExecutor.executeSetParanetSyncedAssetType(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
@@ -244,7 +250,10 @@ class OTNode {
             .getImplementationNames()
             .map(async (blockchain) => {
                 try {
-                    if (!(await blockchainModuleManager.identityIdExists(blockchain))) {
+                    const identityExists = await blockchainModuleManager.identityIdExists(
+                        blockchain,
+                    );
+                    if (!identityExists) {
                         this.logger.info(`Creating profile on network: ${blockchain}`);
                         await blockchainModuleManager.createProfile(blockchain, peerId);
 
@@ -268,20 +277,28 @@ class OTNode {
                             );
                         }
                     }
-                    const identityId = await blockchainModuleManager.getIdentityId(blockchain);
-                    const onChainNodeId = await blockchainModuleManager.getNodeId(
-                        blockchain,
-                        identityId,
-                    );
-                    const nodeId = blockchainModuleManager.convertAsciiToHex(blockchain, peerId);
 
-                    if (nodeId !== onChainNodeId) {
-                        this.logger.warn(
-                            `On blockchain ${blockchain} for identity id: ${identityId} local peer id: ${peerId} doesn't match on chain node id.`,
-                        );
-                        blockchainModuleManager.removeImplementation(blockchain);
-                    }
+                    const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+
                     this.logger.info(`Identity ID: ${identityId}`);
+
+                    if (identityExists) {
+                        const onChainNodeId = await blockchainModuleManager.getNodeId(
+                            blockchain,
+                            identityId,
+                        );
+                        const onChainPeerId = blockchainModuleManager.convertHexToAscii(
+                            blockchain,
+                            onChainNodeId,
+                        );
+
+                        if (peerId !== onChainPeerId) {
+                            this.logger.warn(
+                                `Local peer id: ${peerId} doesn't match on chain peer id: ${onChainPeerId} for blockchain: ${blockchain}, identity id: ${identityId}.`,
+                            );
+                            blockchainModuleManager.removeImplementation(blockchain);
+                        }
+                    }
                 } catch (error) {
                     this.logger.warn(
                         `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
@@ -388,7 +405,7 @@ class OTNode {
         const validParanets = [];
 
         // eslint-disable-next-line no-unsafe-optional-chaining
-        for (const paranetUAL of this.config.assetSync?.syncParanets) {
+        for (const paranetUAL of this.config.assetSync?.syncParanets ?? []) {
             if (!ualService.isUAL(paranetUAL)) {
                 this.logger.warn(
                     `Unable to initialize Paranet with id ${paranetUAL} because of invalid UAL format`,
