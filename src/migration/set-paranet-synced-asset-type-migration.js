@@ -1,7 +1,7 @@
 import BaseMigration from './base-migration.js';
 import { PARANET_SYNC_SOURCES } from '../constants/constants.js';
 
-class SetParanetSyncedAssetType extends BaseMigration {
+class SetParanetSyncedAssetTypeMigration extends BaseMigration {
     constructor(migrationName, logger, config, repositoryModuleManager) {
         super(migrationName, logger, config);
         this.repositoryModuleManager = repositoryModuleManager;
@@ -17,4 +17,4 @@ class SetParanetSyncedAssetType extends BaseMigration {
     }
 }
 
-export default SetParanetSyncedAssetType;
+export default SetParanetSyncedAssetTypeMigration;
