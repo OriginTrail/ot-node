@@ -105,7 +105,8 @@ class ParanetSyncCommand extends Command {
         if (syncedAssetsCount + localStoredAssetsCount + totalMissedAssetsCount < contractKaCount) {
             this.logger.info(
                 `Paranet sync: Syncing ${
-                    contractKaCount - (syncedAssetsCount + totalMissedAssetsCount)
+                    contractKaCount -
+                    (syncedAssetsCount + localStoredAssetsCount + totalMissedAssetsCount)
                 } new assets for paranet: ${paranetUAL} (${paranetId}), operation ID: ${operationId}`,
             );
 

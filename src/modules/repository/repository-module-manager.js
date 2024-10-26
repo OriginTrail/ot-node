@@ -588,6 +588,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         privateAssertionId,
         sender,
         transactionHash,
+        dataSource,
     ) {
         return this.getRepository('paranet_synced_asset').createParanetSyncedAssetRecord(
             blockchainId,
@@ -597,6 +598,7 @@ class RepositoryModuleManager extends BaseModuleManager {
             privateAssertionId,
             sender,
             transactionHash,
+            dataSource,
         );
     }
 
