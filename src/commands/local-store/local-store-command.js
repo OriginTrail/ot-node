@@ -98,7 +98,6 @@ class LocalStoreCommand extends Command {
                 await this.paranetService.initializeParanetRecord(blockchain, paranetId);
 
                 if (cachedData.public.assertion && cachedData.public.assertionId) {
-                    // eslint-disable-next-line no-await-in-loop
                     await this.tripleStoreService.localStoreAsset(
                         paranetRepository,
                         cachedData.public.assertionId,
@@ -112,7 +111,6 @@ class LocalStoreCommand extends Command {
                     );
                 }
                 if (cachedData.private?.assertion && cachedData.private?.assertionId) {
-                    // eslint-disable-next-line no-await-in-loop
                     await this.tripleStoreService.localStoreAsset(
                         paranetRepository,
                         cachedData.private.assertionId,
