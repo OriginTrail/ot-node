@@ -11,7 +11,7 @@ class SetParanetSyncedAssetTypeMigration extends BaseMigration {
         this.logger.info('Starting SetParanetSyncedAssetType migration.');
         const query = `
                   UPDATE paranet_synced_asset
-                  SET data_source = ${PARANET_SYNC_SOURCES.SYNC}
+                  SET data_source = '${PARANET_SYNC_SOURCES.SYNC}'
                   `;
         await this.repositoryModuleManager.query(query);
     }
