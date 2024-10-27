@@ -175,6 +175,14 @@ By their nature, Knowledge Assets are semantic resources (following the W3C Sema
 
 <br/>
 
+### 1. Open your port
+Use the following commands to open ports 9999, 8900, and 9000 so the node can communicate with the network:
+```bash
+sudo ufw allow 9999 && sudo ufw allow 8900 && sudo ufw allow 9000 && sudo ufw reload
+sudo iptables -A INPUT -p tcp --dport 9999 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 8900 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 9000 -j ACCEPT
+
 First, clone the repo:
 
 ```bash
