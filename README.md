@@ -182,8 +182,9 @@ sudo ufw allow 9999 && sudo ufw allow 8900 && sudo ufw allow 9000 && sudo ufw re
 sudo iptables -A INPUT -p tcp --dport 9999 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 8900 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 9000 -j ACCEPT
+```
 
-First, clone the repo:
+###First, clone the repo:
 
 ```bash
 git clone https://github.com/OriginTrail/ot-node.git
