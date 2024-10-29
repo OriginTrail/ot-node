@@ -158,7 +158,6 @@ class ParanetSyncCommand extends Command {
     }
 
     async syncAssetState(
-        operationId,
         ual,
         blockchain,
         contract,
@@ -323,7 +322,6 @@ class ParanetSyncCommand extends Command {
                 isSuccessful =
                     isSuccessful &&
                     (await this.syncAssetState(
-                        operationId,
                         ual,
                         blockchain,
                         contract,
@@ -423,9 +421,10 @@ class ParanetSyncCommand extends Command {
         paranetNodesAccessPolicy,
         operationId,
     ) {
-        const kasToSync = [];
-        for (let i = Number(startIndex); i <= contractKaCount; i += PARANET_SYNC_KA_COUNT) {
-            // Empty array, offset is 1 and we should probably start with zero
+        let i = Number(startIndex);
+
+        const results = [];
+        while (i <= contractKaCount) {
             const nextKaArray =
                 await this.blockchainModuleManager.getParanetKnowledgeAssetsWithPagination(
                     blockchain,
@@ -433,9 +432,15 @@ class ParanetSyncCommand extends Command {
                     i,
                     PARANET_SYNC_KA_COUNT,
                 );
-            if (!nextKaArray.length) break;
+
+            if (nextKaArray.length === 0) {
+                break;
+            }
+
+            i += nextKaArray.length;
 
             const filteredKAs = [];
+            // NOTE: This could also be processed in parallel if needed
             for (const knowledgeAssetId of nextKaArray) {
                 const { knowledgeAssetStorageContract, tokenId: knowledgeAssetTokenId } =
                     await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
@@ -448,6 +453,7 @@ class ParanetSyncCommand extends Command {
                     knowledgeAssetStorageContract,
                     knowledgeAssetTokenId,
                 );
+
                 const isAlreadySynced =
                     await this.repositoryModuleManager.paranetSyncedAssetRecordExists(ual);
 
@@ -472,47 +478,29 @@ class ParanetSyncCommand extends Command {
                 ]);
             }
 
-            kasToSync.push(...filteredKAs);
-        }
+            if (filteredKAs.length > 0) {
+                const promises = filteredKAs.map(
+                    ([syncKAUal, syncKABlockchain, syncKAContract, syncKATokenId]) =>
+                        this.syncAsset(
+                            syncKAUal,
+                            syncKABlockchain,
+                            syncKAContract,
+                            syncKATokenId,
+                            paranetUAL,
+                            paranetId,
+                            paranetMetadata,
+                            paranetNodesAccessPolicy,
+                            operationId,
+                            false, // removeMissingAssetRecord
+                        ),
+                );
 
-        const results = [];
-
-        // Loop through kasToSync in batches
-        for (let i = 0; i < kasToSync.length; i += PARANET_SYNC_KA_COUNT) {
-            // Get the current batch
-            const batch = kasToSync.slice(i, i + PARANET_SYNC_KA_COUNT);
-
-            // Map the batch to an array of promises
-            const promises = batch.map(
-                ([
-                    ual,
-                    knowledgeAssetBlockchain,
-                    knowledgeAssetStorageContract,
-                    knowledgeAssetTokenId,
-                ]) =>
-                    this.syncAsset(
-                        ual,
-                        knowledgeAssetBlockchain,
-                        knowledgeAssetStorageContract,
-                        knowledgeAssetTokenId,
-                        paranetUAL,
-                        paranetId,
-                        paranetMetadata,
-                        paranetNodesAccessPolicy,
-                        operationId,
-                        false, // removeMissingAssetRecord
-                    ),
-            );
-
-            // Await the promises in the current batch
-            const batchResults = await Promise.all(promises);
-
-            // Accumulate the results
-            results.push(...batchResults);
+                const batchResults = await Promise.all(promises);
+                results.push(...batchResults);
+            }
         }
 
         const successfulCount = results.filter(Boolean).length;
-
         return [successfulCount, results.length - successfulCount];
     }
 
