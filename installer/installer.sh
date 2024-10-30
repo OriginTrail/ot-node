@@ -418,6 +418,7 @@ EOF
 
         jq "$jq_filter" $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
         mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc
+        chmod 600 $CONFIG_DIR/.origintrail_noderc
     }
 
     # Configure Base-Sepolia
