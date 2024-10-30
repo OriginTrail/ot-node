@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "550b0443-cd47-482a-9c56-2b1229422426",
-		"name": "DKGv6",
-		"description": "DKG v6 API Collection.",
+		"name": "DKGv8",
+		"description": "DKG V8 API Collection.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [

@@ -12,6 +12,7 @@ class ParanetSyncedAssetRepository {
         privateAssertionId,
         sender,
         transactionHash,
+        dataSource,
     ) {
         return this.model.create({
             blockchainId,
@@ -21,12 +22,22 @@ class ParanetSyncedAssetRepository {
             privateAssertionId,
             sender,
             transactionHash,
+            dataSource,
         });
     }
 
     async getParanetSyncedAssetRecordByUAL(ual) {
         return this.model.findOne({
             where: { ual },
+        });
+    }
+
+    async getParanetSyncedAssetRecordsCountByDataSource(paranetUal, dataSource) {
+        return this.model.count({
+            where: {
+                paranetUal,
+                dataSource,
+            },
         });
     }
 

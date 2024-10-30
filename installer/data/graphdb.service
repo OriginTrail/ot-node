@@ -1,7 +1,7 @@
 #/lib/systemd/system/graphdb.service
 
 [Unit]
-Description=GraphDB - OriginTrail V6 Stage 1 Beta Node
+Description=GraphDB - OriginTrail V8 Node
 Documentation=https://github.com/OriginTrail/ot-node
 After=network.target
 

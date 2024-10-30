@@ -164,8 +164,8 @@ By their nature, Knowledge Assets are semantic resources (following the W3C Sema
 
 <br/>
 
--   **NodeJS** 16.x (ideally, 16.16)
--   **npm** >= 8.0.0
+-   **Node.js** 20.18
+-   **npm** 10.8.2
 
 ---
 
@@ -180,6 +180,12 @@ First, clone the repo:
 ```bash
 git clone https://github.com/OriginTrail/ot-node.git
 cd ot-node
+```
+
+Switch the branch to `v8/develop`:
+
+```bash
+git checkout v8/develop
 ```
 
 Install dependencies using `npm`:
@@ -210,18 +216,18 @@ To use default Triple Store (`blazegraph`), download the exec file and run it wi
 java -server -Xmx4g -jar blazegraph.jar
 ```
 
-Then, depending on the OS, use one of the scripts in order to run the local network with provided number of nodes (minimal amount of nodes should be 12):
+Then, depending on the OS, use one of the scripts in order to run the local network with provided number of nodes (minimal amount of nodes should be 6):
 
 **MacOS**
 
 ```bash
-bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=12
+bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=6
 ```
 
 **Linux**
 
 ```bash
-./tools/local-network-setup/setup-linux-environment.sh --nodes=12
+./tools/local-network-setup/setup-linux-environment.sh --nodes=6
 ```
 
 ---
@@ -232,7 +238,7 @@ bash ./tools/local-network-setup/setup-macos-environment.sh --nodes=12
 
 <br/>
 
-In order to run a DKG node on the **Testnet** or **Mainnet**, please read the official documentation: https://docs.origintrail.io/decentralized-knowledge-graph-layer-2/node-setup-instructions/setup-instructions-dockerless
+In order to run a DKG node on the **V8 Testnet**, please read the official documentation: https://docs.origintrail.io/dkg-v8-upcoming-version/run-a-v8-core-node-on-testnet
 
 ---
 
@@ -251,12 +257,12 @@ From an architectural standpoint, the SDK libraries are application interfaces i
 
 The OriginTrail SDK libraries are being built in various languages by the team and the community, as listed below:
 
--   dkg.js - JavaScript SDK implementation
-    -   [Github repository](https://github.com/OriginTrail/dkg.js)
-    -   [Documentation](https://docs.origintrail.io/decentralized-knowledge-graph-layer-2/dkg-sdk/dkg-v6-js-client)
--   dkg.py - Python SDK implementation
-    -   [Github repository](https://github.com/OriginTrail/dkg.py)
-    -   [Documentation](https://docs.origintrail.io/decentralized-knowledge-graph-layer-2/dkg-sdk/dkg-v6-py-client)
+-   dkg.js - V8 JavaScript SDK implementation
+    -   [Github repository](https://github.com/OriginTrail/dkg.js/tree/v8/develop)
+    -   [Documentation](https://docs.origintrail.io/dkg-v8-upcoming-version/v8-dkg-sdk/dkg-v8-js-client)
+-   dkg.py - V8 Python SDK implementation
+    -   [Github repository](https://github.com/OriginTrail/dkg.py/tree/v8/develop)
+    -   [Documentation](https://docs.origintrail.io/dkg-v8-upcoming-version/v8-dkg-sdk/dkg-v8-py-client)
 
 ---
 

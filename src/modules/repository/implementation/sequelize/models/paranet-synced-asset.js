@@ -1,3 +1,5 @@
+import { PARANET_SYNC_SOURCES } from '../../../../../constants/constants.js';
+
 export default (sequelize, DataTypes) => {
     const blockchain = sequelize.define(
         'paranet_synced_asset',
@@ -34,6 +36,10 @@ export default (sequelize, DataTypes) => {
             transactionHash: {
                 allowNull: true,
                 type: DataTypes.STRING,
+            },
+            dataSource: {
+                allowNull: true,
+                type: DataTypes.ENUM(...Object.values(PARANET_SYNC_SOURCES)),
             },
             createdAt: {
                 type: DataTypes.DATE,

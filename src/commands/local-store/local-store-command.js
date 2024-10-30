@@ -6,6 +6,7 @@ import {
     TRIPLE_STORE_REPOSITORIES,
     LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+    PARANET_SYNC_SOURCES,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -22,6 +23,7 @@ class LocalStoreCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.tripleStoreModuleManager = ctx.tripleStoreModuleManager;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -92,8 +94,10 @@ class LocalStoreCommand extends Command {
                 );
                 const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
 
+                await this.tripleStoreModuleManager.initializeParanetRepository(paranetRepository);
+                await this.paranetService.initializeParanetRecord(blockchain, paranetId);
+
                 if (cachedData.public.assertion && cachedData.public.assertionId) {
-                    // eslint-disable-next-line no-await-in-loop
                     await this.tripleStoreService.localStoreAsset(
                         paranetRepository,
                         cachedData.public.assertionId,
@@ -107,7 +111,6 @@ class LocalStoreCommand extends Command {
                     );
                 }
                 if (cachedData.private?.assertion && cachedData.private?.assertionId) {
-                    // eslint-disable-next-line no-await-in-loop
                     await this.tripleStoreService.localStoreAsset(
                         paranetRepository,
                         cachedData.private.assertionId,
@@ -130,6 +133,7 @@ class LocalStoreCommand extends Command {
                     cachedData.private?.assertionId,
                     cachedData.sender,
                     cachedData.txHash,
+                    PARANET_SYNC_SOURCES.LOCAL_STORE,
                 );
             } else {
                 await this.pendingStorageService.cacheAssertion(
