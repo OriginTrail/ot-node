@@ -7,7 +7,6 @@ class RpcRouter {
         this.logger = ctx.logger;
 
         this.publishRpcController = ctx.publishRpcController;
-        this.publishParanetRpcController = ctx.publishParanetRpcController;
         this.getRpcController = ctx.getRpcController;
         this.updateRpcController = ctx.updateRpcController;
     }

@@ -8,6 +8,11 @@ import {
     OPERATION_REQUEST_STATUS,
     TRIPLE_STORE_REPOSITORIES,
     PARANET_NODES_ACCESS_POLICIES,
+    LOCAL_INSERT_FOR_ASSET_SYNC_MAX_ATTEMPTS,
+    LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY,
+    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+    PARANET_SYNC_SOURCES,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -50,9 +55,6 @@ class GetService extends OperationService {
             paranetMetadata,
         } = command.data;
 
-        const paranetNodesAccessPolicy =
-            PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
-
         const keywordsStatuses = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,
@@ -86,7 +88,7 @@ class GetService extends OperationService {
                 operationId,
                 blockchain,
                 { assertion: responseData.nquads },
-                this.completedStatuses,
+                [...this.completedStatuses],
             );
             this.logResponsesSummary(completedNumber, failedNumber);
 
@@ -97,46 +99,21 @@ class GetService extends OperationService {
                     `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                 );
 
+                const paranetNodesAccessPolicy =
+                    PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
+
+                const publicAssertionId = assertionId;
+                const paranetUAL = this.ualService.deriveUAL(blockchain, contract, paranetTokenId);
+                const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
                 let repository;
-                let publicAssertionId;
-
-                if (!paranetLatestAsset) {
-                    repository =
-                        paranetNodesAccessPolicy === 'OPEN'
-                            ? TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY
-                            : TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
-                    publicAssertionId = assertionId;
+                if (paranetLatestAsset) {
+                    repository = paranetRepository;
+                } else if (paranetNodesAccessPolicy === 'OPEN') {
+                    repository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+                } else if (paranetNodesAccessPolicy === 'CURATED') {
+                    repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
                 } else {
-                    const paranetUAL = this.ualService.deriveUAL(
-                        blockchain,
-                        contract,
-                        paranetTokenId,
-                    );
-
-                    repository = this.paranetService.getParanetRepositoryName(paranetUAL);
-                    publicAssertionId = responseData.syncedAssetRecord.publicAssertionId;
-
-                    if (responseData.privateNquads) {
-                        await this.tripleStoreService.localStoreAsset(
-                            repository,
-                            responseData.syncedAssetRecord.privateAssertionId,
-                            responseData.privateNquads,
-                            blockchain,
-                            contract,
-                            tokenId,
-                            keyword,
-                        );
-                    }
-
-                    await this.repositoryModuleManager.createParanetSyncedAssetRecord(
-                        blockchain,
-                        ual,
-                        paranetUAL,
-                        responseData.syncedAssetRecord.publicAssertionId,
-                        responseData.syncedAssetRecord.privateAssertionId,
-                        responseData.syncedAssetRecord.sender,
-                        responseData.syncedAssetRecord.transactionHash,
-                    );
+                    throw new Error('Unsupported access policy');
                 }
 
                 await this.tripleStoreService.localStoreAsset(
@@ -147,6 +124,41 @@ class GetService extends OperationService {
                     contract,
                     tokenId,
                     keyword,
+                    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                );
+                if (paranetNodesAccessPolicy === 'CURATED' && responseData.privateNquads) {
+                    await this.tripleStoreService.localStoreAsset(
+                        repository,
+                        responseData.syncedAssetRecord.privateAssertionId,
+                        responseData.privateNquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                    );
+                }
+                const privateAssertionId =
+                    paranetNodesAccessPolicy === 'CURATED'
+                        ? responseData.syncedAssetRecord?.privateAssertionId
+                        : null;
+
+                const paranetId = this.paranetService.constructParanetId(
+                    blockchain,
+                    contract,
+                    paranetTokenId,
+                );
+
+                await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
+                await this.repositoryModuleManager.createParanetSyncedAssetRecord(
+                    blockchain,
+                    ual,
+                    paranetUAL,
+                    publicAssertionId,
+                    privateAssertionId,
+                    responseData.syncedAssetRecord?.sender,
+                    responseData.syncedAssetRecord?.transactionHash,
+                    PARANET_SYNC_SOURCES.SYNC,
                 );
             } else if (assetSync) {
                 this.logger.debug(
@@ -161,6 +173,8 @@ class GetService extends OperationService {
                     contract,
                     tokenId,
                     keyword,
+                    LOCAL_INSERT_FOR_ASSET_SYNC_MAX_ATTEMPTS,
+                    LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY,
                 );
             }
         }
@@ -173,21 +187,27 @@ class GetService extends OperationService {
                 this.logger.info(
                     `Unable to find assertion on the network for operation id: ${operationId}`,
                 );
-                await this.markOperationAsCompleted(
-                    operationId,
-                    blockchain,
-                    {
-                        message: 'Unable to find assertion on the network!',
-                    },
-                    this.completedStatuses,
-                );
-                this.logResponsesSummary(completedNumber, failedNumber);
                 if (assetSync) {
                     const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
                     this.logger.debug(
                         `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
                     );
+                    this.markOperationAsFailed(
+                        operationId,
+                        blockchain,
+                        `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                    );
+                } else {
+                    await this.markOperationAsCompleted(
+                        operationId,
+                        blockchain,
+                        {
+                            message: 'Unable to find assertion on the network!',
+                        },
+                        [...this.completedStatuses],
+                    );
                 }
+                this.logResponsesSummary(completedNumber, failedNumber);
             } else {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }

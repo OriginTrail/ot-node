@@ -355,7 +355,7 @@
                         "enabled": true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/release/testnet"
+                            "branch": "v8/release/testnet"
                         }
                     }
                 }
@@ -448,7 +448,8 @@
                         "config": {
                             "hubContractAddress": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692",
                             "rpcEndpoints": ["https://sepolia.base.org"],
-                            "operatorFee": 0
+                            "operatorFee": 0,
+                            "initialAskAmount": 0.1
                         }
                     }
                 }
@@ -491,7 +492,7 @@
                         "package": "./telemetry/implementation/ot-telemetry.js",
                         "config": {
                             "sendTelemetryData": true,
-                            "signalingServerUrl": "https://v8-testnet-signaling.origin-trail.network"
+                            "signalingServerUrl": "https://v8-testnet-signaling.origin-trail.network/signal"
                         }
                     }
                 }
@@ -613,7 +614,7 @@
                         "package": "./blockchain/implementation/base/base-service.js",
 
                         "config": {
-                            "hubContractAddress": "0xaA849CAC4FA86f6b7484503f3c7a314772AED6d4",
+                            "hubContractAddress": "0xAB4A4794Fc1F415C24807B947280aCa8dC492238",
                             "rpcEndpoints": ["https://sepolia.base.org"],
                             "operatorFee": 0
                         }

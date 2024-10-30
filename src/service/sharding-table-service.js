@@ -123,7 +123,14 @@ class ShardingTableService {
         );
     }
 
-    async findNeighbourhood(blockchainId, key, r2, hashFunctionId, proximityScoreFunctionsPairId) {
+    async findNeighbourhood(
+        blockchainId,
+        key,
+        r2,
+        hashFunctionId,
+        proximityScoreFunctionsPairId,
+        filterInactive = false,
+    ) {
         let peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
         peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
         const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
@@ -135,6 +142,7 @@ class ShardingTableService {
             r2,
             hashFunctionId,
             proximityScoreFunctionsPairId,
+            filterInactive,
         );
         return sortedPeers;
     }
@@ -146,9 +154,10 @@ class ShardingTableService {
         count,
         hashFunctionId,
         proximityScoreFunctionsPairId,
+        filterInactive,
     ) {
         const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-        const peersWithDistance = await Promise.all(
+        let peersWithDistance = await Promise.all(
             peers.map(async (peer) => ({
                 ...peer,
                 distance: await this.proximityScoringService.callProximityFunction(
@@ -159,6 +168,13 @@ class ShardingTableService {
                 ),
             })),
         );
+
+        if (filterInactive) {
+            peersWithDistance = peersWithDistance.filter(
+                (node) => node.lastSeen >= node.lastDialed,
+            );
+        }
+
         peersWithDistance.sort((a, b) => {
             if (a.distance.lt(b.distance)) {
                 return -1;
@@ -168,6 +184,7 @@ class ShardingTableService {
             }
             return 0;
         });
+
         return peersWithDistance.slice(0, count);
     }
 

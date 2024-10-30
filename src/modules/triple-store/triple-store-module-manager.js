@@ -5,11 +5,19 @@ class TripleStoreModuleManager extends BaseModuleManager {
         return this.getImplementation().module.initializeParanetRepository(repository);
     }
 
-    async insertAssetAssertionMetadata(implementationName, repository, assetNquads) {
+    async insertAssetAssertionMetadata(
+        implementationName,
+        repository,
+        ual,
+        assetNquads,
+        checkExists = true,
+    ) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAssetAssertionMetadata(
                 repository,
+                ual,
                 assetNquads,
+                checkExists,
             );
         }
     }
@@ -95,21 +103,28 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async insertAssertion(implementationName, repository, assertionId, assertionNquads) {
+    async insertAssertion(
+        implementationName,
+        repository,
+        assertionId,
+        assertionNquads,
+        checkExists = true,
+    ) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.insertAssertion(
                 repository,
                 assertionId,
                 assertionNquads,
+                checkExists,
             );
         }
     }
 
-    async assertionExists(implementationName, repository, uri) {
+    async assertionExists(implementationName, repository, assertionId) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.assertionExists(
                 repository,
-                uri,
+                assertionId,
             );
         }
     }

@@ -196,12 +196,27 @@ class Web3Service {
                 // eslint-disable-next-line no-await-in-loop
                 await provider.getNetwork();
 
-                providers.push({
-                    provider,
-                    priority,
-                    weight: 1,
-                    stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
-                });
+                let isArchiveNode = false;
+                try {
+                    const block = await provider.getBlock(1);
+
+                    if (block) {
+                        isArchiveNode = true;
+                    }
+                } catch (error) {
+                    /* empty */
+                }
+
+                if (isArchiveNode) {
+                    providers.push({
+                        provider,
+                        priority,
+                        weight: 1,
+                        stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
+                    });
+                } else {
+                    this.logger.warn(`${rpcEndpoint} RPC is not an Archive Node, skipping...`);
+                }
 
                 this.logger.debug(
                     `Connected to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
@@ -950,7 +965,9 @@ class Web3Service {
 
         const topics = [];
         for (const filterName in contract.filters) {
-            if (!eventsToFilter.includes(filterName)) continue;
+            if (!eventsToFilter.includes(filterName)) {
+                continue;
+            }
             const filter = contract.filters[filterName]().topics[0];
             topics.push(filter);
         }
@@ -1711,6 +1728,19 @@ class Web3Service {
             this.ParanetsRegistryContract,
             'getCuratedNodes',
             [paranetId],
+            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+        );
+    }
+
+    async getNodeId(identityId) {
+        return this.callContractFunction(this.ProfileStorageContract, 'getNodeId', [identityId]);
+    }
+
+    async isKnowledgeAssetRegistered(paranetId, knowledgeAssetId) {
+        return this.callContractFunction(
+            this.ParanetsRegistryContract,
+            'isKnowledgeAssetRegistered',
+            [paranetId, knowledgeAssetId],
             CONTRACTS.PARANETS_REGISTRY_CONTRACT,
         );
     }

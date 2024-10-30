@@ -96,12 +96,11 @@ class FindNodesCommand extends Command {
             r2,
             hashFunctionId,
             proximityScoreFunctionsPairId,
+            true, // filter inactive nodes
         );
 
-        const availableNodes = closestNodes.filter((node) => node.lastSeen >= node.lastDialed);
-
         const nodesFound = await Promise.all(
-            availableNodes.map(({ peerId }) =>
+            closestNodes.map(({ peerId }) =>
                 this.shardingTableService.findPeerAddressAndProtocols(peerId),
             ),
         );

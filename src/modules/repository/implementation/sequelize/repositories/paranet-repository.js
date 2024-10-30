@@ -30,9 +30,11 @@ class ParanetRepository {
         });
     }
 
-    async updateParanetKaCount(paranetId, blockchainId, kaCount) {
+    async addToParanetKaCount(paranetId, blockchainId, kaCount) {
         return this.model.update(
-            { kaCount },
+            {
+                kaCount: Sequelize.literal(`ka_count + ${kaCount}`),
+            },
             {
                 where: {
                     paranetId,
@@ -60,6 +62,20 @@ class ParanetRepository {
                 blockchainId,
             },
         });
+    }
+
+    async incrementParanetKaCount(paranetId, blockchainId) {
+        return this.model.update(
+            {
+                kaCount: Sequelize.literal(`ka_count + 1`),
+            },
+            {
+                where: {
+                    paranetId,
+                    blockchainId,
+                },
+            },
+        );
     }
 
     async getParanetsBlockchains() {
