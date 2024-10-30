@@ -1,7 +1,7 @@
 #/lib/systemd/system/fuseki.service
 
 [Unit]
-Description=OtFuseki - OriginTrail V6 Stage 1 Beta Node
+Description=OtFuseki - OriginTrail V8 Node
 Documentation=https://github.com/OriginTrail/ot-node
 After=network.target
 

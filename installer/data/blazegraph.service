@@ -1,7 +1,7 @@
 #/lib/systemd/system/blazegraph.service
 
 [Unit]
-Description=OtBlazegraph - OriginTrail V6 Stage 1 Beta Node
+Description=OtBlazegraph - OriginTrail V8 Node
 Documentation=https://github.com/OriginTrail/ot-node
 After=network.target
 
