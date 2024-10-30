@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: DKGv6
-  description: DKG v6 API Collection.
+  title: DKGv8
+  description: DKG V8 API Collection.
   version: 1.0.0
   contact: {}
 servers:

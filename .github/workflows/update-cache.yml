@@ -3,7 +3,7 @@ name: update-cache
 on:
   push:
     branches:
-      - v6/develop
+      - v8/develop
 
 concurrency:
   group: update-cache-${{ github.ref }}
