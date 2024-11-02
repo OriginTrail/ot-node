@@ -231,8 +231,11 @@ export const COMMAND_TX_GAS_INCREASE_FACTORS = {
 };
 
 export const CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS = {
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 1.2,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': 1.2,
+    sendProof: 2,
+    'submitCommit((address,uint256,bytes,uint8,uint16))': 2,
+    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 2,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 2,
+    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': 2,
 };
 
 export const GNOSIS_DEFAULT_GAS_PRICE = {
