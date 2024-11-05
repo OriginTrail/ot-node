@@ -27,6 +27,10 @@ export async function up({ context: { queryInterface } }) {
         name: 'statusIndex',
     });
 
+    await queryInterface.addIndex('commands', ['startedAt'], {
+        name: 'startedAtIndex',
+    });
+
     await queryInterface.addIndex('get', ['operationId'], {
         name: 'operationIdIndex',
     });
@@ -74,6 +78,8 @@ export async function down({ context: { queryInterface } }) {
     await queryInterface.removeIndex('event', 'operationIdIndex');
 
     await queryInterface.removeIndex('commands', 'statusIndex');
+
+    await queryInterface.removeIndex('commands', 'startedAtIndex');
 
     await queryInterface.removeIndex('get', 'operationIdIndex');
 
