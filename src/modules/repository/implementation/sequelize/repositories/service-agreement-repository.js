@@ -339,6 +339,14 @@ class ServiceAgreementRepository {
             },
         });
     }
+
+    async getServiceAgreementsByBlockchainInBatches(blockchainId, batchSize, offset) {
+        return this.model.findAll({
+            where: { blockchainId },
+            limit: batchSize,
+            offset,
+        });
+    }
 }
 
 export default ServiceAgreementRepository;

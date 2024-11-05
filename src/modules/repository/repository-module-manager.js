@@ -560,6 +560,14 @@ class RepositoryModuleManager extends BaseModuleManager {
             blockchainId,
         );
     }
+
+    async getServiceAgreementsByBlockchainInBatches(blockchainId, batchSize, offset) {
+        return this.getRepository('service_agreement').etServiceAgreementsByBlockchainInBatches(
+            blockchainId,
+            batchSize,
+            offset,
+        );
+    }
 }
 
 export default RepositoryModuleManager;
