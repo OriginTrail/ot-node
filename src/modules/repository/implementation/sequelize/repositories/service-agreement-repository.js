@@ -331,6 +331,14 @@ class ServiceAgreementRepository {
             order: [['token_id']],
         });
     }
+
+    async getCountOfServiceAgreementsByBlockchain(blockchainId) {
+        return this.model.count({
+            where: {
+                blockchainId,
+            },
+        });
+    }
 }
 
 export default ServiceAgreementRepository;

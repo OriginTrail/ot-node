@@ -554,6 +554,12 @@ class RepositoryModuleManager extends BaseModuleManager {
     async getParanetsBlockchains() {
         return this.getRepository('paranet').getParanetsBlockchains();
     }
+
+    async getCountOfServiceAgreementsByBlockchain(blockchainId) {
+        return this.getRepository('service_agreement').getCountOfServiceAgreementsByBlockchain(
+            blockchainId,
+        );
+    }
 }
 
 export default RepositoryModuleManager;
