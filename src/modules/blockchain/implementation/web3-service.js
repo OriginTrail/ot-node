@@ -607,8 +607,8 @@ class Web3Service {
         contractInstance,
         functionName,
         args,
-        blockTag = ETHERS_BLOCK_TAGS.LATEST,
         contractName = null,
+        blockTag = ETHERS_BLOCK_TAGS.LATEST,
     ) {
         const maxNumberOfRetries = 3;
         const retryDelayInSec = 12;
@@ -1096,6 +1096,7 @@ class Web3Service {
             assetStorageContractInstance,
             'lastTokenId',
             [],
+            null,
             blockTag,
         );
         return lastTokenId;
@@ -1115,6 +1116,7 @@ class Web3Service {
             assetStorageContractInstance,
             'getAssertionIds',
             [tokenId],
+            null,
             blockTag,
         );
     }
@@ -1141,6 +1143,7 @@ class Web3Service {
             this.ServiceAgreementStorageProxyContract,
             'getAgreementData',
             [agreementId],
+            null,
             blockTag,
         );
         if (!result) {
