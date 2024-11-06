@@ -2,7 +2,7 @@ import BaseMigration from './base-migration.js';
 import { NODE_ENVIRONMENTS, CONTENT_ASSET_HASH_FUNCTION_ID } from '../constants/constants.js';
 
 const NUMBER_OF_ASSETS_FROM_DB = 1_000_000;
-const BATCH_FOR_RPC_CALLS = 250;
+const BATCH_FOR_RPC_CALLS = 25;
 
 class ServiceAgreementFixMigration extends BaseMigration {
     constructor(
@@ -50,11 +50,7 @@ class ServiceAgreementFixMigration extends BaseMigration {
                     NUMBER_OF_ASSETS_FROM_DB,
                     i * NUMBER_OF_ASSETS_FROM_DB,
                 );
-            for (
-                let j = 0;
-                j < serviceAgreementBatch.length;
-                j += BATCH_FOR_RPC_CALLS
-            ) {
+            for (let j = 0; j < serviceAgreementBatch.length; j += BATCH_FOR_RPC_CALLS) {
                 const currentBatch = serviceAgreementBatch.slice(j, j + BATCH_FOR_RPC_CALLS);
 
                 const batchPromises = currentBatch.map((serviceAgreement) =>
@@ -81,24 +77,32 @@ class ServiceAgreementFixMigration extends BaseMigration {
     }
 
     async compareDataWithOnChainData(serviceAgreement) {
-        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            serviceAgreement.blockchainId,
-            serviceAgreement.assetStorageContractAddress,
-            serviceAgreement.tokenId,
-        );
-        const firstAssertionId = assertionIds[0];
+        let assertionId;
+        try {
+            assertionId = await this.blockchainModuleManager.getAssertionIdByIndex(
+                serviceAgreement.blockchainId,
+                serviceAgreement.assetStorageContractAddress,
+                serviceAgreement.tokenId,
+                0,
+            );
+        } catch (error) {
+            this.logger.warn(
+                `Unable to fetch assertionIdfor token id: ${serviceAgreement.tokenId}`,
+            );
+            return null;
+        }
 
-        if (serviceAgreement.asssertionId !== firstAssertionId) {
+        if (serviceAgreement.asssertionId !== assertionId) {
             const serviceAgreementId = this.serviceAgreementService.generateId(
                 serviceAgreement.blockchainId,
                 serviceAgreement.assetStorageContractAddress,
                 serviceAgreement.tokenId,
-                firstAssertionId,
+                assertionId,
                 CONTENT_ASSET_HASH_FUNCTION_ID, // 1 - sha256
             );
             return {
                 tokenId: serviceAgreement.tokenId,
-                assertionId: firstAssertionId,
+                assertionId,
                 serviceAgreementId,
             };
         }
