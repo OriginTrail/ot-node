@@ -113,6 +113,12 @@ class OTNode {
             this.logger,
             this.config,
         );
+
+        MigrationExecutor.executeServiceAgreementFixMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
     }
 
     checkNodeVersion() {

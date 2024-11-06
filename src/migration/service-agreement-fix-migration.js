@@ -2,9 +2,9 @@ import BaseMigration from './base-migration.js';
 import { NODE_ENVIRONMENTS, CONTENT_ASSET_HASH_FUNCTION_ID } from '../constants/constants.js';
 
 const NUMBER_OF_ASSETS_FROM_DB = 1_000_000;
-const BATCH_FOR_RPC_CALLS = 500;
+const BATCH_FOR_RPC_CALLS = 250;
 
-class ServiceAgreementPruningMigration extends BaseMigration {
+class ServiceAgreementFixMigration extends BaseMigration {
     constructor(
         migrationName,
         logger,
@@ -30,28 +30,30 @@ class ServiceAgreementPruningMigration extends BaseMigration {
                 break;
             case NODE_ENVIRONMENTS.MAINENET:
             default:
-                blockchainId = 'otp:2043';
+                blockchainId = 'hardhat2:31337';
         }
 
         // Get count of service agreement for neuroweb
-        const serviceAgreementCount = await this.getCountOfServiceAgreementsByBlockchain(
-            blockchainId,
-        );
+        const serviceAgreementCount =
+            await this.repositoryModuleManager.getCountOfServiceAgreementsByBlockchain(
+                blockchainId,
+            );
 
         //    In batches
         const numberOfIteration = Math.ceil(serviceAgreementCount / NUMBER_OF_ASSETS_FROM_DB);
         for (let i = 0; i < numberOfIteration; i += 1) {
-            const serviceAgreementToBeUpdated = [];
+            let serviceAgreementToBeUpdated = [];
             const serviceAgreementBatch =
-                this.repositoryModuleManager.getServiceAgreementsByBlockchainInBatches(
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.getServiceAgreementsByBlockchainInBatches(
                     blockchainId,
                     NUMBER_OF_ASSETS_FROM_DB,
                     i * NUMBER_OF_ASSETS_FROM_DB,
                 );
             for (
                 let j = 0;
-                j < NUMBER_OF_ASSETS_FROM_DB || j < serviceAgreementBatch.length;
-                i += BATCH_FOR_RPC_CALLS
+                j < NUMBER_OF_ASSETS_FROM_DB && j < serviceAgreementBatch.length;
+                j += BATCH_FOR_RPC_CALLS
             ) {
                 const currentBatch = serviceAgreementBatch.slice(j, j + BATCH_FOR_RPC_CALLS);
 
@@ -64,16 +66,17 @@ class ServiceAgreementPruningMigration extends BaseMigration {
                 const mismatches = results.filter((result) => result !== null);
 
                 if (mismatches.length > 0) {
-                    this.logger.log(`Mismatches found: ${mismatches.length}`);
-                    serviceAgreementToBeUpdated.concat(mismatches);
+                    this.logger.trace(`Mismatches found: ${mismatches.length}`);
+                    serviceAgreementToBeUpdated = serviceAgreementToBeUpdated.concat(mismatches);
                 }
             }
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.repositoryModuleManager.updateAssertionIdServiceAgreement(
-                blockchainId,
-                serviceAgreementToBeUpdated,
-            );
+            if (serviceAgreementToBeUpdated.length > 0) {
+                // eslint-disable-next-line no-await-in-loop
+                await this.repositoryModuleManager.updateAssertionIdServiceAgreement(
+                    blockchainId,
+                    serviceAgreementToBeUpdated,
+                );
+            }
         }
     }
 
@@ -95,7 +98,7 @@ class ServiceAgreementPruningMigration extends BaseMigration {
             );
             return {
                 tokenId: serviceAgreement.tokenId,
-                asssertionId: firstAssertionId,
+                assertionId: firstAssertionId,
                 serviceAgreementId,
             };
         }
@@ -103,4 +106,4 @@ class ServiceAgreementPruningMigration extends BaseMigration {
     }
 }
 
-export default ServiceAgreementPruningMigration;
+export default ServiceAgreementFixMigration;

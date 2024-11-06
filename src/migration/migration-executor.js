@@ -21,6 +21,7 @@ import GetOldServiceAgreementsMigration from './get-old-service-agreements-migra
 import ServiceAgreementPruningMigration from './service-agreement-pruning-migration.js';
 import RemoveDuplicateServiceAgreementMigration from './remove-duplicate-service-agreement-migration.js';
 import DevnetNeuroPruningMigration from './devnet-neuro-pruning-migration.js';
+import ServiceAgreementFixMigration from './service-agreement-fix-migration.js';
 
 class MigrationExecutor {
     static async executePullShardingTableMigration(container, logger, config) {
@@ -524,6 +525,36 @@ class MigrationExecutor {
             } catch (error) {
                 logger.error(
                     `Unable to execute devnet neuro pruning migration. Error: ${error.message}`,
+                );
+            }
+        }
+    }
+
+    static async executeServiceAgreementFixMigration(container, logger, config) {
+        if (
+            // process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+        )
+            return;
+
+        const repositoryModuleManager = container.resolve('repositoryModuleManager');
+        const blockchainModuleManager = container.resolve('blockchainModuleManager');
+        const serviceAgreementService = container.resolve('serviceAgreementService');
+
+        const migration = new ServiceAgreementFixMigration(
+            'serviceAgreementFixMigration',
+            logger,
+            config,
+            repositoryModuleManager,
+            blockchainModuleManager,
+            serviceAgreementService,
+        );
+        if (!(await migration.migrationAlreadyExecuted())) {
+            try {
+                await migration.migrate();
+            } catch (error) {
+                logger.error(
+                    `Unable to execute service agreement fix migration. Error: ${error.message}`,
                 );
             }
         }

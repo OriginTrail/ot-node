@@ -352,7 +352,6 @@ class ServiceAgreementRepository {
         const tokenIds = serviceAgreementsToBeUpdated.map(
             (serviceAgreement) => serviceAgreement.tokenId,
         );
-
         const assertionIdCase = serviceAgreementsToBeUpdated
             .map(({ tokenId, assertionId }) => `WHEN token_id = ${tokenId} THEN '${assertionId}'`)
             .join(' ');
@@ -368,7 +367,7 @@ class ServiceAgreementRepository {
             UPDATE service_agreement
             SET
                 assertion_id = CASE ${assertionIdCase} ELSE assertion_id END,
-                service_agreement_id = CASE ${serviceAgreementIdCase} ELSE service_agreement_id END
+                agreement_id = CASE ${serviceAgreementIdCase} ELSE agreement_id END
             WHERE blockchain_id = :blockchainId AND token_id IN (:tokenIds);
         `;
 
