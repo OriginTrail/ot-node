@@ -347,6 +347,36 @@ class ServiceAgreementRepository {
             offset,
         });
     }
+
+    async updateAssertionIdServiceAgreement(blockchainId, serviceAgreementsToBeUpdated) {
+        const tokenIds = serviceAgreementsToBeUpdated.map(
+            (serviceAgreement) => serviceAgreement.tokenId,
+        );
+
+        const assertionIdCase = serviceAgreementsToBeUpdated
+            .map(({ tokenId, assertionId }) => `WHEN token_id = ${tokenId} THEN '${assertionId}'`)
+            .join(' ');
+
+        const serviceAgreementIdCase = serviceAgreementsToBeUpdated
+            .map(
+                ({ tokenId, serviceAgreementId }) =>
+                    `WHEN token_id = ${tokenId} THEN '${serviceAgreementId}'`,
+            )
+            .join(' ');
+
+        const query = `
+            UPDATE service_agreement
+            SET
+                assertion_id = CASE ${assertionIdCase} ELSE assertion_id END,
+                service_agreement_id = CASE ${serviceAgreementIdCase} ELSE service_agreement_id END
+            WHERE blockchain_id = :blockchainId AND token_id IN (:tokenIds);
+        `;
+
+        await this.sequelize.query(query, {
+            replacements: { blockchainId, tokenIds },
+            type: Sequelize.QueryTypes.UPDATE,
+        });
+    }
 }
 
 export default ServiceAgreementRepository;

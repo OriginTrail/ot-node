@@ -562,10 +562,17 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async getServiceAgreementsByBlockchainInBatches(blockchainId, batchSize, offset) {
-        return this.getRepository('service_agreement').etServiceAgreementsByBlockchainInBatches(
+        return this.getRepository('service_agreement').getServiceAgreementsByBlockchainInBatches(
             blockchainId,
             batchSize,
             offset,
+        );
+    }
+
+    async updateAssertionIdServiceAgreement(blockchainId, serviceAgreementsToBeUpdated) {
+        return this.getRepository('service_agreement').updateAssertionIdServiceAgreement(
+            blockchainId,
+            serviceAgreementsToBeUpdated,
         );
     }
 }
