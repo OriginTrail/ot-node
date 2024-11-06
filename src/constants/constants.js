@@ -41,6 +41,14 @@ export const COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS = 5;
 
 export const TRANSACTION_POLLING_TIMEOUT_MILLIS = 300 * 1000;
 
+export const ETHERS_BLOCK_TAGS = {
+    EARLIEST: 'earliest',
+    FINALIZED: 'finalized',
+    LATEST: 'latest',
+    PENDING: 'pending',
+    SAFE: 'safe',
+};
+
 export const SOLIDITY_ERROR_STRING_PREFIX = '0x08c379a0';
 
 export const SOLIDITY_PANIC_CODE_PREFIX = '0x4e487b71';
@@ -565,8 +573,6 @@ export const GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE = 50;
 export const GET_ASSERTION_IDS_MAX_RETRY_COUNT = 5;
 
 export const GET_ASSERTION_IDS_RETRY_DELAY_IN_SECONDS = 2;
-
-export const GET_LATEST_SERVICE_AGREEMENT_EXCLUDE_LATEST_TOKEN_ID = 1;
 
 /**
  * @constant {object} HTTP_API_ROUTES -

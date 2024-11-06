@@ -155,8 +155,12 @@ class OtParachainService extends Web3Service {
         if (!isRpcError) throw error;
     }
 
-    async getLatestTokenId(assetContractAddress) {
-        return this.provider.getStorageAt(assetContractAddress.toString().toLowerCase(), 7);
+    async getLatestTokenId(assetContractAddress, blockTag) {
+        return this.provider.getStorageAt(
+            assetContractAddress.toString().toLowerCase(),
+            7,
+            blockTag,
+        );
     }
 
     async restartParachainProvider() {
