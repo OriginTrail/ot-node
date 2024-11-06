@@ -3,11 +3,11 @@ import { setTimeout as sleep } from 'timers/promises';
 import Command from '../../command.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
+    ETHERS_BLOCK_TAGS,
     EXPECTED_TRANSACTION_ERRORS,
     GET_ASSERTION_IDS_MAX_RETRY_COUNT,
     GET_ASSERTION_IDS_RETRY_DELAY_IN_SECONDS,
     GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE,
-    GET_LATEST_SERVICE_AGREEMENT_EXCLUDE_LATEST_TOKEN_ID,
     GET_LATEST_SERVICE_AGREEMENT_FREQUENCY_MILLS,
     SERVICE_AGREEMENT_SOURCES,
 } from '../../../constants/constants.js';
@@ -60,9 +60,13 @@ class BlockchainGetLatestServiceAgreement extends Command {
         );
         let latestBlockchainTokenId;
         try {
-            latestBlockchainTokenId =
-                Number(await this.blockchainModuleManager.getLatestTokenId(blockchain, contract)) -
-                GET_LATEST_SERVICE_AGREEMENT_EXCLUDE_LATEST_TOKEN_ID;
+            latestBlockchainTokenId = Number(
+                await this.blockchainModuleManager.getLatestTokenId(
+                    blockchain,
+                    contract,
+                    ETHERS_BLOCK_TAGS.FINALIZED,
+                ),
+            );
         } catch (error) {
             if (error.message.includes(EXPECTED_TRANSACTION_ERRORS.NO_MINTED_ASSETS)) {
                 this.logger.info(
@@ -81,7 +85,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
             (await this.repositoryModuleManager.getLatestServiceAgreementTokenId(blockchain)) ??
             latestBlockchainTokenId;
 
-        if (latestBlockchainTokenId < latestDbTokenId) {
+        if (latestBlockchainTokenId <= latestDbTokenId) {
             this.logger.debug(
                 `Get latest service agreement: No new agreements found on blockchain: ${blockchain}.`,
             );
@@ -89,13 +93,6 @@ class BlockchainGetLatestServiceAgreement extends Command {
                 contract,
                 lastProcessedTokenId: latestDbTokenId,
             };
-        }
-
-        if (latestBlockchainTokenId < latestDbTokenId) {
-            this.logger.debug(
-                `Get latest service agreement: No new agreements found on blockchain: ${blockchain}.`,
-            );
-            return;
         }
 
         this.logger.debug(
@@ -121,17 +118,17 @@ class BlockchainGetLatestServiceAgreement extends Command {
                 await this.repositoryModuleManager.bulkCreateServiceAgreementRecords(
                     missingAgreements.filter((agreement) => agreement != null),
                 );
+                tokenIdDifference -= getAgreementDataPromise.length;
                 getAgreementDataPromise = [];
-                tokenIdDifference -= GET_LATEST_SERVICE_AGREEMENT_BATCH_SIZE;
             }
         }
-        if (latestBlockchainTokenId - latestDbTokenId > 0) {
-            this.logger.debug(
-                `Get latest service agreement: Successfully fetched ${
-                    latestBlockchainTokenId - latestDbTokenId
-                } on blockchain: ${blockchain}`,
-            );
-        }
+
+        this.logger.debug(
+            `Get latest service agreement: Successfully fetched ${
+                latestBlockchainTokenId - latestDbTokenId
+            } on blockchain: ${blockchain}`,
+        );
+
         return {
             contract,
             lastProcessedTokenId: latestBlockchainTokenId,
@@ -164,6 +161,8 @@ class BlockchainGetLatestServiceAgreement extends Command {
                     blockchain,
                     contract,
                     tokenId,
+                    0,
+                    ETHERS_BLOCK_TAGS.FINALIZED,
                 );
                 retryCount += 1;
                 await sleep(GET_ASSERTION_IDS_RETRY_DELAY_IN_SECONDS * 1000);
@@ -185,6 +184,7 @@ class BlockchainGetLatestServiceAgreement extends Command {
             const agreementData = await this.blockchainModuleManager.getAgreementData(
                 blockchain,
                 agreementId,
+                ETHERS_BLOCK_TAGS.FINALIZED,
             );
 
             if (!agreementData) {

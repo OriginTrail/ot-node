@@ -46,6 +46,13 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             tokenId,
         );
         const stateIndex = assertionIds.length - 1;
+
+        if (assertionId !== assertionIds[stateIndex]) {
+            throw new Error(
+                `Provided assertionId: ${assertionId} doesn't match latest assertion id from the blockchain: ${assertionIds[stateIndex]} for KA with blockchain: ${blockchain}; contract: ${contract}, token id: ${tokenId}.`,
+            );
+        }
+
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         await this.validationService.validateAssertion(assertionId, blockchain, assertion);
 

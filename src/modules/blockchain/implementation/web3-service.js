@@ -6,6 +6,7 @@ import { setTimeout as sleep } from 'timers/promises';
 import { createRequire } from 'module';
 
 import {
+    ETHERS_BLOCK_TAGS,
     SOLIDITY_ERROR_STRING_PREFIX,
     SOLIDITY_PANIC_CODE_PREFIX,
     SOLIDITY_PANIC_REASONS,
@@ -602,7 +603,13 @@ class Web3Service {
         }
     }
 
-    async callContractFunction(contractInstance, functionName, args, contractName = null) {
+    async callContractFunction(
+        contractInstance,
+        functionName,
+        args,
+        contractName = null,
+        blockTag = ETHERS_BLOCK_TAGS.LATEST,
+    ) {
         const maxNumberOfRetries = 3;
         const retryDelayInSec = 12;
         let retryCount = 0;
@@ -610,7 +617,7 @@ class Web3Service {
         try {
             if (!result) {
                 while (retryCount < maxNumberOfRetries) {
-                    result = await contractInstance[functionName](...args);
+                    result = await contractInstance[functionName](...args, { blockTag });
                     const resultIsValid = Web3ServiceValidator.validateResult(
                         functionName,
                         contractName,
@@ -1079,7 +1086,7 @@ class Web3Service {
         ]);
     }
 
-    async getLatestTokenId(assetContractAddress) {
+    async getLatestTokenId(assetContractAddress, blockTag) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
         if (!assetStorageContractInstance)
@@ -1089,6 +1096,8 @@ class Web3Service {
             assetStorageContractInstance,
             'lastTokenId',
             [],
+            null,
+            blockTag,
         );
         return lastTokenId;
     }
@@ -1097,15 +1106,19 @@ class Web3Service {
         return Object.keys(this.assetStorageContracts);
     }
 
-    async getAssertionIds(assetContractAddress, tokenId) {
+    async getAssertionIds(assetContractAddress, tokenId, blockTag) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
         if (!assetStorageContractInstance)
             throw new Error('Unknown asset storage contract address');
 
-        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
-            tokenId,
-        ]);
+        return this.callContractFunction(
+            assetStorageContractInstance,
+            'getAssertionIds',
+            [tokenId],
+            null,
+            blockTag,
+        );
     }
 
     async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
@@ -1125,11 +1138,13 @@ class Web3Service {
         );
     }
 
-    async getAgreementData(agreementId) {
+    async getAgreementData(agreementId, blockTag) {
         const result = await this.callContractFunction(
             this.ServiceAgreementStorageProxyContract,
             'getAgreementData',
             [agreementId],
+            null,
+            blockTag,
         );
         if (!result) {
             return null;

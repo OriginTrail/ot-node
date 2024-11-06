@@ -1,3 +1,4 @@
+import { ETHERS_BLOCK_TAGS } from '../../constants/constants.js';
 import BaseModuleManager from '../base-module-manager.js';
 
 class BlockchainModuleManager extends BaseModuleManager {
@@ -114,9 +115,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getLatestTokenId(blockchain, assetContractAddress) {
+    async getLatestTokenId(blockchain, assetContractAddress, blockTag = ETHERS_BLOCK_TAGS.LATEST) {
         return this.callImplementationFunction(blockchain, 'getLatestTokenId', [
             assetContractAddress,
+            blockTag,
         ]);
     }
 
@@ -124,10 +126,16 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getAssetStorageContractAddresses');
     }
 
-    async getAssertionIds(blockchain, assetContractAddress, tokenId) {
+    async getAssertionIds(
+        blockchain,
+        assetContractAddress,
+        tokenId,
+        blockTag = ETHERS_BLOCK_TAGS.LATEST,
+    ) {
         return this.callImplementationFunction(blockchain, 'getAssertionIds', [
             assetContractAddress,
             tokenId,
+            blockTag,
         ]);
     }
 
@@ -241,8 +249,11 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getAgreementData(blockchain, agreementId) {
-        return this.callImplementationFunction(blockchain, 'getAgreementData', [agreementId]);
+    async getAgreementData(blockchain, agreementId, blockTag = ETHERS_BLOCK_TAGS.LATEST) {
+        return this.callImplementationFunction(blockchain, 'getAgreementData', [
+            agreementId,
+            blockTag,
+        ]);
     }
 
     async getAssertionSize(blockchain, assertionid) {
