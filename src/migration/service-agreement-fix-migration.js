@@ -30,7 +30,7 @@ class ServiceAgreementFixMigration extends BaseMigration {
                 break;
             case NODE_ENVIRONMENTS.MAINENET:
             default:
-                blockchainId = 'hardhat2:31337';
+                blockchainId = 'otp:2043';
         }
 
         // Get count of service agreement for neuroweb

@@ -532,7 +532,7 @@ class MigrationExecutor {
 
     static async executeServiceAgreementFixMigration(container, logger, config) {
         if (
-            // process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
             process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
         )
             return;
