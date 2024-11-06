@@ -52,7 +52,7 @@ class ServiceAgreementFixMigration extends BaseMigration {
                 );
             for (
                 let j = 0;
-                j < NUMBER_OF_ASSETS_FROM_DB && j < serviceAgreementBatch.length;
+                j < serviceAgreementBatch.length;
                 j += BATCH_FOR_RPC_CALLS
             ) {
                 const currentBatch = serviceAgreementBatch.slice(j, j + BATCH_FOR_RPC_CALLS);
