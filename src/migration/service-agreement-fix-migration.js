@@ -95,7 +95,7 @@ class ServiceAgreementPruningMigration extends BaseMigration {
             );
             return {
                 tokenId: serviceAgreement.tokenId,
-                x: firstAssertionId,
+                asssertionId: firstAssertionId,
                 serviceAgreementId,
             };
         }
