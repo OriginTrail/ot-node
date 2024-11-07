@@ -64,7 +64,9 @@ class ParanetSyncCommand extends Command {
                 PARANET_SYNC_RETRY_DELAY_MS,
             );
 
-        this.logger.info(`Paranet sync: Total amount of missed assets: ${totalMissedAssetsCount}`);
+        this.logger.info(
+            `Paranet sync: Paranet: ${paranetUAL} (${paranetId}) Total count of Paranet KAs in the contract: ${contractKaCount}; Synced KAs count: ${syncedAssetsCount}; Local Stored KAs count: ${localStoredAssetsCount}; Total count of missed KAs: ${totalMissedAssetsCount}`,
+        );
 
         // First, attempt to sync missed KAs if any exist
         if (missedAssetsCount > 0) {
