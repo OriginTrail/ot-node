@@ -6,7 +6,7 @@ import {
     PARANET_SYNC_FREQUENCY_MILLS,
     OPERATION_ID_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
-    SIMPLE_ASSET_SYNC_PARAMETERS,
+    PARANET_SYNC_PARAMETERS,
     PARANET_SYNC_KA_COUNT,
     PARANET_SYNC_RETRIES_LIMIT,
     PARANET_SYNC_RETRY_DELAY_MS,
@@ -255,16 +255,16 @@ class ParanetSyncCommand extends Command {
             let attempt = 0;
             let getResult;
             do {
-                await setTimeout(SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
+                await setTimeout(PARANET_SYNC_PARAMETERS.GET_RESULT_POLLING_INTERVAL_MILLIS);
                 getResult = await this.operationIdService.getOperationIdRecord(getOperationId);
                 attempt += 1;
             } while (
-                attempt < SIMPLE_ASSET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
+                attempt < PARANET_SYNC_PARAMETERS.GET_RESULT_POLLING_MAX_ATTEMPTS &&
                 getResult?.status !== OPERATION_ID_STATUS.FAILED &&
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
 
-            if (!getResult || getResult?.status === OPERATION_ID_STATUS.FAILED) {
+            if (getResult?.status !== OPERATION_ID_STATUS.COMPLETED) {
                 this.logger.warn(
                     `Paranet sync: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, GET result: ${JSON.stringify(
                         getResult,
@@ -282,12 +282,12 @@ class ParanetSyncCommand extends Command {
             this.logger.warn(
                 `Paranet sync: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, error: ${error}`,
             );
+
             await this.repositoryModuleManager.createMissedParanetAssetRecord({
                 blockchainId: blockchain,
                 ual,
                 paranetUal: paranetUAL,
             });
-
             return false;
         }
 
