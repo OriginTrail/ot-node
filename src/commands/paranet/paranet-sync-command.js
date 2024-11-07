@@ -13,6 +13,9 @@ import {
     OPERATION_STATUS,
     PARANET_NODES_ACCESS_POLICIES,
     PARANET_SYNC_SOURCES,
+    TRIPLE_STORE_REPOSITORIES,
+    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
 } from '../../constants/constants.js';
 
 class ParanetSyncCommand extends Command {
@@ -165,11 +168,9 @@ class ParanetSyncCommand extends Command {
         assertionIds,
         stateIndex,
         paranetId,
-        paranetTokenId,
-        latestAsset,
+        latestState,
         paranetUAL,
         paranetNodesAccessPolicy,
-        paranetMetadata,
     ) {
         const assertionId = assertionIds[stateIndex];
 
@@ -210,12 +211,6 @@ class ParanetSyncCommand extends Command {
                         state: assertionId,
                         hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
                         assertionId,
-                        assetSync: true,
-                        stateIndex,
-                        paranetSync: true,
-                        paranetTokenId,
-                        paranetLatestAsset: latestAsset,
-                        paranetMetadata,
                     },
                     transactional: false,
                 });
@@ -233,14 +228,6 @@ class ParanetSyncCommand extends Command {
                         state: assertionId,
                         hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
                         assertionId,
-                        assetSync: true,
-                        stateIndex,
-                        paranetSync: true,
-                        paranetTokenId,
-                        paranetLatestAsset: latestAsset,
-                        paranetUAL,
-                        paranetId,
-                        paranetMetadata,
                     },
                     transactional: false,
                 });
@@ -264,7 +251,71 @@ class ParanetSyncCommand extends Command {
                 getResult?.status !== OPERATION_ID_STATUS.COMPLETED
             );
 
-            if (getResult?.status !== OPERATION_ID_STATUS.COMPLETED) {
+            if (getResult?.status === OPERATION_ID_STATUS.COMPLETED) {
+                const data = await this.operationIdService.getCachedOperationIdData(getOperationId);
+
+                const keyword = await this.ualService.calculateLocationKeyword(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
+
+                this.logger.debug(
+                    `Paranet sync: ${data.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                );
+
+                const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+
+                let repository;
+                if (latestState) {
+                    repository = paranetRepository;
+                } else if (paranetNodesAccessPolicy === 'OPEN') {
+                    repository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
+                } else if (paranetNodesAccessPolicy === 'CURATED') {
+                    repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
+                } else {
+                    throw new Error('Unsupported access policy');
+                }
+
+                await this.tripleStoreService.localStoreAsset(
+                    repository,
+                    assertionId,
+                    data.nquads,
+                    blockchain,
+                    contract,
+                    tokenId,
+                    keyword,
+                    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                );
+                if (paranetNodesAccessPolicy === 'CURATED' && data.privateNquads) {
+                    await this.tripleStoreService.localStoreAsset(
+                        repository,
+                        data.syncedAssetRecord.privateAssertionId,
+                        data.privateNquads,
+                        blockchain,
+                        contract,
+                        tokenId,
+                        keyword,
+                    );
+                }
+                const privateAssertionId =
+                    paranetNodesAccessPolicy === 'CURATED'
+                        ? data.syncedAssetRecord?.privateAssertionId
+                        : null;
+
+                await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
+                await this.repositoryModuleManager.createParanetSyncedAssetRecord(
+                    blockchain,
+                    ual,
+                    paranetUAL,
+                    assertionId,
+                    privateAssertionId,
+                    data.syncedAssetRecord?.sender,
+                    data.syncedAssetRecord?.transactionHash,
+                    PARANET_SYNC_SOURCES.SYNC,
+                );
+            } else {
                 this.logger.warn(
                     `Paranet sync: Unable to sync tokenId: ${tokenId}, for contract: ${contract} state index: ${stateIndex} blockchain: ${blockchain}, GET result: ${JSON.stringify(
                         getResult,
@@ -290,8 +341,6 @@ class ParanetSyncCommand extends Command {
             });
             return false;
         }
-
-        return true;
     }
 
     async syncAsset(
@@ -301,7 +350,6 @@ class ParanetSyncCommand extends Command {
         tokenId,
         paranetUAL,
         paranetId,
-        paranetMetadata,
         paranetNodesAccessPolicy,
         operationId,
         removeMissingAssetRecord = false,
@@ -316,7 +364,6 @@ class ParanetSyncCommand extends Command {
                 contract,
                 tokenId,
             );
-            const { tokenId: paranetTokenId } = this.ualService.resolveUAL(paranetUAL);
             let isSuccessful = true;
             for (let stateIndex = 0; stateIndex < assertionIds.length; stateIndex += 1) {
                 isSuccessful =
@@ -329,11 +376,9 @@ class ParanetSyncCommand extends Command {
                         assertionIds,
                         stateIndex,
                         paranetId,
-                        paranetTokenId,
                         stateIndex === assertionIds.length - 1,
                         paranetUAL,
                         paranetNodesAccessPolicy,
-                        paranetMetadata,
                     ));
             }
 
@@ -392,7 +437,6 @@ class ParanetSyncCommand extends Command {
                     knowledgeAssetTokenId,
                     paranetUAL,
                     paranetId,
-                    paranetMetadata,
                     paranetNodesAccessPolicy,
                     operationId,
                     true, // removeMissingAssetRecord
@@ -488,7 +532,6 @@ class ParanetSyncCommand extends Command {
                             syncKATokenId,
                             paranetUAL,
                             paranetId,
-                            paranetMetadata,
                             paranetNodesAccessPolicy,
                             operationId,
                             false, // removeMissingAssetRecord
