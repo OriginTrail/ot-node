@@ -43,7 +43,11 @@ class PublishService extends OperationService {
         );
 
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
-        const numberOfResponses = completedNumber + failedNumber;
+
+        const totalResponses = completedNumber + failedNumber;
+        const isAllNodesResponded = numberOfFoundNodes === totalResponses;
+        const isBatchCompleted = totalResponses % batchSize === 0;
+
         this.logger.debug(
             `Processing ${
                 this.operationName
@@ -52,7 +56,7 @@ class PublishService extends OperationService {
                 batchSize,
             )} number of leftover nodes: ${
                 leftoverNodes.length
-            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${minAckResponses}`,
+            }, number of responses: ${totalResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${minAckResponses}`,
         );
         if (responseData.errorMessage) {
             this.logger.trace(
@@ -64,41 +68,28 @@ class PublishService extends OperationService {
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
             completedNumber === minAckResponses
         ) {
-            let allCompleted = true;
-            for (const key in keywordsStatuses) {
-                if (keywordsStatuses[key].completedNumber < minAckResponses) {
-                    allCompleted = false;
-                    break;
-                }
-            }
-            if (allCompleted) {
-                await this.markOperationAsCompleted(
-                    operationId,
-                    blockchain,
-                    null,
-                    this.completedStatuses,
-                );
-                this.logResponsesSummary(completedNumber, failedNumber);
-                this.logger.info(
-                    `${this.operationName} with operation id: ${operationId} with status: ${
-                        this.completedStatuses[this.completedStatuses.length - 1]
-                    }`,
-                );
-            }
-        } else if (
-            completedNumber < minAckResponses &&
-            (numberOfFoundNodes === numberOfResponses || numberOfResponses % batchSize === 0)
-        ) {
-            if (leftoverNodes.length === 0) {
-                await this.markOperationAsFailed(
+            await this.markOperationAsCompleted(
+                operationId,
+                blockchain,
+                null,
+                this.completedStatuses,
+            );
+            this.logResponsesSummary(completedNumber, failedNumber);
+        } else if (completedNumber < minAckResponses && (isAllNodesResponded || isBatchCompleted)) {
+            const potentialCompletedNumber = completedNumber + leftoverNodes.length;
+
+            // Still possible to meet minAckResponses, schedule leftover nodes
+            if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
+                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
+            } else {
+                // Not enough potential responses to meet minAckResponses, or no leftover nodes
+                this.markOperationAsFailed(
                     operationId,
                     blockchain,
                     'Not replicated to enough nodes!',
                     this.errorType,
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
-            } else {
-                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
         }
     }
