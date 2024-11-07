@@ -9,6 +9,7 @@ import {
     TRIPLE_STORE_REPOSITORIES,
     SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS,
     SERVICE_AGREEMENT_SOURCES,
+    CONTENT_ASSET_HASH_FUNCTION_ID,
 } from '../../../../constants/constants.js';
 
 class BlockchainEpochCheckCommand extends Command {
@@ -24,6 +25,7 @@ class BlockchainEpochCheckCommand extends Command {
         this.proximityScoringService = ctx.proximityScoringService;
         this.hashingService = ctx.hashingService;
         this.tripleStoreService = ctx.tripleStoreService;
+        this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.COMMIT_PROOF.BLOCKCHAIN_EPOCH_CHECK_ERROR;
     }
@@ -186,6 +188,37 @@ class BlockchainEpochCheckCommand extends Command {
                     serviceAgreement.scoreFunctionId = blockchainAgreementData.scoreFunctionId;
                     serviceAgreement.proofWindowOffsetPerc =
                         blockchainAgreementData.proofWindowOffsetPerc;
+                }
+
+                const assertionId = await this.blockchainModuleManager.getAssertionIdByIndex(
+                    serviceAgreement.blockchainId,
+                    serviceAgreement.assetStorageContractAddress,
+                    serviceAgreement.tokenId,
+                    0,
+                );
+
+                const newServiceAgreementId = this.serviceAgreementService.generateId(
+                    serviceAgreement.blockchainId,
+                    serviceAgreement.assetStorageContractAddress,
+                    serviceAgreement.tokenId,
+                    assertionId,
+                    CONTENT_ASSET_HASH_FUNCTION_ID, // 1 - sha256
+                );
+
+                if (serviceAgreement.agreementId !== newServiceAgreementId) {
+                    const newKeyword = this.blockchainModuleManager.encodePacked(
+                        serviceAgreement.blockchainId,
+                        ['address', 'bytes32'],
+                        [serviceAgreement.assetStorageContractAddress, assertionId],
+                    );
+
+                    await this.updateServiceAgreementForTokenId(
+                        serviceAgreement.tokenId,
+                        newServiceAgreementId,
+                        newKeyword,
+                        assertionId,
+                        serviceAgreement.stateIndex,
+                    );
                 }
 
                 const neighbourhood = await this.shardingTableService.findNeighbourhood(
@@ -359,6 +392,8 @@ class BlockchainEpochCheckCommand extends Command {
                     serviceAgreement.currentEpoch,
                     serviceAgreement.stateIndex,
                     r0,
+                    serviceAgreement.assetStorageContractAddress,
+                    serviceAgreement.tokenId,
                 );
                 if (eligibleForReward) {
                     this.logger.trace(
@@ -392,14 +427,63 @@ class BlockchainEpochCheckCommand extends Command {
         ]);
     }
 
-    async isEligibleForRewards(blockchain, agreementId, epoch, stateIndex, r0) {
+    async isEligibleForRewards(
+        blockchain,
+        agreementId,
+        epoch,
+        stateIndex,
+        r0,
+        assetStorageContractAddress,
+        tokenId,
+    ) {
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-        const commits = await this.blockchainModuleManager.getTopCommitSubmissions(
-            blockchain,
-            agreementId,
-            epoch,
-            stateIndex,
-        );
+        let commits;
+        try {
+            commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+                blockchain,
+                agreementId,
+                epoch,
+                stateIndex,
+            );
+        } catch (error) {
+            const assertionId = await this.blockchainModuleManager.getAssertionIdByIndex(
+                blockchain,
+                assetStorageContractAddress,
+                tokenId,
+                0,
+            );
+
+            const newServiceAgreementId = this.serviceAgreementService.generateId(
+                blockchain,
+                assetStorageContractAddress,
+                tokenId,
+                assertionId,
+                CONTENT_ASSET_HASH_FUNCTION_ID, // 1 - sha256
+            );
+
+            if (agreementId !== newServiceAgreementId) {
+                const newKeyword = this.blockchainModuleManager.encodePacked(
+                    blockchain,
+                    ['address', 'bytes32'],
+                    [assetStorageContractAddress, assertionId],
+                );
+
+                await this.updateServiceAgreementForTokenId(
+                    tokenId,
+                    newServiceAgreementId,
+                    newKeyword,
+                    assertionId,
+                    stateIndex,
+                );
+
+                commits = await this.blockchainModuleManager.getTopCommitSubmissions(
+                    blockchain,
+                    agreementId,
+                    epoch,
+                    stateIndex,
+                );
+            }
+        }
 
         for (const commit of commits.slice(0, r0)) {
             if (Number(commit.identityId) === identityId && Number(commit.score) !== 0) {
