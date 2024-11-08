@@ -23,10 +23,6 @@ export async function up({ context: { queryInterface } }) {
         name: 'ual_index',
     });
 
-    await queryInterface.addIndex('paranet_synced_asset', ['paranet_ual', 'data_source'], {
-        name: 'paranet_ual_data_source_index',
-    });
-
     await queryInterface.addIndex('paranet', ['blockchain_id', 'paranet_id'], {
         name: 'blockchain_id_paranet_id_index',
     });
@@ -136,8 +132,6 @@ export async function down({ context: { queryInterface } }) {
     await queryInterface.removeIndex('service_agreement', 'token_id_index');
 
     await queryInterface.removeIndex('paranet_synced_asset', 'ual_index');
-
-    await queryInterface.removeIndex('paranet_synced_asset', 'paranet_ual_data_source_index');
 
     await queryInterface.removeIndex('paranet', 'blockchain_id_paranet_id_index');
 
