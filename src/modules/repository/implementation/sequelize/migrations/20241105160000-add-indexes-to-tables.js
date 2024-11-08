@@ -1,4 +1,4 @@
-export async function up({ context: { queryInterface } }) {
+export async function up({ context: { queryInterface, Sequelize } }) {
     await queryInterface.addIndex('shard', ['blockchain_id'], {
         name: 'blockchain_id_index',
     });
@@ -21,6 +21,15 @@ export async function up({ context: { queryInterface } }) {
 
     await queryInterface.addIndex('paranet_synced_asset', ['ual'], {
         name: 'ual_index',
+    });
+
+    await queryInterface.changeColumn('paranet_synced_asset', 'data_source', {
+        type: Sequelize.ENUM('sync', 'local_store'),
+        allowNull: true,
+    });
+
+    await queryInterface.addIndex('paranet_synced_asset', ['paranet_ual', 'data_source'], {
+        name: 'paranet_ual_data_source_index',
     });
 
     await queryInterface.addIndex('paranet', ['blockchain_id', 'paranet_id'], {
@@ -120,7 +129,7 @@ export async function up({ context: { queryInterface } }) {
     });
 }
 
-export async function down({ context: { queryInterface } }) {
+export async function down({ context: { queryInterface, Sequelize } }) {
     await queryInterface.removeIndex('shard', 'blockchain_id_index');
 
     await queryInterface.removeIndex('shard', 'last_dialed_index');
@@ -132,6 +141,13 @@ export async function down({ context: { queryInterface } }) {
     await queryInterface.removeIndex('service_agreement', 'token_id_index');
 
     await queryInterface.removeIndex('paranet_synced_asset', 'ual_index');
+
+    await queryInterface.changeColumn('paranet_synced_asset', 'data_source', {
+        type: Sequelize.TEXT,
+        allowNull: true,
+    });
+
+    await queryInterface.removeIndex('paranet_synced_asset', 'paranet_ual_data_source_index');
 
     await queryInterface.removeIndex('paranet', 'blockchain_id_paranet_id_index');
 
