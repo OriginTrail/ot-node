@@ -6,21 +6,25 @@ class OtFuseki extends OtTripleStore {
         await super.initialize(config, logger);
         await Promise.all(
             Object.keys(this.repositories).map(async (repository) => {
-                const { url, name } = this.repositories[repository];
-
-                if (!(await this.repositoryExists(repository))) {
-                    await axios.post(
-                        `${url}/$/datasets?dbName=${name}&dbType=tdb`,
-                        {},
-                        {
-                            headers: {
-                                'Content-Type': 'text/plain',
-                            },
-                        },
-                    );
-                }
+                await this.createRepository(repository);
             }),
         );
+    }
+
+    async createRepository(repository) {
+        const { url, name } = this.repositories[repository];
+
+        if (!(await this.repositoryExists(repository))) {
+            await axios.post(
+                `${url}/$/datasets?dbName=${name}&dbType=tdb`,
+                {},
+                {
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                },
+            );
+        }
     }
 
     initializeSparqlEndpoints(repository) {
