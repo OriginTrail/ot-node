@@ -10,45 +10,49 @@ class OtGraphdb extends OtTripleStore {
 
         await Promise.all(
             Object.keys(this.repositories).map(async (repository) => {
-                const { url, name } = this.repositories[repository];
-                const serverConfig = new server.ServerClientConfig(url)
-                    .setTimeout(40000)
-                    .setHeaders({
-                        Accept: http.RDFMimeType.N_QUADS,
-                    })
-                    .setKeepAlive(true);
-                const s = new server.GraphDBServerClient(serverConfig);
-                // eslint-disable-next-line no-await-in-loop
-                const exists = await s.hasRepository(name);
-                if (!exists) {
-                    try {
-                        // eslint-disable-next-line no-await-in-loop
-                        await s.createRepository(
-                            new repo.RepositoryConfig(
-                                name,
-                                '',
-                                new Map(),
-                                '',
-                                'Repo title',
-                                repo.RepositoryType.FREE,
-                            ),
-                        );
-                    } catch (e) {
-                        // eslint-disable-next-line no-await-in-loop
-                        await s.createRepository(
-                            new repo.RepositoryConfig(
-                                name,
-                                '',
-                                {},
-                                'graphdb:SailRepository',
-                                'Repo title',
-                                'graphdb',
-                            ),
-                        );
-                    }
-                }
+                await this.createRepository(repository);
             }),
         );
+    }
+
+    async createRepository(repository) {
+        const { url, name } = this.repositories[repository];
+        const serverConfig = new server.ServerClientConfig(url)
+            .setTimeout(40000)
+            .setHeaders({
+                Accept: http.RDFMimeType.N_QUADS,
+            })
+            .setKeepAlive(true);
+        const s = new server.GraphDBServerClient(serverConfig);
+        // eslint-disable-next-line no-await-in-loop
+        const exists = await s.hasRepository(name);
+        if (!exists) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await s.createRepository(
+                    new repo.RepositoryConfig(
+                        name,
+                        '',
+                        new Map(),
+                        '',
+                        'Repo title',
+                        repo.RepositoryType.FREE,
+                    ),
+                );
+            } catch (e) {
+                // eslint-disable-next-line no-await-in-loop
+                await s.createRepository(
+                    new repo.RepositoryConfig(
+                        name,
+                        '',
+                        {},
+                        'graphdb:SailRepository',
+                        'Repo title',
+                        'graphdb',
+                    ),
+                );
+            }
+        }
     }
 
     initializeSparqlEndpoints(repository) {
@@ -106,6 +110,20 @@ class OtGraphdb extends OtTripleStore {
                 }`,
             ),
         );
+    }
+
+    async repositoryExists(repository) {
+        const { url, name } = this.repositories[repository];
+
+        const serverConfig = new server.ServerClientConfig(url)
+            .setTimeout(40000)
+            .setHeaders({
+                Accept: http.RDFMimeType.N_QUADS,
+            })
+            .setKeepAlive(true);
+        const s = new server.GraphDBServerClient(serverConfig);
+
+        return s.hasRepository(name);
     }
 
     getName() {
