@@ -36,6 +36,10 @@ class ModuleConfigValidation {
         return true;
     }
 
+    validateEventListener() {
+        return true;
+    }
+
     validateTripleStore(config) {
         const occurences = {};
         for (const implementation of Object.values(config.implementation)) {

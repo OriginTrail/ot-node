@@ -82,7 +82,7 @@ class OTNode {
             this.config,
         );
 
-        await this.initializeBlockchainEventListenerService();
+        await this.initializeBlockchainEventListenerModule();
 
         await MigrationExecutor.executePullShardingTableMigration(
             this.container,
@@ -201,11 +201,12 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    async initializeBlockchainEventListenerService() {
+    async initializeBlockchainEventListenerModule() {
         try {
-            const eventListenerService = this.container.resolve('blockchainEventListenerService');
-            await eventListenerService.initialize();
-            eventListenerService.startListeningOnEvents();
+            const eventListenerModule = this.container.resolve('eventListenerModuleManager');
+            const implementation = await eventListenerModule.getImplementation();
+            await eventListenerModule.initializeEventListener(implementation);
+            eventListenerModule.startListeningOnEvents(implementation);
             this.logger.info('Event Listener Service initialized successfully');
         } catch (error) {
             this.logger.error(

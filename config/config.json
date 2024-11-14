@@ -160,6 +160,16 @@
                         }
                     }
                 }
+            },
+            "eventListener": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "config": {}
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 10000,
@@ -326,6 +336,16 @@
                             "sendTelemetryData": false,
                             "signalingServerUrl": "null"
                         }
+                    }
+                }
+            },
+            "eventListener": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "config": {}
                     }
                 }
             }
@@ -496,6 +516,16 @@
                         }
                     }
                 }
+            },
+            "eventListener": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "config": {}
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 10000,
@@ -661,6 +691,16 @@
                             "sendTelemetryData": true,
                             "signalingServerUrl": "https://devnet-signaling.origin-trail.network/signal"
                         }
+                    }
+                }
+            },
+            "eventListener": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "config": {}
                     }
                 }
             }
@@ -851,6 +891,16 @@
                             "sendTelemetryData": true,
                             "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
                         }
+                    }
+                }
+            },
+            "eventListener": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "config": {}
                     }
                 }
             }
