@@ -205,8 +205,7 @@ class OTNode {
         try {
             const eventListenerModule = this.container.resolve('eventListenerModuleManager');
             const implementation = await eventListenerModule.getImplementation();
-            await eventListenerModule.initializeEventListener(implementation);
-            eventListenerModule.startListeningOnEvents(implementation);
+            eventListenerModule.initializeAndStartEventListener(implementation);
             this.logger.info('Event Listener Service initialized successfully');
         } catch (error) {
             this.logger.error(

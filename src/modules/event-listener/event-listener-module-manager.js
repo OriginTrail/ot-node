@@ -6,19 +6,11 @@ class EventListenerModuleManager extends BaseModuleManager {
         this.ctx = ctx;
     }
 
-    async initializeEventListener(eventListenerImplementation) {
+    async initializeAndStartEventListener(eventListenerImplementation) {
         if (this.getImplementation(eventListenerImplementation)) {
             return this.getImplementation(
                 eventListenerImplementation,
-            ).module.initializeEventListener(this.ctx);
-        }
-    }
-
-    async startListeningOnEvents(eventListenerImplementation) {
-        if (this.getImplementation(eventListenerImplementation)) {
-            return this.getImplementation(
-                eventListenerImplementation,
-            ).module.startListeningOnEvents();
+            ).module.initializeAndStartEventListener(this.ctx);
         }
     }
 

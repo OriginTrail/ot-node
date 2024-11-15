@@ -23,7 +23,7 @@ class OtEthers extends OtEventListener {
         await super.initialize(config, logger);
     }
 
-    async initializeEventListener(ctx) {
+    initializeAndStartEventListener(ctx) {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
@@ -33,22 +33,10 @@ class OtEthers extends OtEventListener {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
         this.paranetService = ctx.paranetService;
-
         this.eventGroupsBuffer = {};
 
-        const promises = [];
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
-            this.logger.info(
-                `Initializing blockchain event listener for blockchain ${blockchainId}, handling missed events`,
-            );
             this.eventGroupsBuffer[blockchainId] = {};
-            promises.push(this.fetchAndHandleBlockchainEvents(blockchainId));
-        }
-        await Promise.all(promises);
-    }
-
-    startListeningOnEvents() {
-        for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
             this.listenOnBlockchainEvents(blockchainId);
             this.logger.info(`Event listener initialized for blockchain: '${blockchainId}'.`);
         }

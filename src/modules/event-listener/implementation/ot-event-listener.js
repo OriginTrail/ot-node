@@ -4,12 +4,8 @@ class OtEventListener {
         this.config = config;
     }
 
-    async initializeEventListener() {
-        throw Error('initializeEventListener not implemented');
-    }
-
-    async startListeningOnEvents() {
-        throw Error('startListeningOnEvents not implemented');
+    async initializeAndStartEventListener() {
+        throw Error('initializeAndStartEventListener not implemented');
     }
 }
 
