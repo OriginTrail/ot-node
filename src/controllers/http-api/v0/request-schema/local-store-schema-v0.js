@@ -42,6 +42,9 @@ export default (argumentsObject) => ({
             paranetUAL: {
                 type: 'string',
             },
+            filePath: {
+                type: 'string',
+            },
         },
     },
     minItems: 1,
