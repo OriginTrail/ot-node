@@ -25,8 +25,9 @@ class LocalStoreController extends BaseController {
             OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INIT_END,
         );
         let assertions;
-        if (req.filePath) {
-            assertions = this.fileService.readFile(req.filePath);
+        const { filePath } = req.body;
+        if (filePath) {
+            assertions = JSON.parse(await this.fileService.readFile(filePath));
         } else {
             assertions = req.body;
         }
