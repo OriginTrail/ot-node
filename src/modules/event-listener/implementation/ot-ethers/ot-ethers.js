@@ -38,99 +38,18 @@ class OtEthers extends OtEventListener {
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
             this.eventGroupsBuffer[blockchainId] = {};
             this.listenOnBlockchainEvents(blockchainId);
-            this.logger.info(`Event listener initialized for blockchain: '${blockchainId}'.`);
-        }
-    }
-
-    async fetchAndHandleBlockchainEvents(blockchainId) {
-        const devEnvironment =
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
-
-        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
-
-        if (devEnvironment) {
-            // handling sharding table node added events first for tests and local network setup
-            // because of race condition for node added and ask updated events
-            const shardingTableEvents = await this.getContractEvents(
-                blockchainId,
-                CONTRACTS.SHARDING_TABLE_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.SHARDING_TABLE,
-            );
-
-            await this.handleBlockchainEvents(shardingTableEvents, blockchainId);
-        }
-
-        const syncContractEventsPromises = [
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.SHARDING_TABLE_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.SHARDING_TABLE,
-            ),
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.STAKING_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.STAKING,
-            ),
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.PROFILE_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.PROFILE,
-            ),
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.COMMIT_MANAGER_V1,
-            ),
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.PARAMETERS_STORAGE,
-            ),
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.LOG2PLDSF_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.LOG2PLDSF,
-            ),
-            this.getContractEvents(
-                blockchainId,
-                CONTRACTS.LINEAR_SUM_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.LINEAR_SUM,
-            ),
-        ];
-
-        if (!devEnvironment) {
-            syncContractEventsPromises.push(
-                this.getContractEvents(
-                    blockchainId,
-                    CONTRACTS.HUB_CONTRACT,
-                    currentBlock,
-                    CONTRACT_EVENTS.HUB,
-                ),
+            this.logger.info(
+                `Event listener initialized for blockchain: '${blockchainId}'. Starting to listen on events`,
             );
         }
-        const contractEvents = await Promise.all(syncContractEventsPromises);
-
-        await this.handleBlockchainEvents(
-            contractEvents.flatMap((events) => events),
-            blockchainId,
-        );
     }
 
     listenOnBlockchainEvents(blockchainId) {
-        const devEnvironment =
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST;
+        const isDevEnvironment = [NODE_ENVIRONMENTS.DEVELOPMENT, NODE_ENVIRONMENTS.TEST].includes(
+            process.env.NODE_ENV,
+        );
 
-        const eventFetchInterval = devEnvironment
+        const eventFetchInterval = isDevEnvironment
             ? CONTRACT_EVENT_FETCH_INTERVALS.DEVELOPMENT
             : CONTRACT_EVENT_FETCH_INTERVALS.MAINNET;
 
@@ -165,6 +84,55 @@ class OtEthers extends OtEventListener {
                 working = false;
             }
         }, eventFetchInterval);
+    }
+
+    async fetchAndHandleBlockchainEvents(blockchainId) {
+        const isDevEnvironment = [NODE_ENVIRONMENTS.DEVELOPMENT, NODE_ENVIRONMENTS.TEST].includes(
+            process.env.NODE_ENV,
+        );
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
+
+        const contractsEventsConfig = [
+            { contract: CONTRACTS.SHARDING_TABLE_CONTRACT, events: CONTRACT_EVENTS.SHARDING_TABLE },
+            { contract: CONTRACTS.STAKING_CONTRACT, events: CONTRACT_EVENTS.STAKING },
+            { contract: CONTRACTS.PROFILE_CONTRACT, events: CONTRACT_EVENTS.PROFILE },
+            {
+                contract: CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
+                events: CONTRACT_EVENTS.COMMIT_MANAGER_V1,
+            },
+            {
+                contract: CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+                events: CONTRACT_EVENTS.PARAMETERS_STORAGE,
+            },
+            { contract: CONTRACTS.LOG2PLDSF_CONTRACT, events: CONTRACT_EVENTS.LOG2PLDSF },
+            { contract: CONTRACTS.LINEAR_SUM_CONTRACT, events: CONTRACT_EVENTS.LINEAR_SUM },
+        ];
+
+        if (isDevEnvironment) {
+            // handling sharding table node added events first for tests and local network setup
+            // because of race condition for node added and ask updated events
+            const shardingTableEvents = await this.getContractEvents(
+                blockchainId,
+                CONTRACTS.SHARDING_TABLE_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.SHARDING_TABLE,
+            );
+
+            await this.handleBlockchainEvents(shardingTableEvents, blockchainId);
+        } else {
+            contractsEventsConfig.push({
+                contract: CONTRACTS.HUB_CONTRACT,
+                events: CONTRACT_EVENTS.HUB,
+            });
+        }
+
+        const contractEvents = await Promise.all(
+            contractsEventsConfig.map(({ contract, events }) =>
+                this.getContractEvents(blockchainId, contract, currentBlock, events),
+            ),
+        );
+
+        await this.handleBlockchainEvents(contractEvents.flat(), blockchainId);
     }
 
     async getContractEvents(blockchainId, contractName, currentBlock, eventsToFilter) {
