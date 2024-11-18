@@ -16,7 +16,7 @@ import {
 
 const fetchEventsFailedCount = {};
 
-const eventNames = Object.values(CONTRACT_EVENTS).flatMap((e) => e);
+const eventNames = Object.values(CONTRACT_EVENTS).flat();
 
 class OtEthers extends OtEventListener {
     async initialize(config, logger) {
@@ -55,6 +55,7 @@ class OtEthers extends OtEventListener {
 
         let working = false;
         fetchEventsFailedCount[blockchainId] = 0;
+
         const fetchEventInterval = setInterval(async () => {
             if (working) return;
             try {
@@ -62,23 +63,26 @@ class OtEthers extends OtEventListener {
                 await this.fetchAndHandleBlockchainEvents(blockchainId);
                 fetchEventsFailedCount[blockchainId] = 0;
             } catch (e) {
-                if (fetchEventsFailedCount[blockchainId] >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
+                fetchEventsFailedCount[blockchainId] += 1;
+                const failCount = fetchEventsFailedCount[blockchainId];
+
+                if (failCount >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
                     clearInterval(fetchEventInterval);
                     this.blockchainModuleManager.removeImplementation(blockchainId);
+
+                    const errorMessage = `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message}`;
+
                     if (!this.blockchainModuleManager.getImplementationNames().length) {
-                        this.logger.error(
-                            `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message} OT-node shutting down...`,
-                        );
+                        this.logger.error(`${errorMessage} OT-node shutting down...`);
                         process.exit(1);
                     }
-                    this.logger.error(
-                        `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message} blockchain implementation removed.`,
-                    );
+
+                    this.logger.error(`${errorMessage} blockchain implementation removed.`);
                 }
+
                 this.logger.error(
                     `Failed to get and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
                 );
-                fetchEventsFailedCount[blockchainId] += 1;
                 await setTimeout(DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
             } finally {
                 working = false;
