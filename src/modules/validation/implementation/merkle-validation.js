@@ -12,7 +12,7 @@ class MerkleValidation {
         };
     }
 
-    calculateRoot(assertion) {
+    async calculateRoot(assertion) {
         return calculateRoot(assertion);
     }
 

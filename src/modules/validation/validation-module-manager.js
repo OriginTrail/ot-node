@@ -5,7 +5,7 @@ class ValidationModuleManager extends BaseModuleManager {
         return 'validation';
     }
 
-    calculateRoot(assertion) {
+    async calculateRoot(assertion) {
         if (this.initialized) {
             if (!assertion) {
                 throw new Error('Calculation failed: Assertion cannot be null or undefined.');
