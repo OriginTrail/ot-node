@@ -86,7 +86,7 @@ class ValidateAssetCommand extends Command {
             );
 
             try {
-                this.validationService.validateAssertionId(
+                await this.validationService.validateAssertionId(
                     cachedData.private.assertion,
                     cachedData.private.assertionId,
                 );
