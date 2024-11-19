@@ -171,50 +171,50 @@ class OtEthers extends OtEventListener {
     async handleBlockchainEvents(events, blockchainId) {
         const eventsForProcessing = events.filter((event) => eventNames.includes(event.event));
 
+        // Store new events in the DB
         if (eventsForProcessing?.length) {
             this.logger.trace(
                 `${eventsForProcessing.length} blockchain events caught on blockchain ${blockchainId}.`,
             );
             await this.repositoryModuleManager.insertBlockchainEvents(eventsForProcessing);
         }
+
+        // Get unprocessed events from the DB
         const unprocessedEvents =
             await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(
                 eventNames,
                 blockchainId,
             );
 
+        // Process events block by block
         if (unprocessedEvents?.length) {
             this.logger.trace(
                 `Processing ${unprocessedEvents.length} blockchain events on blockchain ${blockchainId}.`,
             );
-            let batchedEvents = {};
-            let currentBlockNumber = 0;
-            for (const event of unprocessedEvents) {
-                if (event.block !== currentBlockNumber) {
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.handleBlockBatchedEvents(batchedEvents);
-                    batchedEvents = {};
-                    currentBlockNumber = event.block;
-                }
 
-                // Check if event should be grouped with other event
-                const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.event];
-                if (eventsGroupName) {
-                    // Get Events Group object containing predefined events and Grouping Key (Event Argument)
+            // Group events by block
+            const eventsByBlock = this.groupEventsByBlock(unprocessedEvents);
+
+            // Process each block
+            const batchedEvents = {};
+            for (const [, blockEvents] of Object.entries(eventsByBlock)) {
+                // separate events into grouped and regular
+                const { groupedEvents, regularEvents } = this.separateEvents(blockEvents);
+
+                // Handle grouped events
+                for (const event of groupedEvents) {
+                    const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.event];
                     const eventsGroup = GROUPED_CONTRACT_EVENTS[eventsGroupName];
-                    // Get value of the Grouping Key from the Event
                     const groupingKeyValue = JSON.parse(event.data)[eventsGroup.groupingKey];
 
-                    if (!this.eventGroupsBuffer[blockchainId][eventsGroupName]) {
-                        this.eventGroupsBuffer[blockchainId][eventsGroupName] = {};
-                    }
+                    // Initialize buffer if needed
+                    this.initializeEventsGroupBuffer(
+                        blockchainId,
+                        eventsGroupName,
+                        groupingKeyValue,
+                    );
 
-                    if (!this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]) {
-                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue] =
-                            [];
-                    }
-
-                    // Push event to the buffer until Events Group is not full
+                    // Add event to buffer
                     this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue].push(
                         event,
                     );
@@ -226,33 +226,64 @@ class OtEthers extends OtEventListener {
                     // eslint-disable-next-line no-await-in-loop
                     await this.repositoryModuleManager.markBlockchainEventsAsProcessed([event]);
 
-                    // When all expected Events from the Event Group are collected
-                    if (
-                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]
-                            .length === eventsGroup.events.length
-                    ) {
+                    // Check if group is complete
+                    const currentGroup =
+                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue];
+                    if (currentGroup.length === eventsGroup.events.length) {
                         if (!batchedEvents[eventsGroupName]) {
                             batchedEvents[eventsGroupName] = [];
                         }
 
-                        // Add Events Group to the Processing Queue
                         batchedEvents[eventsGroupName].push(
                             this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue],
                         );
 
-                        // Remove Events Group from the Buffer
                         delete this.eventGroupsBuffer[blockchainId][eventsGroupName][
                             groupingKeyValue
                         ];
                     }
-                } else if (batchedEvents[event.event]) {
+                }
+
+                // Handle regular events
+                for (const event of regularEvents) {
+                    batchedEvents[event.event] = batchedEvents[event.event] || [];
                     batchedEvents[event.event].push(event);
-                } else {
-                    batchedEvents[event.event] = [event];
                 }
             }
 
             await this.handleBlockBatchedEvents(batchedEvents);
+        }
+    }
+
+    groupEventsByBlock(events) {
+        const groupedEvents = {};
+        for (const event of events) {
+            groupedEvents[event.block] = groupedEvents[event.block] || [];
+            groupedEvents[event.block].push(event);
+        }
+        return groupedEvents;
+    }
+
+    separateEvents(events) {
+        const result = { groupedEvents: [], regularEvents: [] };
+        for (const event of events) {
+            const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.event];
+            if (eventsGroupName) {
+                result.groupedEvents.push(event);
+            } else {
+                result.regularEvents.push(event);
+            }
+        }
+        return result;
+    }
+
+    initializeEventsGroupBuffer(blockchainId, eventsGroupName, groupingKeyValue) {
+        if (!this.eventGroupsBuffer[blockchainId][eventsGroupName]) {
+            this.eventGroupsBuffer[blockchainId][eventsGroupName] = {};
+        }
+
+        if (!this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]) {
+            this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue] = [];
         }
     }
 
