@@ -1,4 +1,5 @@
 import jsonld from 'jsonld';
+import toNQuadsWorker from '../workers/data-service-toNQuads-worker.js';
 import {
     SCHEMA_CONTEXT,
     MEDIA_TYPES,
@@ -7,7 +8,6 @@ import {
 } from '../constants/constants.js';
 
 const ALGORITHM = 'URDNA2015';
-import workerToNQuads from "./data-service-toNQuads.js";
 
 class DataService {
     constructor(ctx) {
@@ -16,7 +16,14 @@ class DataService {
     }
 
     async toNQuads(content, inputFormat) {
-        return workerToNQuads(content, inputFormat);
+        const options = {
+            algorithm: ALGORITHM,
+            format: MEDIA_TYPES.N_QUADS,
+        };
+        if (inputFormat) {
+            options.inputFormat = inputFormat;
+        }
+        return toNQuadsWorker(content, options);
     }
 
     async compact(content) {
