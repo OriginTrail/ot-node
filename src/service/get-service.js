@@ -76,7 +76,11 @@ class GetService extends OperationService {
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                { assertion: responseData.nquads, privateAssertion: responseData.privateNquads },
+                {
+                    assertion: responseData.nquads,
+                    privateAssertion: responseData.privateNquads,
+                    syncedAssetRecord: responseData.syncedAssetRecord,
+                },
                 [...this.completedStatuses],
             );
             this.logResponsesSummary(completedNumber, failedNumber);
