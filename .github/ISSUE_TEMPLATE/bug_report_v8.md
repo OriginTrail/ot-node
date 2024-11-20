@@ -1,5 +1,5 @@
 ---
-name: Bug report for v6 ot-node
+name: Bug report for V8 ot-node
 about: Create an issue report
 title: ''
 labels: ''

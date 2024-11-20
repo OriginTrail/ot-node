@@ -49,8 +49,8 @@ describe.only('Validation module manager', async () => {
     });
 
     it('validate successful root hash calculation, expect to be matched', async () => {
-        const expectedRootHash = calculateRoot(assertion);
-        const calculatedRootHash = validationManager.calculateRoot(assertion);
+        const expectedRootHash = await calculateRoot(assertion);
+        const calculatedRootHash = await validationManager.calculateRoot(assertion);
 
         assert(expect(calculatedRootHash).to.exist);
         expect(calculatedRootHash).to.equal(expectedRootHash);
@@ -60,7 +60,7 @@ describe.only('Validation module manager', async () => {
         validationManager.initialized = false;
 
         try {
-            validationManager.calculateRoot(assertion);
+            await validationManager.calculateRoot(assertion);
         } catch (error) {
             expect(error.message).to.equal('Validation module is not initialized.');
         }
@@ -76,7 +76,7 @@ describe.only('Validation module manager', async () => {
     });
 
     it('successful getting merkle proof hash', async () => {
-        const calculatedMerkleHash = validationManager.getMerkleProof(assertion, 0);
+        const calculatedMerkleHash = await validationManager.getMerkleProof(assertion, 0);
 
         assert(expect(calculatedMerkleHash).to.exist);
         expect(calculatedMerkleHash).to.be.instanceof(Object);
@@ -88,19 +88,20 @@ describe.only('Validation module manager', async () => {
         validationManager.initialized = false;
 
         try {
-            validationManager.getMerkleProof(assertion, 0);
+            await validationManager.getMerkleProof(assertion, 0);
         } catch (error) {
             expect(error.message).to.equal('Validation module is not initialized.');
         }
     });
 
-    it('failed merkle prof hash calculation when assertion is null or undefined', async () => {
-        invalidValues.forEach((value) => {
-            expect(() => validationManager.getMerkleProof(value, 0)).to.throw(
+    it('failed merkle proof hash calculation when assertion is null or undefined', async () => {
+        for (const value of invalidValues) {
+            // eslint-disable-next-line no-await-in-loop
+            expect(await validationManager.getMerkleProof(value, 0)).to.be.rejectedWith(
                 Error,
                 'Get merkle proof failed: Assertion cannot be null or undefined.',
             );
-        });
+        }
     });
 
     it('validate getting function name', async () => {
