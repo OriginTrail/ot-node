@@ -10,7 +10,6 @@ import {
     SOLIDITY_PANIC_CODE_PREFIX,
     SOLIDITY_PANIC_REASONS,
     ZERO_PREFIX,
-    MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
     TRANSACTION_QUEUE_CONCURRENCY,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
     TRANSACTION_CONFIRMATIONS,
@@ -932,87 +931,6 @@ class Web3Service {
 
     async getTransaction(transactionHash) {
         return this.provider.getTransaction(transactionHash);
-    }
-
-    async getAllPastEvents(
-        blockchainId,
-        contractName,
-        eventsToFilter,
-        lastCheckedBlock,
-        lastCheckedTimestamp,
-        currentBlock,
-    ) {
-        const contract = this[contractName];
-        if (!contract) {
-            // this will happen when we have different set of contracts on different blockchains
-            // eg LinearSum contract is available on gnosis but not on NeuroWeb, so the node should not fetch events
-            // from LinearSum contract on NeuroWeb blockchain
-            return {
-                events: [],
-                lastCheckedBlock: currentBlock,
-                eventsMissed: false,
-            };
-        }
-
-        let fromBlock;
-        let eventsMissed = false;
-        if (this.startBlock - lastCheckedBlock > this.getMaxNumberOfHistoricalBlocksForSync()) {
-            fromBlock = this.startBlock;
-            eventsMissed = true;
-        } else {
-            fromBlock = lastCheckedBlock + 1;
-        }
-
-        const topics = [];
-        for (const filterName in contract.filters) {
-            if (!eventsToFilter.includes(filterName)) {
-                continue;
-            }
-            const filter = contract.filters[filterName]().topics[0];
-            topics.push(filter);
-        }
-
-        const events = [];
-        let toBlock = currentBlock;
-        try {
-            while (fromBlock <= currentBlock) {
-                toBlock = Math.min(
-                    fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
-                    currentBlock,
-                );
-                const newEvents = await this.processBlockRange(
-                    fromBlock,
-                    toBlock,
-                    contract,
-                    topics,
-                );
-                newEvents.forEach((e) => events.push(...e));
-                fromBlock = toBlock + 1;
-            }
-        } catch (error) {
-            this.logger.warn(
-                `Unable to process block range from: ${fromBlock} to: ${toBlock} for contract ${contractName} on blockchain: ${blockchainId}. Error: ${error.message}`,
-            );
-        }
-
-        return {
-            events: events.map((event) => ({
-                contract: contractName,
-                event: event.event,
-                data: JSON.stringify(
-                    Object.fromEntries(
-                        Object.entries(event.args).map(([k, v]) => [
-                            k,
-                            ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
-                        ]),
-                    ),
-                ),
-                block: event.blockNumber,
-                blockchainId,
-            })),
-            lastCheckedBlock: toBlock,
-            eventsMissed,
-        };
     }
 
     getMaxNumberOfHistoricalBlocksForSync() {

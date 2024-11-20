@@ -161,24 +161,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getTransaction', [transactionHash]);
     }
 
-    async getAllPastEvents(
-        blockchain,
-        contractName,
-        eventsToFilter,
-        lastCheckedBlock,
-        lastCheckedTimestamp,
-        currentBlock,
-    ) {
-        return this.callImplementationFunction(blockchain, 'getAllPastEvents', [
-            blockchain,
-            contractName,
-            eventsToFilter,
-            lastCheckedBlock,
-            lastCheckedTimestamp,
-            currentBlock,
-        ]);
-    }
-
     toBigNumber(blockchain, value) {
         return this.callImplementationFunction(blockchain, 'toBigNumber', [value]);
     }

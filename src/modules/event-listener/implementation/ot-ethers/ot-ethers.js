@@ -36,7 +36,10 @@ class OtEthers extends OtEventListener {
         this.eventGroupsBuffer = {};
 
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
+            this.blockchain_config =
+                ctx.config.modules.blockchain.implementation[blockchainId].config;
             this.eventGroupsBuffer[blockchainId] = {};
+            this.initializeWeb3(this.blockchain_config);
             this.listenOnBlockchainEvents(blockchainId);
             this.logger.info(
                 `Event listener initialized for blockchain: '${blockchainId}'. Starting to listen on events`,
@@ -94,7 +97,7 @@ class OtEthers extends OtEventListener {
         const isDevEnvironment = [NODE_ENVIRONMENTS.DEVELOPMENT, NODE_ENVIRONMENTS.TEST].includes(
             process.env.NODE_ENV,
         );
-        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
+        const currentBlock = await this.getBlockNumber(blockchainId);
 
         const contractsEventsConfig = [
             { contract: CONTRACTS.SHARDING_TABLE_CONTRACT, events: CONTRACT_EVENTS.SHARDING_TABLE },
@@ -145,7 +148,7 @@ class OtEthers extends OtEventListener {
             contractName,
         );
 
-        const result = await this.blockchainModuleManager.getAllPastEvents(
+        const result = await this.getAllPastEvents(
             blockchainId,
             contractName,
             eventsToFilter,
@@ -287,6 +290,9 @@ class OtEthers extends OtEventListener {
         }
     }
 
+    // epoch check command on v6/develop
+    // handleStateFinalizedEvents
+    // COPIED
     async handleBlockBatchedEvents(batchedEvents) {
         const handleBlockEventsPromises = [];
         for (const [eventName, blockEvents] of Object.entries(batchedEvents)) {
