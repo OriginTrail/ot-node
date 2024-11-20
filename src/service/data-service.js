@@ -7,6 +7,7 @@ import {
 } from '../constants/constants.js';
 
 const ALGORITHM = 'URDNA2015';
+import workerToNQuads from "./data-service-toNQuads.js";
 
 class DataService {
     constructor(ctx) {
@@ -15,18 +16,7 @@ class DataService {
     }
 
     async toNQuads(content, inputFormat) {
-        const options = {
-            algorithm: ALGORITHM,
-            format: MEDIA_TYPES.N_QUADS,
-        };
-
-        if (inputFormat) {
-            options.inputFormat = inputFormat;
-        }
-
-        const canonized = await jsonld.canonize(content, options);
-
-        return canonized.split('\n').filter((x) => x !== '');
+        return workerToNQuads(content, inputFormat);
     }
 
     async compact(content) {
