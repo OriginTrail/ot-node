@@ -218,6 +218,7 @@ class ParanetSyncCommand extends Command {
                         hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
                         assertionId,
                         paranetId,
+                        paranetUAL,
                     },
                     transactional: false,
                 });
