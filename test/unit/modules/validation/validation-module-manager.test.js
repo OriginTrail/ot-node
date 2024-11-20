@@ -49,8 +49,8 @@ describe.only('Validation module manager', async () => {
     });
 
     it('validate successful root hash calculation, expect to be matched', async () => {
-        const expectedRootHash = calculateRoot(assertion);
-        const calculatedRootHash = validationManager.calculateRoot(assertion);
+        const expectedRootHash = await calculateRoot(assertion);
+        const calculatedRootHash = await validationManager.calculateRoot(assertion);
 
         assert(expect(calculatedRootHash).to.exist);
         expect(calculatedRootHash).to.equal(expectedRootHash);
@@ -60,7 +60,7 @@ describe.only('Validation module manager', async () => {
         validationManager.initialized = false;
 
         try {
-            validationManager.calculateRoot(assertion);
+            await validationManager.calculateRoot(assertion);
         } catch (error) {
             expect(error.message).to.equal('Validation module is not initialized.');
         }
