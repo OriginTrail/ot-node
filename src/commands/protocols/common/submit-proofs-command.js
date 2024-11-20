@@ -84,7 +84,7 @@ class SubmitProofsCommand extends SendTransactionCommand {
             return Command.empty();
         }
 
-        const { leaf, proof } = this.validationModuleManager.getMerkleProof(
+        const { leaf, proof } = await this.validationModuleManager.getMerkleProof(
             assertion,
             Number(challenge),
         );

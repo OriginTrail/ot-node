@@ -34,7 +34,7 @@ class ValidationService {
     async validateAssertion(assertionId, blockchain, assertion) {
         this.logger.info(`Validating assertionId: ${assertionId}`);
 
-        this.validateAssertionId(assertion, assertionId);
+        await this.validateAssertionId(assertion, assertionId);
         const blockchainAssertionData = await this.blockchainModuleManager.getAssertionData(
             blockchain,
             assertionId,
@@ -80,8 +80,8 @@ class ValidationService {
         }
     }
 
-    validateAssertionId(assertion, assertionId) {
-        const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
+    async validateAssertionId(assertion, assertionId) {
+        const calculatedAssertionId = await this.validationModuleManager.calculateRoot(assertion);
 
         if (assertionId !== calculatedAssertionId) {
             // todo after corrective component is implemented, update this logic
