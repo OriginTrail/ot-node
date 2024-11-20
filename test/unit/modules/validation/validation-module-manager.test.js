@@ -76,7 +76,7 @@ describe.only('Validation module manager', async () => {
     });
 
     it('successful getting merkle proof hash', async () => {
-        const calculatedMerkleHash = validationManager.getMerkleProof(assertion, 0);
+        const calculatedMerkleHash = await validationManager.getMerkleProof(assertion, 0);
 
         assert(expect(calculatedMerkleHash).to.exist);
         expect(calculatedMerkleHash).to.be.instanceof(Object);

@@ -15,7 +15,7 @@ class ValidationModuleManager extends BaseModuleManager {
         throw new Error('Validation module is not initialized.');
     }
 
-    getMerkleProof(assertion, index) {
+    async getMerkleProof(assertion, index) {
         if (this.initialized) {
             if (!assertion) {
                 throw new Error('Get merkle proof failed: Assertion cannot be null or undefined.');
