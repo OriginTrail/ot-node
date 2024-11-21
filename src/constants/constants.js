@@ -194,6 +194,7 @@ export const PERMANENT_COMMANDS = [
     'updateCleanerCommand',
     'updateResponseCleanerCommand',
     'startParanetSyncCommands',
+    'blockchainEventListenerCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days

@@ -82,8 +82,6 @@ class OTNode {
             this.config,
         );
 
-        await this.initializeBlockchainEventListenerModule();
-
         await MigrationExecutor.executePullShardingTableMigration(
             this.container,
             this.logger,
@@ -199,20 +197,6 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'eventEmitter', eventEmitter);
 
         this.logger.info('Event emitter initialized');
-    }
-
-    async initializeBlockchainEventListenerModule() {
-        try {
-            const eventListenerModule = this.container.resolve('eventListenerModuleManager');
-            const implementation = await eventListenerModule.getImplementation();
-            eventListenerModule.initializeAndStartEventListener(implementation);
-            this.logger.info('Event Listener Service initialized successfully');
-        } catch (error) {
-            this.logger.error(
-                `Unable to initialize event listener service. Error message: ${error.message} OT-node shutting down...`,
-            );
-            this.stop(1);
-        }
     }
 
     async initializeRouters() {
