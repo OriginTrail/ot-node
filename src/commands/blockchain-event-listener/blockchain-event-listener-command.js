@@ -31,7 +31,6 @@ class BlockchainEventListenerCommand extends Command {
         this.shardingTableService = ctx.shardingTableService;
         this.paranetService = ctx.paranetService;
         this.eventListenerModuleManager = ctx.eventListenerModuleManager;
-        this.blockchainImplementationsConfig = ctx.config.modules.blockchain.implementation;
 
         this.eventListenerImplementation = this.eventListenerModuleManager.getImplementation();
         this.eventGroupsBuffer = {};
@@ -41,7 +40,8 @@ class BlockchainEventListenerCommand extends Command {
         for (const blockchainId of this.blockchainModuleManager.getImplementationNames()) {
             this.eventGroupsBuffer[blockchainId] = {};
 
-            const blockchainConfig = this.blockchainImplementationsConfig[blockchainId].config;
+            const blockchainConfig =
+                this.blockchainModuleManager.getModuleConfiguration(blockchainId);
             this.eventListenerModuleManager.initializeBlockchainEventListener(
                 this.eventListenerImplementation,
                 blockchainConfig,

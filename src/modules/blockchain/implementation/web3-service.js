@@ -215,6 +215,7 @@ class Web3Service {
                     });
                 } else {
                     this.logger.warn(`${rpcEndpoint} RPC is not an Archive Node, skipping...`);
+                    continue;
                 }
 
                 this.logger.debug(

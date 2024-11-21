@@ -56,6 +56,7 @@ class OtEthers extends OtEventListener {
                     });
                 } else {
                     this.logger.warn(`${rpcEndpoint} RPC is not an Archive Node, skipping...`);
+                    continue;
                 }
 
                 this.logger.debug(
@@ -81,13 +82,6 @@ class OtEthers extends OtEventListener {
                 `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
             );
         }
-
-        const operationalWallets = this.getValidOperationalWallets();
-        if (operationalWallets.length === 0) {
-            throw Error(
-                'Unable to initialize web3 service, all operational wallets provided are invalid',
-            );
-        }
     }
 
     maskRpcUrl(url) {
@@ -99,20 +93,6 @@ class OtEthers extends OtEventListener {
 
     async providerReady() {
         return this.provider.getNetwork();
-    }
-
-    getValidOperationalWallets() {
-        const wallets = [];
-        this.blockchainConfig.operationalWallets.forEach((wallet) => {
-            try {
-                wallets.push(new ethers.Wallet(wallet.privateKey, this.provider));
-            } catch (error) {
-                this.logger.warn(
-                    `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmAddress}. Error: ${error.message}`,
-                );
-            }
-        });
-        return wallets;
     }
 
     async getAllPastEvents(
