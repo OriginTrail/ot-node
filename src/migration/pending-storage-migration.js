@@ -20,7 +20,7 @@ class PendingStorageMigration extends BaseMigration {
                     const cachedData = await this.fileService.readFile(newDirectoryPath, true);
                     await this.fileService.removeFile(newDirectoryPath);
                     if (cachedData?.public?.assertion) {
-                        const newDocumentName = calculateRoot(cachedData.public.assertion);
+                        const newDocumentName = await calculateRoot(cachedData.public.assertion);
                         await this.fileService.writeContentsToFile(
                             newDirectoryPath,
                             newDocumentName,

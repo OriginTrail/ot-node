@@ -217,6 +217,8 @@ class ParanetSyncCommand extends Command {
                         state: assertionId,
                         hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
                         assertionId,
+                        paranetId,
+                        paranetUAL,
                     },
                     transactional: false,
                 });
@@ -234,6 +236,8 @@ class ParanetSyncCommand extends Command {
                         state: assertionId,
                         hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
                         assertionId,
+                        paranetId,
+                        paranetUAL,
                     },
                     transactional: false,
                 });
@@ -274,9 +278,8 @@ class ParanetSyncCommand extends Command {
             }
 
             const data = await this.operationIdService.getCachedOperationIdData(getOperationId);
-
             this.logger.debug(
-                `Paranet sync: ${data.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                `Paranet sync: ${data.assertion.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
             );
 
             let repository;
@@ -293,7 +296,7 @@ class ParanetSyncCommand extends Command {
             await this.tripleStoreService.localStoreAsset(
                 repository,
                 assertionId,
-                data.nquads,
+                data.assertion,
                 blockchain,
                 contract,
                 tokenId,
@@ -301,11 +304,11 @@ class ParanetSyncCommand extends Command {
                 LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
                 LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
             );
-            if (paranetNodesAccessPolicy === 'CURATED' && data.privateNquads) {
+            if (paranetNodesAccessPolicy === 'CURATED' && data.privateAssertion) {
                 await this.tripleStoreService.localStoreAsset(
                     repository,
                     data.syncedAssetRecord.privateAssertionId,
-                    data.privateNquads,
+                    data.privateAssertion,
                     blockchain,
                     contract,
                     tokenId,

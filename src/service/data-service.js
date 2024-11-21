@@ -1,4 +1,5 @@
 import jsonld from 'jsonld';
+import toNQuadsWorker from '../workers/data-service-toNQuads-worker.js';
 import {
     SCHEMA_CONTEXT,
     MEDIA_TYPES,
@@ -19,14 +20,10 @@ class DataService {
             algorithm: ALGORITHM,
             format: MEDIA_TYPES.N_QUADS,
         };
-
         if (inputFormat) {
             options.inputFormat = inputFormat;
         }
-
-        const canonized = await jsonld.canonize(content, options);
-
-        return canonized.split('\n').filter((x) => x !== '');
+        return toNQuadsWorker(content, options);
     }
 
     async compact(content) {
