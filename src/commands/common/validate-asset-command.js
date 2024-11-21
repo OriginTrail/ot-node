@@ -33,6 +33,10 @@ class ValidateAssetCommand extends Command {
             paranetUAL,
         } = command.data;
 
+        this.logger.debug(
+            `Validating Asset Command with operation id: ${operationId}, blockchain: ${blockchain}, contract: ${contract}, tokenId: ${tokenId}, store type: ${storeType}`,
+        );
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -67,7 +71,7 @@ class ValidateAssetCommand extends Command {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
+                `Invalid assertion id for asset ${ual} and operation with id ${operationId}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
                 this.errorType,
                 true,
             );

@@ -102,7 +102,7 @@ class OperationIdService {
     }
 
     async cacheOperationIdData(operationId, data) {
-        this.logger.debug(`Caching data for operation id: ${operationId} in file`);
+        this.logger.trace(`Caching data for operation id: ${operationId} in file.`);
         const operationIdCachePath = this.fileService.getOperationIdCachePath();
 
         await this.fileService.writeContentsToFile(
