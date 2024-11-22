@@ -1,4 +1,5 @@
 import BaseModuleManager from '../base-module-manager.js';
+import influx from './implementation/influx/influx.js';
 
 class RepositoryModuleManager extends BaseModuleManager {
     getName() {
@@ -217,7 +218,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         value2 = null,
         value3 = null,
     ) {
-        return this.getRepository('event').createEventRecord(
+        return influx.sendEventTelemetry(
             operationId,
             blockchainId,
             name,
@@ -225,7 +226,7 @@ class RepositoryModuleManager extends BaseModuleManager {
             value1,
             value2,
             value3,
-        );
+    );
     }
 
     async getUnpublishedEvents() {
