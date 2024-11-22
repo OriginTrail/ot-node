@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 // Dynamically locate and load the `.env` file
 function setEnvParameters() {
-    const projectRoot = path.resolve(__dirname, '../../../..');  // Adjust this path if needed
+    const projectRoot = path.resolve(__dirname, '../../../../..');  // Adjust this path if needed
     const realRoot = fs.realpathSync(projectRoot);  // Resolve symbolic link to real path
     const envPath = path.join(realRoot, '.env');  // Append `.env` to resolved path
 
