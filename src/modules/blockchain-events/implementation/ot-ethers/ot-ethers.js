@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import ethers from 'ethers';
-import OtEventListener from '../ot-event-listener.js';
+import OtBlockchainEvents from '../ot-blockchain-events.js';
 
 import {
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
@@ -12,20 +12,19 @@ import {
     MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
 } from '../../../../constants/constants.js';
 
-class OtEthers extends OtEventListener {
+class OtEthers extends OtBlockchainEvents {
     async initialize(config, logger) {
         await super.initialize(config, logger);
     }
 
-    async initializeBlockchainEventListener(blockchainConfig) {
-        this.blockchainConfig = blockchainConfig;
-        await this.initializeRpcProvider();
+    async initializeImplementation(blockchainConfig) {
+        await this.initializeRpcProvider(blockchainConfig);
         this.startBlock = await this.getBlockNumber();
     }
 
-    async initializeRpcProvider() {
+    async initializeRpcProvider(blockchainConfig) {
         const providers = [];
-        for (const rpcEndpoint of this.blockchainConfig.rpcEndpoints) {
+        for (const rpcEndpoint of blockchainConfig.rpcEndpoints) {
             const isWebSocket = rpcEndpoint.startsWith('ws');
             const Provider = isWebSocket
                 ? ethers.providers.WebSocketProvider

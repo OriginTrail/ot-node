@@ -161,12 +161,12 @@
                     }
                 }
             },
-            "eventListener": {
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
                     "ot-ethers": {
                         "enabled": true,
-                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {}
                     }
                 }
@@ -339,12 +339,12 @@
                     }
                 }
             },
-            "eventListener": {
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
                     "ot-ethers": {
                         "enabled": true,
-                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {}
                     }
                 }
@@ -517,12 +517,12 @@
                     }
                 }
             },
-            "eventListener": {
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
                     "ot-ethers": {
                         "enabled": true,
-                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {}
                     }
                 }
@@ -694,12 +694,12 @@
                     }
                 }
             },
-            "eventListener": {
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
                     "ot-ethers": {
                         "enabled": true,
-                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {}
                     }
                 }
@@ -894,12 +894,12 @@
                     }
                 }
             },
-            "eventListener": {
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
                     "ot-ethers": {
                         "enabled": true,
-                        "package": "./event-listener/implementation/ot-ethers/ot-ethers.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {}
                     }
                 }

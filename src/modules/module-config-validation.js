@@ -36,7 +36,7 @@ class ModuleConfigValidation {
         return true;
     }
 
-    validateEventListener() {
+    validateBlockchainEvents() {
         return true;
     }
 

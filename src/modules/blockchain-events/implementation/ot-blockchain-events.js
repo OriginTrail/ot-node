@@ -1,11 +1,11 @@
-class OtEventListener {
+class OtBlockchainEvents {
     async initialize(config, logger) {
         this.logger = logger;
         this.config = config;
     }
 
-    async initializeBlockchainEventListener() {
-        throw Error('initializeBlockchainEventListener not implemented');
+    async initializeImplementation() {
+        throw Error('initializeImplementation not implemented');
     }
 
     async initializeRpcProvider() {
@@ -17,4 +17,4 @@ class OtEventListener {
     }
 }
 
-export default OtEventListener;
+export default OtBlockchainEvents;
