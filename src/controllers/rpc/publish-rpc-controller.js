@@ -17,18 +17,13 @@ class PublishController extends BaseController {
 
         const command = { sequence: [], delay: 0, transactional: false, data: {} };
         let dataSource;
-        const [handleInitCommand, handleRequestCommand] = this.getCommandSequence(protocol);
+        const [handleRequestCommand] = this.getCommandSequence(protocol);
         switch (messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                dataSource = message.data;
-                command.name = handleInitCommand;
-                command.period = 5000;
-                command.retries = 3;
-
-                break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 // eslint-disable-next-line no-case-declarations
-                dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
+                dataSource = message.data;
+                command.period = 5000;
+                command.retries = 3;
                 await this.operationIdService.cacheOperationIdData(operationId, {
                     assertionId: dataSource.assertionId,
                     assertion: message.data.assertion,

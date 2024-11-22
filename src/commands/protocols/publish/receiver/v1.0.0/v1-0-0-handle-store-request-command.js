@@ -33,7 +33,35 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             assertionId,
             agreementId,
             agreementData,
+            proximityScoreFunctionsPairId,
         } = commandData;
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
+        );
+
+        const validationResult = await this.validateReceivedData(
+            operationId,
+            assertionId,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
+        );
+
+        this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_END,
+        );
+
+        if (validationResult.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.NACK) {
+            return validationResult;
+        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

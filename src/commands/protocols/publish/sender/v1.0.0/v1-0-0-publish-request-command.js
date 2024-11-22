@@ -10,11 +10,24 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
+        const { assertionId, contract, tokenId, keyword, hashFunctionId } = command.data;
+        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
+
+        // TODO: Backwards compatibility, send blockchain without chainId
+        const blockchain = command.data.blockchain.split(':')[0];
+
         const {
             public: { assertion },
         } = await this.operationIdService.getCachedOperationIdData(command.data.operationId);
 
         return {
+            assertionId,
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            proximityScoreFunctionsPairId,
             assertion,
         };
     }
