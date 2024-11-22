@@ -47,32 +47,14 @@ class HandleProtocolMessageCommand extends Command {
         throw Error('prepareMessage not implemented');
     }
 
-    async validateNeighborhood(
-        blockchain,
-        keyword,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        ual,
-    ) {
-        const closestNodes = await this.shardingTableService.findNeighbourhood(
-            blockchain,
-            keyword,
-            await this.blockchainModuleManager.getR2(blockchain),
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-            true, // filter inactive nodes
-        );
+    async validateShard(blockchain) {
         const peerId = this.networkModuleManager.getPeerId().toB58String();
-        for (const { peerId: otherPeerId } of closestNodes) {
-            if (otherPeerId === peerId) {
-                return true;
-            }
-        }
-        this.logger.warn(
-            `Invalid neighborhood for ual: ${ual} on blockchain: ${blockchain} with hashFunctionId: ${hashFunctionId}, proximityScoreFunctionsPairId: ${proximityScoreFunctionsPairId}`,
+        const isNodePartOfShard = await this.shardingTableService.isNodePartOfShard(
+            blockchain,
+            peerId,
         );
 
-        return false;
+        return isNodePartOfShard;
     }
 
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
@@ -176,30 +158,15 @@ class HandleProtocolMessageCommand extends Command {
         };
     }
 
-    async validateReceivedData(
-        operationId,
-        assertionId,
-        blockchain,
-        contract,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        agreementId,
-        agreementData,
-    ) {
+    async validateReceivedData(operationId, assertionId, blockchain, contract, tokenId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.trace(`Validating neighborhood for ual: ${ual}`);
-        if (
-            !(await this.validateNeighborhood(
-                blockchain,
-                keyword,
-                hashFunctionId,
-                proximityScoreFunctionsPairId,
-                ual,
-            ))
-        ) {
+        const isShardValid = await this.validateShard(blockchain);
+        if (!isShardValid) {
+            this.logger.warn(
+                `Invalid shard on blockchain: ${blockchain}, operationId: ${operationId}`,
+            );
             return {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                 messageData: { errorMessage: 'Invalid neighbourhood' },
@@ -209,24 +176,24 @@ class HandleProtocolMessageCommand extends Command {
         this.logger.trace(`Validating assertion with ual: ${ual}`);
         await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
         this.logger.trace(`Validating bid for asset with ual: ${ual}`);
-        const { errorMessage } = await this.validateBid(
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            blockchain,
-            assertionId,
-            operationId,
-            agreementId,
-            agreementData,
-        );
+        // const { errorMessage } = await this.validateBid(
+        //     contract,
+        //     tokenId,
+        //     keyword,
+        //     hashFunctionId,
+        //     blockchain,
+        //     assertionId,
+        //     operationId,
+        //     agreementId,
+        //     agreementData,
+        // );
 
-        if (errorMessage) {
-            return {
-                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                messageData: { errorMessage },
-            };
-        }
+        // if (errorMessage) {
+        //     return {
+        //         messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+        //         messageData: { errorMessage },
+        //     };
+        // }
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }

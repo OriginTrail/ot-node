@@ -33,7 +33,7 @@ class NetworkProtocolCommand extends Command {
             );
 
         const commandSequence = [
-            'findNodesCommand',
+            'findShardCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
