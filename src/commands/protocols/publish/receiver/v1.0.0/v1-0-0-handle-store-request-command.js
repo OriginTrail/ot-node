@@ -31,8 +31,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             tokenId,
             operationId,
             assertionId,
-            agreementId,
-            agreementData,
             proximityScoreFunctionsPairId,
         } = commandData;
 
@@ -40,6 +38,15 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
+        );
+
+        const { agreementId, agreementData } = await this.getAgreementData(
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+            operationId,
         );
 
         const validationResult = await this.validateReceivedData(
@@ -51,6 +58,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             keyword,
             hashFunctionId,
             proximityScoreFunctionsPairId,
+            agreementId,
+            agreementData,
         );
 
         this.operationIdService.updateOperationIdStatus(

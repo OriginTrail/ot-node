@@ -88,6 +88,29 @@ class HandleProtocolMessageCommand extends Command {
         }
     }
 
+    async getAgreementData(blockchain, contract, tokenId, keyword, hashFunctionId, operationId) {
+        const agreementId = this.serviceAgreementService.generateId(
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+        );
+        this.logger.info(
+            `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, blockchain: ${blockchain} keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId: ${operationId}`,
+        );
+
+        const agreementData = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            agreementId,
+        );
+
+        return {
+            agreementId,
+            agreementData,
+        };
+    }
+
     async validateBid(
         contract,
         tokenId,
@@ -96,30 +119,9 @@ class HandleProtocolMessageCommand extends Command {
         blockchain,
         assertionId,
         operationId,
+        agreementId,
+        agreementData,
     ) {
-        const getAgreementData = async () => {
-            const agreementId = this.serviceAgreementService.generateId(
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                hashFunctionId,
-            );
-            this.logger.info(
-                `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId: ${operationId}`,
-            );
-
-            const agreementData = await this.blockchainModuleManager.getAgreementData(
-                blockchain,
-                agreementId,
-            );
-
-            return {
-                agreementId,
-                agreementData,
-            };
-        };
-
         const getAsk = async () => {
             const peerRecord = await this.repositoryModuleManager.getPeerRecord(
                 this.networkModuleManager.getPeerId().toB58String(),
@@ -129,13 +131,11 @@ class HandleProtocolMessageCommand extends Command {
             return this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
         };
 
-        const [{ agreementId, agreementData }, blockchainAssertionSize, r0, ask] =
-            await Promise.all([
-                getAgreementData(),
-                this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
-                this.blockchainModuleManager.getR0(blockchain),
-                getAsk(),
-            ]);
+        const [blockchainAssertionSize, r0, ask] = await Promise.all([
+            this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
+            this.blockchainModuleManager.getR0(blockchain),
+            getAsk(),
+        ]);
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
         if (!agreementData) {
             this.logger.warn(
@@ -185,6 +185,8 @@ class HandleProtocolMessageCommand extends Command {
         keyword,
         hashFunctionId,
         proximityScoreFunctionsPairId,
+        agreementId,
+        agreementData,
     ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
@@ -207,7 +209,7 @@ class HandleProtocolMessageCommand extends Command {
         this.logger.trace(`Validating assertion with ual: ${ual}`);
         await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
         this.logger.trace(`Validating bid for asset with ual: ${ual}`);
-        const { errorMessage, agreementId, agreementData } = await this.validateBid(
+        const { errorMessage } = await this.validateBid(
             contract,
             tokenId,
             keyword,
@@ -215,6 +217,8 @@ class HandleProtocolMessageCommand extends Command {
             blockchain,
             assertionId,
             operationId,
+            agreementId,
+            agreementData,
         );
 
         if (errorMessage) {
@@ -223,17 +227,6 @@ class HandleProtocolMessageCommand extends Command {
                 messageData: { errorMessage },
             };
         }
-
-        await this.operationIdService.cacheOperationIdData(operationId, {
-            assertionId,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            agreementId,
-            agreementData,
-        });
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }

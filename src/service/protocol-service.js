@@ -36,7 +36,7 @@ class ProtocolService {
 
         const prefix = `${version}Handle${capitalizedOperation}`;
 
-        if (name === 'publish') {
+        if (name === 'store') {
             return [`${prefix}RequestCommand`];
         }
         return [`${prefix}InitCommand`, `${prefix}RequestCommand`];
