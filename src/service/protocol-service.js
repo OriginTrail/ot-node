@@ -36,6 +36,9 @@ class ProtocolService {
 
         const prefix = `${version}Handle${capitalizedOperation}`;
 
+        if (name === 'publish') {
+            return [`${prefix}RequestCommand`];
+        }
         return [`${prefix}InitCommand`, `${prefix}RequestCommand`];
     }
 
@@ -46,6 +49,9 @@ class ProtocolService {
 
         const prefix = `${version}${capitalizedOperation}`;
 
+        if (operation === 'publish') {
+            return [`${prefix}RequestCommand`];
+        }
         return [`${prefix}InitCommand`, `${prefix}RequestCommand`];
     }
 }
