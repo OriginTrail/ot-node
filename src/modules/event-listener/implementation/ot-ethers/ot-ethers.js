@@ -20,6 +20,7 @@ class OtEthers extends OtEventListener {
     async initializeBlockchainEventListener(blockchainConfig) {
         this.blockchainConfig = blockchainConfig;
         await this.initializeRpcProvider();
+        this.startBlock = await this.getBlockNumber();
     }
 
     async initializeRpcProvider() {
@@ -95,15 +96,20 @@ class OtEthers extends OtEventListener {
         return this.provider.getNetwork();
     }
 
+    async getBlockNumber() {
+        const latestBlock = await this.provider.getBlock('latest');
+        return latestBlock.number;
+    }
+
     async getAllPastEvents(
         blockchainId,
         contractName,
+        contract,
         eventsToFilter,
         lastCheckedBlock,
         lastCheckedTimestamp,
         currentBlock,
     ) {
-        const contract = this[contractName];
         if (!contract) {
             // this will happen when we have different set of contracts on different blockchains
             // eg LinearSum contract is available on gnosis but not on NeuroWeb, so the node should not fetch events
@@ -185,6 +191,7 @@ class OtEthers extends OtEventListener {
         return this.maxNumberOfHistoricalBlocksForSync;
     }
 
+    // TODO: Change for each blockchain
     getBlockTimeMillis() {
         return BLOCK_TIME_MILLIS.DEFAULT;
     }

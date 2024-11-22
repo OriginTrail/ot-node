@@ -518,6 +518,10 @@ class BlockchainModuleManager extends BaseModuleManager {
             knowledgeAssetId,
         ]);
     }
+
+    getContract(blockchain, contractName) {
+        return this.callImplementationFunction(blockchain, 'getContract', [contractName]);
+    }
 }
 
 export default BlockchainModuleManager;

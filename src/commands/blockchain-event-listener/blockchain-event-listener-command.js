@@ -86,7 +86,7 @@ class BlockchainEventListenerCommand extends Command {
                     this.logger.error(
                         `Failed to get and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
                     );
-                    await setTimeout(DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
+                    setTimeout(DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
                 } finally {
                     working = false;
                 }
@@ -148,10 +148,13 @@ class BlockchainEventListenerCommand extends Command {
             contractName,
         );
 
+        const contract = this.blockchainModuleManager.getContract(blockchainId, contractName);
+
         const result = await this.eventListenerModuleManager.getAllPastEvents(
             this.eventListenerImplementation,
             blockchainId,
             contractName,
+            contract,
             eventsToFilter,
             lastCheckedBlockObject?.lastCheckedBlock ?? 0,
             lastCheckedBlockObject?.lastCheckedTimestamp ?? 0,

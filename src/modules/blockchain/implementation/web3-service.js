@@ -1663,6 +1663,19 @@ class Web3Service {
             CONTRACTS.PARANETS_REGISTRY_CONTRACT,
         );
     }
+
+    getContract(contractName) {
+        const finalContractName = contractName.endsWith('Contract')
+            ? contractName
+            : `${contractName}Contract`;
+        try {
+            return this[finalContractName];
+        } catch (e) {
+            throw new Error(
+                `Could not fetch the contract ${finalContractName}. Error: ${e.message}.`,
+            );
+        }
+    }
 }
 
 export default Web3Service;
