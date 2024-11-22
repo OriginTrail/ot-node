@@ -16,25 +16,19 @@ class PublishController extends BaseController {
         const { operationId, keywordUuid, messageType } = message.header;
 
         const command = { sequence: [], delay: 0, transactional: false, data: {} };
-        let dataSource;
         const [handleRequestCommand] = this.getCommandSequence(protocol);
-        switch (messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                // eslint-disable-next-line no-case-declarations
-                dataSource = message.data;
-                command.period = 5000;
-                command.retries = 3;
-                await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertionId: dataSource.assertionId,
-                    assertion: message.data.assertion,
-                });
-                command.name = handleRequestCommand;
-                command.data.keyword = message.data.keyword;
-                command.data.agreementId = dataSource.agreementId;
-                command.data.agreementData = dataSource.agreementData;
-                break;
-            default:
-                throw Error('unknown message type');
+        if (messageType === NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST) {
+            Object.assign(command, {
+                name: handleRequestCommand,
+                period: 5000,
+                retries: 3,
+            });
+
+            await this.operationIdService.cacheOperationIdData(operationId, {
+                assertion: message.data.assertion,
+            });
+        } else {
+            throw new Error('Unknown message type');
         }
 
         command.data = {
@@ -43,13 +37,13 @@ class PublishController extends BaseController {
             operationId,
             keywordUuid,
             protocol,
-            assertionId: dataSource.assertionId,
-            blockchain: dataSource.blockchain,
-            contract: dataSource.contract,
-            tokenId: dataSource.tokenId,
-            keyword: dataSource.keyword,
+            assertionId: message.data.assertionId,
+            blockchain: message.data.blockchain,
+            contract: message.data.contract,
+            tokenId: message.data.tokenId,
+            keyword: message.data.keyword,
             hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
-            proximityScoreFunctionsPairId: dataSource.proximityScoreFunctionsPairId ?? 1,
+            proximityScoreFunctionsPairId: message.data.proximityScoreFunctionsPairId ?? 2,
         };
 
         await this.commandExecutor.add(command);

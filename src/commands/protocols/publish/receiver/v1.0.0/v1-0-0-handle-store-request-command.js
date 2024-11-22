@@ -86,6 +86,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         await this.validationService.validateAssertion(assertionId, blockchain, assertion);
 
+        // TODO: Thos updateOperationIdStatus update in a row, this should be changed
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,

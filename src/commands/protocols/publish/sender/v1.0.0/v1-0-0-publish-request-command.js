@@ -21,7 +21,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         } = await this.operationIdService.getCachedOperationIdData(command.data.operationId);
 
         return {
-            assertionId, // fake value
+            assertionId,
             blockchain,
             contract,
             tokenId,
