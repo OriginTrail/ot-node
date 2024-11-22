@@ -5,7 +5,6 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     TRIPLE_STORE_REPOSITORIES,
-    SERVICE_AGREEMENT_SOURCES,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -23,8 +22,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { blockchain, keyword, hashFunctionId, contract, tokenId, operationId, assertionId } =
-            commandData;
+        const { blockchain, contract, operationId, assertionId } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -32,21 +30,11 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
         );
 
-        const { agreementId, agreementData } = await this.getAgreementData(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            operationId,
-        );
-
         const validationResult = await this.validateReceivedData(
             operationId,
             assertionId,
             blockchain,
             contract,
-            tokenId,
         );
 
         this.operationIdService.updateOperationIdStatus(
@@ -64,14 +52,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_START,
         );
-        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            blockchain,
-            contract,
-            tokenId,
-        );
-        const stateIndex = assertionIds.length - 1;
+
         const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.validationService.validateAssertion(assertionId, blockchain, assertion);
 
         // TODO: Thos updateOperationIdStatus update in a row, this should be changed
         await this.operationIdService.updateOperationIdStatus(
@@ -86,31 +68,13 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
+        // TODO: Update this when new data model
         await this.tripleStoreService.localStoreAsset(
             TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
             assertionId,
             assertion,
             blockchain,
             contract,
-            tokenId,
-            keyword,
-        );
-
-        await this.repositoryModuleManager.updateServiceAgreementRecord(
-            blockchain,
-            contract,
-            tokenId,
-            agreementId,
-            agreementData.startTime,
-            agreementData.epochsNumber,
-            agreementData.epochLength,
-            agreementData.scoreFunctionId,
-            agreementData.proofWindowOffsetPerc,
-            hashFunctionId,
-            keyword,
-            assertionId,
-            stateIndex,
-            SERVICE_AGREEMENT_SOURCES.NODE,
         );
 
         await this.operationIdService.updateOperationIdStatus(

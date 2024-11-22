@@ -158,10 +158,8 @@ class HandleProtocolMessageCommand extends Command {
         };
     }
 
-    async validateReceivedData(operationId, assertionId, blockchain, contract, tokenId) {
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-        this.logger.trace(`Validating neighborhood for ual: ${ual}`);
+    async validateReceivedData(operationId, assertionId, blockchain) {
+        this.logger.trace(`Validating shard for assertionId: ${assertionId}`);
         const isShardValid = await this.validateShard(blockchain);
         if (!isShardValid) {
             this.logger.warn(
@@ -173,9 +171,11 @@ class HandleProtocolMessageCommand extends Command {
             };
         }
 
-        this.logger.trace(`Validating assertion with ual: ${ual}`);
-        await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
-        this.logger.trace(`Validating bid for asset with ual: ${ual}`);
+        // TODO: No onchain validation here just validate datasetRoot
+
+        // this.logger.trace(`Validating assertion with ual: ${ual}`);
+        // await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
+        // this.logger.trace(`Validating bid for asset with ual: ${ual}`);
         // const { errorMessage } = await this.validateBid(
         //     contract,
         //     tokenId,

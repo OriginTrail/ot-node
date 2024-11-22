@@ -1,8 +1,5 @@
 import BaseController from './base-rpc-controller.js';
-import {
-    NETWORK_MESSAGE_TYPES,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
-} from '../../constants/constants.js';
+import { NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -40,10 +37,6 @@ class PublishController extends BaseController {
             assertionId: message.data.assertionId,
             blockchain: message.data.blockchain,
             contract: message.data.contract,
-            tokenId: message.data.tokenId,
-            keyword: message.data.keyword,
-            hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
-            proximityScoreFunctionsPairId: message.data.proximityScoreFunctionsPairId ?? 2,
         };
 
         await this.commandExecutor.add(command);

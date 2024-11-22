@@ -13,49 +13,43 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain, contract, tokenId, hashFunctionId } = command.data;
+        const { blockchain } = command.data;
 
-        const keywords = await this.getKeywords(command);
+        // const keywords = await this.getKeywords(command);
         const batchSize = await this.getBatchSize(blockchain);
         const minAckResponses = await this.getMinAckResponses(blockchain);
 
-        const serviceAgreementId = this.serviceAgreementService.generateId(
-            blockchain,
-            contract,
-            tokenId,
-            keywords[0],
-            hashFunctionId,
-        );
-        const proximityScoreFunctionsPairId =
-            await this.blockchainModuleManager.getAgreementScoreFunctionId(
-                blockchain,
-                serviceAgreementId,
-            );
+        // const serviceAgreementId = this.serviceAgreementService.generateId(
+        //     blockchain,
+        //     contract,
+        //     tokenId,
+        //     keywords[0],
+        //     hashFunctionId,
+        // );
+        // const proximityScoreFunctionsPairId =
+        //     await this.blockchainModuleManager.getAgreementScoreFunctionId(
+        //         blockchain,
+        //         serviceAgreementId,
+        //     );
 
         const commandSequence = [
             'findShardCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
-        const addCommandPromises = keywords.map((keyword) =>
-            this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
-                delay: 0,
-                data: {
-                    ...command.data,
-                    keyword,
-                    batchSize,
-                    minAckResponses,
-                    errorType: this.errorType,
-                    networkProtocols: this.operationService.getNetworkProtocols(),
-                    proximityScoreFunctionsPairId,
-                },
-                transactional: false,
-            }),
-        );
-
-        await Promise.all(addCommandPromises);
+        await this.commandExecutor.add({
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
+            delay: 0,
+            data: {
+                ...command.data,
+                batchSize,
+                minAckResponses,
+                errorType: this.errorType,
+                networkProtocols: this.operationService.getNetworkProtocols(),
+            },
+            transactional: false,
+        });
 
         return Command.empty();
     }
