@@ -18,7 +18,7 @@ class HandleProtocolMessageCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, operationId, keywordUuid, protocol } = command.data;
+        const { remotePeerId, operationId, uuid, protocol } = command.data;
 
         try {
             const { messageType, messageData } = await this.prepareMessage(command.data);
@@ -27,7 +27,7 @@ class HandleProtocolMessageCommand extends Command {
                 remotePeerId,
                 messageType,
                 operationId,
-                keywordUuid,
+                uuid,
                 messageData,
             );
         } catch (error) {
@@ -38,7 +38,7 @@ class HandleProtocolMessageCommand extends Command {
             await this.handleError(error.message, command);
         }
 
-        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
+        this.networkModuleManager.removeCachedSession(operationId, uuid, remotePeerId);
 
         return Command.empty();
     }
@@ -199,7 +199,7 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async handleError(errorMessage, command) {
-        const { operationId, blockchain, remotePeerId, keywordUuid, protocol } = command.data;
+        const { operationId, blockchain, remotePeerId, uuid, protocol } = command.data;
 
         await super.handleError(operationId, blockchain, errorMessage, this.errorType, true);
         await this.networkModuleManager.sendMessageResponse(
@@ -207,10 +207,10 @@ class HandleProtocolMessageCommand extends Command {
             remotePeerId,
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             operationId,
-            keywordUuid,
+            uuid,
             { errorMessage },
         );
-        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
+        this.networkModuleManager.removeCachedSession(operationId, uuid, remotePeerId);
     }
 }
 
