@@ -141,14 +141,14 @@ class FileService {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
 
-    getPendingStorageCachePath(repository) {
-        return path.join(this.getDataFolderPath(), 'pending_storage_cache', repository);
+    getPendingStorageCachePath(blockchain) {
+        return path.join(this.getDataFolderPath(), 'pending_storage_cache', blockchain);
     }
 
-    getPendingStorageFolderPath(repository, blockchain, contract, tokenId) {
+    getPendingStorageFolderPath(blockchain, datasetRoot) {
         return path.join(
-            this.getPendingStorageCachePath(repository),
-            `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}`,
+            this.getPendingStorageCachePath(blockchain),
+            `${blockchain.toLowerCase()}-${datasetRoot}`,
         );
     }
 

@@ -17,6 +17,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
+        this.pendingStorageService = ctx.pendingStorageService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
@@ -68,14 +69,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
-        // TODO: Update this when new data model
-        // await this.tripleStoreService.localStoreAsset(
-        //     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-        //     datasetRoot,
-        //     dataset,
-        //     blockchain,
-        //     contract,
-        // );
+        this.pendingStorageService.cacheDataset(blockchain, datasetRoot, dataset, operationId);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
