@@ -14,7 +14,6 @@ class ProtocolScheduleMessagesCommand extends Command {
     async execute(command) {
         const {
             operationId,
-            keyword,
             batchSize,
             leftoverNodes,
             numberOfFoundNodes,
@@ -35,9 +34,7 @@ class ProtocolScheduleMessagesCommand extends Command {
         this.logger.debug(
             `Trying to ${this.operationService.getOperationName()} to batch of ${
                 currentBatchNodes.length
-            } nodes for keyword : ${keyword}, leftover for retry: ${
-                currentBatchLeftoverNodes.length
-            }`,
+            }, leftover for retry: ${currentBatchLeftoverNodes.length}`,
         );
 
         const addCommandPromises = currentBatchNodes.map(async (node) => {
@@ -50,7 +47,6 @@ class ProtocolScheduleMessagesCommand extends Command {
                     ...this.getNextCommandData(command),
                     blockchain,
                     operationId,
-                    keyword,
                     node,
                     numberOfFoundNodes,
                     batchSize,
@@ -69,13 +65,11 @@ class ProtocolScheduleMessagesCommand extends Command {
     }
 
     getNextCommandData(command) {
-        const { assertionId, blockchain, contract, tokenId, hashFunctionId } = command.data;
+        const { datasetRoot, blockchain, hashFunctionId } = command.data;
         const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
         return {
-            assertionId,
             blockchain,
-            contract,
-            tokenId,
+            datasetRoot,
             hashFunctionId,
             proximityScoreFunctionsPairId,
         };

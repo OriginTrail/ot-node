@@ -4,7 +4,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    TRIPLE_STORE_REPOSITORIES,
+    // TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -22,7 +22,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { blockchain, contract, operationId, assertionId } = commandData;
+        const { blockchain, operationId, datasetRoot } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -30,11 +30,13 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
         );
 
+        const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
+
         const validationResult = await this.validateReceivedData(
             operationId,
-            assertionId,
+            datasetRoot,
+            dataset,
             blockchain,
-            contract,
         );
 
         this.operationIdService.updateOperationIdStatus(
@@ -53,9 +55,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_START,
         );
 
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-
-        // TODO: Thos updateOperationIdStatus update in a row, this should be changed
+        // TODO: Two updateOperationIdStatus update in a row, this should be changed
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -69,13 +69,13 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         );
 
         // TODO: Update this when new data model
-        await this.tripleStoreService.localStoreAsset(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            assertionId,
-            assertion,
-            blockchain,
-            contract,
-        );
+        // await this.tripleStoreService.localStoreAsset(
+        //     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+        //     datasetRoot,
+        //     dataset,
+        //     blockchain,
+        //     contract,
+        // );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

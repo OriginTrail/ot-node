@@ -22,7 +22,7 @@ class PublishController extends BaseController {
             });
 
             await this.operationIdService.cacheOperationIdData(operationId, {
-                assertion: message.data.assertion,
+                dataset: message.data.dataset,
             });
         } else {
             throw new Error('Unknown message type');
@@ -34,9 +34,8 @@ class PublishController extends BaseController {
             operationId,
             uuid,
             protocol,
-            assertionId: message.data.assertionId,
+            datasetRoot: message.data.datasetRoot,
             blockchain: message.data.blockchain,
-            contract: message.data.contract,
         };
 
         await this.commandExecutor.add(command);

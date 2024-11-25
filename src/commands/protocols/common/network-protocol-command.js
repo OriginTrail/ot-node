@@ -19,19 +19,6 @@ class NetworkProtocolCommand extends Command {
         const batchSize = await this.getBatchSize(blockchain);
         const minAckResponses = await this.getMinAckResponses(blockchain);
 
-        // const serviceAgreementId = this.serviceAgreementService.generateId(
-        //     blockchain,
-        //     contract,
-        //     tokenId,
-        //     keywords[0],
-        //     hashFunctionId,
-        // );
-        // const proximityScoreFunctionsPairId =
-        //     await this.blockchainModuleManager.getAgreementScoreFunctionId(
-        //         blockchain,
-        //         serviceAgreementId,
-        //     );
-
         const commandSequence = [
             'findShardCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,

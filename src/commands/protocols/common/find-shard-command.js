@@ -14,13 +14,11 @@ class FindShardCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { keyword, operationId, blockchain, errorType, networkProtocols, minAckResponses } =
+        const { operationId, blockchain, errorType, networkProtocols, minAckResponses } =
             command.data;
 
         this.errorType = errorType;
-        this.logger.debug(
-            `Searching for shard for operationId: ${operationId}, keyword: ${keyword}`,
-        );
+        this.logger.debug(`Searching for shard for operationId: ${operationId}`);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -37,9 +35,7 @@ class FindShardCommand extends Command {
             }
         }
 
-        this.logger.debug(
-            `Found ${shardNodes.length} node(s) for operationId: ${operationId}, keyword: ${keyword}`,
-        );
+        this.logger.debug(`Found ${shardNodes.length} node(s) for operationId: ${operationId}`);
         this.logger.trace(
             `Found shard: ${JSON.stringify(
                 shardNodes.map((node) => node.id),
@@ -52,7 +48,7 @@ class FindShardCommand extends Command {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Unable to find enough nodes for operationId: ${operationId}, keyword: ${keyword}. Minimum number of nodes required: ${minAckResponses}`,
+                `Unable to find enough nodes for operationId: ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
                 this.errorType,
                 true,
             );

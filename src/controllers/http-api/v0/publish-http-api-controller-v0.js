@@ -20,11 +20,11 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { assertion, assertionId, blockchain } = req.body;
+        const { dataset, datasetRoot, blockchain } = req.body;
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         this.logger.info(
-            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}`,
+            `Received asset with dataset root: ${datasetRoot}, blockchain: ${blockchain}`,
         );
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -55,8 +55,8 @@ class PublishController extends BaseController {
         try {
             await this.operationIdService.cacheOperationIdData(operationId, {
                 public: {
-                    assertion,
-                    assertionId,
+                    dataset,
+                    datasetRoot,
                 },
                 blockchain,
             });
@@ -75,7 +75,7 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    assertionId,
+                    datasetRoot,
                     blockchain,
                     hashFunctionId,
                     operationId,

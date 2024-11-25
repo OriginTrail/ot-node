@@ -158,8 +158,8 @@ class HandleProtocolMessageCommand extends Command {
         };
     }
 
-    async validateReceivedData(operationId, assertionId, blockchain) {
-        this.logger.trace(`Validating shard for assertionId: ${assertionId}`);
+    async validateReceivedData(operationId, datasetRoot, dataset, blockchain) {
+        this.logger.trace(`Validating shard for datasetRoot: ${datasetRoot}`);
         const isShardValid = await this.validateShard(blockchain);
         if (!isShardValid) {
             this.logger.warn(
@@ -171,29 +171,19 @@ class HandleProtocolMessageCommand extends Command {
             };
         }
 
-        // TODO: No onchain validation here just validate datasetRoot
+        const isValidAssertion = await this.validationService.validateDatasetRoot(
+            dataset,
+            datasetRoot,
+        );
 
-        // this.logger.trace(`Validating assertion with ual: ${ual}`);
-        // await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
-        // this.logger.trace(`Validating bid for asset with ual: ${ual}`);
-        // const { errorMessage } = await this.validateBid(
-        //     contract,
-        //     tokenId,
-        //     keyword,
-        //     hashFunctionId,
-        //     blockchain,
-        //     assertionId,
-        //     operationId,
-        //     agreementId,
-        //     agreementData,
-        // );
-
-        // if (errorMessage) {
-        //     return {
-        //         messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-        //         messageData: { errorMessage },
-        //     };
-        // }
+        if (!isValidAssertion) {
+            return {
+                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                messageData: {
+                    errorMessage: `Invalid dataset root for asset ???. Received value , received value from request: ${datasetRoot}`,
+                },
+            };
+        }
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
