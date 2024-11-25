@@ -1,10 +1,10 @@
 import ValidateAssetCommand from '../../../common/validate-asset-command.js';
-import Command from '../command.js';
+import Command from '../../../command.js';
 import {
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
     ZERO_BYTES32,
-} from '../../constants/constants.js';
+} from '../../../../constants/constants.js';
 
 class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
     constructor(ctx) {
@@ -75,7 +75,7 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
                 true,
             );
             return Command.empty();
-        }        
+        }
 
         await this.validationService.validateAssertion(
             cachedData.public.assertionId,
@@ -89,7 +89,7 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_BLOCKCHAIN_END,
         );
         return this.continueSequence(
-            { ...command.data, paranetId, retry: undefined, period: undefined },
+            { ...command.data, retry: undefined, period: undefined },
             command.sequence,
         );
     }

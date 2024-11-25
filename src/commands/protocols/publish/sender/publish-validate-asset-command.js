@@ -1,10 +1,10 @@
 import ValidateAssetCommand from '../../../common/validate-asset-command.js';
-import Command from '../command.js';
+import Command from '../../../command.js';
 import {
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
     PARANET_ACCESS_POLICY,
-} from '../../constants/constants.js';
+} from '../../../../constants/constants.js';
 
 class PublishValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
@@ -40,7 +40,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         );
 
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
-        
+
         const isValidAssertion = await this.validationService.validateAssertionId(
             cachedData.public.assertion,
             cachedData.public.assertionId,
@@ -50,7 +50,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
+                `Invalid dastaset root for asset ???. Received value , received value from request: ${cachedData.public.datasetRoot}`,
                 this.errorType,
             );
             return Command.empty();
@@ -114,12 +114,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     return Command.empty();
                 }
             } catch (error) {
-                await this.handleError(
-                    operationId,
-                    blockchain,
-                    error.message,
-                    this.errorType,
-                );
+                await this.handleError(operationId, blockchain, error.message, this.errorType);
                 return Command.empty();
             }
         }
