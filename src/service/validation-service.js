@@ -89,6 +89,8 @@ class ValidationService {
                 `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
             );
         }
+
+        return assertionId === calculatedAssertionId;
     }
 }
 

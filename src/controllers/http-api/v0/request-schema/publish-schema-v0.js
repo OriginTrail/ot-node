@@ -17,15 +17,6 @@ export default (argumentsObject) => ({
         blockchain: {
             enum: argumentsObject.blockchainImplementationNames,
         },
-        contract: {
-            type: 'string',
-            minLength: 42,
-            maxLength: 42,
-        },
-        tokenId: {
-            type: 'number',
-            minimum: 0,
-        },
         hashFunctionId: {
             type: 'number',
             minimum: 1,

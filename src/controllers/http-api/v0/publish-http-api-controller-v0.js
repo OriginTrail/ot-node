@@ -20,11 +20,11 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+        const { assertion, assertionId, blockchain } = req.body;
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         this.logger.info(
-            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}`,
         );
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -59,16 +59,12 @@ class PublishController extends BaseController {
                     assertionId,
                 },
                 blockchain,
-                contract,
-                tokenId,
             });
 
             const commandSequence = ['publishValidateAssetCommand'];
 
             // Backwards compatibility check - true for older clients
-            if (req.body.localStore) {
-                commandSequence.push('localStoreCommand');
-            }
+            commandSequence.push('localStoreCommand');
 
             commandSequence.push('networkPublishCommand');
 
@@ -81,8 +77,6 @@ class PublishController extends BaseController {
                 data: {
                     assertionId,
                     blockchain,
-                    contract,
-                    tokenId,
                     hashFunctionId,
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
