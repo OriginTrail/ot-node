@@ -5,6 +5,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.signatureStorageService = ctx.signatureStorageService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
@@ -29,6 +30,16 @@ class PublishRequestCommand extends ProtocolRequestCommand {
 
     messageTimeout() {
         return NETWORK_MESSAGE_TIMEOUT_MILLS.PUBLISH.REQUEST;
+    }
+
+    async handleAck(command, responseData) {
+        const { blockchain, operationId } = command.data;
+        this.signatureStorageService.addSignatureToStorage(
+            blockchain,
+            operationId,
+            responseData.signature,
+        );
+        return super.handleAck(command, responseData);
     }
 
     /**

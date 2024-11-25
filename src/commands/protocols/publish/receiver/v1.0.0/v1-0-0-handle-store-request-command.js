@@ -83,7 +83,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
-        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
+        return {
+            messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+            messageData: { signature: `signature-${Math.floor(Math.random() * 1000000) + 1}` },
+        };
     }
 
     /**
