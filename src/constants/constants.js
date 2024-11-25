@@ -180,6 +180,7 @@ export const DIAL_PEERS_CONCURRENCY = 10;
 export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
 
 export const PERMANENT_COMMANDS = [
+    'eventListenerCommand',
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
     'shardingTableCheckCommand',
@@ -194,7 +195,6 @@ export const PERMANENT_COMMANDS = [
     'updateCleanerCommand',
     'updateResponseCleanerCommand',
     'startParanetSyncCommands',
-    'blockchainEventListenerCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -315,6 +315,8 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
 export const MAX_OPEN_SESSIONS = 10;
 
 export const ERROR_TYPE = {
+    EVENT_LISTENER_ERROR: 'EventListenerError',
+    BLOCKCHAIN_EVENT_LISTENER_ERROR: 'BlockchainEventListenerError',
     DIAL_PROTOCOL_ERROR: 'DialProtocolError',
     VALIDATE_ASSET_ERROR: 'ValidateAssetError',
     PUBLISH: {

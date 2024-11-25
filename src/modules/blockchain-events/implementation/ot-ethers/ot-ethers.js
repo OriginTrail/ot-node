@@ -15,11 +15,15 @@ import {
 class OtEthers extends OtBlockchainEvents {
     async initialize(config, logger) {
         await super.initialize(config, logger);
+        this.startBlock = null;
     }
 
     async initializeImplementation(blockchainConfig) {
         await this.initializeRpcProvider(blockchainConfig);
-        this.startBlock = await this.getBlockNumber();
+
+        if (this.startBlock === null) {
+            this.startBlock = await this.getBlockNumber();
+        }
     }
 
     async initializeRpcProvider(blockchainConfig) {
