@@ -6,6 +6,7 @@ import {
     TRIPLE_STORE_CONNECT_RETRY_FREQUENCY,
     MEDIA_TYPES,
     UAL_PREDICATE,
+    BASE_NAMED_GRAPHS,
 } from '../../../constants/constants.js';
 
 class OtTripleStore {
@@ -103,7 +104,7 @@ class OtTripleStore {
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
                 GRAPH <${namedGraph}> { 
-                    ${collectionNQuads} 
+                    ${collectionNQuads.join('\n')}
                 } 
             }
         `;
@@ -233,8 +234,8 @@ class OtTripleStore {
                 ${uals
                     .map(
                         (ual, index) => `
-                    GRAPH <knowledge-asset:${ual}> {
-                        ${assetsNQuads[index]}
+                    GRAPH <${ual}> {
+                        ${assetsNQuads[index].join('\n')}
                     }
                 `,
                     )
@@ -246,7 +247,7 @@ class OtTripleStore {
     }
 
     async deleteKnowledgeCollectionNamedGraphs(repository, uals) {
-        const query = `${uals.map((ual) => `DROP GRAPH <knowledge-asset:${ual}>`).join(';\n')};`;
+        const query = `${uals.map((ual) => `DROP GRAPH <${ual}>`).join(';\n')};`;
 
         await this.queryVoid(repository, query);
     }
@@ -259,7 +260,7 @@ class OtTripleStore {
                 GRAPH ?g {
                     ?s ?p ?o .
                 }
-                FILTER(STRSTARTS(STR(?g), "knowledge-asset:${ual}/"))
+                FILTER(STRSTARTS(STR(?g), "${ual}/"))
             }
             ${sort ? 'ORDER BY ?s' : ''}
         `;
@@ -273,7 +274,7 @@ class OtTripleStore {
                 GRAPH ?g {
                     ?s ?p ?o
                 }
-                FILTER(STRSTARTS(STR(?g), "knowledge-asset:${ual}/"))
+                FILTER(STRSTARTS(STR(?g), "${ual}/"))
             }
         `;
 
@@ -282,7 +283,7 @@ class OtTripleStore {
 
     async deleteKnowledgeAssetNamedGraph(repository, ual) {
         const query = `
-            DROP GRAPH <knowledge-asset:${ual}>
+            DROP GRAPH <${ual}>
         `;
 
         await this.queryVoid(repository, query);
@@ -293,7 +294,7 @@ class OtTripleStore {
             PREFIX schema: <${SCHEMA_CONTEXT}>
             CONSTRUCT { ?s ?p ?o . }
             WHERE {
-                GRAPH <knowledge-asset:${ual}> {
+                GRAPH <${ual}> {
                     ?s ?p ?o .
                 }
             }
@@ -305,7 +306,7 @@ class OtTripleStore {
     async knowledgeAssetNamedGraphExists(repository, ual) {
         const query = `
             ASK {
-                GRAPH <knowledge-asset:${ual}> {
+                GRAPH <${ual}> {
                     ?s ?p ?o
                 }
             }
@@ -318,7 +319,7 @@ class OtTripleStore {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
-                GRAPH <metadata> { 
+                GRAPH <${BASE_NAMED_GRAPHS.METADATA}> { 
                     ${metadataNQuads} 
                 } 
             }
@@ -331,7 +332,7 @@ class OtTripleStore {
         const query = `
             DELETE
             WHERE {
-                GRAPH <metadata> {
+                GRAPH <${BASE_NAMED_GRAPHS.METADATA}> {
                     ?ual ?p ?o .
                     FILTER(STRSTARTS(STR(?ual), "${ual}/"))
                 }
@@ -345,7 +346,7 @@ class OtTripleStore {
         const query = `
             CONSTRUCT { ?s ?p ?o . }
             WHERE {
-                GRAPH <metadata> {
+                GRAPH <${BASE_NAMED_GRAPHS.METADATA}> {
                     ?ual ?p ?o .
                     FILTER(STRSTARTS(STR(?ual), "${ual}/"))
                 }
@@ -358,7 +359,7 @@ class OtTripleStore {
     async knowledgeCollectionMetadataExists(repository, ual) {
         const query = `
             ASK {
-                GRAPH <metadata> {
+                GRAPH <${BASE_NAMED_GRAPHS.METADATA}> {
                     ?ual ?p ?o
                     FILTER(STRSTARTS(STR(?ual), "${ual}/"))
                 }

@@ -57,7 +57,7 @@ class TripleStoreService {
         const tripleAnnotations = this.dataService.createTripleAnnotations(
             triples,
             UAL_PREDICATE,
-            knowledgeCollectionUAL,
+            `<${knowledgeCollectionUAL}>`,
         );
         const unifiedGraphTriples = [...triples, ...tripleAnnotations];
 
@@ -70,8 +70,8 @@ class TripleStoreService {
                 this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                     this.repositoryImplementations[repository],
                     repository,
-                    knowledgeAssetsTriples,
                     knowledgeAssetsStatesUALs,
+                    knowledgeAssetsTriples,
                 ),
             );
         }
@@ -187,7 +187,7 @@ class TripleStoreService {
         const knowledgeCollectionAnnotations = this.dataService.createTripleAnnotations(
             knowledgeCollection,
             UAL_PREDICATE,
-            ual,
+            `<${ual}>`,
         );
         const knowledgeCollectionWithAnnotations = [
             ...knowledgeCollection,

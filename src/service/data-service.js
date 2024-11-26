@@ -44,7 +44,9 @@ class DataService {
     }
 
     createTripleAnnotations(triples, annotationPredicate, annotation) {
-        return triples.map((triple) => `<< ${triple} >> ${annotationPredicate} ${annotation}`);
+        return triples.map(
+            (triple) => `<< ${triple.replace(' .', '')} >> ${annotationPredicate} ${annotation} .`,
+        );
     }
 
     countDistinctSubjects(triples) {
