@@ -41,16 +41,16 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
 
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
 
-        const isValidAssertion = await this.validationService.validateAssertionId(
-            cachedData.public.assertion,
-            cachedData.public.assertionId,
+        const isValidAssertion = await this.validationService.validateDatasetRoot(
+            cachedData.public.dataset,
+            cachedData.public.datasetRoot,
         );
 
         if (!isValidAssertion) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid dastaset root for asset ???. Received value , received value from request: ${cachedData.public.datasetRoot}`,
+                `Invalid dataset root for asset ???. Received value , received value from request: ${cachedData.public.datasetRoot}`,
                 this.errorType,
             );
             return Command.empty();

@@ -1,13 +1,13 @@
 export default (argumentsObject) => ({
     type: 'object',
-    required: ['assertionId', 'assertion', 'blockchain', 'contract', 'tokenId'],
+    required: ['datasetRoot', 'dataset', 'blockchain'],
     properties: {
-        assertionId: {
+        datasetRoot: {
             type: 'string',
             minLength: 66,
             maxLength: 66,
         },
-        assertion: {
+        dataset: {
             type: 'array',
             items: {
                 type: 'string',

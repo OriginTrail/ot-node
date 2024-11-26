@@ -27,27 +27,9 @@
                     "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
                     "config": {
                         "repositories": {
-                            "privateCurrent": {
+                            "dkg": {
                                 "url": "http://localhost:9999",
-                                "name": "private-current",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "privateHistory": {
-                                "url": "http://localhost:9999",
-                                "name": "private-history",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "publicCurrent": {
-                                "url": "http://localhost:9999",
-                                "name": "public-current",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "publicHistory": {
-                                "url": "http://localhost:9999",
-                                "name": "public-history",
+                                "name": "dkg",
                                 "username": "admin",
                                 "password": ""
                             }
@@ -59,27 +41,9 @@
                     "package": "./triple-store/implementation/ot-fuseki/ot-fuseki.js",
                     "config": {
                         "repositories": {
-                            "privateCurrent": {
+                            "dkg": {
                                 "url": "http://localhost:3030",
-                                "name": "private-current",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "privateHistory": {
-                                "url": "http://localhost:3030",
-                                "name": "private-history",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "publicCurrent": {
-                                "url": "http://localhost:3030",
-                                "name": "public-current",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "publicHistory": {
-                                "url": "http://localhost:3030",
-                                "name": "public-history",
+                                "name": "dkg",
                                 "username": "admin",
                                 "password": ""
                             }
@@ -91,27 +55,9 @@
                     "package": "./triple-store/implementation/ot-graphdb/ot-graphdb.js",
                     "config": {
                         "repositories": {
-                            "privateCurrent": {
+                            "dkg": {
                                 "url": "http://localhost:7200",
-                                "name": "private-current",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "privateHistory": {
-                                "url": "http://localhost:7200",
-                                "name": "private-history",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "publicCurrent": {
-                                "url": "http://localhost:7200",
-                                "name": "public-current",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "publicHistory": {
-                                "url": "http://localhost:7200",
-                                "name": "public-history",
+                                "name": "dkg",
                                 "username": "admin",
                                 "password": ""
                             }

@@ -43,6 +43,48 @@ class DataService {
         return nquads;
     }
 
+    createTripleAnnotations(groupedTriples, annotationPredicate, annotations) {
+        return groupedTriples.flatMap((knowledgeAssetTriples, index) =>
+            knowledgeAssetTriples.map(
+                (triple) =>
+                    `<< ${triple.replace(' .', '')} >> ${annotationPredicate} ${
+                        annotations[index]
+                    } .`,
+            ),
+        );
+    }
+
+    countDistinctSubjects(triples) {
+        const distinctSubjects = new Set();
+
+        for (const triple of triples) {
+            const [subject, ,] = triple.split(' ');
+
+            distinctSubjects.add(subject);
+        }
+
+        return distinctSubjects.size;
+    }
+
+    groupTriplesBySubject(triples, sort = true) {
+        const groupedTriples = {};
+
+        for (const triple of triples) {
+            const [subject, ,] = triple.split(' ');
+            if (!groupedTriples[subject]) {
+                groupedTriples[subject] = [];
+            }
+            groupedTriples[subject].push(triple);
+        }
+
+        let subjects = Object.keys(groupedTriples);
+        if (sort) {
+            subjects = subjects.sort();
+        }
+
+        return subjects.map((subject) => groupedTriples[subject]);
+    }
+
     /**
      * Returns bindings with proper data types
      * @param bindings

@@ -1,5 +1,5 @@
 import path from 'path';
-import { mkdir, writeFile, readFile, unlink, stat, readdir, rm } from 'fs/promises';
+import { mkdir, writeFile, readFile, unlink, stat, readdir, rm, appendFile } from 'fs/promises';
 import appRootPath from 'app-root-path';
 
 const ARCHIVE_FOLDER_NAME = 'archive';
@@ -30,6 +30,18 @@ class FileService {
         const fullpath = path.join(directory, filename);
         await writeFile(fullpath, data);
         return fullpath;
+    }
+
+    async appendContentsToFile(directory, filename, data, log = true) {
+        if (log) {
+            this.logger.debug(`Saving file with name: ${filename} in the directory: ${directory}`);
+        }
+        await mkdir(directory, { recursive: true });
+        const fullPath = path.join(directory, filename);
+
+        await appendFile(fullPath, data);
+
+        return fullPath;
     }
 
     async readDirectory(dirPath) {
@@ -129,14 +141,34 @@ class FileService {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
 
-    getPendingStorageCachePath(repository) {
-        return path.join(this.getDataFolderPath(), 'pending_storage_cache', repository);
+    getPendingStorageCachePath(blockchain) {
+        return path.join(this.getDataFolderPath(), 'pending_storage_cache', blockchain);
     }
 
-    getPendingStorageFolderPath(repository, blockchain, contract, tokenId) {
+    getPendingStorageFolderPath(blockchain, datasetRoot) {
         return path.join(
-            this.getPendingStorageCachePath(repository),
-            `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}`,
+            this.getPendingStorageCachePath(blockchain),
+            `${blockchain.toLowerCase()}-${datasetRoot}`,
+        );
+    }
+
+    getSignatureStorageCachePath(operationId) {
+        return path.join(this.getDataFolderPath(), 'signature_storage_cache', operationId);
+    }
+
+    getSignatureStorageFolderPath(blockchain, operationId) {
+        return path.join(
+            this.getSignatureStorageCachePath(blockchain, operationId),
+            `${blockchain.toLowerCase()}:${operationId}`,
+        );
+    }
+
+    async getSignatureStorageFilePath(blockchain, operationId) {
+        const getSignatureStorageCachePath = this.getPendingStorageFolderPath(operationId);
+
+        return path.join(
+            getSignatureStorageCachePath,
+            `${blockchain.toLowerCase()}:${operationId}`,
         );
     }
 
