@@ -56,6 +56,11 @@ class PostLocalStoreParanetValidateCommand extends Command {
                     );
 
                     await this.repositoryModuleManager.deleteParanetSyncedAssetRecord(assetUal);
+                    await this.repositoryModuleManager.addToParanetKaCount(
+                        paranetId,
+                        blockchain,
+                        -1,
+                    );
                 }
             }
         } catch (e) {
