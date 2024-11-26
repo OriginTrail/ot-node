@@ -100,7 +100,6 @@ class BlockchainEventListenerCommand extends Command {
             },
             { contract: CONTRACTS.LOG2PLDSF_CONTRACT, events: CONTRACT_EVENTS.LOG2PLDSF },
             { contract: CONTRACTS.LINEAR_SUM_CONTRACT, events: CONTRACT_EVENTS.LINEAR_SUM },
-            { contract: CONTRACTS.CONTENT_ASSET, events: CONTRACT_EVENTS.CONTENT_ASSET },
         ];
 
         if (isDevEnvironment) {
