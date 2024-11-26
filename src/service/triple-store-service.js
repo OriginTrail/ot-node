@@ -30,7 +30,8 @@ class TripleStoreService {
     async insertKnowledgeCollection(
         repository,
         knowledgeCollectionUAL,
-        knowledgeAssetsStatesUALs,
+        knowledgeAssetsUALs,
+        knowledgeAssetsStates,
         triples,
         retries = 1,
         retryDelay = 0,
@@ -54,14 +55,17 @@ class TripleStoreService {
             ),
         ]);
 
+        const knowledgeAssetsStatesUALs = knowledgeAssetsUALs.map(
+            (ual, index) => `${ual}:${knowledgeAssetsStates[index]}`,
+        );
+        const knowledgeAssetsTriples = this.dataService.groupTriplesBySubject(triples);
+
         const tripleAnnotations = this.dataService.createTripleAnnotations(
-            triples,
+            knowledgeAssetsTriples,
             UAL_PREDICATE,
-            `<${knowledgeCollectionUAL}>`,
+            knowledgeAssetsUALs.map((ual) => `<${ual}>`),
         );
         const unifiedGraphTriples = [...triples, ...tripleAnnotations];
-
-        const knowledgeAssetsTriples = this.dataService.groupTriplesBySubject(triples);
 
         const promises = [];
 
@@ -89,14 +93,10 @@ class TripleStoreService {
 
         const metadataTriples = await formatAssertion({
             '@context': SCHEMA_CONTEXT,
-            '@graph': knowledgeAssetsStatesUALs.map((stateUAL) => {
-                const ualWithoutState = stateUAL.substring(0, stateUAL.lastIndexOf(':'));
-
-                return {
-                    '@id': ualWithoutState,
-                    states: [stateUAL],
-                };
-            }),
+            '@graph': knowledgeAssetsUALs.map((ual, index) => ({
+                '@id': ual,
+                states: [knowledgeAssetsStatesUALs[index]],
+            })),
         });
 
         promises.push(

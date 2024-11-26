@@ -35,7 +35,6 @@ export const SCHEMA_CONTEXT = 'http://schema.org/';
 export const PRIVATE_ASSERTION_PREDICATE =
     'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
 export const UAL_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#UAL>';
-export const KA_STATES_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#knowledgeAssetStates>';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 

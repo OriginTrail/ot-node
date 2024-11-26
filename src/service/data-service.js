@@ -43,9 +43,14 @@ class DataService {
         return nquads;
     }
 
-    createTripleAnnotations(triples, annotationPredicate, annotation) {
-        return triples.map(
-            (triple) => `<< ${triple.replace(' .', '')} >> ${annotationPredicate} ${annotation} .`,
+    createTripleAnnotations(groupedTriples, annotationPredicate, annotations) {
+        return groupedTriples.flatMap((knowledgeAssetTriples, index) =>
+            knowledgeAssetTriples.map(
+                (triple) =>
+                    `<< ${triple.replace(' .', '')} >> ${annotationPredicate} ${
+                        annotations[index]
+                    } .`,
+            ),
         );
     }
 

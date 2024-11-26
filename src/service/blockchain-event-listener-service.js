@@ -532,16 +532,19 @@ class BlockchainEventListenerService {
             const triples = await this.fileService.readFile(datasetPath, true);
 
             const knowledgeAssetsCount = this.dataService.countDistinctSubjects(triples);
-            const knowledgeAssetsStatesUALs = Array.from(
-                { length: knowledgeAssetsCount },
-                (_, i) => `${knowledgeCollectionUAL}/${i + 1}:0`,
-            );
+            const knowledgeAssetsUALs = [];
+            const knowledgeAssetStates = [];
+            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
+                knowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i + 1}`);
+                knowledgeAssetStates.push(0);
+            }
 
             // eslint-disable-next-line no-await-in-loop
             await this.tripleStoreService.insertKnowledgeCollection(
                 TRIPLE_STORE_REPOSITORIES.DKG,
                 knowledgeCollectionUAL,
-                knowledgeAssetsStatesUALs,
+                knowledgeAssetsUALs,
+                knowledgeAssetStates,
                 triples,
             );
         }
