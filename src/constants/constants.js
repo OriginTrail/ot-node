@@ -105,8 +105,8 @@ export const TRIPLE_STORE_REPOSITORIES = {
 };
 
 export const BASE_NAMED_GRAPHS = {
-    UNIFIED: 'unified-graph',
-    HISTORICAL_UNIFIED: 'historical-unified-graph',
+    UNIFIED: 'unified:graph',
+    HISTORICAL_UNIFIED: 'historical-unified:graph',
 };
 
 export const PENDING_STORAGE_REPOSITORIES = {

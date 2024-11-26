@@ -529,7 +529,7 @@ class BlockchainEventListenerService {
             const datasetPath = `${datasetsFolder}/${state}`;
 
             // eslint-disable-next-line no-await-in-loop
-            const triples = await this.fileService.readFile(datasetPath);
+            const triples = await this.fileService.readFile(datasetPath, true);
 
             const knowledgeAssetsCount = this.dataService.countDistinctSubjects(triples);
             const knowledgeAssetsStatesUALs = Array.from(
