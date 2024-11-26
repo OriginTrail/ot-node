@@ -123,7 +123,7 @@ class OtTripleStore {
                 GRAPH <${namedGraph}> {
                     << ?s ?p ?o >> ${UAL_PREDICATE} ?annotationValue .
                 }
-                FILTER(STRSTARTS(STR(?annotationValue), "${ual}"))
+                FILTER(STRSTARTS(STR(?annotationValue), "${ual}/"))
 
                 {
                     SELECT ?s ?p ?o (COUNT(?annotationValue) AS ?annotationCount)
@@ -148,7 +148,7 @@ class OtTripleStore {
             WHERE {
                 GRAPH <${namedGraph}> {
                     << ?s ?p ?o >> ${UAL_PREDICATE} ?ual .
-                    FILTER(STRSTARTS(STR(?ual), "${ual}"))
+                    FILTER(STRSTARTS(STR(?ual), "${ual}/"))
                 }
             }
             ${sort ? 'ORDER BY ?s' : ''}
@@ -162,7 +162,7 @@ class OtTripleStore {
             ASK
             WHERE {
                 GRAPH <${namedGraph}> {
-                    << ?s ?p ?o >> ${UAL_PREDICATE} ${ual}
+                    << ?s ?p ?o >> ${UAL_PREDICATE} <${ual}>
                 }
             }
         `;
@@ -218,7 +218,7 @@ class OtTripleStore {
             ASK
             WHERE {
                 GRAPH <${namedGraph}> {
-                    << ?s ?p ?o >> ${UAL_PREDICATE} ${ual}
+                    << ?s ?p ?o >> ${UAL_PREDICATE} <${ual}>
                 }
             }
         `;
@@ -259,7 +259,7 @@ class OtTripleStore {
                 GRAPH ?g {
                     ?s ?p ?o .
                 }
-                FILTER(STRSTARTS(STR(?g), "knowledge-asset:${ual}"))
+                FILTER(STRSTARTS(STR(?g), "knowledge-asset:${ual}/"))
             }
             ${sort ? 'ORDER BY ?s' : ''}
         `;
@@ -273,7 +273,7 @@ class OtTripleStore {
                 GRAPH ?g {
                     ?s ?p ?o
                 }
-                FILTER(STRSTARTS(STR(?g), "knowledge-asset:${ual}"))
+                FILTER(STRSTARTS(STR(?g), "knowledge-asset:${ual}/"))
             }
         `;
 
@@ -333,7 +333,7 @@ class OtTripleStore {
             WHERE {
                 GRAPH <metadata> {
                     ?ual ?p ?o .
-                    FILTER(STRSTARTS(STR(?ual), "${ual}"))
+                    FILTER(STRSTARTS(STR(?ual), "${ual}/"))
                 }
             }
         `;
@@ -347,7 +347,7 @@ class OtTripleStore {
             WHERE {
                 GRAPH <metadata> {
                     ?ual ?p ?o .
-                    FILTER(STRSTARTS(STR(?ual), "${ual}"))
+                    FILTER(STRSTARTS(STR(?ual), "${ual}/"))
                 }
             }
         `;
@@ -360,7 +360,7 @@ class OtTripleStore {
             ASK {
                 GRAPH <metadata> {
                     ?ual ?p ?o
-                    FILTER(STRSTARTS(STR(?ual), "${ual}"))
+                    FILTER(STRSTARTS(STR(?ual), "${ual}/"))
                 }
             }
         `;
