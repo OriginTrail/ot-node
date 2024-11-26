@@ -47,6 +47,18 @@ class DataService {
         return triples.map((triple) => `<< ${triple} >> ${annotationPredicate} ${annotation}`);
     }
 
+    countDistinctSubjects(triples) {
+        const distinctSubjects = new Set();
+
+        for (const triple of triples) {
+            const [subject, ,] = triple.split(' ');
+
+            distinctSubjects.add(subject);
+        }
+
+        return distinctSubjects.size;
+    }
+
     groupTriplesBySubject(triples, sort = true) {
         const groupedTriples = {};
 

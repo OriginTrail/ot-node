@@ -2,12 +2,7 @@
 import { setTimeout } from 'timers/promises';
 import { formatAssertion } from 'assertion-tools';
 
-import {
-    SCHEMA_CONTEXT,
-    UAL_PREDICATE,
-    BASE_NAMED_GRAPHS,
-    KA_STATES_PREDICATE,
-} from '../constants/constants.js';
+import { SCHEMA_CONTEXT, UAL_PREDICATE, BASE_NAMED_GRAPHS } from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -35,7 +30,7 @@ class TripleStoreService {
     async insertKnowledgeCollection(
         repository,
         knowledgeCollectionUAL,
-        knowledgeAssetsUALs,
+        knowledgeAssetsStatesUALs,
         triples,
         retries = 1,
         retryDelay = 0,
@@ -45,7 +40,7 @@ class TripleStoreService {
                 `to the Triple Store's ${repository} repository.`,
         );
 
-        const [existsInUnifiedGraph, existsInNamedGraphs, metadata] = await Promise.all([
+        const [existsInUnifiedGraph, existsInNamedGraphs] = await Promise.all([
             this.tripleStoreModuleManager.knowledgeCollectionNamedGraphsExist(
                 this.repositoryImplementations[repository],
                 repository,
@@ -55,11 +50,6 @@ class TripleStoreService {
                 this.repositoryImplementations[repository],
                 repository,
                 BASE_NAMED_GRAPHS.UNIFIED,
-                knowledgeCollectionUAL,
-            ),
-            this.tripleStoreModuleManager.getKnowledgeCollectionMetadata(
-                this.repositoryImplementations[repository],
-                repository,
                 knowledgeCollectionUAL,
             ),
         ]);
@@ -72,32 +62,6 @@ class TripleStoreService {
         const unifiedGraphTriples = [...triples, ...tripleAnnotations];
 
         const knowledgeAssetsTriples = this.dataService.groupTriplesBySubject(triples);
-        let knowledgeAssetsStatesUALs;
-        if (metadata.length > 0) {
-            knowledgeAssetsStatesUALs = knowledgeAssetsUALs.map((knowledgeAssetUAL) => {
-                const relevantMetadata = metadata.find((meta) =>
-                    meta[0].startsWith(`<${knowledgeAssetUAL}> `),
-                );
-
-                const existingStates = relevantMetadata
-                    ? relevantMetadata
-                          .filter((triple) => triple.includes(` ${KA_STATES_PREDICATE} `))
-                          .map((triple) => {
-                              const stateUAL = triple.split(` ${KA_STATES_PREDICATE} `)[1];
-                              return parseInt(stateUAL.split(':').pop(), 10);
-                          })
-                    : [];
-
-                const latestState = existingStates.length > 0 ? Math.max(...existingStates) + 1 : 0;
-
-                return `${knowledgeAssetUAL}:${latestState}`;
-            });
-        } else {
-            knowledgeAssetsStatesUALs = Array.from(
-                { length: knowledgeAssetsTriples.length },
-                (_, i) => `${knowledgeCollectionUAL}/${i + 1}:0`,
-            );
-        }
 
         const promises = [];
 
