@@ -1,3 +1,5 @@
+import { setTimeout } from 'timers/promises';
+
 import { LOCAL_STORE_TYPES, ERROR_TYPE, OPERATION_ID_STATUS } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -26,14 +28,15 @@ class PostLocalStoreParanetValidateCommand extends Command {
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
-        const assetUal = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-        this.logger.info(
-            `[Post Local-Store] Checking if asset: ${assetUal} is part of paranet: ${paranetId}, operation id: ${operationId}.`,
-        );
 
         try {
             if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
+                await setTimeout(5 * 60 * 1000);
+                const assetUal = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                this.logger.info(
+                    `[Post Local-Store] Checking if asset: ${assetUal} is part of paranet: ${paranetId}, operation id: ${operationId}.`,
+                );
                 const knowledgeAssetId = this.paranetService.constructKnowledgeAssetId(
                     blockchain,
                     contract,
@@ -42,6 +45,7 @@ class PostLocalStoreParanetValidateCommand extends Command {
 
                 const isKnowledgeAssetRegistered =
                     await this.blockchainModuleManager.isKnowledgeAssetRegistered(
+                        blockchain,
                         paranetId,
                         knowledgeAssetId,
                     );

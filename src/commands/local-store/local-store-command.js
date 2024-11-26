@@ -139,7 +139,7 @@ class LocalStoreCommand extends Command {
                 await this.commandExecutor.add({
                     name: 'postLocalStoreParanetValidateCommand',
                     sequence: [],
-                    delay: 5 * 60 * 1000,
+                    delay: 0,
                     data: {
                         ...command.data,
                     },
