@@ -185,17 +185,7 @@ class ShardingTableService {
         bidSuggestionRange = LOW_BID_SUGGESTION,
     ) {
         const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
-        const peerRecords = await this.findNeighbourhood(
-            blockchainId,
-            this.blockchainModuleManager.encodePacked(
-                blockchainId,
-                ['address', 'bytes32'],
-                [contentAssetStorageAddress, firstAssertionId],
-            ),
-            await this.blockchainModuleManager.getR2(blockchainId),
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-        );
+        const peerRecords = await this.findShard(blockchainId);
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
         // todo remove this line once we implement logic for storing assertion in publish node if it's in neighbourhood
         const myPeerId = this.networkModuleManager.getPeerId().toB58String();
