@@ -315,27 +315,9 @@ install_node() {
             "enabled": "true",
             "config": {
                 "repositories": {
-                    "privateCurrent": {
+                    "dkg": {
                         "url": $tripleStoreUrl,
-                        "name": "private-current",
-                        "username": "admin",
-                        "password": ""
-                    },
-                    "privateHistory": {
-                        "url": $tripleStoreUrl,
-                        "name": "private-history",
-                        "username": "admin",
-                        "password": ""
-                    },
-                    "publicCurrent": {
-                        "url": $tripleStoreUrl,
-                        "name": "public-current",
-                        "username": "admin",
-                        "password": ""
-                    },
-                    "publicHistory": {
-                        "url": $tripleStoreUrl,
-                        "name": "public-history",
+                        "name": "dkg",
                         "username": "admin",
                         "password": ""
                     }

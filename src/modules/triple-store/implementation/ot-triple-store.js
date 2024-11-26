@@ -5,6 +5,7 @@ import {
     TRIPLE_STORE_CONNECT_MAX_RETRIES,
     TRIPLE_STORE_CONNECT_RETRY_FREQUENCY,
     MEDIA_TYPES,
+    UAL_PREDICATE,
 } from '../../../constants/constants.js';
 
 class OtTripleStore {
@@ -97,182 +98,274 @@ class OtTripleStore {
         await Promise.all(ensureConnectionPromises);
     }
 
-    async assetExists(repository, ual) {
-        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        ASK WHERE {
-                            GRAPH <assets:graph> {
-                                <${ual}> ?p ?o
-                            }
-                        }`;
-
-        return this.ask(repository, query);
-    }
-
-    async insertAssetAssertionLink(repository, ual, assertionId) {
-        const assetExists = await this.assetExists(repository, ual);
-
-        if (assetExists) {
-            const insertQuery = `
-                PREFIX schema: <${SCHEMA_CONTEXT}>
-                INSERT DATA {
-                    GRAPH <assets:graph> {
-                        <${ual}> schema:assertion <assertion:${assertionId}> .
-                    }
-                }`;
-            await this.queryVoid(repository, insertQuery);
-        }
-    }
-
-    async deleteAssetAssertionLink(repository, ual, assertionId) {
-        const linkExists = await this.assetAssertionLinkExists(repository, ual, assertionId);
-
-        if (linkExists) {
-            const deleteQuery = `
-                PREFIX schema: <${SCHEMA_CONTEXT}>
-                DELETE DATA {
-                    GRAPH <assets:graph> {
-                        <${ual}> schema:assertion <assertion:${assertionId}> .
-                    }
-                }`;
-            await this.queryVoid(repository, deleteQuery);
-        }
-    }
-
-    async updateAssetAssertionLink(repository, ual, oldAssertionId, newAssertionId) {
-        const linkExists = await this.assetAssertionLinkExists(repository, ual, oldAssertionId);
-
-        if (linkExists) {
-            const updateQuery = `
-                PREFIX schema: <${SCHEMA_CONTEXT}>
-                DELETE {
-                    GRAPH <assets:graph> {
-                        <${ual}> schema:assertion <assertion:${oldAssertionId}> .
-                    }
-                } INSERT {
-                    GRAPH <assets:graph> {
-                        <${ual}> schema:assertion <assertion:${newAssertionId}> .
-                    }
-                } WHERE {
-                    GRAPH <assets:graph> {
-                        <${ual}> schema:assertion <assertion:${oldAssertionId}> .
-                    }
-                }`;
-            await this.queryVoid(repository, updateQuery);
-        }
-    }
-
-    async getAssetAssertionLinks(repository, ual) {
-        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                        SELECT ?assertion  WHERE {
-                            GRAPH <assets:graph> {
-                                    <${ual}> schema:assertion ?assertion
-                            }
-                        }`;
-
-        return this.select(repository, query);
-    }
-
-    async assetAssertionLinkExists(repository, ual, assertionId) {
+    async insertKnowledgeCollectionIntoUnifiedGraph(repository, namedGraph, collectionNQuads) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
-            ASK {
-                GRAPH <assets:graph> {
-                    <${ual}> schema:assertion <assertion:${assertionId}> .
-                }
-            }`;
+            INSERT DATA {
+                GRAPH <${namedGraph}> { 
+                    ${collectionNQuads} 
+                } 
+            }
+        `;
 
-        return this.ask(repository, query);
+        await this.queryVoid(repository, query);
     }
 
-    async updateAssetNonAssertionMetadata(repository, ual, assetNquads) {
-        const updateQuery = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
+    async deleteUniqueKnowledgeCollectionTriplesFromUnifiedGraph(repository, namedGraph, ual) {
+        const query = `
             DELETE {
-                GRAPH <assets:graph> {
-                    <${ual}> ?p ?o .
-                    FILTER(?p != schema:assertion)
-                }
-            }
-            INSERT {
-                GRAPH <assets:graph> { 
-                    ${assetNquads} 
+                GRAPH <${namedGraph}> {
+                    ?s ?p ?o .
+                    << ?s ?p ?o >> ?annotationPredicate ?annotationValue .
                 }
             }
             WHERE {
-                GRAPH <assets:graph> {
-                    <${ual}> ?p ?o .
-                    FILTER(?p != schema:assertion)
+                GRAPH <${namedGraph}> {
+                    << ?s ?p ?o >> ${UAL_PREDICATE} ?annotationValue .
                 }
-            }`;
-        await this.queryVoid(repository, updateQuery);
-    }
+                FILTER(STRSTARTS(STR(?annotationValue), "${ual}"))
 
-    async deleteAssetMetadata(repository, ual) {
-        const query = `DELETE WHERE {
-                GRAPH <assets:graph> {
-                    <${ual}> ?p ?o
+                {
+                    SELECT ?s ?p ?o (COUNT(?annotationValue) AS ?annotationCount)
+                    WHERE {
+                        GRAPH <${namedGraph}> {
+                            << ?s ?p ?o >> ${UAL_PREDICATE} ?annotationValue .
+                        }
+                    }
+                    GROUP BY ?s ?p ?o
+                    HAVING(?annotationCount = 1)
                 }
-            };`;
-
-        return this.queryVoid(repository, query);
-    }
-
-    async countAssetsWithAssertionId(repository, assertionId) {
-        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                    SELECT (COUNT(DISTINCT ?ual) as ?count)
-                    WHERE {
-                        GRAPH <assets:graph> {
-                                ?ual schema:assertion <assertion:${assertionId}>
-                        }
-                    }`;
-        return this.select(repository, query);
-    }
-
-    async getAssetAssertionIds(repository, ual) {
-        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                    SELECT DISTINCT ?assertionId
-                    WHERE {
-                        GRAPH <assets:graph> {
-                                <${ual}> schema:assertion ?assertionId .
-                        }
-                    }`;
-        return this.select(repository, query);
-    }
-
-    async insertAssetAssertionMetadata(repository, ual, assetNquads, checkExists) {
-        if (checkExists) {
-            const existedBeforeInsertion = await this.assetExists(repository, ual);
-            if (existedBeforeInsertion) {
-                return;
             }
-        }
+        `;
 
-        const query = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            INSERT DATA {
-                GRAPH <assets:graph> { 
-                    ${assetNquads} 
-                }
-            }`;
         await this.queryVoid(repository, query);
     }
 
-    async insertAssertion(repository, assertionId, assertionNquads, checkExists) {
-        if (checkExists) {
-            const existedBeforeInsertion = await this.assertionExists(repository, assertionId);
-            if (existedBeforeInsertion) {
-                return;
+    async getKnowledgeCollectionFromUnifiedGraph(repository, namedGraph, ual, sort) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT { ?s ?p ?o . }
+            WHERE {
+                GRAPH <${namedGraph}> {
+                    << ?s ?p ?o >> ${UAL_PREDICATE} ?ual .
+                    FILTER(STRSTARTS(STR(?ual), "${ual}"))
+                }
             }
-        }
+            ${sort ? 'ORDER BY ?s' : ''}
+        `;
 
+        return this.construct(repository, query);
+    }
+
+    async knowledgeCollectionExistsInUnifiedGraph(repository, namedGraph, ual) {
+        const query = `
+            ASK
+            WHERE {
+                GRAPH <${namedGraph}> {
+                    << ?s ?p ?o >> ${UAL_PREDICATE} ${ual}
+                }
+            }
+        `;
+
+        return this.ask(repository, query);
+    }
+
+    async deleteUniqueKnowledgeAssetTriplesFromUnifiedGraph(repository, namedGraph, ual) {
+        const query = `
+            DELETE {
+                GRAPH <${namedGraph}> {
+                    ?s ?p ?o .
+                    << ?s ?p ?o >> ?annotationPredicate ?annotationValue .
+                }
+            }
+            WHERE {
+                GRAPH <${namedGraph}> {
+                    << ?s ?p ?o >> ${UAL_PREDICATE} <${ual}> .
+                }
+
+                {
+                    SELECT ?s ?p ?o (COUNT(?annotationValue) AS ?annotationCount)
+                    WHERE {
+                        GRAPH <${namedGraph}> {
+                            << ?s ?p ?o >> ${UAL_PREDICATE} ?annotationValue .
+                        }
+                    }
+                    GROUP BY ?s ?p ?o
+                    HAVING(?annotationCount = 1)
+                }
+            }
+        `;
+
+        await this.queryVoid(repository, query);
+    }
+
+    async getKnowledgeAssetFromUnifiedGraph(repository, namedGraph, ual) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT { ?s ?p ?o . }
+            WHERE {
+                GRAPH <${namedGraph}> {
+                    << ?s ?p ?o >> ${UAL_PREDICATE} <${ual}> .
+                }
+            }
+        `;
+
+        return this.construct(repository, query);
+    }
+
+    async knowledgeAssetExistsInUnifiedGraph(repository, namedGraph, ual) {
+        const query = `
+            ASK
+            WHERE {
+                GRAPH <${namedGraph}> {
+                    << ?s ?p ?o >> ${UAL_PREDICATE} ${ual}
+                }
+            }
+        `;
+
+        return this.ask(repository, query);
+    }
+
+    async createKnowledgeCollectionNamedGraphs(repository, uals, assetsNQuads) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
-                GRAPH <assertion:${assertionId}> { 
-                    ${assertionNquads} 
+                ${uals
+                    .map(
+                        (ual, index) => `
+                    GRAPH <knowledge-asset:${ual}> {
+                        ${assetsNQuads[index]}
+                    }
+                `,
+                    )
+                    .join('\n')}
+            }
+        `;
+
+        await this.queryVoid(repository, query);
+    }
+
+    async deleteKnowledgeCollectionNamedGraphs(repository, uals) {
+        const query = `${uals.map((ual) => `DROP GRAPH <knowledge-asset:${ual}>`).join(';\n')};`;
+
+        await this.queryVoid(repository, query);
+    }
+
+    async getKnowledgeCollectionNamedGraphs(repository, ual, sort) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT { ?s ?p ?o . }
+            WHERE {
+                GRAPH ?g {
+                    ?s ?p ?o .
+                }
+                FILTER(STRSTARTS(STR(?g), "knowledge-asset:${ual}"))
+            }
+            ${sort ? 'ORDER BY ?s' : ''}
+        `;
+
+        return this.construct(repository, query);
+    }
+
+    async knowledgeCollectionNamedGraphsExist(repository, ual) {
+        const query = `
+            ASK {
+                GRAPH ?g {
+                    ?s ?p ?o
+                }
+                FILTER(STRSTARTS(STR(?g), "knowledge-asset:${ual}"))
+            }
+        `;
+
+        return this.ask(repository, query);
+    }
+
+    async deleteKnowledgeAssetNamedGraph(repository, ual) {
+        const query = `
+            DROP GRAPH <knowledge-asset:${ual}>
+        `;
+
+        await this.queryVoid(repository, query);
+    }
+
+    async getKnowledgeAssetNamedGraph(repository, ual) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT { ?s ?p ?o . }
+            WHERE {
+                GRAPH <knowledge-asset:${ual}> {
+                    ?s ?p ?o .
+                }
+            }
+        `;
+
+        return this.select(repository, query);
+    }
+
+    async knowledgeAssetNamedGraphExists(repository, ual) {
+        const query = `
+            ASK {
+                GRAPH <knowledge-asset:${ual}> {
+                    ?s ?p ?o
+                }
+            }
+        `;
+
+        return this.ask(repository, query);
+    }
+
+    async insertKnowledgeCollectionMetadata(repository, metadataNQuads) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            INSERT DATA {
+                GRAPH <metadata> { 
+                    ${metadataNQuads} 
                 } 
-            }`;
+            }
+        `;
+
         await this.queryVoid(repository, query);
+    }
+
+    async deleteKnowledgeCollectionMetadata(repository, ual) {
+        const query = `
+            DELETE
+            WHERE {
+                GRAPH <metadata> {
+                    ?ual ?p ?o .
+                    FILTER(STRSTARTS(STR(?ual), "${ual}"))
+                }
+            }
+        `;
+
+        await this.queryVoid(repository, query);
+    }
+
+    async getKnowledgeCollectionMetadata(repository, ual) {
+        const query = `
+            CONSTRUCT { ?s ?p ?o . }
+            WHERE {
+                GRAPH <metadata> {
+                    ?ual ?p ?o .
+                    FILTER(STRSTARTS(STR(?ual), "${ual}"))
+                }
+            }
+        `;
+
+        return this.construct(repository, query);
+    }
+
+    async knowledgeCollectionMetadataExists(repository, ual) {
+        const query = `
+            ASK {
+                GRAPH <metadata> {
+                    ?ual ?p ?o
+                    FILTER(STRSTARTS(STR(?ual), "${ual}"))
+                }
+            }
+        `;
+
+        return this.ask(repository, query);
     }
 
     async construct(repository, query) {
@@ -295,35 +388,6 @@ class OtTripleStore {
         return this.queryEngine.queryBoolean(query, this.repositories[repository].queryContext);
     }
 
-    async assertionExists(repository, assertionId) {
-        const escapedAssertionId = this.cleanEscapeCharacter(assertionId);
-        const query = `ASK WHERE { GRAPH <assertion:${escapedAssertionId}> { ?s ?p ?o } }`;
-
-        return this.ask(repository, query);
-    }
-
-    async deleteAssertion(repository, assertionId) {
-        const query = `DROP GRAPH <assertion:${assertionId}>`;
-
-        await this.queryVoid(repository, query);
-    }
-
-    async getAssertion(repository, assertionId) {
-        const escapedGraphName = this.cleanEscapeCharacter(assertionId);
-
-        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
-                    CONSTRUCT { ?s ?p ?o }
-                    WHERE {
-                        {
-                            GRAPH <assertion:${escapedGraphName}>
-                            {
-                                ?s ?p ?o .
-                            }
-                        }
-                    }`;
-        return this.construct(repository, query);
-    }
-
     async healthCheck() {
         return true;
     }
@@ -342,10 +406,6 @@ class OtTripleStore {
         }
 
         return response;
-    }
-
-    cleanEscapeCharacter(query) {
-        return query.replace(/['|[\]\\]/g, '\\$&');
     }
 
     async reinitialize() {
