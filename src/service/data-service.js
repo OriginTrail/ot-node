@@ -43,6 +43,29 @@ class DataService {
         return nquads;
     }
 
+    createTripleAnnotations(triples, annotationPredicate, annotation) {
+        return triples.map((triple) => `<< ${triple} >> ${annotationPredicate} ${annotation}`);
+    }
+
+    groupTriplesBySubject(triples, sort = true) {
+        const groupedTriples = {};
+
+        for (const triple of triples) {
+            const [subject, ,] = triple.split(' ');
+            if (!groupedTriples[subject]) {
+                groupedTriples[subject] = [];
+            }
+            groupedTriples[subject].push(triple);
+        }
+
+        let subjects = Object.keys(groupedTriples);
+        if (sort) {
+            subjects = subjects.sort();
+        }
+
+        return subjects.map((subject) => groupedTriples[subject]);
+    }
+
     /**
      * Returns bindings with proper data types
      * @param bindings

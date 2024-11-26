@@ -34,6 +34,8 @@ export const SCHEMA_CONTEXT = 'http://schema.org/';
 
 export const PRIVATE_ASSERTION_PREDICATE =
     'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
+export const UAL_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#UAL>';
+export const KA_STATES_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#knowledgeAssetStates>';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 
@@ -99,10 +101,12 @@ export const PARANET_ACCESS_POLICY = {
 };
 
 export const TRIPLE_STORE_REPOSITORIES = {
-    PUBLIC_CURRENT: 'publicCurrent',
-    PUBLIC_HISTORY: 'publicHistory',
-    PRIVATE_CURRENT: 'privateCurrent',
-    PRIVATE_HISTORY: 'privateHistory',
+    DKG: 'dkg',
+};
+
+export const BASE_NAMED_GRAPHS = {
+    UNIFIED: 'unified-graph',
+    HISTORICAL_UNIFIED: 'historical-unified-graph',
 };
 
 export const PENDING_STORAGE_REPOSITORIES = {
