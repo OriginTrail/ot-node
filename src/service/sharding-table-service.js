@@ -123,28 +123,14 @@ class ShardingTableService {
         );
     }
 
-    async findNeighbourhood(
-        blockchainId,
-        key,
-        r2,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        filterInactive = false,
-    ) {
+    async findShard(blockchainId /* filterInactive = false */) {
         let peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
         peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
-        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
+        return peers;
+    }
 
-        const sortedPeers = this.sortPeers(
-            blockchainId,
-            keyHash,
-            peers,
-            r2,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-            filterInactive,
-        );
-        return sortedPeers;
+    async isNodePartOfShard(blockchainId, peerId) {
+        return this.repositoryModuleManager.isNodePartOfShard(blockchainId, peerId);
     }
 
     async sortPeers(

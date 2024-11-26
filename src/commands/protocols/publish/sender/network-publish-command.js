@@ -11,17 +11,6 @@ class NetworkPublishCommand extends NetworkProtocolCommand {
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
 
-    async getKeywords(command) {
-        const { blockchain, contract, tokenId } = command.data;
-        const locationKeyword = await this.ualService.calculateLocationKeyword(
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return [locationKeyword];
-    }
-
     async getBatchSize(blockchainId) {
         return this.blockchainModuleManager.getR2(blockchainId);
     }

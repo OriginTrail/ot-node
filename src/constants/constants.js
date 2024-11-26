@@ -298,7 +298,6 @@ export const PARANET_NODES_ACCESS_POLICIES = ['OPEN', 'CURATED'];
 
 export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
     PUBLISH: {
-        INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
     UPDATE: {
@@ -322,10 +321,8 @@ export const ERROR_TYPE = {
         PUBLISH_LOCAL_STORE_ERROR: 'PublishLocalStoreError',
         PUBLISH_LOCAL_STORE_REMOTE_ERROR: 'PublishLocalStoreRemoteError',
         PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
-        PUBLISH_STORE_INIT_ERROR: 'PublishStoreInitError',
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
         PUBLISH_ERROR: 'PublishError',
-        PUBLISH_REMOTE_ERROR: 'PublishRemoteError',
     },
     UPDATE: {
         UPDATE_INIT_ERROR: 'UpdateInitError',
