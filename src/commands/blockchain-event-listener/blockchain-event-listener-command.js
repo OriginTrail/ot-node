@@ -1,3 +1,4 @@
+import { setTimeout } from 'timers/promises';
 import Command from '../command.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
@@ -35,6 +36,7 @@ class BlockchainEventListenerCommand extends Command {
             this.blockchainEventsModuleManager.getImplementation();
         this.eventGroupsBuffer = {};
         this.blockchainId = null;
+        this.contractLastCheckedBlock = {};
 
         this.errorType = ERROR_TYPE.BLOCKCHAIN_EVENT_LISTENER_ERROR;
     }
@@ -68,9 +70,7 @@ class BlockchainEventListenerCommand extends Command {
             this.logger.error(
                 `Failed to get and process blockchain events for blockchain: ${this.blockchainId}. Error: ${e}`,
             );
-            await new Promise((resolve) => {
-                setTimeout(() => resolve(), DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
-            });
+            await setTimeout(DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
 
             // Try again after a delay
             return Command.repeat();
@@ -148,13 +148,7 @@ class BlockchainEventListenerCommand extends Command {
             currentBlock,
         );
 
-        // We update last checked block before we insert events in our operational db
-        await this.repositoryModuleManager.updateLastCheckedBlock(
-            this.blockchainId,
-            result.lastCheckedBlock,
-            Date.now(0),
-            contractName,
-        );
+        this.contractLastCheckedBlock[contractName] = result.lastCheckedBlock;
 
         if (!result.eventsMissed) {
             await this.shardingTableService.pullBlockchainShardingTable(this.blockchainId, true);
@@ -173,6 +167,18 @@ class BlockchainEventListenerCommand extends Command {
             );
             await this.repositoryModuleManager.insertBlockchainEvents(eventsForProcessing);
         }
+
+        // Update last checked block after inserting into db
+        await Promise.all(
+            Object.entries(this.contractLastCheckedBlock).map(([contractName, lastCheckedBlock]) =>
+                this.repositoryModuleManager.updateLastCheckedBlock(
+                    this.blockchainId,
+                    lastCheckedBlock,
+                    Date.now(0),
+                    contractName,
+                ),
+            ),
+        );
 
         // Get unprocessed events from the DB
         const unprocessedEvents =
