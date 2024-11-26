@@ -619,6 +619,10 @@ class RepositoryModuleManager extends BaseModuleManager {
     async incrementParanetKaCount(paranetId, blockchainId) {
         return this.getRepository('paranet').incrementParanetKaCount(paranetId, blockchainId);
     }
+
+    async deleteParanetSyncedAssetRecord(ual) {
+        return this.getRepository('paranet_synced_asset').deleteParanetSyncedAssetRecord(ual);
+    }
 }
 
 export default RepositoryModuleManager;
