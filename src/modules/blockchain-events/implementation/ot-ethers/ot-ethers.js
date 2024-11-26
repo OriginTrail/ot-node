@@ -10,6 +10,7 @@ import {
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
     MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
+    BLOCKCHAIN_ID_TO_NAME,
 } from '../../../../constants/constants.js';
 
 class OtEthers extends OtBlockchainEvents {
@@ -126,7 +127,10 @@ class OtEthers extends OtBlockchainEvents {
 
         let fromBlock;
         let eventsMissed = false;
-        if (this.startBlock - lastCheckedBlock > this.getMaxNumberOfHistoricalBlocksForSync()) {
+        if (
+            this.startBlock - lastCheckedBlock >
+            this.getMaxNumberOfHistoricalBlocksForSync(blockchainId)
+        ) {
             fromBlock = this.startBlock;
             eventsMissed = true;
         } else {
@@ -185,17 +189,23 @@ class OtEthers extends OtBlockchainEvents {
         };
     }
 
-    getMaxNumberOfHistoricalBlocksForSync() {
+    getMaxNumberOfHistoricalBlocksForSync(blockchainId) {
         if (!this.maxNumberOfHistoricalBlocksForSync) {
             this.maxNumberOfHistoricalBlocksForSync = Math.round(
-                MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / this.getBlockTimeMillis(),
+                MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS /
+                    this.getBlockTimeMillis(blockchainId),
             );
         }
         return this.maxNumberOfHistoricalBlocksForSync;
     }
 
-    // TODO: Change for each blockchain
-    getBlockTimeMillis() {
+    getBlockTimeMillis(blockchainId) {
+        const blockchainName = BLOCKCHAIN_ID_TO_NAME[blockchainId];
+
+        if (blockchainName && BLOCK_TIME_MILLIS[blockchainName] !== undefined) {
+            return BLOCK_TIME_MILLIS[blockchainName];
+        }
+
         return BLOCK_TIME_MILLIS.DEFAULT;
     }
 

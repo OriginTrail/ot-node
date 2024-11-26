@@ -746,6 +746,14 @@ export const CONTRACT_EVENT_FETCH_INTERVALS = {
     DEVELOPMENT: 4 * 1000,
 };
 
+export const BLOCKCHAIN_ID_TO_NAME = {
+    'hardhat1:31337': 'HARDHAT',
+    'hardhat2:31337': 'HARDHAT',
+    'base:84532': 'BASE',
+    'otp:2043': 'OTP',
+    'gnosis:100': 'GNOSIS',
+};
+
 export const BLOCK_TIME_MILLIS = {
     OTP: 12_000,
     HARDHAT: 5_000,
