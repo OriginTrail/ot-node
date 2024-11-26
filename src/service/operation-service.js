@@ -27,7 +27,7 @@ class OperationService {
         );
     }
 
-    async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
+    async getResponsesStatuses(responseStatus, errorMessage, operationId, datasetRoot) {
         const self = this;
         let responses = 0;
         await this.operationMutex.runExclusive(async () => {
@@ -35,7 +35,7 @@ class OperationService {
                 responseStatus,
                 this.operationName,
                 operationId,
-                keyword,
+                datasetRoot,
                 errorMessage,
             );
             responses = await self.repositoryModuleManager.getOperationResponsesStatuses(
@@ -44,19 +44,19 @@ class OperationService {
             );
         });
 
-        const keywordsStatuses = {};
+        const datasetRootStatuses = {};
         responses.forEach((response) => {
-            if (!keywordsStatuses[response.keyword])
-                keywordsStatuses[response.keyword] = { failedNumber: 0, completedNumber: 0 };
+            if (!datasetRootStatuses[response.datasetRoot])
+                datasetRootStatuses[response.datasetRoot] = { failedNumber: 0, completedNumber: 0 };
 
             if (response.status === OPERATION_REQUEST_STATUS.FAILED) {
-                keywordsStatuses[response.keyword].failedNumber += 1;
+                datasetRootStatuses[response.datasetRoot].failedNumber += 1;
             } else {
-                keywordsStatuses[response.keyword].completedNumber += 1;
+                datasetRootStatuses[response.datasetRoot].completedNumber += 1;
             }
         });
 
-        return keywordsStatuses;
+        return datasetRootStatuses;
     }
 
     async markOperationAsCompleted(operationId, blockchain, responseData, endStatuses) {

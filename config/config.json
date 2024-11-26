@@ -8,7 +8,7 @@
                         "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/develop"
+                            "branch": "v8/develop"
                         }
                     }
                 }
@@ -162,7 +162,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
@@ -187,7 +187,7 @@
                         "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/develop"
+                            "branch": "v8/develop"
                         }
                     }
                 }
@@ -330,7 +330,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -498,7 +498,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -665,7 +665,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -855,7 +855,7 @@
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",

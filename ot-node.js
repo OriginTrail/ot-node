@@ -9,7 +9,6 @@ import { MIN_NODE_VERSION, PARANET_ACCESS_POLICY } from './src/constants/constan
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
-import MigrationExecutor from './src/migration/migration-executor.js';
 
 const require = createRequire(import.meta.url);
 const { setTimeout } = require('timers/promises');
@@ -29,12 +28,6 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
-        await MigrationExecutor.executeMultipleOpWalletsUserConfigurationMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
         this.logger.info('██████╗ ██╗  ██╗ ██████╗     ██╗   ██╗ █████╗ ');
         this.logger.info('██╔══██╗██║ ██╔╝██╔════╝     ██║   ██║██╔══██╗');
         this.logger.info('██║  ██║█████╔╝ ██║  ███╗    ██║   ██║╚█████╔╝');
@@ -53,78 +46,18 @@ class OTNode {
         await this.initializeModules();
         await this.initializeParanets();
 
-        await MigrationExecutor.executeRemoveServiceAgreementsForChiadoMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeDevnetPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeSetParanetSyncedAssetType(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
 
-        await MigrationExecutor.executeMarkStakingEventsAsProcessedMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
         await this.initializeBlockchainEventListenerService();
-
-        await MigrationExecutor.executePullShardingTableMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeServiceAgreementPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeDevnetNeuroPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
 
         await this.initializeRouters();
         await this.startNetworkModule();
         this.startTelemetryModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
-
-        MigrationExecutor.executeGetOldServiceAgreementsMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        MigrationExecutor.executeServiceAgreementPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        MigrationExecutor.executeRemoveDuplicateServiceAgreementMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
     }
 
     checkNodeVersion() {

@@ -13,7 +13,7 @@ class UpdateController extends BaseController {
     }
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
-        const { operationId, keywordUuid, messageType } = message.header;
+        const { operationId, uuid, messageType } = message.header;
 
         const command = { sequence: [], delay: 0, transactional: false, data: {} };
         let dataSource;
@@ -49,7 +49,7 @@ class UpdateController extends BaseController {
             ...command.data,
             remotePeerId,
             operationId,
-            keywordUuid,
+            uuid,
             protocol,
             assertionId: dataSource.assertionId,
             blockchain: dataSource.blockchain,

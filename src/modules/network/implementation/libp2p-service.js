@@ -108,7 +108,7 @@ class Libp2pService {
          * sessions = {
          *     [peerId]: {
          *         [operationId]: {
-         *             [keywordUuid] : {
+         *             [uuid] : {
          *                  stream
          *              }
          *         }
@@ -224,7 +224,7 @@ class Libp2pService {
 
             this.updateSessionStream(
                 message.header.operationId,
-                message.header.keywordUuid,
+                message.header.uuid,
                 peerIdString,
                 stream,
             );
@@ -235,12 +235,12 @@ class Libp2pService {
                     peerIdString,
                     NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                     message.header.operationId,
-                    message.header.keywordUuid,
+                    message.header.uuid,
                     { errorMessage: 'Invalid request message' },
                 );
                 this.removeCachedSession(
                     message.header.operationId,
-                    message.header.keywordUuid,
+                    message.header.uuid,
                     peerIdString,
                 );
             } else if (busy) {
@@ -249,12 +249,12 @@ class Libp2pService {
                     peerIdString,
                     NETWORK_MESSAGE_TYPES.RESPONSES.BUSY,
                     message.header.operationId,
-                    message.header.keywordUuid,
+                    message.header.uuid,
                     {},
                 );
                 this.removeCachedSession(
                     message.header.operationId,
-                    message.header.keywordUuid,
+                    message.header.uuid,
                     peerIdString,
                 );
             } else {
@@ -266,65 +266,57 @@ class Libp2pService {
         });
     }
 
-    updateSessionStream(operationId, keywordUuid, peerIdString, stream) {
+    updateSessionStream(operationId, uuid, peerIdString, stream) {
         this.logger.trace(
             `Storing new session stream for remotePeerId: ${peerIdString} with operation id: ${operationId}`,
         );
         if (!this.sessions[peerIdString]) {
             this.sessions[peerIdString] = {
                 [operationId]: {
-                    [keywordUuid]: {
+                    [uuid]: {
                         stream,
                     },
                 },
             };
         } else if (!this.sessions[peerIdString][operationId]) {
             this.sessions[peerIdString][operationId] = {
-                [keywordUuid]: {
+                [uuid]: {
                     stream,
                 },
             };
         } else {
-            this.sessions[peerIdString][operationId][keywordUuid] = {
+            this.sessions[peerIdString][operationId][uuid] = {
                 stream,
             };
         }
     }
 
-    getSessionStream(operationId, keywordUuid, peerIdString) {
+    getSessionStream(operationId, uuid, peerIdString) {
         if (
             this.sessions[peerIdString] &&
             this.sessions[peerIdString][operationId] &&
-            this.sessions[peerIdString][operationId][keywordUuid]
+            this.sessions[peerIdString][operationId][uuid]
         ) {
             this.logger.trace(
                 `Session found remotePeerId: ${peerIdString}, operation id: ${operationId}`,
             );
-            return this.sessions[peerIdString][operationId][keywordUuid].stream;
+            return this.sessions[peerIdString][operationId][uuid].stream;
         }
         return null;
     }
 
-    createStreamMessage(message, operationId, keywordUuid, messageType) {
+    createStreamMessage(message, operationId, uuid, messageType) {
         return {
             header: {
                 messageType,
                 operationId,
-                keywordUuid,
+                uuid,
             },
             data: message,
         };
     }
 
-    async sendMessage(
-        protocol,
-        peerIdString,
-        messageType,
-        operationId,
-        keywordUuid,
-        message,
-        timeout,
-    ) {
+    async sendMessage(protocol, peerIdString, messageType, operationId, uuid, message, timeout) {
         const nackMessage = {
             header: { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK },
             data: {
@@ -366,14 +358,9 @@ class Libp2pService {
 
         const { stream } = dialResult;
 
-        this.updateSessionStream(operationId, keywordUuid, peerIdString, stream);
+        this.updateSessionStream(operationId, uuid, peerIdString, stream);
 
-        const streamMessage = this.createStreamMessage(
-            message,
-            operationId,
-            keywordUuid,
-            messageType,
-        );
+        const streamMessage = this.createStreamMessage(message, operationId, uuid, messageType);
 
         this.logger.trace(
             `Sending message to ${peerIdString}. protocol: ${protocol}, messageType: ${messageType}, operationId: ${operationId}`,
@@ -452,24 +439,17 @@ class Libp2pService {
         return response.message;
     }
 
-    async sendMessageResponse(
-        protocol,
-        peerIdString,
-        messageType,
-        operationId,
-        keywordUuid,
-        message,
-    ) {
+    async sendMessageResponse(protocol, peerIdString, messageType, operationId, uuid, message) {
         this.logger.debug(
             `Sending response from ${this.config.id} to ${peerIdString}: protocol: ${protocol}, messageType: ${messageType};`,
         );
-        const stream = this.getSessionStream(operationId, keywordUuid, peerIdString);
+        const stream = this.getSessionStream(operationId, uuid, peerIdString);
 
         if (!stream) {
             throw Error(`Unable to find opened stream for remotePeerId: ${peerIdString}`);
         }
 
-        const response = this.createStreamMessage(message, operationId, keywordUuid, messageType);
+        const response = this.createStreamMessage(message, operationId, uuid, messageType);
 
         await this._sendMessageToStream(stream, response);
     }
@@ -511,7 +491,7 @@ class Libp2pService {
     }
 
     async readMessageSink(source, isMessageValid, peerIdString) {
-        const message = { header: { operationId: '', keywordUuid: '' }, data: {} };
+        const message = { header: { operationId: '', uuid: '' }, data: {} };
         // we expect first buffer to be header
         const stringifiedHeader = (await source.next()).value;
 
@@ -551,7 +531,7 @@ class Libp2pService {
         // header well formed
         if (
             !header.operationId ||
-            !header.keywordUuid ||
+            !header.uuid ||
             !header.messageType ||
             !Object.keys(NETWORK_MESSAGE_TYPES.REQUESTS).includes(header.messageType)
         )
@@ -560,7 +540,7 @@ class Libp2pService {
             return true;
         }
 
-        return this.sessionExists(peerIdString, header.operationId, header.keywordUuid);
+        return this.sessionExists(peerIdString, header.operationId, header.uuid);
     }
 
     sessionExists() {
@@ -646,9 +626,9 @@ class Libp2pService {
         return this.node.peerStore.get(createFromB58String(peerId));
     }
 
-    removeCachedSession(operationId, keywordUuid, peerIdString) {
-        if (this.sessions[peerIdString]?.[operationId]?.[keywordUuid]?.stream) {
-            this.sessions[peerIdString][operationId][keywordUuid].stream.close();
+    removeCachedSession(operationId, uuid, peerIdString) {
+        if (this.sessions[peerIdString]?.[operationId]?.[uuid]?.stream) {
+            this.sessions[peerIdString][operationId][uuid].stream.close();
             delete this.sessions[peerIdString][operationId];
             this.logger.trace(
                 `Removed session for remotePeerId: ${peerIdString}, operationId: ${operationId}.`,

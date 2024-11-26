@@ -208,6 +208,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').cleanShardingTable(blockchainId);
     }
 
+    async isNodePartOfShard(blockchainId, peerId) {
+        return this.getRepository('shard').isNodePartOfShard(blockchainId, peerId);
+    }
+
     async createEventRecord(
         operationId,
         blockchainId,

@@ -5,7 +5,7 @@ class ValidationModuleManager extends BaseModuleManager {
         return 'validation';
     }
 
-    calculateRoot(assertion) {
+    async calculateRoot(assertion) {
         if (this.initialized) {
             if (!assertion) {
                 throw new Error('Calculation failed: Assertion cannot be null or undefined.');
@@ -15,7 +15,7 @@ class ValidationModuleManager extends BaseModuleManager {
         throw new Error('Validation module is not initialized.');
     }
 
-    getMerkleProof(assertion, index) {
+    async getMerkleProof(assertion, index) {
         if (this.initialized) {
             if (!assertion) {
                 throw new Error('Get merkle proof failed: Assertion cannot be null or undefined.');

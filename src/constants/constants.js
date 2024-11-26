@@ -34,6 +34,7 @@ export const SCHEMA_CONTEXT = 'http://schema.org/';
 
 export const PRIVATE_ASSERTION_PREDICATE =
     'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
+export const UAL_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#UAL>';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
 
@@ -73,7 +74,7 @@ export const TRANSACTION_QUEUE_CONCURRENCY = 1;
 
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
-export const MAX_FILE_SIZE = 10000000;
+export const MAX_FILE_SIZE = 524288000;
 
 export const GET_STATES = { LATEST: 'LATEST', FINALIZED: 'LATEST_FINALIZED' };
 
@@ -99,10 +100,13 @@ export const PARANET_ACCESS_POLICY = {
 };
 
 export const TRIPLE_STORE_REPOSITORIES = {
-    PUBLIC_CURRENT: 'publicCurrent',
-    PUBLIC_HISTORY: 'publicHistory',
-    PRIVATE_CURRENT: 'privateCurrent',
-    PRIVATE_HISTORY: 'privateHistory',
+    DKG: 'dkg',
+};
+
+export const BASE_NAMED_GRAPHS = {
+    UNIFIED: 'unified:graph',
+    HISTORICAL_UNIFIED: 'historical-unified:graph',
+    METADATA: 'metadata:graph',
 };
 
 export const PENDING_STORAGE_REPOSITORIES = {
@@ -231,7 +235,7 @@ export const SIMPLE_ASSET_SYNC_PARAMETERS = {
 
 export const PARANET_SYNC_PARAMETERS = {
     GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
-    GET_RESULT_POLLING_MAX_ATTEMPTS: 30,
+    GET_RESULT_POLLING_MAX_ATTEMPTS: 300,
 };
 
 export const COMMAND_TX_GAS_INCREASE_FACTORS = {
@@ -298,7 +302,6 @@ export const PARANET_NODES_ACCESS_POLICIES = ['OPEN', 'CURATED'];
 
 export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
     PUBLISH: {
-        INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
     UPDATE: {
@@ -307,7 +310,7 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
     },
     GET: {
         INIT: 60 * 1000,
-        REQUEST: 60 * 1000,
+        REQUEST: 5 * 60 * 1000,
     },
 };
 
@@ -322,10 +325,8 @@ export const ERROR_TYPE = {
         PUBLISH_LOCAL_STORE_ERROR: 'PublishLocalStoreError',
         PUBLISH_LOCAL_STORE_REMOTE_ERROR: 'PublishLocalStoreRemoteError',
         PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
-        PUBLISH_STORE_INIT_ERROR: 'PublishStoreInitError',
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
         PUBLISH_ERROR: 'PublishError',
-        PUBLISH_REMOTE_ERROR: 'PublishRemoteError',
     },
     UPDATE: {
         UPDATE_INIT_ERROR: 'UpdateInitError',
@@ -391,6 +392,8 @@ export const OPERATION_ID_STATUS = {
     DIAL_PROTOCOL_END: 'DIAL_PROTOCOL_END',
     VALIDATE_ASSET_START: 'VALIDATE_ASSET_START',
     VALIDATE_ASSET_END: 'VALIDATE_ASSET_END',
+    VALIDATE_ASSET_BLOCKCHAIN_START: 'VALIDATE_ASSET_BLOCKCHAIN_START',
+    VALIDATE_ASSET_BLOCKCHAIN_END: 'VALIDATE_ASSET_BLOCKCHAIN_END',
     VALIDATE_ASSET_REMOTE_START: 'VALIDATE_ASSET_REMOTE_START',
     VALIDATE_ASSET_REMOTE_END: 'VALIDATE_ASSET_REMOTE_END',
     PUBLISH: {
@@ -690,6 +693,7 @@ export const LOCAL_STORE_TYPES = {
  * @type {{SHARDING_TABLE_CONTRACT: string}}
  */
 export const CONTRACTS = {
+    CONTENT_ASSET_CONTRACT: 'ContentAssetContract',
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
@@ -708,6 +712,7 @@ export const CONTRACT_EVENTS = {
     SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
     STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
     PROFILE: ['AskUpdated'],
+    CONTENT_ASSET: ['AssetMinted'],
     COMMIT_MANAGER_V1: ['StateFinalized'],
     PARAMETERS_STORAGE: ['ParameterChanged'],
     LOG2PLDSF: ['ParameterChanged'],

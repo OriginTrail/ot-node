@@ -7,39 +7,26 @@ class PendingStorageService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
-        this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
     }
 
-    async cacheAssertion(
-        repository,
-        blockchain,
-        contract,
-        tokenId,
-        assertionId,
-        assertion,
-        operationId,
-    ) {
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
+    async cacheDataset(blockchain, datasetRoot, dataset, operationId) {
         this.logger.debug(
-            `Caching ${assertionId} assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
+            `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage`,
         );
 
         const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
-            repository,
             blockchain,
-            contract,
-            tokenId,
+            datasetRoot,
         );
 
         await this.fileService.writeContentsToFile(
             pendingStorageFolderPath,
-            assertionId,
-            JSON.stringify(assertion),
+            datasetRoot,
+            JSON.stringify(dataset),
         );
     }
 

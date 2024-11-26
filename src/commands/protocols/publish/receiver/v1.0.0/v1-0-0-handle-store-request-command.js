@@ -4,8 +4,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    TRIPLE_STORE_REPOSITORIES,
-    SERVICE_AGREEMENT_SOURCES,
+    // TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -18,37 +17,46 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
+        this.pendingStorageService = ctx.pendingStorageService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }
 
     async prepareMessage(commandData) {
-        const {
-            blockchain,
-            keyword,
-            hashFunctionId,
-            contract,
-            tokenId,
+        const { blockchain, operationId, datasetRoot } = commandData;
+
+        await this.operationIdService.updateOperationIdStatus(
             operationId,
-            assertionId,
-            agreementId,
-            agreementData,
-        } = commandData;
+            blockchain,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
+        );
+
+        const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
+
+        const validationResult = await this.validateReceivedData(
+            operationId,
+            datasetRoot,
+            dataset,
+            blockchain,
+        );
+
+        this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_END,
+        );
+
+        if (validationResult.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.NACK) {
+            return validationResult;
+        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.VALIDATING_PUBLISH_ASSERTION_REMOTE_START,
         );
-        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-            blockchain,
-            contract,
-            tokenId,
-        );
-        const stateIndex = assertionIds.length - 1;
-        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.validationService.validateAssertion(assertionId, blockchain, assertion);
 
+        // TODO: Two updateOperationIdStatus update in a row, this should be changed
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -61,32 +69,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
-        await this.tripleStoreService.localStoreAsset(
-            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-            assertionId,
-            assertion,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-        );
-
-        await this.repositoryModuleManager.updateServiceAgreementRecord(
-            blockchain,
-            contract,
-            tokenId,
-            agreementId,
-            agreementData.startTime,
-            agreementData.epochsNumber,
-            agreementData.epochLength,
-            agreementData.scoreFunctionId,
-            agreementData.proofWindowOffsetPerc,
-            hashFunctionId,
-            keyword,
-            assertionId,
-            stateIndex,
-            SERVICE_AGREEMENT_SOURCES.NODE,
-        );
+        this.pendingStorageService.cacheDataset(blockchain, datasetRoot, dataset, operationId);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -94,7 +77,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
 
-        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
+        return {
+            messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+            messageData: { signature: `signature-${Math.floor(Math.random() * 1000000) + 1}` },
+        };
     }
 
     /**
