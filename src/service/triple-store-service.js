@@ -230,19 +230,20 @@ class TripleStoreService {
             ...knowledgeCollectionAnnotations,
         ];
 
-        await this.tripleStoreModuleManager.insertKnowledgeCollectionIntoUnifiedGraph(
-            this.repositoryImplementations[toRepository],
-            toRepository,
-            BASE_NAMED_GRAPHS.HISTORICAL_UNIFIED,
-            knowledgeCollectionWithAnnotations,
-        );
-
-        await this.tripleStoreModuleManager.deleteUniqueKnowledgeCollectionTriplesFromUnifiedGraph(
-            this.repositoryImplementations[toRepository],
-            toRepository,
-            BASE_NAMED_GRAPHS.UNIFIED,
-            ual,
-        );
+        await Promise.all([
+            this.tripleStoreModuleManager.insertKnowledgeCollectionIntoUnifiedGraph(
+                this.repositoryImplementations[toRepository],
+                toRepository,
+                BASE_NAMED_GRAPHS.HISTORICAL_UNIFIED,
+                knowledgeCollectionWithAnnotations,
+            ),
+            this.tripleStoreModuleManager.deleteUniqueKnowledgeCollectionTriplesFromUnifiedGraph(
+                this.repositoryImplementations[toRepository],
+                toRepository,
+                BASE_NAMED_GRAPHS.UNIFIED,
+                ual,
+            ),
+        ]);
     }
 
     async construct(repository, query) {
