@@ -693,7 +693,7 @@ export const LOCAL_STORE_TYPES = {
  * @type {{SHARDING_TABLE_CONTRACT: string}}
  */
 export const CONTRACTS = {
-    CONTENT_ASSET_CONTRACT: 'ContentAsset',
+    CONTENT_ASSET_CONTRACT: 'ContentAssetContract',
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
