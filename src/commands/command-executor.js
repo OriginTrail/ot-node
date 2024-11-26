@@ -263,7 +263,12 @@ class CommandExecutor {
             handler.logger.warn(`Command will not be executed.`);
             return;
         }
-        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+        if (name === 'eventListenerCommand') {
+            await this.add(handler.default(), 0, true);
+        } else {
+            await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+        }
+
         if (this.verboseLoggingEnabled) {
             handler.logger.trace(`Permanent command created.`);
         }
