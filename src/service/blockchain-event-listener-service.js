@@ -30,6 +30,8 @@ class BlockchainEventListenerService {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
         this.paranetService = ctx.paranetService;
+        this.fileService = ctx.fileService;
+        this.dataService = ctx.dataService;
 
         this.eventGroupsBuffer = {};
     }
@@ -74,6 +76,12 @@ class BlockchainEventListenerService {
         }
 
         const syncContractEventsPromises = [
+            this.getContractEvents(
+                blockchainId,
+                CONTRACTS.CONTENT_ASSET_CONTRACT,
+                currentBlock,
+                CONTRACT_EVENTS.CONTENT_ASSET,
+            ),
             this.getContractEvents(
                 blockchainId,
                 CONTRACTS.SHARDING_TABLE_CONTRACT,
@@ -502,6 +510,41 @@ class BlockchainEventListenerService {
                 );
             }),
         );
+    }
+
+    async handleAssetMintedEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const eventData = JSON.parse(event.data);
+
+            const { assetContract, tokenId, state } = eventData;
+            const blockchain = event.blockchainId;
+
+            const knowledgeCollectionUAL = this.ualService.deriveUAL(
+                blockchain,
+                assetContract,
+                tokenId,
+            );
+
+            const datasetsFolder = this.fileService.getPendingStorageFolderPath(blockchain, state);
+            const datasetPath = `${datasetsFolder}/${state}`;
+
+            // eslint-disable-next-line no-await-in-loop
+            const triples = await this.fileService.readFile(datasetPath);
+
+            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(triples);
+            const knowledgeAssetsStatesUALs = Array.from(
+                { length: knowledgeAssetsCount },
+                (_, i) => `${knowledgeCollectionUAL}/${i + 1}:0`,
+            );
+
+            // eslint-disable-next-line no-await-in-loop
+            await this.tripleStoreService.insertKnowledgeCollection(
+                TRIPLE_STORE_REPOSITORIES.DKG,
+                knowledgeCollectionUAL,
+                knowledgeAssetsStatesUALs,
+                triples,
+            );
+        }
     }
 
     async handleStateFinalizedEvents(blockEvents) {

@@ -693,6 +693,7 @@ export const LOCAL_STORE_TYPES = {
  * @type {{SHARDING_TABLE_CONTRACT: string}}
  */
 export const CONTRACTS = {
+    CONTENT_ASSET_CONTRACT: 'ContentAsset',
     SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
     STAKING_CONTRACT: 'StakingContract',
     PROFILE_CONTRACT: 'ProfileContract',
@@ -711,6 +712,7 @@ export const CONTRACT_EVENTS = {
     SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
     STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
     PROFILE: ['AskUpdated'],
+    CONTENT_ASSET: ['AssetMinted'],
     COMMIT_MANAGER_V1: ['StateFinalized'],
     PARAMETERS_STORAGE: ['ParameterChanged'],
     LOG2PLDSF: ['ParameterChanged'],
