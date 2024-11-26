@@ -79,7 +79,7 @@ class Web3Service {
     initializeTransactionQueues(concurrency = TRANSACTION_QUEUE_CONCURRENCY) {
         this.transactionQueues = {};
         for (const operationalWallet of this.operationalWallets) {
-            const transactionQueue = async.queue((args, cb) => {
+            const transactionQueue = async.priorityQueue((args, cb) => {
                 const { contractInstance, functionName, transactionArgs, gasPrice } = args;
                 this._executeContractFunction(
                     contractInstance,
@@ -102,33 +102,18 @@ class Web3Service {
 
     queueTransaction(contractInstance, functionName, transactionArgs, callback, gasPrice) {
         const selectedQueue = this.selectTransactionQueue();
-        const priority = CONTRACT_FUNCTION_PRIORITY[functionName] ?? TRANSACTION_PRIORITY.REGULAR;
+        const priority = CONTRACT_FUNCTION_PRIORITY[functionName] ?? TRANSACTION_PRIORITY.MEDIUM;
         this.logger.info(`Calling ${functionName} with priority: ${priority}`);
-        switch (priority) {
-            case TRANSACTION_PRIORITY.HIGH:
-                selectedQueue.unshift(
-                    {
-                        contractInstance,
-                        functionName,
-                        transactionArgs,
-                        gasPrice,
-                    },
-                    callback,
-                );
-                break;
-            case TRANSACTION_PRIORITY.REGULAR:
-            default:
-                selectedQueue.push(
-                    {
-                        contractInstance,
-                        functionName,
-                        transactionArgs,
-                        gasPrice,
-                    },
-                    callback,
-                );
-                break;
-        }
+        selectedQueue.push(
+            {
+                contractInstance,
+                functionName,
+                transactionArgs,
+                gasPrice,
+            },
+            priority,
+            callback,
+        );
     }
 
     removeTransactionQueue(walletAddress) {

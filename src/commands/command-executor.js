@@ -7,6 +7,7 @@ import {
     COMMAND_STATUS,
     DEFAULT_COMMAND_DELAY_IN_MILLS,
     COMMAND_QUEUE_PARALLELISM,
+    DEFAULT_COMMAND_PRIORITY,
 } from '../constants/constants.js';
 
 /**
@@ -20,7 +21,7 @@ class CommandExecutor {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
 
-        this.queue = async.queue((command, callback = () => {}) => {
+        this.queue = async.priorityQueue((command, callback = () => {}) => {
             this._execute(command)
                 .then((result) => {
                     callback(result);
@@ -295,16 +296,19 @@ class CommandExecutor {
         if (insert) {
             command = await this._insert(command);
         }
+
+        const commandPriority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+
         if (delay) {
             setTimeout(
                 (timeoutCommand) => {
-                    this.queue.push(timeoutCommand);
+                    this.queue.push(timeoutCommand, commandPriority);
                 },
                 delay,
                 command,
             );
         } else {
-            this.queue.push(command);
+            this.queue.push(command, commandPriority);
         }
     }
 
@@ -393,6 +397,9 @@ class CommandExecutor {
                 command.data = commandInstance.pack(command.data);
             }
         }
+        if (!command.priority) {
+            command.priority = DEFAULT_COMMAND_PRIORITY;
+        }
         command.status = COMMAND_STATUS.PENDING;
         const opts = {};
         if (transaction != null) {
@@ -467,6 +474,7 @@ class CommandExecutor {
                     id: commandModel.id,
                     name: commandModel.name,
                     data: commandModel.data,
+                    priority: commandModel.priority ?? DEFAULT_COMMAND_PRIORITY,
                     readyAt: commandModel.readyAt,
                     delay: commandModel.delay,
                     startedAt: commandModel.startedAt,
