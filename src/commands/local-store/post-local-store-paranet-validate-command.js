@@ -1,5 +1,3 @@
-import { setTimeout } from 'timers/promises';
-
 import { LOCAL_STORE_TYPES, ERROR_TYPE, OPERATION_ID_STATUS } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -24,8 +22,6 @@ class PostLocalStoreParanetValidateCommand extends Command {
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetId,
         } = command.data;
-
-        await setTimeout(5 * 60 * 1000);
 
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
