@@ -63,6 +63,16 @@ export const LIBP2P_KEY_FILENAME = 'privateKey';
 
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
+export const COMMAND_PRIORITY = {
+    HIGHEST: 0,
+    HIGH: 1,
+    MEDIUM: 5,
+    LOW: 10,
+    LOWEST: 20,
+};
+
+export const DEFAULT_COMMAND_PRIORITY = COMMAND_PRIORITY.MEDIUM;
+
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
 export const MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS = 60 * 60 * 1000; // 1 hour
@@ -203,18 +213,21 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const TRANSACTION_PRIORITY = {
+    HIGHEST: 0,
     HIGH: 1,
-    REGULAR: 2,
+    MEDIUM: 5,
+    LOW: 10,
+    LOWEST: 20,
 };
 
 export const CONTRACT_FUNCTION_PRIORITY = {
     'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.REGULAR,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.REGULAR,
+        TRANSACTION_PRIORITY.MEDIUM,
+    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.MEDIUM,
     'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
         TRANSACTION_PRIORITY.HIGH,
     'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
-    sendProof: TRANSACTION_PRIORITY.REGULAR,
+    sendProof: TRANSACTION_PRIORITY.MEDIUM,
 };
 
 export const COMMAND_RETRIES = {
