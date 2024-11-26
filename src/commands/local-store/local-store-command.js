@@ -135,6 +135,16 @@ class LocalStoreCommand extends Command {
                     cachedData.txHash,
                     PARANET_SYNC_SOURCES.LOCAL_STORE,
                 );
+
+                await this.commandExecutor.add({
+                    name: 'postLocalStoreParanetValidateCommand',
+                    sequence: [],
+                    delay: 0,
+                    data: {
+                        ...command.data,
+                    },
+                    transactional: false,
+                });
             } else {
                 await this.pendingStorageService.cacheAssertion(
                     PENDING_STORAGE_REPOSITORIES.PRIVATE,

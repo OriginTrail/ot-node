@@ -404,8 +404,11 @@ class OTNode {
         const ualService = this.container.resolve('ualService');
         const validParanets = [];
 
-        // eslint-disable-next-line no-unsafe-optional-chaining
-        for (const paranetUAL of this.config.assetSync?.syncParanets ?? []) {
+        const syncParanets =
+            this.config.assetSync && this.config.assetSync.syncParanets
+                ? this.config.assetSync.syncParanets
+                : [];
+        for (const paranetUAL of syncParanets) {
             if (!ualService.isUAL(paranetUAL)) {
                 this.logger.warn(
                     `Unable to initialize Paranet with id ${paranetUAL} because of invalid UAL format`,

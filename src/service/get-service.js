@@ -6,13 +6,6 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
-    TRIPLE_STORE_REPOSITORIES,
-    PARANET_NODES_ACCESS_POLICIES,
-    LOCAL_INSERT_FOR_ASSET_SYNC_MAX_ATTEMPTS,
-    LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY,
-    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
-    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
-    PARANET_SYNC_SOURCES,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -44,15 +37,7 @@ class GetService extends OperationService {
             keyword,
             batchSize,
             minAckResponses,
-            contract,
-            tokenId,
             assertionId,
-            assetSync,
-            stateIndex,
-            paranetSync,
-            paranetTokenId,
-            paranetLatestAsset,
-            paranetMetadata,
         } = command.data;
 
         const keywordsStatuses = await this.getResponsesStatuses(
@@ -63,7 +48,11 @@ class GetService extends OperationService {
         );
 
         const { completedNumber, failedNumber } = keywordsStatuses[keyword];
-        const numberOfResponses = completedNumber + failedNumber;
+
+        const totalResponses = completedNumber + failedNumber;
+        const isAllNodesResponded = numberOfFoundNodes === totalResponses;
+        const isBatchCompleted = totalResponses % batchSize === 0;
+
         this.logger.debug(
             `Processing ${
                 this.operationName
@@ -72,7 +61,7 @@ class GetService extends OperationService {
                 batchSize,
             )} number of leftover nodes: ${
                 leftoverNodes.length
-            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
+            }, number of responses: ${totalResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
         if (responseData.errorMessage) {
             this.logger.trace(
@@ -87,129 +76,29 @@ class GetService extends OperationService {
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                { assertion: responseData.nquads },
+                {
+                    assertion: responseData.nquads,
+                    privateAssertion: responseData.privateNquads,
+                    syncedAssetRecord: responseData.syncedAssetRecord,
+                },
                 [...this.completedStatuses],
             );
             this.logResponsesSummary(completedNumber, failedNumber);
+        } else if (completedNumber < minAckResponses && (isAllNodesResponded || isBatchCompleted)) {
+            const potentialCompletedNumber = completedNumber + leftoverNodes.length;
 
-            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-            if (paranetSync) {
-                this.logger.debug(
-                    `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                );
-
-                const paranetNodesAccessPolicy =
-                    PARANET_NODES_ACCESS_POLICIES[paranetMetadata.nodesAccessPolicy];
-
-                const publicAssertionId = assertionId;
-                const paranetUAL = this.ualService.deriveUAL(blockchain, contract, paranetTokenId);
-                const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
-                let repository;
-                if (paranetLatestAsset) {
-                    repository = paranetRepository;
-                } else if (paranetNodesAccessPolicy === 'OPEN') {
-                    repository = TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY;
-                } else if (paranetNodesAccessPolicy === 'CURATED') {
-                    repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY;
-                } else {
-                    throw new Error('Unsupported access policy');
-                }
-
-                await this.tripleStoreService.localStoreAsset(
-                    repository,
-                    publicAssertionId,
-                    responseData.nquads,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                    LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
-                    LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
-                );
-                if (paranetNodesAccessPolicy === 'CURATED' && responseData.privateNquads) {
-                    await this.tripleStoreService.localStoreAsset(
-                        repository,
-                        responseData.syncedAssetRecord.privateAssertionId,
-                        responseData.privateNquads,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-                }
-                const privateAssertionId =
-                    paranetNodesAccessPolicy === 'CURATED'
-                        ? responseData.syncedAssetRecord?.privateAssertionId
-                        : null;
-
-                const paranetId = this.paranetService.constructParanetId(
-                    blockchain,
-                    contract,
-                    paranetTokenId,
-                );
-
-                await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
-                await this.repositoryModuleManager.createParanetSyncedAssetRecord(
-                    blockchain,
-                    ual,
-                    paranetUAL,
-                    publicAssertionId,
-                    privateAssertionId,
-                    responseData.syncedAssetRecord?.sender,
-                    responseData.syncedAssetRecord?.transactionHash,
-                    PARANET_SYNC_SOURCES.SYNC,
-                );
-            } else if (assetSync) {
-                this.logger.debug(
-                    `Asset sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                );
-
-                await this.tripleStoreService.localStoreAsset(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    assertionId,
-                    responseData.nquads,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                    LOCAL_INSERT_FOR_ASSET_SYNC_MAX_ATTEMPTS,
-                    LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY,
-                );
-            }
-        }
-
-        if (
-            completedNumber < minAckResponses &&
-            (numberOfFoundNodes === failedNumber || failedNumber % batchSize === 0)
-        ) {
-            if (leftoverNodes.length === 0) {
-                this.logger.info(
-                    `Unable to find assertion on the network for operation id: ${operationId}`,
-                );
-                if (assetSync) {
-                    const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-                    this.logger.debug(
-                        `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                    );
-                    this.markOperationAsFailed(
-                        operationId,
-                        blockchain,
-                        `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                    );
-                } else {
-                    await this.markOperationAsCompleted(
-                        operationId,
-                        blockchain,
-                        {
-                            message: 'Unable to find assertion on the network!',
-                        },
-                        [...this.completedStatuses],
-                    );
-                }
-                this.logResponsesSummary(completedNumber, failedNumber);
-            } else {
+            // Still possible to meet minAckResponses, schedule leftover nodes
+            if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
+            } else {
+                // Not enough potential responses to meet minAckResponses, or no leftover nodes
+                this.markOperationAsFailed(
+                    operationId,
+                    blockchain,
+                    `Unable to find assertion ${assertionId} on the network!`,
+                    this.errorType,
+                );
+                this.logResponsesSummary(completedNumber, failedNumber);
             }
         }
     }

@@ -1,6 +1,6 @@
 # DKG local network setup tool
 
-This tool will help you set up a local DKG v6 network running with the Hardhat blockchain. It is useful for development and testing purposes and is used internally by the OriginTrail core developers.
+This tool will help you set up a local DKG V8 network running with the Hardhat blockchain. It is useful for development and testing purposes and is used internally by the OriginTrail core developers.
 <br/>
 
 **Note: This tool is an internal tool used by the OriginTrail team and thus is developed for our workflow, meaning that it currently only supports MacOS and Linux**, but we encourage you to adapt it for your workflow as well.
@@ -10,7 +10,7 @@ This tool will help you set up a local DKG v6 network running with the Hardhat b
 -   An installed and running triplestore (graph database)
     -   We recommend testing with Blazegraph. In order to download Blazegraph, please visit their official [website](https://blazegraph.com/). Alternatively other triple stores can be used (GraphBD or and other RDF native graph databases)
 -   An installed and running MySQL server
--   You should have installed npm and Node.js (v16)
+-   You should have installed npm and Node.js (v20)
 
 # Setup instructions
 
@@ -19,7 +19,7 @@ In order to run the local network you fist need to clone the "ot-node" repositor
 
 ## 1. CLONE OT-NODE REPOSITORY & INSTALL DEPENDENCIES
 
-After cloning the **ot-node** repository, please checkout to "v6/develop" branch and install dependencies by running:
+After cloning the **ot-node** repository, please checkout to "v8/develop" branch and install dependencies by running:
 
 ```bash
 git clone https://github.com/OriginTrail/ot-node.git && cd ot-node/ && npm install && cd ..

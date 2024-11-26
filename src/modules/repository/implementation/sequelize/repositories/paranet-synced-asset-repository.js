@@ -41,6 +41,12 @@ class ParanetSyncedAssetRepository {
         });
     }
 
+    async deleteParanetSyncedAssetRecord(ual) {
+        await this.model.destroy({
+            where: { ual },
+        });
+    }
+
     async paranetSyncedAssetRecordExists(ual) {
         const paranetSyncedAssetRecord = await this.getParanetSyncedAssetRecordByUAL(ual);
 

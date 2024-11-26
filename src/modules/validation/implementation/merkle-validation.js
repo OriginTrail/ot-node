@@ -12,11 +12,11 @@ class MerkleValidation {
         };
     }
 
-    calculateRoot(assertion) {
+    async calculateRoot(assertion) {
         return calculateRoot(assertion);
     }
 
-    getMerkleProof(nquadsArray, challenge) {
+    async getMerkleProof(nquadsArray, challenge) {
         return getMerkleProof(nquadsArray, challenge);
     }
 
