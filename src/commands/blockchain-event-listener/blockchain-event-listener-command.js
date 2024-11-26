@@ -148,6 +148,7 @@ class BlockchainEventListenerCommand extends Command {
             currentBlock,
         );
 
+        // We update last checked block before we insert events in our operational db
         await this.repositoryModuleManager.updateLastCheckedBlock(
             this.blockchainId,
             result.lastCheckedBlock,
