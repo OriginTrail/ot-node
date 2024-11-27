@@ -10,6 +10,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.pendingStorageService = ctx.pendingStorageService;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -31,6 +32,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetUAL,
+            datasetRoot
         } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
@@ -39,18 +41,18 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
-        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+        const cachedData = await this.pendingStorageService.getCachedDataset(blockchain, datasetRoot);
 
         const isValidAssertion = await this.validationService.validateDatasetRoot(
-            cachedData.public.dataset,
-            cachedData.public.datasetRoot,
+            cachedData,
+            datasetRoot,
         );
 
         if (!isValidAssertion) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid dataset root for asset ???. Received value , received value from request: ${cachedData.public.datasetRoot}`,
+                `Invalid dataset root for asset ???. Received value , received value from request: ${datasetRoot}`,
                 this.errorType,
             );
             return Command.empty();

@@ -30,7 +30,7 @@ class BlockchainEventListenerService {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
         this.paranetService = ctx.paranetService;
-        this.fileService = ctx.fileService;
+        this.pendingStorageService = ctx.pendingStorageService;
         this.dataService = ctx.dataService;
 
         this.eventGroupsBuffer = {};
@@ -525,11 +525,7 @@ class BlockchainEventListenerService {
                 tokenId,
             );
 
-            const datasetsFolder = this.fileService.getPendingStorageFolderPath(blockchain, state);
-            const datasetPath = `${datasetsFolder}/${state}`;
-
-            // eslint-disable-next-line no-await-in-loop
-            const triples = await this.fileService.readFile(datasetPath, true);
+            const triples = await this.pendingStorageService.getCachedDataset(blockchain, state);
 
             const knowledgeAssetsCount = this.dataService.countDistinctSubjects(triples);
             const knowledgeAssetsUALs = [];

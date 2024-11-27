@@ -30,6 +30,30 @@ class PendingStorageService {
         );
     }
 
+    async getCachedDataset(blockchain, datasetRoot) {
+        this.logger.debug(
+            `Retrieving cached dataset for ${datasetRoot} from pending storage`,
+        );
+    
+        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
+            blockchain,
+            datasetRoot,
+        );
+
+        const filePath = path.join(pendingStorageFolderPath, datasetRoot);
+
+    
+        try {
+            const fileContents = await this.fileService.readFile(filePath, true);
+            return fileContents;
+        } catch (error) {
+            this.logger.error(
+                `Failed to retrieve or parse cached dataset for ${datasetRoot}: ${error.message}`,
+            );
+            throw error;
+        }
+    }
+
     async getCachedAssertion(repository, blockchain, contract, tokenId, assertionId, operationId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 

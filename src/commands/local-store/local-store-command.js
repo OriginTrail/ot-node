@@ -24,6 +24,7 @@ class LocalStoreCommand extends Command {
             blockchain,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetId,
+            datasetRoot
         } = command.data;
 
         try {
@@ -33,20 +34,11 @@ class LocalStoreCommand extends Command {
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
 
-            const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+            const cachedData = await this.pendingStorageService.getCachedDataset(blockchain, datasetRoot);
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
-                if (cachedData.public.dataset && cachedData.public.datasetRoot) {
-                    storePromises.push(
-                        this.pendingStorageService.cacheDataset(
-                            blockchain,
-                            cachedData.public.datasetRoot,
-                            cachedData.public.dataset,
-                            operationId,
-                        ),
-                    );
-                }
+
                 // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
                 //     storePromises.push(
                 //         this.pendingStorageService.cacheDataset(
@@ -73,7 +65,7 @@ class LocalStoreCommand extends Command {
                 await this.tripleStoreModuleManager.initializeParanetRepository(paranetRepository);
                 await this.paranetService.initializeParanetRecord(blockchain, paranetId);
 
-                if (cachedData.public.dataset && cachedData.public.datasetRoot) {
+                if (datasetRoot && cachedData) {
                     // await this.tripleStoreService.localStoreAsset(
                     //     paranetRepository,
                     //     cachedData.public.assertionId,
@@ -86,7 +78,7 @@ class LocalStoreCommand extends Command {
                     //     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
                     // );
                 }
-                if (cachedData.private?.assertion && cachedData.private?.assertionId) {
+                if (datasetRoot && cachedData) {
                     // await this.tripleStoreService.localStoreAsset(
                     //     paranetRepository,
                     //     cachedData.private.assertionId,
