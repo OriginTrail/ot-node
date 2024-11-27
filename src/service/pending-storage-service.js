@@ -1,3 +1,4 @@
+import path from 'path';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
     SERVICE_AGREEMENT_SOURCES,
@@ -15,7 +16,7 @@ class PendingStorageService {
 
     async cacheDataset(blockchain, datasetRoot, dataset, operationId) {
         this.logger.debug(
-            `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage`,
+            `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage, blockchain: ${blockchain}`,
         );
 
         const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
@@ -32,9 +33,8 @@ class PendingStorageService {
 
     async getCachedDataset(blockchain, datasetRoot) {
         this.logger.debug(
-            `Retrieving cached dataset for ${datasetRoot} from pending storage`,
+            `Retrieving cached dataset for ${datasetRoot} from pending storage, blockchain: ${blockchain}`,
         );
-    
         const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
             blockchain,
             datasetRoot,
@@ -42,7 +42,6 @@ class PendingStorageService {
 
         const filePath = path.join(pendingStorageFolderPath, datasetRoot);
 
-    
         try {
             const fileContents = await this.fileService.readFile(filePath, true);
             return fileContents;
