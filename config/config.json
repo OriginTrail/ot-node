@@ -158,6 +158,10 @@
                             "sendTelemetryData": false,
                             "signalingServerUrl": "null"
                         }
+                    },
+                    "local-telemetry": {
+                        "enabled": false,
+                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
@@ -326,6 +330,10 @@
                             "sendTelemetryData": false,
                             "signalingServerUrl": "null"
                         }
+                    },
+                    "local-telemetry": {
+                        "enabled": false,
+                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
@@ -494,6 +502,10 @@
                             "sendTelemetryData": true,
                             "signalingServerUrl": "https://v8-testnet-signaling.origin-trail.network/signal"
                         }
+                    },
+                    "local-telemetry": {
+                        "enabled": false,
+                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
@@ -661,6 +673,10 @@
                             "sendTelemetryData": true,
                             "signalingServerUrl": "https://devnet-signaling.origin-trail.network/signal"
                         }
+                    },
+                    "local-telemetry": {
+                        "enabled": false,
+                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
@@ -851,6 +867,10 @@
                             "sendTelemetryData": true,
                             "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
                         }
+                    },
+                    "local-telemetry": {
+                        "enabled": false,
+                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
