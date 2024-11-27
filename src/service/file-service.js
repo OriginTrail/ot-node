@@ -1,6 +1,7 @@
 import path from 'path';
 import { mkdir, writeFile, readFile, unlink, stat, readdir, rm, appendFile } from 'fs/promises';
 import appRootPath from 'app-root-path';
+import { BLS_KEY_DIRECTORY, BLS_KEY_FILENAME, NODE_ENVIRONMENTS } from '../constants/constants.js';
 
 const ARCHIVE_FOLDER_NAME = 'archive';
 const MIGRATION_FOLDER_NAME = 'migrations';
@@ -114,11 +115,31 @@ class FileService {
         }
     }
 
+    getBinariesFolderPath() {
+        return path.join(appRootPath.path, 'bin');
+    }
+
+    getBinaryPath(binary) {
+        let binaryName = binary;
+        if (process.platform === 'win32') {
+            binaryName += '.exe';
+        }
+        return path.join(this.getBinariesFolderPath(), process.platform, process.arch, binaryName);
+    }
+
+    getBLSSecretKeyFolderPath() {
+        return path.join(this.getDataFolderPath(), BLS_KEY_DIRECTORY);
+    }
+
+    getBLSSecretKeyPath() {
+        return path.join(this.getBLSSecretKeyFolderPath(), BLS_KEY_FILENAME);
+    }
+
     getDataFolderPath() {
         if (
-            process.env.NODE_ENV === 'testnet' ||
-            process.env.NODE_ENV === 'mainnet' ||
-            process.env.NODE_ENV === 'devnet'
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVNET ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TESTNET ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
         ) {
             return path.join(appRootPath.path, '..', this.config.appDataPath);
         }
