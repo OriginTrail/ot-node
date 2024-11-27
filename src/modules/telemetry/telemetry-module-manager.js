@@ -1,5 +1,5 @@
 import BaseModuleManager from '../base-module-manager.js';
-import questdb from './implementation/telemetry-quest.js';
+import TelemetryQuest from './implementation/telemetry-quest.js';
 class TelemetryModuleManager extends BaseModuleManager {
     constructor(ctx) {
         super(ctx);
@@ -33,15 +33,17 @@ class TelemetryModuleManager extends BaseModuleManager {
         value2 = null,
         value3 = null,
     ) {
-        return questdb.sendEventTelemetry(
-            operationId,
-            blockchainId,
-            name,
-            timestamp,
-            value1,
-            value2,
-            value3,
-    );
+        if (this.initialized) {
+            return this.telemetryQuest.sendEventTelemetry(
+                operationId,
+                blockchainId,
+                name,
+                timestamp,
+                value1,
+                value2,
+                value3,
+            );
+        }
     }
 }
 
