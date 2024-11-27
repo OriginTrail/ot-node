@@ -1,4 +1,5 @@
 import async from 'async';
+import { Mutex } from 'async-mutex';
 import Command from './command.js';
 import {
     PERMANENT_COMMANDS,
@@ -19,6 +20,8 @@ class CommandExecutor {
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
+        this.blockingCommands = new Set();
+        this.mutex = new Mutex();
 
         this.queue = async.queue((command, callback = () => {}) => {
             this._execute(command)
@@ -73,151 +76,200 @@ class CommandExecutor {
     async _execute(executeCommand) {
         const command = executeCommand;
         const now = Date.now();
-        await this._update(command, {
-            startedAt: now,
-        });
 
-        const commandContext = {
-            commandId: command.id,
-            commandName: command.name,
-        };
-        if (command.data && command.data.operationId) {
-            commandContext.operationId = command.data.operationId;
-        }
-        const loggerWithContext = this.logger.child(commandContext);
+        if (command.isBlocking) {
+            // Sometimes we run 2 commands with the same name but, e.g. for different blockchains. We add command.data to name to differentiate them
+            const blockingCommandName =
+                Object.keys(command.data).length === 0
+                    ? command.name
+                    : command.name + JSON.stringify(command.data);
 
-        if (this.verboseLoggingEnabled) {
-            loggerWithContext.trace('Command started.');
-        }
+            // Use mutex to avoid race conditions over this.blockingCommands set
+            const release = await this.mutex.acquire();
 
-        const handler = this.commandResolver.resolve(command.name);
-        handler.logger = loggerWithContext;
-
-        for (const key in handler) {
-            if (key.endsWith('Service') || key.endsWith('ModuleManager')) {
-                handler[key].logger = loggerWithContext;
-            }
-        }
-
-        if (!handler) {
-            loggerWithContext.warn('Command will not be executed.');
-            await this._update(command, {
-                status: COMMAND_STATUS.UNKNOWN,
-            });
-            return;
-        }
-        if (command.deadlineAt && now > command.deadlineAt) {
-            loggerWithContext.warn('Command is too late...');
-            await this._update(command, {
-                status: COMMAND_STATUS.EXPIRED,
-            });
             try {
-                const result = await handler.expired(command);
-                if (result?.commands) {
-                    await Promise.all(result.commands.map((c) => this.add(c, c.delay, true)));
+                // Check if previous instance of this command is still running
+                if (this.blockingCommands.has(blockingCommandName)) {
+                    this.logger.info(
+                        `Skipping command: ${command.name}, because the previous iteration of this command has not yet finished execution`,
+                    );
+                    return;
                 }
-            } catch (e) {
-                loggerWithContext.warn('Failed to handle expired callback');
-            }
-            return;
-        }
 
-        const waitMs = command.readyAt + command.delay - now;
-        if (waitMs > 0) {
-            if (this.verboseLoggingEnabled) {
-                loggerWithContext.trace('Command should be delayed');
+                // No previous instance of this command - add blocking command to set
+                this.blockingCommands.add(blockingCommandName);
+            } finally {
+                // release the mutex
+                release();
             }
-            await this.add(command, Math.min(waitMs, MAX_COMMAND_DELAY_IN_MILLS), false);
-            return;
         }
 
         try {
-            const processResult = await this._process(async (transaction) => {
-                await this._update(
-                    command,
-                    {
-                        status: COMMAND_STATUS.STARTED,
-                    },
-                    transaction,
-                );
+            await this._update(command, {
+                startedAt: now,
+            });
 
-                command.data = handler.unpack(command.data);
+            const commandContext = {
+                commandId: command.id,
+                commandName: command.name,
+            };
+            if (command.data && command.data.operationId) {
+                commandContext.operationId = command.data.operationId;
+            }
+            const loggerWithContext = this.logger.child(commandContext);
 
-                let result = await handler.execute(command, transaction);
-                if (result.repeat) {
+            if (this.verboseLoggingEnabled) {
+                loggerWithContext.trace('Command started.');
+            }
+
+            const handler = this.commandResolver.resolve(command.name);
+            handler.logger = loggerWithContext;
+
+            for (const key in handler) {
+                if (key.endsWith('Service') || key.endsWith('ModuleManager')) {
+                    handler[key].logger = loggerWithContext;
+                }
+            }
+
+            if (!handler) {
+                loggerWithContext.warn('Command will not be executed.');
+                await this._update(command, {
+                    status: COMMAND_STATUS.UNKNOWN,
+                });
+                return;
+            }
+            if (command.deadlineAt && now > command.deadlineAt) {
+                loggerWithContext.warn('Command is too late...');
+                await this._update(command, {
+                    status: COMMAND_STATUS.EXPIRED,
+                });
+                try {
+                    const result = await handler.expired(command);
+                    if (result?.commands) {
+                        await Promise.all(result.commands.map((c) => this.add(c, c.delay, true)));
+                    }
+                } catch (e) {
+                    loggerWithContext.warn('Failed to handle expired callback');
+                }
+                return;
+            }
+
+            const waitMs = command.readyAt + command.delay - now;
+            if (waitMs > 0) {
+                if (this.verboseLoggingEnabled) {
+                    loggerWithContext.trace('Command should be delayed');
+                }
+                await this.add(command, Math.min(waitMs, MAX_COMMAND_DELAY_IN_MILLS), false);
+                return;
+            }
+
+            try {
+                const processResult = await this._process(async (transaction) => {
                     await this._update(
                         command,
                         {
-                            status: COMMAND_STATUS.REPEATING,
+                            status: COMMAND_STATUS.STARTED,
                         },
                         transaction,
                     );
 
-                    command.data = handler.pack(command.data);
+                    command.data = handler.unpack(command.data);
 
-                    const period = command.period ?? DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
-                    await this.add(command, period, false);
-                    return Command.repeat();
-                }
+                    let result = await handler.execute(command, transaction);
+                    if (result.repeat) {
+                        await this._update(
+                            command,
+                            {
+                                status: COMMAND_STATUS.REPEATING,
+                            },
+                            transaction,
+                        );
 
-                if (result.retry) {
-                    result = await this._handleRetry(command, handler);
-                    if (result.retry) {
-                        return result;
+                        command.data = handler.pack(command.data);
+
+                        const period = command.period ?? DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                        await this.add(command, period, false);
+                        return Command.repeat();
                     }
-                }
 
-                const children = result.commands.map((c) => {
-                    const newCommand = c;
-                    newCommand.parentId = command.id;
-                    return newCommand;
-                });
+                    if (result.retry) {
+                        result = await this._handleRetry(command, handler);
+                        if (result.retry) {
+                            return result;
+                        }
+                    }
 
-                await Promise.all(children.map((e) => this._insert(e, transaction)));
-                await this._update(
-                    command,
-                    {
-                        status: COMMAND_STATUS.COMPLETED,
-                    },
-                    transaction,
-                );
-                return {
-                    children,
-                };
-            }, command.transactional);
-
-            if (!processResult.repeat && !processResult.retry) {
-                if (this.verboseLoggingEnabled) {
-                    loggerWithContext.trace(`Command processed.`);
-                }
-                const addPromises = [];
-                processResult.children.forEach((e) =>
-                    addPromises.push(this.add(e, e.delay, false)),
-                );
-                await Promise.all(addPromises);
-            }
-        } catch (e) {
-            if (this.verboseLoggingEnabled) {
-                loggerWithContext.trace(`Failed to process command. ${e}.\n${e.stack}`);
-            }
-
-            try {
-                const result = await this._handleError(command, handler, e);
-                if (result && result.repeat) {
-                    await this._update(command, {
-                        status: COMMAND_STATUS.REPEATING,
+                    const children = result.commands.map((c) => {
+                        const newCommand = c;
+                        newCommand.parentId = command.id;
+                        return newCommand;
                     });
 
-                    command.data = handler.pack(command.data);
+                    await Promise.all(children.map((e) => this._insert(e, transaction)));
+                    await this._update(
+                        command,
+                        {
+                            status: COMMAND_STATUS.COMPLETED,
+                        },
+                        transaction,
+                    );
+                    return {
+                        children,
+                    };
+                }, command.transactional);
 
-                    const period = command.period
-                        ? command.period
-                        : DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
-                    await this.add(command, period, false);
-                    return Command.repeat();
+                if (!processResult.repeat && !processResult.retry) {
+                    if (this.verboseLoggingEnabled) {
+                        loggerWithContext.trace(`Command processed.`);
+                    }
+                    const addPromises = [];
+                    processResult.children.forEach((e) =>
+                        addPromises.push(this.add(e, e.delay, false)),
+                    );
+                    await Promise.all(addPromises);
                 }
-            } catch (error) {
-                loggerWithContext.warn(`Failed to handle error callback, error: ${error.message}`);
+            } catch (e) {
+                if (this.verboseLoggingEnabled) {
+                    loggerWithContext.trace(`Failed to process command. ${e}.\n${e.stack}`);
+                }
+
+                try {
+                    const result = await this._handleError(command, handler, e);
+                    if (result && result.repeat) {
+                        await this._update(command, {
+                            status: COMMAND_STATUS.REPEATING,
+                        });
+
+                        command.data = handler.pack(command.data);
+
+                        const period = command.period
+                            ? command.period
+                            : DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                        await this.add(command, period, false);
+                        return Command.repeat();
+                    }
+                } catch (error) {
+                    loggerWithContext.warn(
+                        `Failed to handle error callback, error: ${error.message}`,
+                    );
+                }
+            }
+        } finally {
+            if (command.isBlocking) {
+                const blockingCommandName =
+                    Object.keys(command.data).length === 0
+                        ? command.name
+                        : command.name + JSON.stringify(command.data);
+                const release = await this.mutex.acquire();
+
+                try {
+                    // Remove blockingCommandName from set after execution is done to unblock the command
+                    if (this.blockingCommands.has(blockingCommandName)) {
+                        this.blockingCommands.delete(blockingCommandName);
+                    }
+                } finally {
+                    release();
+                }
             }
         }
     }
