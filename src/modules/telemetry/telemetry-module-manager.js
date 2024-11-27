@@ -1,5 +1,5 @@
 import BaseModuleManager from '../base-module-manager.js';
-import TelemetryQuest from './implementation/telemetry-quest.js';
+import TelemetryQuest from './implementation/local-telemetry.js';
 class TelemetryModuleManager extends BaseModuleManager {
     constructor(ctx) {
         super(ctx);
