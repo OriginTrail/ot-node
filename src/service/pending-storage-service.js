@@ -125,8 +125,9 @@ class PendingStorageService {
                 }
             };
     
-            for (const path of storagePaths) {
-                await collectFiles(path);
+            for (const basePath of storagePaths) {
+                // eslint-disable-next-line no-await-in-loop
+                await collectFiles(basePath);
             }
     
             const deleteFile = async ({ file, assertionPath }) => {
@@ -151,7 +152,8 @@ class PendingStorageService {
     
             for (let i = 0; i < filesToDelete.length; i += maxRemovalCount) {
                 const batch = filesToDelete.slice(i, i + maxRemovalCount);
-    
+                
+                // eslint-disable-next-line no-await-in-loop
                 const deletionResults = await Promise.allSettled(batch.map(deleteFile));
     
                 removedCount += deletionResults.filter(
