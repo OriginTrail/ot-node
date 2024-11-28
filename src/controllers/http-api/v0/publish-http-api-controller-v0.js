@@ -63,9 +63,6 @@ class PublishController extends BaseController {
 
             const commandSequence = ['publishValidateAssetCommand'];
 
-            // Backwards compatibility check - true for older clients
-            commandSequence.push('localStoreCommand');
-
             commandSequence.push('networkPublishCommand');
 
             await this.commandExecutor.add({
