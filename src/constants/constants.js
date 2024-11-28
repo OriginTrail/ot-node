@@ -198,6 +198,7 @@ export const PERMANENT_COMMANDS = [
     'updateCleanerCommand',
     'updateResponseCleanerCommand',
     'startParanetSyncCommands',
+    'pendingStorageCleanerCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
