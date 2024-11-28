@@ -12,6 +12,7 @@ import {
     CONTRACT_EVENT_TO_GROUP_MAPPING,
     GROUPED_CONTRACT_EVENTS,
     ZERO_BYTES32,
+    OPERATION_ID_STATUS,
 } from '../constants/constants.js';
 
 const fetchEventsFailedCount = {};
@@ -32,6 +33,8 @@ class BlockchainEventListenerService {
         this.paranetService = ctx.paranetService;
         this.fileService = ctx.fileService;
         this.dataService = ctx.dataService;
+        this.operationIdService = ctx.operationIdService;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.eventGroupsBuffer = {};
     }
@@ -519,33 +522,35 @@ class BlockchainEventListenerService {
             const { assetContract, tokenId, operationId } = eventData;
             const blockchain = event.blockchainId;
 
-            const knowledgeCollectionUAL = this.ualService.deriveUAL(
-                blockchain,
-                assetContract,
-                tokenId,
+            // eslint-disable-next-line no-await-in-loop
+            const operationId = await this.operationIdService.generateOperationId(
+                OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
             );
 
             const datasetPath = this.fileService.getPendingStorageDocumentPath(operationId);
 
             // eslint-disable-next-line no-await-in-loop
-            const triples = await this.fileService.readFile(datasetPath, true);
+            const data = await this.fileService.readFile(datasetPath, true);
 
-            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(triples);
-            const knowledgeAssetsUALs = [];
-            const knowledgeAssetStates = [];
-            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-                knowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i + 1}`);
-                knowledgeAssetStates.push(0);
-            }
+            const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
 
             // eslint-disable-next-line no-await-in-loop
-            await this.tripleStoreService.insertKnowledgeCollection(
-                TRIPLE_STORE_REPOSITORIES.DKG,
-                knowledgeCollectionUAL,
-                knowledgeAssetsUALs,
-                knowledgeAssetStates,
-                triples,
-            );
+            await this.commandExecutor.add({
+                name: 'validateAssertionMetadataCommand',
+                sequence: ['storeAssertionCommand'],
+                delay: 0,
+                data: {
+                    operationId,
+                    ual,
+                    blockchain,
+                    contract: assetContract,
+                    tokenId,
+                    merkleRoot: state,
+                    assertion: data.assertion,
+                    cachedMerkleRoot: data.merkleRoot,
+                },
+                transactional: false,
+            });
         }
     }
 
