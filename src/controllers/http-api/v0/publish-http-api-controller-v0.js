@@ -61,7 +61,7 @@ class PublishController extends BaseController {
                 blockchain,
             });
 
-            const commandSequence = ['publishValidateAssetCommand'];
+            const commandSequence = ['findShardCommand', 'publishValidateAssetCommand'];
 
             commandSequence.push('networkPublishCommand');
 

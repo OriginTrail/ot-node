@@ -20,7 +20,6 @@ class NetworkProtocolCommand extends Command {
         const minAckResponses = await this.getMinAckResponses(blockchain);
 
         const commandSequence = [
-            'findShardCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
