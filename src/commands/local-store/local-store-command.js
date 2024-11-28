@@ -40,20 +40,18 @@ class LocalStoreCommand extends Command {
                 if (cachedData.public.dataset && cachedData.public.datasetRoot) {
                     storePromises.push(
                         this.pendingStorageService.cacheDataset(
-                            blockchain,
+                            operationId,
                             cachedData.public.datasetRoot,
                             cachedData.public.dataset,
-                            operationId,
                         ),
                     );
                 }
                 // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
                 //     storePromises.push(
                 //         this.pendingStorageService.cacheDataset(
-                //             blockchain,
+                //             operationId,
                 //             datasetRoot,
                 //             dataset,
-                //             operationId,
                 //         ),
                 //     );
                 // }
