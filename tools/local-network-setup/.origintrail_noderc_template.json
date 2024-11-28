@@ -22,6 +22,38 @@
         "tripleStore": {
             "enabled": true,
             "implementation": {
+                "ot-neptune": {
+                    "enabled": false,
+                    "package": "./triple-store/implementation/ot-neptune/ot-neptune.js",
+                    "config": {
+                        "repositories": {
+                            "privateCurrent": {
+                                "url": "https://endicia.origin-trail.network/privatecurrent",
+                                "name": "private-current",
+                                "username": "",
+                                "password": ""
+                            },
+                            "privateHistory": {
+                                "url": "https://endicia.origin-trail.network/privatehistory",
+                                "name": "private-history",
+                                "username": "",
+                                "password": ""
+                            },
+                            "publicCurrent": {
+                                "url": "https://endicia.origin-trail.network/publiccurrent",
+                                "name": "public-current",
+                                "username": "",
+                                "password": ""
+                            },
+                            "publicHistory": {
+                                "url": "https://endicia.origin-trail.network/publichistory",
+                                "name": "public-history",
+                                "username": "",
+                                "password": ""
+                            }
+                        }
+                    }
+                },
                 "ot-blazegraph": {
                     "enabled": false,
                     "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
