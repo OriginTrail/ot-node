@@ -38,14 +38,22 @@ class LocalStoreCommand extends Command {
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
-
+                
+                if (cachedData.public.dataset && cachedData.public.datasetRoot) {
+                    storePromises.push(
+                        this.pendingStorageService.cacheDataset(
+                            operationId,
+                            cachedData.public.datasetRoot,
+                            cachedData.public.dataset,
+                        ),
+                    );
+                }
                 // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
                 //     storePromises.push(
                 //         this.pendingStorageService.cacheDataset(
-                //             blockchain,
+                //             operationId,
                 //             datasetRoot,
                 //             dataset,
-                //             operationId,
                 //         ),
                 //     );
                 // }

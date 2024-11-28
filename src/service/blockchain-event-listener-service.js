@@ -12,6 +12,7 @@ import {
     CONTRACT_EVENT_TO_GROUP_MAPPING,
     GROUPED_CONTRACT_EVENTS,
     ZERO_BYTES32,
+    OPERATION_ID_STATUS,
 } from '../constants/constants.js';
 
 const fetchEventsFailedCount = {};
@@ -32,6 +33,8 @@ class BlockchainEventListenerService {
         this.paranetService = ctx.paranetService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.dataService = ctx.dataService;
+        this.operationIdService = ctx.operationIdService;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.eventGroupsBuffer = {};
     }
@@ -516,13 +519,12 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const eventData = JSON.parse(event.data);
 
-            const { assetContract, tokenId, state } = eventData;
+            const { assetContract, tokenId, state, publishOperationId } = eventData;
             const blockchain = event.blockchainId;
 
-            const knowledgeCollectionUAL = this.ualService.deriveUAL(
-                blockchain,
-                assetContract,
-                tokenId,
+            // eslint-disable-next-line no-await-in-loop
+            const operationId = await this.operationIdService.generateOperationId(
+                OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
             );
 
             // eslint-disable-next-line no-await-in-loop
@@ -537,13 +539,22 @@ class BlockchainEventListenerService {
             }
 
             // eslint-disable-next-line no-await-in-loop
-            await this.tripleStoreService.insertKnowledgeCollection(
-                TRIPLE_STORE_REPOSITORIES.DKG,
-                knowledgeCollectionUAL,
-                knowledgeAssetsUALs,
-                knowledgeAssetStates,
-                triples,
-            );
+            await this.commandExecutor.add({
+                name: 'validateAssertionMetadataCommand',
+                sequence: ['storeAssertionCommand'],
+                delay: 0,
+                data: {
+                    operationId,
+                    ual,
+                    blockchain,
+                    contract: assetContract,
+                    tokenId,
+                    merkleRoot: state,
+                    assertion: data.assertion,
+                    cachedMerkleRoot: data.merkleRoot,
+                },
+                transactional: false,
+            });
         }
     }
 

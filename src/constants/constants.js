@@ -62,7 +62,21 @@ export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
 export const LIBP2P_KEY_FILENAME = 'privateKey';
 
+export const BLS_KEY_DIRECTORY = 'bls';
+
+export const BLS_KEY_FILENAME = 'secretKey';
+
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
+
+export const COMMAND_PRIORITY = {
+    HIGHEST: 0,
+    HIGH: 1,
+    MEDIUM: 5,
+    LOW: 10,
+    LOWEST: 20,
+};
+
+export const DEFAULT_COMMAND_PRIORITY = COMMAND_PRIORITY.MEDIUM;
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
@@ -208,18 +222,21 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const TRANSACTION_PRIORITY = {
+    HIGHEST: 0,
     HIGH: 1,
-    REGULAR: 2,
+    MEDIUM: 5,
+    LOW: 10,
+    LOWEST: 20,
 };
 
 export const CONTRACT_FUNCTION_PRIORITY = {
     'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.REGULAR,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.REGULAR,
+        TRANSACTION_PRIORITY.MEDIUM,
+    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.MEDIUM,
     'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
         TRANSACTION_PRIORITY.HIGH,
     'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
-    sendProof: TRANSACTION_PRIORITY.REGULAR,
+    sendProof: TRANSACTION_PRIORITY.MEDIUM,
 };
 
 export const COMMAND_RETRIES = {
@@ -329,6 +346,8 @@ export const ERROR_TYPE = {
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
         PUBLISH_ERROR: 'PublishError',
     },
+    VALIDATE_ASSERTION_METADATA_ERROR: 'ValidateAssertionMetadataError',
+    STORE_ASSERTION_ERROR: 'StoreAssertionError',
     UPDATE: {
         UPDATE_INIT_ERROR: 'UpdateInitError',
         UPDATE_REQUEST_ERROR: 'UpdateRequestError',
@@ -410,6 +429,16 @@ export const OPERATION_ID_STATUS = {
         PUBLISH_REPLICATE_START: 'PUBLISH_REPLICATE_START',
         PUBLISH_REPLICATE_END: 'PUBLISH_REPLICATE_END',
         PUBLISH_END: 'PUBLISH_END',
+    },
+    PUBLISH_FINALIZATION: {
+        PUBLISH_FINALIZATION_START: 'PUBLISH_FINALIZATION_START',
+        PUBLISH_FINALIZATION_METADATA_VALIDATION_START:
+            'PUBLISH_FINALIZATION_METADATA_VALIDATION_START',
+        PUBLISH_FINALIZATION_METADATA_VALIDATION_END:
+            'PUBLISH_FINALIZATION_METADATA_VALIDATION_END',
+        PUBLISH_FINALIZATION_STORE_ASSERTION_START: 'PUBLISH_FINALIZATION_STORE_ASSERTION_START',
+        PUBLISH_FINALIZATION_STORE_ASSERTION_END: 'PUBLISH_FINALIZATION_STORE_ASSERTION_END',
+        PUBLISH_FINALIZATION_END: 'PUBLISH_FINALIZATION_END',
     },
     UPDATE: {
         UPDATE_START: 'UPDATE_START',

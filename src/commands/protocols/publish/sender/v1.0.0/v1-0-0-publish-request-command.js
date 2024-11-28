@@ -30,10 +30,10 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command, responseData) {
-        const { blockchain, operationId } = command.data;
+        const { operationId } = command.data;
         await this.signatureStorageService.addSignatureToStorage(
-            blockchain,
             operationId,
+            responseData.identityId,
             responseData.signature,
         );
         return super.handleAck(command, responseData);
