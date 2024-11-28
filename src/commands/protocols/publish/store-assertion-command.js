@@ -43,7 +43,7 @@ class StoreAssertionCommand extends Command {
                 assertion,
             );
         } catch (e) {
-            await this.handleError(operationId, null, e.message, this.errorType, true);
+            await this.handleError(operationId, blockchain, e.message, this.errorType, true);
         }
 
         await this.operationIdService.updateOperationIdStatus(

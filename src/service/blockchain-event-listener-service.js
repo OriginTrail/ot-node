@@ -519,7 +519,7 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const eventData = JSON.parse(event.data);
 
-            const { assetContract, tokenId, state, operationId: publishOperationId } = eventData;
+            const { assetContract, tokenId, state, publishOperationId } = eventData;
             const blockchain = event.blockchainId;
 
             // eslint-disable-next-line no-await-in-loop

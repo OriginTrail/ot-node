@@ -21,7 +21,10 @@ class PendingStorageService {
         await this.fileService.writeContentsToFile(
             this.fileService.getPendingStorageCachePath(),
             operationId,
-            JSON.stringify(dataset),
+            JSON.stringify({
+                merkleRoot: datasetRoot,
+                assertion: dataset,
+            }),
         );
     }
 

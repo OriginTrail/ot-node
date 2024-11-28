@@ -32,7 +32,7 @@ import Web3ServiceValidator from './web3-service-validator.js';
 const require = createRequire(import.meta.url);
 
 const ABIs = {
-    ContentAsset: require('dkg-evm-module/abi/ContentAsset.json'),
+    ContentAsset: require('dkg-evm-module/abi/ContentAssetV2.json'),
     ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorageV2.json'),
     AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
