@@ -1,5 +1,4 @@
 import async from 'async';
-import { Mutex } from 'async-mutex';
 import Command from './command.js';
 import {
     PERMANENT_COMMANDS,
@@ -20,8 +19,6 @@ class CommandExecutor {
 
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
-        this.blockingCommands = new Set();
-        this.mutex = new Mutex();
 
         this.queue = async.queue((command, callback = () => {}) => {
             this._execute(command)
