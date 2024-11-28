@@ -519,7 +519,7 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const eventData = JSON.parse(event.data);
 
-            const { assetContract, tokenId, operationId } = eventData;
+            const { assetContract, tokenId, state, operationId: publishOperationId } = eventData;
             const blockchain = event.blockchainId;
 
             // eslint-disable-next-line no-await-in-loop
@@ -527,7 +527,7 @@ class BlockchainEventListenerService {
                 OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
             );
 
-            const datasetPath = this.fileService.getPendingStorageDocumentPath(operationId);
+            const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
 
             // eslint-disable-next-line no-await-in-loop
             const data = await this.fileService.readFile(datasetPath, true);
