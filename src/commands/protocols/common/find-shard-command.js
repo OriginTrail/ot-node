@@ -41,12 +41,10 @@ class FindShardCommand extends Command {
                 shardNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
         }
-        command.sequence.push('publishValidateAssetCommand');
-        if (nodePartOfShard) {
-            const localCommand = this.getLocalCommand();
-            command.sequence.push(localCommand);
-        }
-        command.sequence.push('networkPublishCommand');
+
+        const commandSequence = this.getOperationCommandSequence(nodePartOfShard);
+
+        command.sequence.push(...commandSequence);
 
         this.logger.debug(
             `Found ${
@@ -103,6 +101,10 @@ class FindShardCommand extends Command {
         );
 
         return nodesFound;
+    }
+
+    getOperationCommandSequence() {
+        throw Error('getOperationCommandSequence() is not defined');
     }
 
     /**

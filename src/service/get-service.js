@@ -102,6 +102,14 @@ class GetService extends OperationService {
             }
         }
     }
+
+    async getBatchSize() {
+        return 2;
+    }
+
+    async getMinAckResponses() {
+        return 1;
+    }
 }
 
 export default GetService;

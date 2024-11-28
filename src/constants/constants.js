@@ -643,7 +643,13 @@ export const HTTP_API_ROUTES = {
             options: {},
         },
     },
-    v1: {},
+    v1: {
+        get: {
+            method: 'post',
+            path: '/get',
+            options: { rateLimit: true },
+        },
+    },
 };
 
 /**
@@ -830,3 +836,7 @@ export const LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY = 1000;
 
 export const LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS = 5;
 export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
+
+export const TRIPLE_STORE_REPOSITORY = {
+    DKG: 'dkg',
+};

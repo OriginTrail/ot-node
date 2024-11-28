@@ -10,14 +10,6 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
     }
 
-    async getBatchSize() {
-        return 2;
-    }
-
-    async getMinAckResponses() {
-        return 1;
-    }
-
     /**
      * Builds default networkGetCommand
      * @param map

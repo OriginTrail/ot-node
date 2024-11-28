@@ -2,7 +2,6 @@ import {
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
-    DEFAULT_GET_STATE,
     ERROR_TYPE,
 } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
@@ -40,27 +39,21 @@ class GetController extends BaseController {
         );
 
         let blockchain;
-        let contract;
-        let tokenId;
         try {
             const { id, paranetUAL } = req.body;
 
             if (!this.ualService.isUAL(id)) {
                 throw Error('Requested id is not a UAL.');
             }
+            // const isValidUal = await this.validationService.validateUal(
+            //     blockchain,
+            //     contract,
+            //     tokenId,
+            // );
+            // if (!isValidUal) {
+            //     throw Error(`${id} UAL isn't valid.`);
+            // }
 
-            ({ blockchain, contract, tokenId } = this.ualService.resolveUAL(id));
-
-            const isValidUal = await this.validationService.validateUal(
-                blockchain,
-                contract,
-                tokenId,
-            );
-            if (!isValidUal) {
-                throw Error(`${id} UAL isn't valid.`);
-            }
-
-            const state = req.body.state ?? DEFAULT_GET_STATE;
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
@@ -72,11 +65,8 @@ class GetController extends BaseController {
                 sequence: commandSequence.slice(1),
                 delay: 0,
                 data: {
-                    blockchain,
-                    contract,
-                    tokenId,
+                    ual: id,
                     operationId,
-                    state,
                     hashFunctionId,
                     paranetUAL,
                 },

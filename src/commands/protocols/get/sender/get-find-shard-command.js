@@ -1,28 +1,28 @@
 import FindShardCommand from '../../common/find-shard-command.js';
 
-class PublishFindShardCommand extends FindShardCommand {
+class GetFindShardCommand extends FindShardCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.operationService = ctx.getService;
     }
 
     getOperationCommandSequence(nodePartOfShard) {
         const sequence = [];
-        sequence.push('publishValidateAssetCommand');
+        sequence.push('getValidateAssetCommand');
         if (nodePartOfShard) {
-            sequence.push('localStoreCommand');
+            sequence.push('localGetCommand');
         }
-        sequence.push('networkPublishCommand');
+        sequence.push('networkGetCommand');
     }
 
     /**
-     * Builds default publishFindShardCommand
+     * Builds default getFindShardCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'publishFindShardCommand',
+            name: 'getFindShardCommand',
             delay: 0,
             transactional: false,
         };
@@ -31,4 +31,4 @@ class PublishFindShardCommand extends FindShardCommand {
     }
 }
 
-export default PublishFindShardCommand;
+export default GetFindShardCommand;
