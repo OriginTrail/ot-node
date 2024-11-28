@@ -13,15 +13,13 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain } = command.data;
+        const { blockchain, operationService } = command.data;
 
         // const keywords = await this.getKeywords(command);
-        const batchSize = await this.getBatchSize(blockchain);
-        const minAckResponses = await this.getMinAckResponses(blockchain);
+        const batchSize = await operationService.getBatchSize(blockchain);
+        const minAckResponses = await operationService.getMinAckResponses(blockchain);
 
-        const commandSequence = [
-            `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
-        ];
+        const commandSequence = [`${operationService.getOperationName()}ScheduleMessagesCommand`];
 
         await this.commandExecutor.add({
             name: commandSequence[0],
@@ -32,7 +30,6 @@ class NetworkProtocolCommand extends Command {
                 batchSize,
                 minAckResponses,
                 errorType: this.errorType,
-                networkProtocols: this.operationService.getNetworkProtocols(),
             },
             transactional: false,
         });

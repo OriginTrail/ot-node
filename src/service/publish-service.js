@@ -93,6 +93,14 @@ class PublishService extends OperationService {
             }
         }
     }
+
+    async getBatchSize() {
+        throw Error('getBatchSize not implemented');
+    }
+
+    async getMinAckResponses() {
+        throw Error('getMinAckResponses not implemented');
+    }
 }
 
 export default PublishService;

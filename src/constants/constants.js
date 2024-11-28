@@ -379,6 +379,9 @@ export const ERROR_TYPE = {
         START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
         PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
+    FIND_SHARD: {
+        FIND_SHARD_ERROR: 'FindShardError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',

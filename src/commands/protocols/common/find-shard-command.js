@@ -1,5 +1,9 @@
 import Command from '../../command.js';
-import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    NETWORK_PROTOCOLS,
+    ERROR_TYPE,
+} from '../../../constants/constants.js';
 
 class FindShardCommand extends Command {
     constructor(ctx) {
@@ -14,28 +18,53 @@ class FindShardCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, errorType, networkProtocols, minAckResponses } =
-            command.data;
-
-        this.errorType = errorType;
-        this.logger.debug(`Searching for shard for operationId: ${operationId}`);
-
+        const { operationId, blockchain, datasetRoot, operationService } = command.data;
+        this.logger.debug(
+            `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
+        );
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
+        this.minAckResponses = operationService.getMinAckResponses(blockchain);
+        this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
 
-        // TODO: protocol selection
+        const networkProtocols = operationService.getNetworkProtocols();
+
         const shardNodes = [];
+        let nodePartOfShard = false;
+
         const foundNodes = await this.findShardNodes(blockchain);
+
+        const currentPeerId = this.networkModuleManager.getPeerId().toB58String();
+
         for (const node of foundNodes) {
-            if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
+            if (node.id === currentPeerId) {
+                nodePartOfShard = true;
+            } else {
                 shardNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
         }
+        // TODO: Schedule local command localStore or localGet
+        // TODO: Maybe move this in child class so it only implements localCommand
+        if (nodePartOfShard) {
+            switch (networkProtocols[0]) {
+                case NETWORK_PROTOCOLS.STORE:
+                    command.sequence.push('localStoreCommand');
+                    break;
 
-        this.logger.debug(`Found ${shardNodes.length} node(s) for operationId: ${operationId}`);
+                default:
+                    break;
+            }
+        }
+
+        this.logger.debug(
+            `Found ${
+                shardNodes.length + nodePartOfShard ? 1 : 0
+            } node(s) for operationId: ${operationId}`,
+        );
+        // TODO: Log local node
         this.logger.trace(
             `Found shard: ${JSON.stringify(
                 shardNodes.map((node) => node.id),
@@ -44,11 +73,11 @@ class FindShardCommand extends Command {
             )}`,
         );
 
-        if (shardNodes.length < minAckResponses) {
+        if (shardNodes.length + (nodePartOfShard ? 1 : 0) < this.minAckResponses) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Unable to find enough nodes for operationId: ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
+                `Unable to find enough nodes for operationId: ${operationId}. Minimum number of nodes required: ${this.minAckResponses}`,
                 this.errorType,
                 true,
             );
