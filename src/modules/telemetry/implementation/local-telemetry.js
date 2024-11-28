@@ -23,10 +23,10 @@ class TelemetryQuest {
             table.symbol('operationId', operationId || 'NULL');
             table.symbol('blockchainId', blockchainId || 'NULL');
             table.symbol('name', name || 'NULL');
-            table.timestampColumn('timestamp', timestamp || Date.now()); // Default to current timestamp in milliseconds
-            if (value1 !== null) table.string('value1', value1);
-            if (value2 !== null) table.string('value2', value2);
-            if (value3 !== null) table.string('value3', value3);
+            if (value1 !== null) table.symbol('value1', value1);
+            if (value2 !== null) table.symbol('value2', value2);
+            if (value3 !== null) table.symbol('value3', value3);
+            table.timestampColumn('timestamp', timestamp * 1000);
 
             await table.at(Date.now(), 'ms'); // Sends data with the current timestamp
             await sender.flush();
