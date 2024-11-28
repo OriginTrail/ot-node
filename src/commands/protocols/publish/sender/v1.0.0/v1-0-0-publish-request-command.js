@@ -14,7 +14,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         const { datasetRoot } = command.data;
 
         // TODO: Backwards compatibility, send blockchain without chainId
-        const blockchain = command.data.blockchain.split(':')[0];
+        const { blockchain } = command.data;
 
         const dataset = await this.pendingStorageService.getCachedDataset(blockchain, datasetRoot);
 
