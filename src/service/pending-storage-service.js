@@ -102,6 +102,11 @@ class PendingStorageService {
             const filesToDelete = [];
     
             const collectFiles = async (basePath) => {
+                if (!(await this.fileService.pathExists(basePath))) {
+                    this.logger.warn(`Storage path does not exist: ${basePath}`);
+                    return;
+                }
+                
                 const blockchainFolders = await this.fileService.readDirectory(basePath);
     
                 for (const blockchain of blockchainFolders) {
