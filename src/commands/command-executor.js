@@ -372,20 +372,19 @@ class CommandExecutor {
      * @private
      */
     async _insert(insertCommand, transaction = null) {
-        const { sequence, name, readyAt, delay, transactional, data, priority } = insertCommand;
+        const command = insertCommand;
+        if (!command.name) {
+            [command.name] = command.sequence;
+            command.sequence = command.sequence.slice(1);
+        }
 
-        const command = {
-            ...insertCommand,
-            name: name || sequence?.[0],
-            sequence: name ? sequence : sequence?.slice(1),
-            readyAt: readyAt ?? Date.now(),
-            delay: delay ?? 0,
-            transactional: transactional ?? 0,
-            priority: priority ?? DEFAULT_COMMAND_PRIORITY,
-            status: COMMAND_STATUS.PENDING,
-        };
+        command.readyAt = command.readyAt || Date.now();
+        command.delay = command.delay ?? 0;
+        command.transactional = command.transactional ?? 0;
+        command.priority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+        command.status = COMMAND_STATUS.PENDING;
 
-        if (!data) {
+        if (!command.data) {
             const commandInstance = this.commandResolver.resolve(command.name);
             if (commandInstance) {
                 command.data = commandInstance.pack(command.data);
@@ -393,6 +392,7 @@ class CommandExecutor {
         }
 
         const opts = transaction ? { transaction } : {};
+
         const model = await this.repositoryModuleManager.createCommand(command, opts);
 
         command.id = model.id;
