@@ -13,6 +13,7 @@ class PublishService extends OperationService {
     constructor(ctx) {
         super(ctx);
 
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocols = NETWORK_PROTOCOLS.STORE;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
@@ -24,11 +25,17 @@ class PublishService extends OperationService {
         this.operationMutex = new Mutex();
     }
 
-    async processResponse(command, responseStatus, responseData, errorMessage = null) {
+    async processResponse(
+        command,
+        responseStatus,
+        responseData,
+        errorMessage = null,
+        localStore = false,
+    ) {
         const {
             operationId,
             blockchain,
-            numberOfFoundNodes,
+            numberOfShardNodes,
             leftoverNodes,
             batchSize,
             minAckResponses,
@@ -42,17 +49,21 @@ class PublishService extends OperationService {
             datasetRoot,
         );
 
+        if (localStore) {
+            return;
+        }
+
         const { completedNumber, failedNumber } = datasetRootStatus[datasetRoot];
 
         const totalResponses = completedNumber + failedNumber;
-        const isAllNodesResponded = numberOfFoundNodes === totalResponses;
+        const isAllNodesResponded = numberOfShardNodes === totalResponses;
         const isBatchCompleted = totalResponses % batchSize === 0;
 
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response with status: ${responseStatus} for operationId: ${operationId}, dataset root: ${datasetRoot}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
-                numberOfFoundNodes,
+            } response with status: ${responseStatus} for operationId: ${operationId}, dataset root: ${datasetRoot}. Total number of nodes: ${numberOfShardNodes}, number of nodes in batch: ${Math.min(
+                numberOfShardNodes,
                 batchSize,
             )} number of leftover nodes: ${
                 leftoverNodes.length
@@ -92,6 +103,14 @@ class PublishService extends OperationService {
                 this.logResponsesSummary(completedNumber, failedNumber);
             }
         }
+    }
+
+    async getBatchSize(blockchainId) {
+        return this.blockchainModuleManager.getR2(blockchainId);
+    }
+
+    async getMinAckResponses(blockchainId) {
+        return this.blockchainModuleManager.getR1(blockchainId);
     }
 }
 

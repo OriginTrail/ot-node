@@ -1,4 +1,10 @@
-import { OPERATION_ID_STATUS, ERROR_TYPE, LOCAL_STORE_TYPES } from '../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    LOCAL_STORE_TYPES,
+    OPERATION_REQUEST_STATUS,
+    NETWORK_MESSAGE_TYPES,
+} from '../../constants/constants.js';
 import Command from '../command.js';
 
 class LocalStoreCommand extends Command {
@@ -8,6 +14,7 @@ class LocalStoreCommand extends Command {
         this.paranetService = ctx.paranetService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.operationIdService = ctx.operationIdService;
+        this.operationService = ctx.publishService;
         this.dataService = ctx.dataService;
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
@@ -24,6 +31,7 @@ class LocalStoreCommand extends Command {
             blockchain,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetId,
+            datasetRoot,
         } = command.data;
 
         try {
@@ -32,32 +40,27 @@ class LocalStoreCommand extends Command {
                 blockchain,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
-
-            const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+            const dataset = await this.operationIdService.getCachedOperationIdData(operationId);
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
-                const storePromises = [];
-                if (cachedData.public.dataset && cachedData.public.datasetRoot) {
-                    storePromises.push(
-                        this.pendingStorageService.cacheDataset(
-                            blockchain,
-                            cachedData.public.datasetRoot,
-                            cachedData.public.dataset,
-                            operationId,
-                        ),
-                    );
-                }
-                // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
-                //     storePromises.push(
-                //         this.pendingStorageService.cacheDataset(
-                //             blockchain,
-                //             datasetRoot,
-                //             dataset,
-                //             operationId,
-                //         ),
-                //     );
-                // }
-                await Promise.all(storePromises);
+                await this.pendingStorageService.cacheDataset(
+                    blockchain,
+                    datasetRoot,
+                    dataset,
+                    operationId,
+                );
+                await this.operationService.processResponse(
+                    command,
+                    OPERATION_REQUEST_STATUS.COMPLETED,
+                    {
+                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                        messageData: {
+                            signature: `signature-${Math.floor(Math.random() * 1000000) + 1}`,
+                        },
+                    },
+                    null,
+                    true,
+                );
             } else if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
                 const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
                     blockchain,
@@ -72,33 +75,6 @@ class LocalStoreCommand extends Command {
 
                 await this.tripleStoreModuleManager.initializeParanetRepository(paranetRepository);
                 await this.paranetService.initializeParanetRecord(blockchain, paranetId);
-
-                if (cachedData.public.dataset && cachedData.public.datasetRoot) {
-                    // await this.tripleStoreService.localStoreAsset(
-                    //     paranetRepository,
-                    //     cachedData.public.assertionId,
-                    //     cachedData.public.assertion,
-                    //     blockchain,
-                    //     contract,
-                    //     tokenId,
-                    //     keyword,
-                    //     LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
-                    //     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
-                    // );
-                }
-                if (cachedData.private?.assertion && cachedData.private?.assertionId) {
-                    // await this.tripleStoreService.localStoreAsset(
-                    //     paranetRepository,
-                    //     cachedData.private.assertionId,
-                    //     cachedData.private.assertion,
-                    //     blockchain,
-                    //     contract,
-                    //     tokenId,
-                    //     keyword,
-                    //     LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
-                    //     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
-                    // );
-                }
 
                 await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
                 // await this.repositoryModuleManager.createParanetSyncedAssetRecord(

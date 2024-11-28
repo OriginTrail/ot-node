@@ -50,7 +50,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid dataset root for asset ???. Received value , received value from request: ${cachedData.public.datasetRoot}`,
+                `Invalid dataset root for assertion. Received value received value from request: ${cachedData.public.datasetRoot}`,
                 this.errorType,
             );
             return Command.empty();

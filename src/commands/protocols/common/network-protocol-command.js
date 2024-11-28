@@ -16,11 +16,10 @@ class NetworkProtocolCommand extends Command {
         const { blockchain } = command.data;
 
         // const keywords = await this.getKeywords(command);
-        const batchSize = await this.getBatchSize(blockchain);
-        const minAckResponses = await this.getMinAckResponses(blockchain);
+        const batchSize = await this.operationService.getBatchSize(blockchain);
+        const minAckResponses = await this.operationService.getMinAckResponses(blockchain);
 
         const commandSequence = [
-            'findShardCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
@@ -33,7 +32,6 @@ class NetworkProtocolCommand extends Command {
                 batchSize,
                 minAckResponses,
                 errorType: this.errorType,
-                networkProtocols: this.operationService.getNetworkProtocols(),
             },
             transactional: false,
         });
