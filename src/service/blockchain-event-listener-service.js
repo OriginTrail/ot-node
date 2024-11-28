@@ -528,7 +528,7 @@ class BlockchainEventListenerService {
             );
 
             // eslint-disable-next-line no-await-in-loop
-            const triples = await this.pendingStorageService.getCachedDataset(blockchain, state);
+            const triples = await this.pendingStorageService.getCachedDataset(operationId);
 
             const knowledgeAssetsCount = this.dataService.countDistinctSubjects(triples);
             const knowledgeAssetsUALs = [];

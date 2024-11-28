@@ -11,12 +11,12 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { datasetRoot } = command.data;
+        const { datasetRoot, operationId } = command.data;
 
         // TODO: Backwards compatibility, send blockchain without chainId
         const { blockchain } = command.data;
 
-        const dataset = await this.pendingStorageService.getCachedDataset(blockchain, datasetRoot);
+        const dataset = await this.pendingStorageService.getCachedDataset(operationId);
 
         return {
             dataset,

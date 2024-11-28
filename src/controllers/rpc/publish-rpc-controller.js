@@ -22,10 +22,9 @@ class PublishController extends BaseController {
             });
 
             await this.pendingStorageService.cacheDataset(
-                message.data.blockchain,
-                message.data.datasetRoot,
-                message.data.dataset,
                 operationId,
+                message.data.datasetRoot,
+                message.data.dataset, 
             );
         } else {
             throw new Error('Unknown message type');

@@ -32,7 +32,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_REMOTE_START,
         );
 
-        const dataset = await this.pendingStorageService.getCachedDataset(blockchain, datasetRoot);
+        const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         const validationResult = await this.validateReceivedData(
             operationId,

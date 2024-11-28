@@ -12,8 +12,6 @@ class PendingStorageService {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
-
-        this.memoryCachedHandlersData = {};
     }
 
     async cacheDataset(operationId, datasetRoot, dataset) {
@@ -29,58 +27,24 @@ class PendingStorageService {
                 assertion: dataset,
             }),
         );
-
-        this.memoryCachedHandlersData[datasetRoot] = { data: dataset, timestamp: Date.now() };
     }
 
-    async getCachedDataset(blockchain, datasetRoot) {
+    async getCachedDataset(operationId) {
         this.logger.debug(
-            `Retrieving cached dataset for ${datasetRoot} from pending storage, blockchain: ${blockchain}`,
+            `Retrieving cached dataset for ${operationId} from pending storage`,
         );
 
-        if (this.memoryCachedHandlersData[datasetRoot]) {
-            this.logger.debug(`Dataset found in memory cache for ${datasetRoot}`);
-            return this.memoryCachedHandlersData[datasetRoot].data;
-        }
-
-        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
-            blockchain,
-            datasetRoot,
-        );
-
-        const filePath = path.join(pendingStorageFolderPath, datasetRoot);
+        const filePath = this.fileService.getPendingStorageCachePath();
 
         try {
             const fileContents = await this.fileService.readFile(filePath, true);
             return fileContents;
         } catch (error) {
             this.logger.error(
-                `Failed to retrieve or parse cached dataset for ${datasetRoot}: ${error.message}`,
+                `Failed to retrieve or parse cached dataset for ${operationId}: ${error.message}`,
             );
             throw error;
         }
-    }
-
-    async removeExpiredMemoryCache(expirationTimeMillis) {
-        this.logger.debug(
-            `Cleaning up expired entries from pending storage memory cache older than ${expirationTimeMillis} milliseconds.`,
-        );
-
-        const now = Date.now();
-        let removedCount = 0;
-
-        for (const [key, value] of Object.entries(this.memoryCachedHandlersData)) {
-            if (value.timestamp && now - value.timestamp > expirationTimeMillis) {
-                delete this.memoryCachedHandlersData[key];
-                removedCount += 1;
-            }
-        }
-
-        this.logger.debug(
-            `Removed ${removedCount} expired entries from pending storage memory cache.`,
-        );
-
-        return removedCount;
     }
 
     async removeExpiredFileCache(expirationTimeMillis, maxRemovalCount) {

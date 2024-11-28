@@ -62,7 +62,7 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             return Command.retry();
         }
 
-        const cachedData = await this.pendingStorageService.getCachedDataset(blockchain, datasetRoot);
+        const cachedData = await this.pendingStorageService.getCachedDataset(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(
             `Validating asset's public assertion with id: ${datasetRoot} ual: ${ual}`,

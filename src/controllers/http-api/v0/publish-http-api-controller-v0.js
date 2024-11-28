@@ -55,10 +55,9 @@ class PublishController extends BaseController {
 
         try {
             await this.pendingStorageService.cacheDataset(
-                blockchain,
-                datasetRoot,
-                dataset,
                 operationId,
+                datasetRoot,
+                dataset
             );
 
             const commandSequence = ['publishValidateAssetCommand'];

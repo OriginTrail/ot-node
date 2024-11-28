@@ -23,16 +23,6 @@ class PendingStorageCleanerCommand extends Command {
     async execute() {
         this.logger.debug('Starting command for removal of expired pending storage entries');
 
-        let removed = await this.pendingStorageService.removeExpiredMemoryCache(
-            PUBLISH_STORAGE_MEMORY_CLEANUP_COMMAND_CLEANUP_TIME_MILLS,
-        );
-        if (removed) {
-            this.logger.debug(
-                `Successfully removed ${
-                    removed / BYTES_IN_KILOBYTE
-                } Kbs expired cached pending storage entries from memory`,
-            );
-        }
         removed = await this.pendingStorageService.removeExpiredFileCache(
             PUBLISH_STORAGE_FILE_CLEANUP_COMMAND_CLEANUP_TIME_MILLS,
             PENDING_STORAGE_FILES_FOR_REMOVAL_MAX_NUMBER,

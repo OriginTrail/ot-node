@@ -41,7 +41,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
-        const cachedData = await this.pendingStorageService.getCachedDataset(blockchain, datasetRoot);
+        const cachedData = await this.pendingStorageService.getCachedDataset(operationId);
 
         const isValidAssertion = await this.validationService.validateDatasetRoot(
             cachedData,
