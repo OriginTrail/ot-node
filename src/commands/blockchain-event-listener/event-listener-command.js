@@ -3,6 +3,7 @@ import {
     CONTRACT_EVENT_FETCH_INTERVALS,
     NODE_ENVIRONMENTS,
     ERROR_TYPE,
+    COMMAND_PRIORITY,
 } from '../../constants/constants.js';
 
 class EventListenerCommand extends Command {
@@ -33,10 +34,15 @@ class EventListenerCommand extends Command {
                     blockchainId,
                 };
 
+                // fetching 2 times
+                // improve logic for processing
+
                 return this.commandExecutor.add({
                     name: 'blockchainEventListenerCommand',
                     data: commandData,
                     transactional: false,
+                    priority: COMMAND_PRIORITY.HIGHEST,
+                    isBlocking: true,
                 });
             }),
         );
@@ -71,6 +77,7 @@ class EventListenerCommand extends Command {
             data: {},
             transactional: false,
             period: this.calculateCommandPeriod(),
+            priority: COMMAND_PRIORITY.HIGHEST,
         };
         Object.assign(command, map);
         return command;
