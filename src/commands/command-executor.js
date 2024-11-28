@@ -8,6 +8,7 @@ import {
     DEFAULT_COMMAND_DELAY_IN_MILLS,
     COMMAND_QUEUE_PARALLELISM,
     DEFAULT_COMMAND_PRIORITY,
+    COMMAND_PRIORITY,
 } from '../constants/constants.js';
 
 /**
@@ -397,7 +398,7 @@ class CommandExecutor {
                 command.data = commandInstance.pack(command.data);
             }
         }
-        if (!command.priority) {
+        if (!command.priority && command.priority !== COMMAND_PRIORITY.HIGHEST) {
             command.priority = DEFAULT_COMMAND_PRIORITY;
         }
         command.status = COMMAND_STATUS.PENDING;
@@ -454,6 +455,11 @@ class CommandExecutor {
 
         const commands = [];
         for (const command of pendingCommands) {
+            if (command.name === 'blockchainEventListenerCommand') {
+                commands.push(command);
+                continue;
+            }
+
             if (!command?.parentId) {
                 continue;
             }
