@@ -1,9 +1,12 @@
 import BaseModuleManager from '../base-module-manager.js';
 import TelemetryQuest from './implementation/local-telemetry.js';
+
 class TelemetryModuleManager extends BaseModuleManager {
     constructor(ctx) {
         super(ctx);
         this.eventEmitter = ctx.eventEmitter;
+        this.telemetryQuest = new TelemetryQuest();
+        this.telemetryQuest.initialize(ctx.config.modules.telemetry, ctx.logger); 
     }
 
     getName() {
@@ -24,6 +27,7 @@ class TelemetryModuleManager extends BaseModuleManager {
             return this.getImplementation().module.sendTelemetryData(nodeData, events);
         }
     }
+
     async createEventRecord(
         operationId,
         blockchainId,
