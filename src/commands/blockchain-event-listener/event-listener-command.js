@@ -30,12 +30,7 @@ class EventListenerCommand extends Command {
 
         await Promise.all(
             this.blockchainModuleManager.getImplementationNames().map(async (blockchainId) => {
-                const commandData = {
-                    blockchainId,
-                };
-
-                // fetching 2 times
-                // improve logic for processing
+                const commandData = { blockchainId };
 
                 return this.commandExecutor.add({
                     name: 'blockchainEventListenerCommand',
