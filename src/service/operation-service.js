@@ -28,8 +28,8 @@ class OperationService {
     }
 
     async getResponsesStatuses(responseStatus, errorMessage, operationId, datasetRoot) {
-        const self = this;
         let responses = 0;
+        const self = this;
         await this.operationMutex.runExclusive(async () => {
             await self.repositoryModuleManager.createOperationResponseRecord(
                 responseStatus,
@@ -44,6 +44,7 @@ class OperationService {
             );
         });
 
+        // TODO: What happens if there are two parallel publishes with same datasetRoot ????
         const datasetRootStatuses = {};
         responses.forEach((response) => {
             if (!datasetRootStatuses[response.datasetRoot])
@@ -113,12 +114,12 @@ class OperationService {
         );
     }
 
-    async getBatchSize(blockchainId) {
-        return this.blockchainModuleManager.getR2(blockchainId);
+    async getBatchSize() {
+        throw Error('getBatchSize not implemented');
     }
 
-    async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
+    async getMinAckResponses() {
+        throw Error('getMinAckResponses not implemented');
     }
 }
 

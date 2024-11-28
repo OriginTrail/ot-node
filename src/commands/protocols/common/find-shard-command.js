@@ -1,9 +1,5 @@
 import Command from '../../command.js';
-import {
-    OPERATION_ID_STATUS,
-    NETWORK_PROTOCOLS,
-    ERROR_TYPE,
-} from '../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../constants/constants.js';
 
 class FindShardCommand extends Command {
     constructor(ctx) {
@@ -18,7 +14,8 @@ class FindShardCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, datasetRoot, operationService } = command.data;
+        const { operationId, blockchain, datasetRoot } = command.data;
+        this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
         this.logger.debug(
             `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
         );
@@ -27,18 +24,16 @@ class FindShardCommand extends Command {
             blockchain,
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
-        this.minAckResponses = operationService.getMinAckResponses(blockchain);
-        this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
 
-        const networkProtocols = operationService.getNetworkProtocols();
+        this.minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+
+        const networkProtocols = this.operationService.getNetworkProtocols();
 
         const shardNodes = [];
         let nodePartOfShard = false;
-
-        const foundNodes = await this.findShardNodes(blockchain);
-
         const currentPeerId = this.networkModuleManager.getPeerId().toB58String();
 
+        const foundNodes = await this.findShardNodes(blockchain);
         for (const node of foundNodes) {
             if (node.id === currentPeerId) {
                 nodePartOfShard = true;
@@ -46,18 +41,12 @@ class FindShardCommand extends Command {
                 shardNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
         }
-        // TODO: Schedule local command localStore or localGet
-        // TODO: Maybe move this in child class so it only implements localCommand
+        command.sequence.push('publishValidateAssetCommand');
         if (nodePartOfShard) {
-            switch (networkProtocols[0]) {
-                case NETWORK_PROTOCOLS.STORE:
-                    command.sequence.push('localStoreCommand');
-                    break;
-
-                default:
-                    break;
-            }
+            const localCommand = this.getLocalCommand();
+            command.sequence.push(localCommand);
         }
+        command.sequence.push('networkPublishCommand');
 
         this.logger.debug(
             `Found ${
@@ -94,7 +83,7 @@ class FindShardCommand extends Command {
             {
                 ...command.data,
                 leftoverNodes: shardNodes,
-                numberOfShardNodes: shardNodes.length,
+                numberOfShardNodes: shardNodes.length + nodePartOfShard ? 1 : 0,
             },
             command.sequence,
         );

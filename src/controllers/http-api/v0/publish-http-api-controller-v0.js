@@ -17,7 +17,6 @@ class PublishController extends BaseController {
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.publishService = ctx.publishService;
     }
 
     async handleRequest(req, res) {
@@ -62,11 +61,7 @@ class PublishController extends BaseController {
                 blockchain,
             });
 
-            const commandSequence = [
-                'findShardCommand',
-                'publishValidateAssetCommand',
-                'networkPublishCommand',
-            ];
+            const commandSequence = ['publishFindShardCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
@@ -80,7 +75,6 @@ class PublishController extends BaseController {
                     hashFunctionId,
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
-                    operationService: this.publishService,
                 },
                 transactional: false,
             });
