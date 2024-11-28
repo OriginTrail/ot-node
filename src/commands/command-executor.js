@@ -82,7 +82,7 @@ class CommandExecutor {
             commandId: command.id,
             commandName: command.name,
         };
-        if (command.data && command.data.operationId) {
+        if (command.data?.operationId !== undefined) {
             commandContext.operationId = command.data.operationId;
         }
         const loggerWithContext = this.logger.child(commandContext);
@@ -107,7 +107,7 @@ class CommandExecutor {
             });
             return;
         }
-        if (command.deadlineAt && now > command.deadlineAt) {
+        if (command.deadlineAt !== undefined && now > command.deadlineAt) {
             loggerWithContext.warn('Command is too late...');
             await this._update(command, {
                 status: COMMAND_STATUS.EXPIRED,
@@ -281,7 +281,7 @@ class CommandExecutor {
         let delay = addDelay ?? 0;
 
         if (delay > MAX_COMMAND_DELAY_IN_MILLS) {
-            if (command.readyAt == null) {
+            if (command.readyAt === undefined) {
                 command.readyAt = Date.now();
             }
             command.readyAt += delay;
@@ -315,7 +315,7 @@ class CommandExecutor {
      */
     async _handleRetry(retryCommand, handler) {
         const command = retryCommand;
-        if (command.retries > 1) {
+        if (command.retries !== undefined && command.retries > 1) {
             command.data = handler.pack(command.data);
             await this._update(command, {
                 status: COMMAND_STATUS.PENDING,
@@ -341,7 +341,7 @@ class CommandExecutor {
      * @private
      */
     async _handleError(command, handler, error) {
-        if (command.retries > 0) {
+        if (command.retries !== undefined && command.retries > 0) {
             await this._update(command, {
                 retries: command.retries - 1,
             });
@@ -372,36 +372,31 @@ class CommandExecutor {
      * @private
      */
     async _insert(insertCommand, transaction = null) {
-        const command = insertCommand;
-        if (!command.name) {
-            [command.name] = command.sequence;
-            command.sequence = command.sequence.slice(1);
-        }
-        if (!command.readyAt) {
-            command.readyAt = Date.now(); // take current time
-        }
-        if (command.delay == null) {
-            command.delay = 0;
-        }
-        if (!command.transactional) {
-            command.transactional = 0;
-        }
-        if (!command.data) {
+        const { sequence, name, readyAt, delay, transactional, data, priority } = insertCommand;
+
+        const command = {
+            ...insertCommand,
+            name: name || sequence?.[0],
+            sequence: name ? sequence : sequence?.slice(1),
+            readyAt: readyAt ?? Date.now(),
+            delay: delay ?? 0,
+            transactional: transactional ?? 0,
+            priority: priority ?? DEFAULT_COMMAND_PRIORITY,
+            status: COMMAND_STATUS.PENDING,
+        };
+
+        if (!data) {
             const commandInstance = this.commandResolver.resolve(command.name);
             if (commandInstance) {
                 command.data = commandInstance.pack(command.data);
             }
         }
-        if (!command.priority) {
-            command.priority = DEFAULT_COMMAND_PRIORITY;
-        }
-        command.status = COMMAND_STATUS.PENDING;
-        const opts = {};
-        if (transaction != null) {
-            opts.transaction = transaction;
-        }
+
+        const opts = transaction ? { transaction } : {};
         const model = await this.repositoryModuleManager.createCommand(command, opts);
+
         command.id = model.id;
+
         return command;
     }
 
