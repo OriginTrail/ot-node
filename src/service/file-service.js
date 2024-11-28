@@ -23,13 +23,13 @@ class FileService {
      * @param data
      * @returns {Promise}
      */
-    async writeContentsToFile(directory, filename, data, log = true) {
+    async writeContentsToFile(directory, filename, data, log = true, flag = 'w') {
         if (log) {
             this.logger.debug(`Saving file with name: ${filename} in the directory: ${directory}`);
         }
         await mkdir(directory, { recursive: true });
         const fullpath = path.join(directory, filename);
-        await writeFile(fullpath, data);
+        await writeFile(fullpath, data, { flag });
         return fullpath;
     }
 
@@ -162,80 +162,20 @@ class FileService {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
 
-    getPendingStorageCachePath(blockchain) {
-        return path.join(this.getDataFolderPath(), 'pending_storage_cache', blockchain);
+    getPendingStorageCachePath() {
+        return path.join(this.getDataFolderPath(), 'pending_storage_cache');
     }
 
-    getPendingStorageFolderPath(blockchain, datasetRoot) {
-        return path.join(
-            this.getPendingStorageCachePath(blockchain),
-            `${blockchain.toLowerCase()}-${datasetRoot}`,
-        );
+    getPendingStorageDocumentPath(operationId) {
+        return path.join(this.getPendingStorageCachePath(), operationId);
     }
 
-    getSignatureStorageCachePath(operationId) {
-        return path.join(this.getDataFolderPath(), 'signature_storage_cache', operationId);
+    getSignatureStorageCachePath() {
+        return path.join(this.getDataFolderPath(), 'signature_storage_cache');
     }
 
-    getSignatureStorageFolderPath(blockchain, operationId) {
-        return path.join(
-            this.getSignatureStorageCachePath(blockchain, operationId),
-            `${blockchain.toLowerCase()}:${operationId}`,
-        );
-    }
-
-    async getSignatureStorageFilePath(blockchain, operationId) {
-        const getSignatureStorageCachePath = this.getPendingStorageFolderPath(operationId);
-
-        return path.join(
-            getSignatureStorageCachePath,
-            `${blockchain.toLowerCase()}:${operationId}`,
-        );
-    }
-
-    async getPendingStorageLatestDocument(repository, blockchain, contract, tokenId) {
-        const pendingStorageFolder = this.getPendingStorageFolderPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        let latestFile;
-        let latestMtime = 0;
-        try {
-            const files = await readdir(pendingStorageFolder);
-
-            for (const file of files) {
-                const filePath = path.join(pendingStorageFolder, file);
-                // eslint-disable-next-line no-await-in-loop
-                const stats = await stat(filePath);
-
-                if (stats.mtimeMs > latestMtime) {
-                    latestFile = file;
-                    latestMtime = stats.mtimeMs;
-                }
-            }
-        } catch (error) {
-            if (error.code === 'ENOENT') {
-                this.logger.debug(`Folder not found at path: ${pendingStorageFolder}`);
-                return false;
-            }
-            throw error;
-        }
-
-        return latestFile ?? false;
-    }
-
-    async getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, assertionId) {
-        const pendingStorageFolder = this.getPendingStorageFolderPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return path.join(pendingStorageFolder, assertionId);
+    getSignatureStorageDocumentPath(operationId) {
+        return path.join(this.getSignatureStorageCachePath(), operationId);
     }
 
     getArchiveFolderPath(subFolder) {

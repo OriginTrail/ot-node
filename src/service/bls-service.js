@@ -28,9 +28,10 @@ class BLSService {
                     this.fileService.getBLSSecretKeyFolderPath(),
                     BLS_KEY_FILENAME,
                     this.config.blsSecretKey,
+                    false,
                 );
             } else {
-                this.config.blsPublicKey = await this.publicKeyFromSecret(this.config.blsSecretKey);
+                this.config.blsPublicKey = await this.publicKeyFromSecret();
             }
         }
 
@@ -69,12 +70,18 @@ class BLSService {
         return this.runBLSBinary(['generate-keys'], true);
     }
 
-    async publicKeyFromSecret(secret) {
-        return this.runBLSBinary(['public-key-from-secret', '--secret', secret]);
+    async publicKeyFromSecret() {
+        return this.runBLSBinary(['public-key-from-secret', '--secret', this.config.blsSecretKey]);
     }
 
-    async sign(secret, message) {
-        return this.runBLSBinary(['sign', '--secret', secret, '--message', message]);
+    async sign(message) {
+        return this.runBLSBinary([
+            'sign',
+            '--secret',
+            this.config.blsSecretKey,
+            '--message',
+            message,
+        ]);
     }
 }
 
