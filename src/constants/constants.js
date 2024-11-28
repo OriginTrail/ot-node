@@ -62,6 +62,10 @@ export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
 export const LIBP2P_KEY_FILENAME = 'privateKey';
 
+export const BLS_KEY_DIRECTORY = 'bls';
+
+export const BLS_KEY_FILENAME = 'secretKey';
+
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days

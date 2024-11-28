@@ -516,7 +516,7 @@ class BlockchainEventListenerService {
         for (const event of blockEvents) {
             const eventData = JSON.parse(event.data);
 
-            const { assetContract, tokenId, state } = eventData;
+            const { assetContract, tokenId, operationId } = eventData;
             const blockchain = event.blockchainId;
 
             const knowledgeCollectionUAL = this.ualService.deriveUAL(
@@ -525,8 +525,7 @@ class BlockchainEventListenerService {
                 tokenId,
             );
 
-            const datasetsFolder = this.fileService.getPendingStorageFolderPath(blockchain, state);
-            const datasetPath = `${datasetsFolder}/${state}`;
+            const datasetPath = this.fileService.getPendingStorageDocumentPath(operationId);
 
             // eslint-disable-next-line no-await-in-loop
             const triples = await this.fileService.readFile(datasetPath, true);
