@@ -108,6 +108,32 @@
                     }
                 }
             }
+        },
+        "blockchainEvents": {
+            "enabled": true,
+            "implementation": {
+                "ot-ethers": {
+                    "enabled": true,
+                    "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
+                    "config": {
+                        "blockchains": ["hardhat1:31337", "hardhat2:31337"],
+                        "operationalWallets": {
+                            "hardhat1:31337": [
+                                {
+                                    "evmAddress": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                                    "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e"
+                                }
+                            ],
+                            "hardhat2:31337": [
+                                {
+                                    "evmAddress": "0xd6879C0A03aDD8cFc43825A42a3F3CF44DB7D2b9",
+                                    "privateKey": "0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "auth": {

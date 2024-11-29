@@ -1584,18 +1584,6 @@ class Web3Service {
             CONTRACTS.PARANETS_REGISTRY_CONTRACT,
         );
     }
-
-    getContract(contractName) {
-        const finalContractName = contractName.endsWith('Contract')
-            ? contractName
-            : `${contractName}Contract`;
-
-        const contract = this[finalContractName];
-        if (contract === undefined) {
-            this.logger.error(`Could not fetch the contract ${finalContractName}.`);
-        }
-        return contract;
-    }
 }
 
 export default Web3Service;

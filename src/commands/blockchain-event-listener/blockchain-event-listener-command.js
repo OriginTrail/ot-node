@@ -151,12 +151,9 @@ class BlockchainEventListenerCommand extends Command {
             contractName,
         );
 
-        const contract = this.blockchainModuleManager.getContract(blockchain, contractName);
-
         const result = await this.blockchainEventsService.getPastEvents(
             blockchain,
             contractName,
-            contract,
             eventsToFilter,
             lastCheckedBlockObject?.lastCheckedBlock ?? 0,
             currentBlock,
