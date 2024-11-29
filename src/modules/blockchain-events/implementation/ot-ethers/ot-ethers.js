@@ -199,7 +199,7 @@ class OtEthers extends BlockchainEventsService {
         }
 
         const latestBlock = await this.getBlock(blockchain);
-        const olderBlock = await this.getBlock(latestBlock.number - blockRange);
+        const olderBlock = await this.getBlock(blockchain, latestBlock.number - blockRange);
 
         const timeDiffMillis = (latestBlock.timestamp - olderBlock.timestamp) * 1000;
         return timeDiffMillis / blockRange;
