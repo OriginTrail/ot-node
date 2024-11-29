@@ -84,7 +84,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //     }
         // }
 
-        const assertion = this.tripleStoreService.getAssertion(ual);
+        const assertion = await this.tripleStoreService.getAssertion(ual);
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,

@@ -644,11 +644,11 @@ export const HTTP_API_ROUTES = {
         },
     },
     v1: {
-        get: {
-            method: 'post',
-            path: '/get',
-            options: { rateLimit: true },
-        },
+        // get: {
+        //     method: 'post',
+        //     path: '/get',
+        //     options: { rateLimit: true },
+        // },
     },
 };
 

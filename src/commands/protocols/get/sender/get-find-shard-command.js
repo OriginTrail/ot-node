@@ -8,11 +8,12 @@ class GetFindShardCommand extends FindShardCommand {
 
     getOperationCommandSequence(nodePartOfShard) {
         const sequence = [];
-        sequence.push('getValidateAssetCommand');
         if (nodePartOfShard) {
             sequence.push('localGetCommand');
         }
         sequence.push('networkGetCommand');
+
+        return sequence;
     }
 
     /**

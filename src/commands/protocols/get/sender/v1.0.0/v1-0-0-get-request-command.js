@@ -31,24 +31,12 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const {
-            blockchain,
-            contract,
-            tokenId,
-            assertionId,
-            state,
-            hashFunctionId,
-            paranetUAL,
-            paranetId,
-        } = command.data;
+        const { blockchain, ual, hashFunctionId, paranetUAL, paranetId } = command.data;
         const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 2;
 
         return {
             blockchain,
-            contract,
-            tokenId,
-            assertionId,
-            state,
+            ual,
             hashFunctionId,
             proximityScoreFunctionsPairId,
             paranetUAL,

@@ -83,7 +83,7 @@ class HttpApiRouter {
         }
 
         this.httpClientModuleManager.use('/latest', this.routers.latest);
-        this.httpClientModuleManager.use('/', this.routers.v1);
+        this.httpClientModuleManager.use('/', this.routers.v0);
     }
 
     initializeAfterMiddlewares() {

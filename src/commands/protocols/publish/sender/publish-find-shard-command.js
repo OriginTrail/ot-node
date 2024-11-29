@@ -13,6 +13,8 @@ class PublishFindShardCommand extends FindShardCommand {
             sequence.push('localStoreCommand');
         }
         sequence.push('networkPublishCommand');
+
+        return sequence;
     }
 
     /**

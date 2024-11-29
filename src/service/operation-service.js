@@ -27,7 +27,7 @@ class OperationService {
         );
     }
 
-    async getResponsesStatuses(responseStatus, errorMessage, operationId, datasetRoot) {
+    async getResponsesStatuses(responseStatus, errorMessage, operationId) {
         let responses = 0;
         const self = this;
         await this.operationMutex.runExclusive(async () => {
@@ -35,7 +35,6 @@ class OperationService {
                 responseStatus,
                 this.operationName,
                 operationId,
-                datasetRoot,
                 errorMessage,
             );
             responses = await self.repositoryModuleManager.getOperationResponsesStatuses(
@@ -44,20 +43,19 @@ class OperationService {
             );
         });
 
-        // TODO: What happens if there are two parallel publishes with same datasetRoot ????
-        const datasetRootStatuses = {};
-        responses.forEach((response) => {
-            if (!datasetRootStatuses[response.datasetRoot])
-                datasetRootStatuses[response.datasetRoot] = { failedNumber: 0, completedNumber: 0 };
+        const operationIdStatuses = {};
+        for (const response of responses) {
+            if (!operationIdStatuses[operationId])
+                operationIdStatuses[operationId] = { failedNumber: 0, completedNumber: 0 };
 
             if (response.status === OPERATION_REQUEST_STATUS.FAILED) {
-                datasetRootStatuses[response.datasetRoot].failedNumber += 1;
+                operationIdStatuses[operationId].failedNumber += 1;
             } else {
-                datasetRootStatuses[response.datasetRoot].completedNumber += 1;
+                operationIdStatuses[operationId].completedNumber += 1;
             }
-        });
+        }
 
-        return datasetRootStatuses;
+        return operationIdStatuses;
     }
 
     async markOperationAsCompleted(operationId, blockchain, responseData, endStatuses) {

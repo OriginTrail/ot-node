@@ -29,28 +29,26 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    async sendMessage(protocol, remotePeerId, messageType, operationId, uuid, message, timeout) {
+    async sendMessage(protocol, remotePeerId, messageType, operationId, message, timeout) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessage(
                 protocol,
                 remotePeerId,
                 messageType,
                 operationId,
-                uuid,
                 message,
                 timeout,
             );
         }
     }
 
-    async sendMessageResponse(protocol, remotePeerId, messageType, operationId, keyword, message) {
+    async sendMessageResponse(protocol, remotePeerId, messageType, operationId, message) {
         if (this.initialized) {
             return this.getImplementation().module.sendMessageResponse(
                 protocol,
                 remotePeerId,
                 messageType,
                 operationId,
-                keyword,
                 message,
             );
         }
@@ -92,9 +90,9 @@ class NetworkModuleManager extends BaseModuleManager {
         }
     }
 
-    removeCachedSession(operationId, uuid, remotePeerId) {
+    removeCachedSession(operationId, remotePeerId) {
         if (this.initialized) {
-            this.getImplementation().module.removeCachedSession(operationId, uuid, remotePeerId);
+            this.getImplementation().module.removeCachedSession(operationId, remotePeerId);
         }
     }
 }

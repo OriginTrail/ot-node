@@ -15,7 +15,6 @@ class NetworkProtocolCommand extends Command {
     async execute(command) {
         const { blockchain } = command.data;
 
-        // const keywords = await this.getKeywords(command);
         const batchSize = await this.operationService.getBatchSize(blockchain);
         const minAckResponses = await this.operationService.getMinAckResponses(blockchain);
 
