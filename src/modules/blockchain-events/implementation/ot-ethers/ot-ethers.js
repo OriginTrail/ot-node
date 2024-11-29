@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import ethers from 'ethers';
-import OtBlockchainEvents from '../blockchain-events-service.js';
+import BlockchainEventsService from '../blockchain-events-service.js';
 
 import {
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
@@ -13,7 +13,7 @@ import {
     BLOCK_TIME_MILLIS,
 } from '../../../../constants/constants.js';
 
-class OtEthers extends OtBlockchainEvents {
+class OtEthers extends BlockchainEventsService {
     async initialize(config, logger) {
         await super.initialize(config, logger);
         await this.initializeRpcProviders();
