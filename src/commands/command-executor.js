@@ -7,6 +7,7 @@ import {
     COMMAND_STATUS,
     DEFAULT_COMMAND_DELAY_IN_MILLS,
     COMMAND_QUEUE_PARALLELISM,
+    DEFAULT_COMMAND_PRIORITY,
 } from '../constants/constants.js';
 
 /**
@@ -20,7 +21,7 @@ class CommandExecutor {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
 
-        this.queue = async.queue((command, callback = () => {}) => {
+        this.queue = async.priorityQueue((command, callback = () => {}) => {
             this._execute(command)
                 .then((result) => {
                     callback(result);
@@ -81,7 +82,7 @@ class CommandExecutor {
             commandId: command.id,
             commandName: command.name,
         };
-        if (command.data && command.data.operationId) {
+        if (command.data?.operationId !== undefined) {
             commandContext.operationId = command.data.operationId;
         }
         const loggerWithContext = this.logger.child(commandContext);
@@ -106,7 +107,7 @@ class CommandExecutor {
             });
             return;
         }
-        if (command.deadlineAt && now > command.deadlineAt) {
+        if (command.deadlineAt !== undefined && now > command.deadlineAt) {
             loggerWithContext.warn('Command is too late...');
             await this._update(command, {
                 status: COMMAND_STATUS.EXPIRED,
@@ -280,7 +281,7 @@ class CommandExecutor {
         let delay = addDelay ?? 0;
 
         if (delay > MAX_COMMAND_DELAY_IN_MILLS) {
-            if (command.readyAt == null) {
+            if (command.readyAt === undefined) {
                 command.readyAt = Date.now();
             }
             command.readyAt += delay;
@@ -290,16 +291,19 @@ class CommandExecutor {
         if (insert) {
             command = await this._insert(command);
         }
+
+        const commandPriority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+
         if (delay) {
             setTimeout(
                 (timeoutCommand) => {
-                    this.queue.push(timeoutCommand);
+                    this.queue.push(timeoutCommand, commandPriority);
                 },
                 delay,
                 command,
             );
         } else {
-            this.queue.push(command);
+            this.queue.push(command, commandPriority);
         }
     }
 
@@ -311,7 +315,7 @@ class CommandExecutor {
      */
     async _handleRetry(retryCommand, handler) {
         const command = retryCommand;
-        if (command.retries > 1) {
+        if (command.retries !== undefined && command.retries > 1) {
             command.data = handler.pack(command.data);
             await this._update(command, {
                 status: COMMAND_STATUS.PENDING,
@@ -337,7 +341,7 @@ class CommandExecutor {
      * @private
      */
     async _handleError(command, handler, error) {
-        if (command.retries > 0) {
+        if (command.retries !== undefined && command.retries > 0) {
             await this._update(command, {
                 retries: command.retries - 1,
             });
@@ -373,28 +377,26 @@ class CommandExecutor {
             [command.name] = command.sequence;
             command.sequence = command.sequence.slice(1);
         }
-        if (!command.readyAt) {
-            command.readyAt = Date.now(); // take current time
-        }
-        if (command.delay == null) {
-            command.delay = 0;
-        }
-        if (!command.transactional) {
-            command.transactional = 0;
-        }
+
+        command.readyAt = command.readyAt || Date.now();
+        command.delay = command.delay ?? 0;
+        command.transactional = command.transactional ?? 0;
+        command.priority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+        command.status = COMMAND_STATUS.PENDING;
+
         if (!command.data) {
             const commandInstance = this.commandResolver.resolve(command.name);
             if (commandInstance) {
                 command.data = commandInstance.pack(command.data);
             }
         }
-        command.status = COMMAND_STATUS.PENDING;
-        const opts = {};
-        if (transaction != null) {
-            opts.transaction = transaction;
-        }
+
+        const opts = transaction ? { transaction } : {};
+
         const model = await this.repositoryModuleManager.createCommand(command, opts);
+
         command.id = model.id;
+
         return command;
     }
 
@@ -462,6 +464,7 @@ class CommandExecutor {
                     id: commandModel.id,
                     name: commandModel.name,
                     data: commandModel.data,
+                    priority: commandModel.priority ?? DEFAULT_COMMAND_PRIORITY,
                     readyAt: commandModel.readyAt,
                     delay: commandModel.delay,
                     startedAt: commandModel.startedAt,

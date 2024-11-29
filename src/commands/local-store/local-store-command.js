@@ -43,24 +43,26 @@ class LocalStoreCommand extends Command {
             const dataset = await this.operationIdService.getCachedOperationIdData(operationId);
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
-                await this.pendingStorageService.cacheDataset(
-                    blockchain,
-                    datasetRoot,
-                    dataset,
-                    operationId,
-                );
-                await this.operationService.processResponse(
-                    command,
-                    OPERATION_REQUEST_STATUS.COMPLETED,
-                    {
-                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                        messageData: {
-                            signature: `signature-${Math.floor(Math.random() * 1000000) + 1}`,
-                        },
-                    },
-                    null,
-                    true,
-                );
+                const storePromises = [];
+                if (cachedData.public.dataset && cachedData.public.datasetRoot) {
+                    storePromises.push(
+                        this.pendingStorageService.cacheDataset(
+                            operationId,
+                            cachedData.public.datasetRoot,
+                            cachedData.public.dataset,
+                        ),
+                    );
+                }
+                // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
+                //     storePromises.push(
+                //         this.pendingStorageService.cacheDataset(
+                //             operationId,
+                //             datasetRoot,
+                //             dataset,
+                //         ),
+                //     );
+                // }
+                await Promise.all(storePromises);
             } else if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
                 const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
                     blockchain,

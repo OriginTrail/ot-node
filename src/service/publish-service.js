@@ -23,6 +23,7 @@ class PublishService extends OperationService {
             OPERATION_ID_STATUS.COMPLETED,
         ];
         this.operationMutex = new Mutex();
+        this.signatureStorageService = ctx.signatureStorageService;
     }
 
     async processResponse(
@@ -79,10 +80,13 @@ class PublishService extends OperationService {
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
             completedNumber === minAckResponses
         ) {
+            const signatures = await this.signatureStorageService.getSignaturesFromStorage(
+                operationId,
+            );
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                null,
+                signatures,
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
