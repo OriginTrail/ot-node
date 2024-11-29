@@ -409,6 +409,7 @@ class CommandExecutor {
         command.delay = command.delay ?? 0;
         command.transactional = command.transactional ?? 0;
         command.priority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+        command.isBlocking = command.isBlocking ?? false;
         command.status = COMMAND_STATUS.PENDING;
 
         if (!command.data) {
@@ -471,7 +472,8 @@ class CommandExecutor {
 
         const commands = [];
         for (const command of pendingCommands) {
-            if (command.name === 'blockchainEventListenerCommand') {
+            if (command?.isBlocking === true && command?.parentId === null) {
+                this.logger.trace(`Commands: ${command.name} will replay`);
                 commands.push(command);
                 continue;
             }
@@ -497,6 +499,7 @@ class CommandExecutor {
                     name: commandModel.name,
                     data: commandModel.data,
                     priority: commandModel.priority ?? DEFAULT_COMMAND_PRIORITY,
+                    isBlocking: commandModel.isBlocking ?? false,
                     readyAt: commandModel.readyAt,
                     delay: commandModel.delay,
                     startedAt: commandModel.startedAt,
