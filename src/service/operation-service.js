@@ -69,7 +69,7 @@ class OperationService {
         );
 
         if (responseData != null) {
-            await this.operationIdService.cacheOperationIdData(operationId, responseData);
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, responseData);
         }
 
         for (const status of endStatuses) {

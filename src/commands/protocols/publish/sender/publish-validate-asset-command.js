@@ -32,7 +32,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetUAL,
-            datasetRoot
+            datasetRoot,
         } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
@@ -41,8 +41,9 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
-        const cachedData = await this.pendingStorageService.getCachedDataset(operationId);
-
+        const { dataset: cachedData } = await this.operationIdService.getCachedOperationIdData(
+            operationId,
+        );
         const isValidAssertion = await this.validationService.validateDatasetRoot(
             cachedData,
             datasetRoot,

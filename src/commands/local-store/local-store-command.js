@@ -33,7 +33,9 @@ class LocalStoreCommand extends Command {
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
 
-            const cachedData = await this.pendingStorageService.getCachedDataset(operationId);
+            const { dataset: cachedData } = await this.operationIdService.getCachedOperationIdData(
+                operationId,
+            );
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];

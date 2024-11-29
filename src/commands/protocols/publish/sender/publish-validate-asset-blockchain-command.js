@@ -62,11 +62,11 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             return Command.retry();
         }
 
-        const cachedData = await this.pendingStorageService.getCachedDataset(operationId);
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        this.logger.info(
-            `Validating asset's public assertion with id: ${datasetRoot} ual: ${ual}`,
+        const { dataset: cachedData } = await this.operationIdService.getCachedOperationIdData(
+            operationId,
         );
+        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        this.logger.info(`Validating asset's public assertion with id: ${datasetRoot} ual: ${ual}`);
 
         if (blockchainAssertionId !== datasetRoot) {
             await this.handleError(
@@ -79,11 +79,7 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             return Command.empty();
         }
 
-        await this.validationService.validateAssertion(
-            datasetRoot,
-            blockchain,
-            cachedData,
-        );
+        await this.validationService.validateAssertion(datasetRoot, blockchain, cachedData);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

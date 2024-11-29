@@ -6,7 +6,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         super(ctx);
         this.operationService = ctx.publishService;
         this.signatureStorageService = ctx.signatureStorageService;
-        this.pendingStorageService = ctx.pendingStorageService;
+        this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
 
