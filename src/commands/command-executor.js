@@ -74,6 +74,28 @@ class CommandExecutor {
     async _execute(executeCommand) {
         const command = executeCommand;
         const now = Date.now();
+
+        if (command.isBlocking) {
+            // Check the db to see if the previous instance of this command is still running
+            const blockingCommands = await this.repositoryModuleManager.getCommandWithNameAndStatus(
+                command.name,
+                [COMMAND_STATUS.STARTED],
+            );
+            if (blockingCommands.length !== 0) {
+                for (const blockingCommand of blockingCommands) {
+                    // Sometimes we run 2 commands with the same name but, e.g. for different blockchains. We can differentiate them by their data values
+                    if (JSON.stringify(blockingCommand.data) === JSON.stringify(command.data)) {
+                        // eslint-disable-next-line no-await-in-loop
+                        await this.repositoryModuleManager.removeCommands([command.id]);
+                        this.logger.info(
+                            `Skipping command: ${command.name}, because the previous iteration of this command has not yet finished execution`,
+                        );
+                        return;
+                    }
+                }
+            }
+        }
+
         await this._update(command, {
             startedAt: now,
         });
@@ -449,6 +471,11 @@ class CommandExecutor {
 
         const commands = [];
         for (const command of pendingCommands) {
+            if (command.name === 'blockchainEventListenerCommand') {
+                commands.push(command);
+                continue;
+            }
+
             if (!command?.parentId) {
                 continue;
             }

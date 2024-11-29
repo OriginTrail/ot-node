@@ -56,6 +56,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('command').getCommandWithId(id);
     }
 
+    async getCommandWithNameAndStatus(name, statusArray) {
+        return this.getRepository('command').getCommandWithNameAndStatus(name, statusArray);
+    }
+
     async removeCommands(ids) {
         return this.getRepository('command').removeCommands(ids);
     }

@@ -42,6 +42,17 @@ class CommandRepository {
         });
     }
 
+    async getCommandWithNameAndStatus(name, statusArray) {
+        return this.model.findAll({
+            where: {
+                name: { [Sequelize.Op.eq]: name },
+                status: {
+                    [Sequelize.Op.in]: statusArray,
+                },
+            },
+        });
+    }
+
     async removeCommands(ids) {
         await this.model.destroy({
             where: {
