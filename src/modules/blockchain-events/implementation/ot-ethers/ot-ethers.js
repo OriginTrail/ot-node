@@ -1,91 +1,88 @@
 /* eslint-disable no-await-in-loop */
 import ethers from 'ethers';
-import OtBlockchainEvents from '../ot-blockchain-events.js';
+import OtBlockchainEvents from '../blockchain-events-service.js';
 
 import {
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
-    BLOCK_TIME_MILLIS,
     WS_RPC_PROVIDER_PRIORITY,
     HTTP_RPC_PROVIDER_PRIORITY,
     FALLBACK_PROVIDER_QUORUM,
     RPC_PROVIDER_STALL_TIMEOUT,
     MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
-    BLOCKCHAIN_ID_TO_NAME,
+    NODE_ENVIRONMENTS,
+    BLOCK_TIME_MILLIS,
 } from '../../../../constants/constants.js';
 
 class OtEthers extends OtBlockchainEvents {
     async initialize(config, logger) {
         await super.initialize(config, logger);
-        this.startBlock = null;
+        await this.initializeRpcProviders();
     }
 
-    async initializeImplementation(blockchainConfig) {
-        await this.initializeRpcProvider(blockchainConfig);
+    async initializeRpcProviders() {
+        this.providers = {};
+        for (const blockchain of Object.keys(this.config.rpcEndpoints)) {
+            const providers = [];
+            for (const rpcEndpoint of this.config.rpcEndpoints[blockchain]) {
+                const isWebSocket = rpcEndpoint.startsWith('ws');
+                const Provider = isWebSocket
+                    ? ethers.providers.WebSocketProvider
+                    : ethers.providers.JsonRpcProvider;
+                const priority = isWebSocket
+                    ? WS_RPC_PROVIDER_PRIORITY
+                    : HTTP_RPC_PROVIDER_PRIORITY;
 
-        if (this.startBlock === null) {
-            this.startBlock = await this.getBlockNumber();
-        }
-    }
+                try {
+                    const provider = new Provider(rpcEndpoint);
+                    // eslint-disable-next-line no-await-in-loop
+                    await provider.getNetwork();
 
-    async initializeRpcProvider(blockchainConfig) {
-        const providers = [];
-        for (const rpcEndpoint of blockchainConfig.rpcEndpoints) {
-            const isWebSocket = rpcEndpoint.startsWith('ws');
-            const Provider = isWebSocket
-                ? ethers.providers.WebSocketProvider
-                : ethers.providers.JsonRpcProvider;
-            const priority = isWebSocket ? WS_RPC_PROVIDER_PRIORITY : HTTP_RPC_PROVIDER_PRIORITY;
+                    let isArchiveNode = false;
+                    try {
+                        const block = await provider.getBlock(1);
+
+                        if (block) {
+                            isArchiveNode = true;
+                        }
+                    } catch (error) {
+                        /* empty */
+                    }
+
+                    if (isArchiveNode) {
+                        providers.push({
+                            provider,
+                            priority,
+                            weight: 1,
+                            stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
+                        });
+                    } else {
+                        this.logger.warn(`${rpcEndpoint} RPC is not an Archive Node, skipping...`);
+                        continue;
+                    }
+
+                    this.logger.debug(
+                        `Connected to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                    );
+                } catch (e) {
+                    this.logger.warn(
+                        `Unable to connect to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                    );
+                }
+            }
 
             try {
-                const provider = new Provider(rpcEndpoint);
-                // eslint-disable-next-line no-await-in-loop
-                await provider.getNetwork();
-
-                let isArchiveNode = false;
-                try {
-                    const block = await provider.getBlock(1);
-
-                    if (block) {
-                        isArchiveNode = true;
-                    }
-                } catch (error) {
-                    /* empty */
-                }
-
-                if (isArchiveNode) {
-                    providers.push({
-                        provider,
-                        priority,
-                        weight: 1,
-                        stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
-                    });
-                } else {
-                    this.logger.warn(`${rpcEndpoint} RPC is not an Archive Node, skipping...`);
-                    continue;
-                }
-
-                this.logger.debug(
-                    `Connected to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                this.providers[blockchain] = new ethers.providers.FallbackProvider(
+                    providers,
+                    FALLBACK_PROVIDER_QUORUM,
                 );
+
+                // eslint-disable-next-line no-await-in-loop
+                await this.providers[blockchain].getNetwork();
             } catch (e) {
-                this.logger.warn(
-                    `Unable to connect to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                throw new Error(
+                    `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
                 );
             }
-        }
-
-        try {
-            this.provider = new ethers.providers.FallbackProvider(
-                providers,
-                FALLBACK_PROVIDER_QUORUM,
-            );
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.providerReady();
-        } catch (e) {
-            throw new Error(
-                `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
-            );
         }
     }
 
@@ -96,22 +93,16 @@ class OtEthers extends OtBlockchainEvents {
         return url;
     }
 
-    async providerReady() {
-        return this.provider.getNetwork();
+    async getBlock(blockchain, tag = 'latest') {
+        return this.providers[blockchain].getBlock(tag);
     }
 
-    async getBlockNumber() {
-        const latestBlock = await this.provider.getBlock('latest');
-        return latestBlock.number;
-    }
-
-    async getAllPastEvents(
-        blockchainId,
+    async getPastEvents(
+        blockchain,
         contractName,
         contract,
         eventsToFilter,
         lastCheckedBlock,
-        lastCheckedTimestamp,
         currentBlock,
     ) {
         if (!contract) {
@@ -128,10 +119,10 @@ class OtEthers extends OtBlockchainEvents {
         let fromBlock;
         let eventsMissed = false;
         if (
-            this.startBlock - lastCheckedBlock >
-            this.getMaxNumberOfHistoricalBlocksForSync(blockchainId)
+            currentBlock - lastCheckedBlock >
+            (await this._getMaxNumberOfHistoricalBlocksForSync(blockchain))
         ) {
-            fromBlock = this.startBlock;
+            fromBlock = currentBlock;
             eventsMissed = true;
         } else {
             fromBlock = lastCheckedBlock + 1;
@@ -154,7 +145,7 @@ class OtEthers extends OtBlockchainEvents {
                     fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
                     currentBlock,
                 );
-                const newEvents = await this.processBlockRange(
+                const newEvents = await this._processBlockRange(
                     fromBlock,
                     toBlock,
                     contract,
@@ -165,7 +156,7 @@ class OtEthers extends OtBlockchainEvents {
             }
         } catch (error) {
             this.logger.warn(
-                `Unable to process block range from: ${fromBlock} to: ${toBlock} for contract ${contractName} on blockchain: ${blockchainId}. Error: ${error.message}`,
+                `Unable to process block range from: ${fromBlock} to: ${toBlock} for contract ${contractName} on blockchain: ${blockchain}. Error: ${error.message}`,
             );
         }
 
@@ -182,34 +173,39 @@ class OtEthers extends OtBlockchainEvents {
                     ),
                 ),
                 block: event.blockNumber,
-                blockchainId,
+                blockchain,
             })),
             lastCheckedBlock: toBlock,
             eventsMissed,
         };
     }
 
-    getMaxNumberOfHistoricalBlocksForSync(blockchainId) {
+    async _getMaxNumberOfHistoricalBlocksForSync(blockchain) {
         if (!this.maxNumberOfHistoricalBlocksForSync) {
+            const blockTimeMillis = await this._getBlockTimeMillis(blockchain);
+
             this.maxNumberOfHistoricalBlocksForSync = Math.round(
-                MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS /
-                    this.getBlockTimeMillis(blockchainId),
+                MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / blockTimeMillis,
             );
         }
         return this.maxNumberOfHistoricalBlocksForSync;
     }
 
-    getBlockTimeMillis(blockchainId) {
-        const blockchainName = BLOCKCHAIN_ID_TO_NAME[blockchainId];
-
-        if (blockchainName && BLOCK_TIME_MILLIS[blockchainName] !== undefined) {
-            return BLOCK_TIME_MILLIS[blockchainName];
+    async _getBlockTimeMillis(blockchain, blockRange = 1000) {
+        if (
+            [NODE_ENVIRONMENTS.DEVELOPMENT, NODE_ENVIRONMENTS.TEST].includes(process.env.NODE_ENV)
+        ) {
+            return BLOCK_TIME_MILLIS.HARDHAT;
         }
 
-        return BLOCK_TIME_MILLIS.DEFAULT;
+        const latestBlock = await this.getBlock(blockchain);
+        const olderBlock = await this.getBlock(latestBlock.number - blockRange);
+
+        const timeDiffMillis = (latestBlock.timestamp - olderBlock.timestamp) * 1000;
+        return timeDiffMillis / blockRange;
     }
 
-    async processBlockRange(fromBlock, toBlock, contract, topics) {
+    async _processBlockRange(fromBlock, toBlock, contract, topics) {
         const newEvents = await Promise.all(
             topics.map((topic) => contract.queryFilter(topic, fromBlock, toBlock)),
         );

@@ -167,7 +167,12 @@
                     "ot-ethers": {
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
-                        "config": {}
+                        "config": {
+                            "rpcEndpoints": {
+                                "hardhat1:31337:": ["http://localhost:8545"],
+                                "hardhat2:31337": ["http://localhost:9545"]
+                            }
+                        }
                     }
                 }
             }
@@ -345,7 +350,12 @@
                     "ot-ethers": {
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
-                        "config": {}
+                        "config": {
+                            "rpcEndpoints": {
+                                "hardhat1:31337:": ["http://localhost:8545"],
+                                "hardhat2:31337": ["http://localhost:9545"]
+                            }
+                        }
                     }
                 }
             }
@@ -523,7 +533,11 @@
                     "ot-ethers": {
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
-                        "config": {}
+                        "config": {
+                            "rpcEndpoints": {
+                                "base:84532": ["https://sepolia.base.org"]
+                            }
+                        }
                     }
                 }
             }
@@ -700,7 +714,11 @@
                     "ot-ethers": {
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
-                        "config": {}
+                        "config": {
+                            "rpcEndpoints": {
+                                "base:84532": ["https://sepolia.base.org"]
+                            }
+                        }
                     }
                 }
             }
@@ -900,7 +918,15 @@
                     "ot-ethers": {
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
-                        "config": {}
+                        "config": {
+                            "rpcEndpoints": {
+                                "otp:2043": [
+                                    "https://astrosat-parachain-rpc.origin-trail.network",
+                                    "https://astrosat.origintrail.network/",
+                                    "https://astrosat-2.origintrail.network/"
+                                ]
+                            }
+                        }
                     }
                 }
             }

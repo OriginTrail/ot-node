@@ -1,17 +1,15 @@
 import BaseModuleManager from '../base-module-manager.js';
 
 class BlockchainEventsModuleManager extends BaseModuleManager {
-    async initializeImplementation(blockchainEventsImplementation, blockchainConfig) {
-        if (this.getImplementation(blockchainEventsImplementation)) {
-            return this.getImplementation(
-                blockchainEventsImplementation,
-            ).module.initializeImplementation(blockchainConfig);
+    async getBlock(implementationName, blockchain, tag) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getBlock(blockchain, tag);
         }
     }
 
-    async getAllPastEvents(
-        blockchainEventsImplementation,
-        blockchainId,
+    async getPastEvents(
+        implementationName,
+        blockchain,
         contract,
         contractName,
         eventsToFilter,
@@ -19,9 +17,9 @@ class BlockchainEventsModuleManager extends BaseModuleManager {
         lastCheckedTimestamp,
         currentBlock,
     ) {
-        if (this.getImplementation(blockchainEventsImplementation)) {
-            return this.getImplementation(blockchainEventsImplementation).module.getAllPastEvents(
-                blockchainId,
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getPastEvents(
+                blockchain,
                 contract,
                 contractName,
                 eventsToFilter,

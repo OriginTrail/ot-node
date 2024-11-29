@@ -157,10 +157,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getTransaction(blockchain, transactionHash) {
-        return this.callImplementationFunction(blockchain, 'getTransaction', [transactionHash]);
-    }
-
     toBigNumber(blockchain, value) {
         return this.callImplementationFunction(blockchain, 'toBigNumber', [value]);
     }
@@ -429,10 +425,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async getBlockchainTimestamp(blockchain) {
         return this.callImplementationFunction(blockchain, 'getBlockchainTimestamp');
-    }
-
-    getBlockTimeMillis(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getBlockTimeMillis');
     }
 
     async hasPendingUpdate(blockchain, tokenId) {
