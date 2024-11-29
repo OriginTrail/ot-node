@@ -1652,13 +1652,12 @@ class Web3Service {
         const finalContractName = contractName.endsWith('Contract')
             ? contractName
             : `${contractName}Contract`;
-        try {
-            return this[finalContractName];
-        } catch (e) {
-            throw new Error(
-                `Could not fetch the contract ${finalContractName}. Error: ${e.message}.`,
-            );
+
+        const contract = this[finalContractName];
+        if (contract === undefined) {
+            this.logger.error(`Could not fetch the contract ${finalContractName}.`);
         }
+        return contract;
     }
 }
 

@@ -1,3 +1,4 @@
+import { setTimeout } from 'timers/promises';
 import Command from '../command.js';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
@@ -15,7 +16,7 @@ import {
     OPERATION_ID_STATUS,
 } from '../../constants/constants.js';
 
-let fetchEventsFailedCount = 0;
+const fetchEventsFailedCount = {};
 const eventNames = Object.values(CONTRACT_EVENTS).flat();
 
 class BlockchainEventListenerCommand extends Command {
@@ -39,17 +40,14 @@ class BlockchainEventListenerCommand extends Command {
         this.blockchainEventsModuleImplementation =
             this.blockchainEventsModuleManager.getImplementation();
         this.eventGroupsBuffer = {};
-        this.blockchainId = null;
 
         this.errorType = ERROR_TYPE.BLOCKCHAIN_EVENT_LISTENER_ERROR;
     }
 
     async execute(command) {
-        this.blockchainId = command.data.blockchainId;
+        const { blockchainId } = command.data;
 
-        const blockchainConfig = this.blockchainModuleManager.getModuleConfiguration(
-            this.blockchainId,
-        );
+        const blockchainConfig = this.blockchainModuleManager.getModuleConfiguration(blockchainId);
 
         await this.blockchainEventsModuleManager.initializeImplementation(
             this.blockchainEventsModuleImplementation,
@@ -57,25 +55,23 @@ class BlockchainEventListenerCommand extends Command {
         );
 
         try {
-            await this.fetchAndHandleBlockchainEvents();
-            fetchEventsFailedCount = 0;
+            await this.fetchAndHandleBlockchainEvents(blockchainId);
+            fetchEventsFailedCount[blockchainId] = 0;
         } catch (e) {
-            fetchEventsFailedCount += 1;
+            fetchEventsFailedCount[blockchainId] += 1;
 
-            if (fetchEventsFailedCount >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
-                this.blockchainModuleManager.removeImplementation(this.blockchainId);
+            if (fetchEventsFailedCount[blockchainId] >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
+                this.blockchainModuleManager.removeImplementation(blockchainId);
 
-                const errorMessage = `Unable to fetch new events for blockchain: ${this.blockchainId}. Error message: ${e.message}`;
+                const errorMessage = `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message}`;
                 this.logger.error(`${errorMessage} blockchain implementation removed.`);
                 return Command.empty();
             }
 
             this.logger.error(
-                `Failed to get and process blockchain events for blockchain: ${this.blockchainId}. Error: ${e}`,
+                `Failed to get and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
             );
-            await new Promise((resolve) => {
-                setTimeout(() => resolve(), DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
-            });
+            await setTimeout(DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
 
             // Try again after a delay
             return Command.repeat();
@@ -84,14 +80,14 @@ class BlockchainEventListenerCommand extends Command {
         return Command.empty();
     }
 
-    async fetchAndHandleBlockchainEvents() {
+    async fetchAndHandleBlockchainEvents(blockchainId) {
         const isDevEnvironment = [NODE_ENVIRONMENTS.DEVELOPMENT, NODE_ENVIRONMENTS.TEST].includes(
             process.env.NODE_ENV,
         );
 
-        const currentBlock = await this.blockchainModuleManager.getBlockNumber(this.blockchainId);
+        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
 
-        const contractsEventsConfig = [
+        let contractsEventsConfig = [
             { contract: CONTRACTS.SHARDING_TABLE_CONTRACT, events: CONTRACT_EVENTS.SHARDING_TABLE },
             { contract: CONTRACTS.STAKING_CONTRACT, events: CONTRACT_EVENTS.STAKING },
             { contract: CONTRACTS.PROFILE_CONTRACT, events: CONTRACT_EVENTS.PROFILE },
@@ -107,17 +103,31 @@ class BlockchainEventListenerCommand extends Command {
             { contract: CONTRACTS.LINEAR_SUM_CONTRACT, events: CONTRACT_EVENTS.LINEAR_SUM },
         ];
 
+        const contractLastCheckedBlock = {};
         if (isDevEnvironment) {
             // handling sharding table node added events first for tests and local network setup
             // because of race condition for node added and ask updated events
 
-            const shardingTableEvents = await this.getContractEvents(
+            const {
+                events: shardingTableEvents,
+                contractName,
+                lastCheckedBlock,
+            } = await this.getContractEvents(
+                blockchainId,
                 CONTRACTS.SHARDING_TABLE_CONTRACT,
                 currentBlock,
                 CONTRACT_EVENTS.SHARDING_TABLE,
             );
+            contractLastCheckedBlock[contractName] = lastCheckedBlock;
+            await this.handleBlockchainEvents(
+                blockchainId,
+                shardingTableEvents,
+                contractLastCheckedBlock,
+            );
 
-            await this.handleBlockchainEvents(shardingTableEvents);
+            contractsEventsConfig = contractsEventsConfig.filter(
+                (item) => item.contract !== CONTRACTS.SHARDING_TABLE_CONTRACT,
+            );
         } else {
             contractsEventsConfig.push({
                 contract: CONTRACTS.HUB_CONTRACT,
@@ -125,26 +135,36 @@ class BlockchainEventListenerCommand extends Command {
             });
         }
 
-        const contractEvents = await Promise.all(
+        const contractEventsData = await Promise.all(
             contractsEventsConfig.map(({ contract, events }) =>
-                this.getContractEvents(contract, currentBlock, events),
+                this.getContractEvents(blockchainId, contract, currentBlock, events),
             ),
         );
 
-        await this.handleBlockchainEvents(contractEvents.flat());
+        const contractEvents = [];
+        for (const { events, contractName, lastCheckedBlock } of contractEventsData) {
+            contractEvents.push(events);
+            contractLastCheckedBlock[contractName] = lastCheckedBlock;
+        }
+
+        await this.handleBlockchainEvents(
+            blockchainId,
+            contractEvents.flat(),
+            contractLastCheckedBlock,
+        );
     }
 
-    async getContractEvents(contractName, currentBlock, eventsToFilter) {
+    async getContractEvents(blockchainId, contractName, currentBlock, eventsToFilter) {
         const lastCheckedBlockObject = await this.repositoryModuleManager.getLastCheckedBlock(
-            this.blockchainId,
+            blockchainId,
             contractName,
         );
 
-        const contract = this.blockchainModuleManager.getContract(this.blockchainId, contractName);
+        const contract = this.blockchainModuleManager.getContract(blockchainId, contractName);
 
         const result = await this.blockchainEventsModuleManager.getAllPastEvents(
             this.blockchainEventsModuleImplementation,
-            this.blockchainId,
+            blockchainId,
             contractName,
             contract,
             eventsToFilter,
@@ -153,42 +173,48 @@ class BlockchainEventListenerCommand extends Command {
             currentBlock,
         );
 
-        // We update last checked block before we insert events in our operational db
-        await this.repositoryModuleManager.updateLastCheckedBlock(
-            this.blockchainId,
-            result.lastCheckedBlock,
-            Date.now(0),
-            contractName,
-        );
-
         if (!result.eventsMissed) {
-            await this.shardingTableService.pullBlockchainShardingTable(this.blockchainId, true);
+            await this.shardingTableService.pullBlockchainShardingTable(blockchainId, true);
         }
 
-        return result.events;
+        const { events, lastCheckedBlock } = result;
+
+        return { events, contractName, lastCheckedBlock };
     }
 
-    async handleBlockchainEvents(events) {
+    async handleBlockchainEvents(blockchainId, events, contractLastCheckedBlock) {
         const eventsForProcessing = events.filter((event) => eventNames.includes(event.event));
 
         // Store new events in the DB
         if (eventsForProcessing?.length) {
             this.logger.trace(
-                `${eventsForProcessing.length} blockchain events caught on blockchain ${this.blockchainId}.`,
+                `${eventsForProcessing.length} blockchain events caught on blockchain ${blockchainId}.`,
             );
             await this.repositoryModuleManager.insertBlockchainEvents(eventsForProcessing);
         }
+
+        // Update last checked block after inserting into db
+        await Promise.all(
+            Object.entries(contractLastCheckedBlock).map(([contractName, lastCheckedBlock]) =>
+                this.repositoryModuleManager.updateLastCheckedBlock(
+                    blockchainId,
+                    lastCheckedBlock,
+                    Date.now(0),
+                    contractName,
+                ),
+            ),
+        );
 
         // Get unprocessed events from the DB
         const unprocessedEvents =
             await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(
                 eventNames,
-                this.blockchainId,
+                blockchainId,
             );
 
         if (unprocessedEvents?.length) {
             this.logger.trace(
-                `Processing ${unprocessedEvents.length} blockchain events on blockchain ${this.blockchainId}.`,
+                `Processing ${unprocessedEvents.length} blockchain events on blockchain ${blockchainId}.`,
             );
             let batchedEvents = {};
             let currentBlockNumber = 0;
@@ -208,16 +234,19 @@ class BlockchainEventListenerCommand extends Command {
                     // Get value of the Grouping Key from the Event
                     const groupingKeyValue = JSON.parse(event.data)[eventsGroup.groupingKey];
 
-                    if (!this.eventGroupsBuffer[eventsGroupName]) {
-                        this.eventGroupsBuffer[eventsGroupName] = {};
+                    if (!this.eventGroupsBuffer[blockchainId][eventsGroupName]) {
+                        this.eventGroupsBuffer[blockchainId][eventsGroupName] = {};
                     }
 
-                    if (!this.eventGroupsBuffer[eventsGroupName][groupingKeyValue]) {
-                        this.eventGroupsBuffer[eventsGroupName][groupingKeyValue] = [];
+                    if (!this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]) {
+                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue] =
+                            [];
                     }
 
                     // Push event to the buffer until Events Group is not full
-                    this.eventGroupsBuffer[eventsGroupName][groupingKeyValue].push(event);
+                    this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue].push(
+                        event,
+                    );
 
                     // Mark event as processed
                     // TODO: There should be a smarter way to do this, because it will cause troubles
@@ -228,8 +257,8 @@ class BlockchainEventListenerCommand extends Command {
 
                     // When all expected Events from the Event Group are collected
                     if (
-                        this.eventGroupsBuffer[eventsGroupName][groupingKeyValue].length ===
-                        eventsGroup.events.length
+                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]
+                            .length === eventsGroup.events.length
                     ) {
                         if (!batchedEvents[eventsGroupName]) {
                             batchedEvents[eventsGroupName] = [];
@@ -237,11 +266,13 @@ class BlockchainEventListenerCommand extends Command {
 
                         // Add Events Group to the Processing Queue
                         batchedEvents[eventsGroupName].push(
-                            this.eventGroupsBuffer[eventsGroupName][groupingKeyValue],
+                            this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue],
                         );
 
                         // Remove Events Group from the Buffer
-                        delete this.eventGroupsBuffer[eventsGroupName][groupingKeyValue];
+                        delete this.eventGroupsBuffer[blockchainId][eventsGroupName][
+                            groupingKeyValue
+                        ];
                     }
                 } else if (batchedEvents[event.event]) {
                     batchedEvents[event.event].push(event);

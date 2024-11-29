@@ -3,6 +3,7 @@ import {
     CONTRACT_EVENT_FETCH_INTERVALS,
     NODE_ENVIRONMENTS,
     ERROR_TYPE,
+    COMMAND_PRIORITY,
 } from '../../constants/constants.js';
 
 class EventListenerCommand extends Command {
@@ -29,14 +30,14 @@ class EventListenerCommand extends Command {
 
         await Promise.all(
             this.blockchainModuleManager.getImplementationNames().map(async (blockchainId) => {
-                const commandData = {
-                    blockchainId,
-                };
+                const commandData = { blockchainId };
 
                 return this.commandExecutor.add({
                     name: 'blockchainEventListenerCommand',
                     data: commandData,
                     transactional: false,
+                    priority: COMMAND_PRIORITY.HIGHEST,
+                    isBlocking: true,
                 });
             }),
         );
@@ -71,6 +72,7 @@ class EventListenerCommand extends Command {
             data: {},
             transactional: false,
             period: this.calculateCommandPeriod(),
+            priority: COMMAND_PRIORITY.HIGHEST,
         };
         Object.assign(command, map);
         return command;
