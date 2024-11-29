@@ -37,28 +37,21 @@ class GetController extends BaseController {
             operationId,
             OPERATION_STATUS.IN_PROGRESS,
         );
-
         let blockchain;
+        let tokenId;
+        let contract;
         try {
             const { id, paranetUAL } = req.body;
 
-            if (!this.ualService.isUAL(id)) {
-                throw Error('Requested id is not a UAL.');
-            }
-            // const isValidUal = await this.validationService.validateUal(
-            //     blockchain,
-            //     contract,
-            //     tokenId,
-            // );
-            // if (!isValidUal) {
-            //     throw Error(`${id} UAL isn't valid.`);
-            // }
-
+            ({ blockchain, tokenId, contract } = this.ualService.resolveUAL(id));
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
-            const commandSequence = ['getFindShardCommand'];
+            // Get assertionId - datasetRoot
+            //
+
+            const commandSequence = ['getValidateAssetCommand', 'getFindShardCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
@@ -66,9 +59,12 @@ class GetController extends BaseController {
                 delay: 0,
                 data: {
                     ual: id,
+                    blockchain,
                     operationId,
                     hashFunctionId,
                     paranetUAL,
+                    tokenId,
+                    contract,
                 },
                 transactional: false,
             });

@@ -2,6 +2,7 @@ import {
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
+    DEFAULT_GET_STATE,
     ERROR_TYPE,
 } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
@@ -37,34 +38,51 @@ class GetController extends BaseController {
             operationId,
             OPERATION_STATUS.IN_PROGRESS,
         );
+
         let blockchain;
-        let tokenId;
         let contract;
+        let tokenId;
         try {
             const { id, paranetUAL } = req.body;
 
-            ({ blockchain, tokenId, contract } = this.ualService.resolveUAL(id));
+            if (!this.ualService.isUAL(id)) {
+                throw Error('Requested id is not a UAL.');
+            }
+
+            ({ blockchain, contract, tokenId } = this.ualService.resolveUAL(id));
+
+            const isValidUal = await this.validationService.validateUal(
+                blockchain,
+                contract,
+                tokenId,
+            );
+            if (!isValidUal) {
+                throw Error(`${id} UAL isn't valid.`);
+            }
+
+            const state = req.body.state ?? DEFAULT_GET_STATE;
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
-            // Get assertionId - datasetRoot
-            //
-
-            const commandSequence = ['getValidateAssetCommand', 'getFindShardCommand'];
+            const commandSequence = [
+                'getAssertionIdCommand',
+                'localGetCommand',
+                'networkGetCommand',
+            ];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
                 sequence: commandSequence.slice(1),
                 delay: 0,
                 data: {
-                    ual: id,
                     blockchain,
+                    contract,
+                    tokenId,
                     operationId,
+                    state,
                     hashFunctionId,
                     paranetUAL,
-                    tokenId,
-                    contract,
                 },
                 transactional: false,
             });
