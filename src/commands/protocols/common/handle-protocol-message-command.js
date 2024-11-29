@@ -1,5 +1,5 @@
 import Command from '../../command.js';
-import { BYTES_IN_KILOBYTE, NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
+import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
 
 class HandleProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -18,7 +18,7 @@ class HandleProtocolMessageCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, operationId, uuid, protocol } = command.data;
+        const { remotePeerId, operationId, protocol } = command.data;
 
         try {
             const { messageType, messageData } = await this.prepareMessage(command.data);
@@ -27,7 +27,6 @@ class HandleProtocolMessageCommand extends Command {
                 remotePeerId,
                 messageType,
                 operationId,
-                uuid,
                 messageData,
             );
         } catch (error) {
@@ -38,7 +37,7 @@ class HandleProtocolMessageCommand extends Command {
             await this.handleError(error.message, command);
         }
 
-        this.networkModuleManager.removeCachedSession(operationId, uuid, remotePeerId);
+        this.networkModuleManager.removeCachedSession(operationId, remotePeerId);
 
         return Command.empty();
     }
@@ -68,94 +67,6 @@ class HandleProtocolMessageCommand extends Command {
                 `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
             );
         }
-    }
-
-    async getAgreementData(blockchain, contract, tokenId, keyword, hashFunctionId, operationId) {
-        const agreementId = this.serviceAgreementService.generateId(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-        );
-        this.logger.info(
-            `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, blockchain: ${blockchain} keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId: ${operationId}`,
-        );
-
-        const agreementData = await this.blockchainModuleManager.getAgreementData(
-            blockchain,
-            agreementId,
-        );
-
-        return {
-            agreementId,
-            agreementData,
-        };
-    }
-
-    async validateBid(
-        contract,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        blockchain,
-        assertionId,
-        operationId,
-        agreementId,
-        agreementData,
-    ) {
-        const getAsk = async () => {
-            const peerRecord = await this.repositoryModuleManager.getPeerRecord(
-                this.networkModuleManager.getPeerId().toB58String(),
-                blockchain,
-            );
-
-            return this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
-        };
-
-        const [blockchainAssertionSize, r0, ask] = await Promise.all([
-            this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
-            this.blockchainModuleManager.getR0(blockchain),
-            getAsk(),
-        ]);
-        const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
-        if (!agreementData) {
-            this.logger.warn(
-                `Unable to fetch agreement data in handle protocol messsage command for agreement id: ${agreementId}, blockchain id: ${blockchain}`,
-            );
-            return {
-                errorMessage: 'Unable to fetch agreement data.',
-                agreementId,
-                agreementData,
-            };
-        }
-        if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
-            this.logger.warn(
-                `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
-            );
-            return {
-                errorMessage:
-                    'The size of the received assertion exceeds the maximum limit allowed.',
-                agreementId,
-                agreementData,
-            };
-        }
-
-        const serviceAgreementBid = await this.serviceAgreementService.calculateBid(
-            blockchain,
-            blockchainAssertionSize,
-            agreementData,
-            r0,
-        );
-
-        const bidAskLog = `Service agreement bid: ${serviceAgreementBid}, ask: ${ask}, operationId: ${operationId}`;
-        this.logger.trace(bidAskLog);
-
-        return {
-            errorMessage: ask.lte(serviceAgreementBid) ? null : bidAskLog,
-            agreementId,
-            agreementData,
-        };
     }
 
     async validateReceivedData(operationId, datasetRoot, dataset, blockchain) {
@@ -189,7 +100,7 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async handleError(errorMessage, command) {
-        const { operationId, blockchain, remotePeerId, uuid, protocol } = command.data;
+        const { operationId, blockchain, remotePeerId, protocol } = command.data;
 
         await super.handleError(operationId, blockchain, errorMessage, this.errorType, true);
         await this.networkModuleManager.sendMessageResponse(
@@ -197,10 +108,9 @@ class HandleProtocolMessageCommand extends Command {
             remotePeerId,
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             operationId,
-            uuid,
             { errorMessage },
         );
-        this.networkModuleManager.removeCachedSession(operationId, uuid, remotePeerId);
+        this.networkModuleManager.removeCachedSession(operationId, remotePeerId);
     }
 }
 

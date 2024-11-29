@@ -2,7 +2,12 @@
 import { setTimeout } from 'timers/promises';
 import { formatAssertion } from 'assertion-tools';
 
-import { SCHEMA_CONTEXT, UAL_PREDICATE, BASE_NAMED_GRAPHS } from '../constants/constants.js';
+import {
+    SCHEMA_CONTEXT,
+    UAL_PREDICATE,
+    BASE_NAMED_GRAPHS,
+    TRIPLE_STORE_REPOSITORY,
+} from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -208,6 +213,34 @@ class TripleStoreService {
                 ual,
             ),
         ]);
+    }
+
+    async getAssertion(ual, repository = TRIPLE_STORE_REPOSITORY.DKG) {
+        this.logger.debug(`Getting Assertion with the UAL: ${ual}.`);
+
+        const nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+        );
+        // TODO: Verify this make sense to be commented
+        // It should be returned sorted
+        // There shouldn't be any blank nodes
+        // nquads = await this.dataService.toNQuads(nquads, MEDIA_TYPES.N_QUADS);
+
+        this.logger.debug(
+            `Assertion: ${ual} ${
+                nquads.length ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
+        );
+
+        if (nquads.length) {
+            this.logger.debug(
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
+            );
+        }
+
+        return nquads;
     }
 
     async construct(repository, query) {

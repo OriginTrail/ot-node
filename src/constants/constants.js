@@ -398,6 +398,9 @@ export const ERROR_TYPE = {
         START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
         PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
+    FIND_SHARD: {
+        FIND_SHARD_ERROR: 'FindShardError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -669,7 +672,13 @@ export const HTTP_API_ROUTES = {
             options: {},
         },
     },
-    v1: {},
+    v1: {
+        // get: {
+        //     method: 'post',
+        //     path: '/get',
+        //     options: { rateLimit: true },
+        // },
+    },
 };
 
 /**
@@ -856,3 +865,7 @@ export const LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY = 1000;
 
 export const LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS = 5;
 export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
+
+export const TRIPLE_STORE_REPOSITORY = {
+    DKG: 'dkg',
+};

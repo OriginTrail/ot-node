@@ -27,15 +27,14 @@ class OperationService {
         );
     }
 
-    async getResponsesStatuses(responseStatus, errorMessage, operationId, datasetRoot) {
-        const self = this;
+    async getResponsesStatuses(responseStatus, errorMessage, operationId) {
         let responses = 0;
+        const self = this;
         await this.operationMutex.runExclusive(async () => {
             await self.repositoryModuleManager.createOperationResponseRecord(
                 responseStatus,
                 this.operationName,
                 operationId,
-                datasetRoot,
                 errorMessage,
             );
             responses = await self.repositoryModuleManager.getOperationResponsesStatuses(
@@ -44,19 +43,19 @@ class OperationService {
             );
         });
 
-        const datasetRootStatuses = {};
-        responses.forEach((response) => {
-            if (!datasetRootStatuses[response.datasetRoot])
-                datasetRootStatuses[response.datasetRoot] = { failedNumber: 0, completedNumber: 0 };
+        const operationIdStatuses = {};
+        for (const response of responses) {
+            if (!operationIdStatuses[operationId])
+                operationIdStatuses[operationId] = { failedNumber: 0, completedNumber: 0 };
 
             if (response.status === OPERATION_REQUEST_STATUS.FAILED) {
-                datasetRootStatuses[response.datasetRoot].failedNumber += 1;
+                operationIdStatuses[operationId].failedNumber += 1;
             } else {
-                datasetRootStatuses[response.datasetRoot].completedNumber += 1;
+                operationIdStatuses[operationId].completedNumber += 1;
             }
-        });
+        }
 
-        return datasetRootStatuses;
+        return operationIdStatuses;
     }
 
     async markOperationAsCompleted(operationId, blockchain, responseData, endStatuses) {
@@ -111,6 +110,14 @@ class OperationService {
                 failedNumber + completedNumber
             }, failed: ${failedNumber}, completed: ${completedNumber}`,
         );
+    }
+
+    async getBatchSize() {
+        throw Error('getBatchSize not implemented');
+    }
+
+    async getMinAckResponses() {
+        throw Error('getMinAckResponses not implemented');
     }
 }
 

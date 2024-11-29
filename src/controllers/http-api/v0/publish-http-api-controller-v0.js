@@ -61,12 +61,7 @@ class PublishController extends BaseController {
                 blockchain,
             });
 
-            const commandSequence = ['publishValidateAssetCommand'];
-
-            // Backwards compatibility check - true for older clients
-            commandSequence.push('localStoreCommand');
-
-            commandSequence.push('networkPublishCommand');
+            const commandSequence = ['publishFindShardCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],

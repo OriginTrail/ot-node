@@ -11,20 +11,19 @@ class OperationResponseRepository {
         };
     }
 
-    async createOperationResponseRecord(status, operation, operationId, datasetRoot, message) {
+    async createOperationResponseRecord(status, operation, operationId, message) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         await this.models[`${operationModel}_response`].create({
             status,
             message,
             operationId,
-            datasetRoot,
         });
     }
 
     async getOperationResponsesStatuses(operation, operationId) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         return this.models[`${operationModel}_response`].findAll({
-            attributes: ['status', 'datasetRoot'],
+            attributes: ['status'],
             where: {
                 operationId,
             },
