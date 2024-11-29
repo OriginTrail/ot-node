@@ -1,6 +1,5 @@
 import Command from '../command.js';
 import {
-    BYTES_IN_KILOBYTE,
     PUBLISH_STORAGE_MEMORY_CLEANUP_COMMAND_CLEANUP_TIME_MILLS,
     PUBLISH_STORAGE_FILE_CLEANUP_COMMAND_CLEANUP_TIME_MILLS,
     PENDING_STORAGE_FILES_FOR_REMOVAL_MAX_NUMBER,
@@ -23,7 +22,7 @@ class PendingStorageCleanerCommand extends Command {
     async execute() {
         this.logger.debug('Starting command for removal of expired pending storage entries');
 
-        removed = await this.pendingStorageService.removeExpiredFileCache(
+        const removed = await this.pendingStorageService.removeExpiredFileCache(
             PUBLISH_STORAGE_FILE_CLEANUP_COMMAND_CLEANUP_TIME_MILLS,
             PENDING_STORAGE_FILES_FOR_REMOVAL_MAX_NUMBER,
         );

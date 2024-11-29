@@ -31,7 +31,7 @@ class BlockchainEventListenerService {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
         this.paranetService = ctx.paranetService;
-        this.pendingStorageService = ctx.pendingStorageService;
+        this.fileService = ctx.fileService;
         this.dataService = ctx.dataService;
         this.operationIdService = ctx.operationIdService;
         this.commandExecutor = ctx.commandExecutor;
@@ -527,16 +527,12 @@ class BlockchainEventListenerService {
                 OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
             );
 
-            // eslint-disable-next-line no-await-in-loop
-            const triples = await this.pendingStorageService.getCachedDataset(operationId);
+            const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
 
-            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(triples);
-            const knowledgeAssetsUALs = [];
-            const knowledgeAssetStates = [];
-            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-                knowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i + 1}`);
-                knowledgeAssetStates.push(0);
-            }
+            // eslint-disable-next-line no-await-in-loop
+            const data = await this.fileService.readFile(datasetPath, true);
+
+            const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
 
             // eslint-disable-next-line no-await-in-loop
             await this.commandExecutor.add({

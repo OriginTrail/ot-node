@@ -103,13 +103,13 @@ class OperationIdService {
 
     async cacheOperationIdData(operationId, data) {
         this.logger.debug(`Caching data for operation id: ${operationId} in file`);
-        const operationIdCachePath = this.fileService.getOperationIdCachePath();
+        // const operationIdCachePath = this.fileService.getOperationIdCachePath();
 
-        await this.fileService.writeContentsToFile(
-            operationIdCachePath,
-            operationId,
-            JSON.stringify(data),
-        );
+        // await this.fileService.writeContentsToFile(
+        //     operationIdCachePath,
+        //     operationId,
+        //     JSON.stringify(data),
+        // );
 
         this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };
     }
@@ -120,13 +120,13 @@ class OperationIdService {
             return this.memoryCachedHandlersData[operationId].data;
         }
 
-        this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
-        const documentPath = this.fileService.getOperationIdDocumentPath(operationId);
-        let data;
-        if (await this.fileService.pathExists(documentPath)) {
-            data = await this.fileService.readFile(documentPath, true);
-        }
-        return data;
+        this.logger.debug(`Didn't manage to get cached ${operationId} data from memory`);
+        // const documentPath = this.fileService.getOperationIdDocumentPath(operationId);
+        // let data;
+        // if (await this.fileService.pathExists(documentPath)) {
+        //     data = await this.fileService.readFile(documentPath, true);
+        // }
+        // return data;
     }
 
     async removeOperationIdCache(operationId) {

@@ -16,7 +16,7 @@ class PendingStorageService {
 
     async cacheDataset(operationId, datasetRoot, dataset) {
         this.logger.debug(
-            `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage, blockchain: ${blockchain}`,
+            `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage`,
         );
 
         await this.fileService.writeContentsToFile(
@@ -30,15 +30,13 @@ class PendingStorageService {
     }
 
     async getCachedDataset(operationId) {
-        this.logger.debug(
-            `Retrieving cached dataset for ${operationId} from pending storage`,
-        );
+        this.logger.debug(`Retrieving cached dataset for ${operationId} from pending storage`);
 
-        const filePath = this.fileService.getPendingStorageCachePath();
+        const filePath = this.fileService.getPendingStorageDocumentPath(operationId);
 
         try {
             const fileContents = await this.fileService.readFile(filePath, true);
-            return fileContents;
+            return fileContents.assertion;
         } catch (error) {
             this.logger.error(
                 `Failed to retrieve or parse cached dataset for ${operationId}: ${error.message}`,
@@ -51,55 +49,49 @@ class PendingStorageService {
         this.logger.debug(
             `Cleaning up expired files older than ${expirationTimeMillis} milliseconds. Max removal: ${maxRemovalCount}`,
         );
-    
+
         const now = Date.now();
         let removedCount = 0;
-    
+
         try {
+            // Define the paths to the directories we want to clean
             const storagePaths = [
                 this.fileService.getPendingStorageCachePath(''),
                 this.fileService.getSignatureStorageCachePath(''),
             ];
-    
+
             const filesToDelete = [];
-    
+
+            // Function to collect files from the provided base path
             const collectFiles = async (basePath) => {
                 if (!(await this.fileService.pathExists(basePath))) {
                     this.logger.warn(`Storage path does not exist: ${basePath}`);
                     return;
                 }
-                
-                const blockchainFolders = await this.fileService.readDirectory(basePath);
-    
-                for (const blockchain of blockchainFolders) {
-                    const blockchainPath = path.join(basePath, blockchain);
-    
-                    // eslint-disable-next-line no-await-in-loop
-                    const assertionDirectories = await this.fileService.readDirectory(blockchainPath);
-    
-                    for (const assertionDir of assertionDirectories) {
-                        const assertionPath = path.join(blockchainPath, assertionDir);
-    
-                        // eslint-disable-next-line no-await-in-loop
-                        const files = await this.fileService.readDirectory(assertionPath);
-                        files.forEach((file) => filesToDelete.push({ file, assertionPath }));
-                    }
-                }
+
+                const files = await this.fileService.readDirectory(basePath);
+
+                // Add all files found in the directory to the filesToDelete array
+                files.forEach((file) => {
+                    filesToDelete.push({ file, basePath });
+                });
             };
-    
+
+            // Collect files from both storage paths
             for (const basePath of storagePaths) {
                 // eslint-disable-next-line no-await-in-loop
                 await collectFiles(basePath);
             }
-    
-            const deleteFile = async ({ file, assertionPath }) => {
-                const filePath = path.join(assertionPath, file);
+
+            // Function to delete an expired file
+            const deleteFile = async ({ file, basePath }) => {
+                const filePath = path.join(basePath, file);
                 this.logger.debug(`Attempting to delete file: ${filePath}`);
-    
+
                 try {
                     const fileStats = await this.fileService.stat(filePath);
                     this.logger.debug(`File stats for ${filePath}: ${JSON.stringify(fileStats)}`);
-    
+
                     const createdDate = fileStats.mtime;
                     if (createdDate.getTime() + expirationTimeMillis < now) {
                         await this.fileService.removeFile(filePath);
@@ -111,17 +103,18 @@ class PendingStorageService {
                 }
                 return false;
             };
-    
+
+            // Process files in batches
             for (let i = 0; i < filesToDelete.length; i += maxRemovalCount) {
                 const batch = filesToDelete.slice(i, i + maxRemovalCount);
-                
+
                 // eslint-disable-next-line no-await-in-loop
                 const deletionResults = await Promise.allSettled(batch.map(deleteFile));
-    
+
                 removedCount += deletionResults.filter(
                     (result) => result.status === 'fulfilled' && result.value,
                 ).length;
-    
+
                 if (removedCount >= maxRemovalCount) {
                     this.logger.debug(`Reached max removal count: ${maxRemovalCount}`);
                     return removedCount;
@@ -131,11 +124,10 @@ class PendingStorageService {
             this.logger.error(`Error during file cleanup: ${error.message}`);
             throw error;
         }
-    
+
         this.logger.debug(`Total files removed: ${removedCount}`);
         return removedCount;
     }
-    
 
     async getCachedAssertion(repository, blockchain, contract, tokenId, assertionId, operationId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);

@@ -54,11 +54,12 @@ class PublishController extends BaseController {
         );
 
         try {
-            await this.pendingStorageService.cacheDataset(
-                operationId,
+            await this.operationIdService.cacheOperationIdData(operationId, {
+                dataset,
                 datasetRoot,
-                dataset
-            );
+            });
+
+            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
 
             const commandSequence = ['publishValidateAssetCommand'];
 

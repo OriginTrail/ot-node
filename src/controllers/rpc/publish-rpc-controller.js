@@ -7,6 +7,7 @@ class PublishController extends BaseController {
         this.operationService = ctx.publishService;
         this.commandExecutor = ctx.commandExecutor;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.operationIdService = ctx.operationIdService;
     }
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
@@ -21,10 +22,15 @@ class PublishController extends BaseController {
                 retries: 3,
             });
 
+            await this.operationIdService.cacheOperationIdData(operationId, {
+                dataset: message.data.dataset,
+                datasetRoot: message.data.datasetRoot,
+            });
+
             await this.pendingStorageService.cacheDataset(
                 operationId,
                 message.data.datasetRoot,
-                message.data.dataset, 
+                message.data.dataset,
             );
         } else {
             throw new Error('Unknown message type');
