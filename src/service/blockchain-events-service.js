@@ -11,7 +11,7 @@ class BlockchainEventsService {
         for (const implementationName of this.blockchainEventsModuleManager.getImplementationNames()) {
             for (const blockchain in this.blockchainEventsModuleManager.getImplementation(
                 implementationName,
-            ).module.rpcEndpoints) {
+            ).module.blockchains) {
                 this.blockchainEventsServicesImplementations[blockchain] = implementationName;
             }
         }

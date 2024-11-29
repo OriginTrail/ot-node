@@ -21,7 +21,7 @@ class OtEthers extends BlockchainEventsService {
 
     async initializeRpcProviders() {
         this.providers = {};
-        for (const blockchain of Object.keys(this.config.rpcEndpoints)) {
+        for (const blockchain of this.config.blockchains) {
             const providers = [];
             for (const rpcEndpoint of this.config.rpcEndpoints[blockchain]) {
                 const isWebSocket = rpcEndpoint.startsWith('ws');

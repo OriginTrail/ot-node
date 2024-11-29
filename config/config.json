@@ -168,6 +168,7 @@
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
+                            "blockchains": ["hardhat1:31337", "hardhat2:31337"],
                             "rpcEndpoints": {
                                 "hardhat1:31337:": ["http://localhost:8545"],
                                 "hardhat2:31337": ["http://localhost:9545"]
@@ -351,6 +352,7 @@
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
+                            "blockchains": ["hardhat1:31337", "hardhat2:31337"],
                             "rpcEndpoints": {
                                 "hardhat1:31337:": ["http://localhost:8545"],
                                 "hardhat2:31337": ["http://localhost:9545"]
@@ -534,6 +536,7 @@
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
+                            "blockchains": ["base:84532"],
                             "rpcEndpoints": {
                                 "base:84532": ["https://sepolia.base.org"]
                             }
@@ -715,6 +718,7 @@
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
+                            "blockchains": ["base:84532"],
                             "rpcEndpoints": {
                                 "base:84532": ["https://sepolia.base.org"]
                             }
@@ -919,6 +923,7 @@
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
+                            "blockchains": ["otp:2043"],
                             "rpcEndpoints": {
                                 "otp:2043": [
                                     "https://astrosat-parachain-rpc.origin-trail.network",
