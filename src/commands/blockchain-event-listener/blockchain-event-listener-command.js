@@ -31,14 +31,12 @@ class BlockchainEventListenerCommand extends Command {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
         this.paranetService = ctx.paranetService;
-        this.blockchainEventsModuleManager = ctx.blockchainEventsModuleManager;
+        this.blockchainEventsService = ctx.blockchainEventsService;
         this.fileService = ctx.fileService;
         this.dataService = ctx.dataService;
         this.operationIdService = ctx.operationIdService;
         this.commandExecutor = ctx.commandExecutor;
 
-        this.blockchainEventsModuleImplementation =
-            this.blockchainEventsModuleManager.getImplementation();
         this.eventGroupsBuffer = {};
 
         this.errorType = ERROR_TYPE.BLOCKCHAIN_EVENT_LISTENER_ERROR;
@@ -46,13 +44,6 @@ class BlockchainEventListenerCommand extends Command {
 
     async execute(command) {
         const { blockchainId } = command.data;
-
-        const blockchainConfig = this.blockchainModuleManager.getModuleConfiguration(blockchainId);
-
-        await this.blockchainEventsModuleManager.initializeImplementation(
-            this.blockchainEventsModuleImplementation,
-            blockchainConfig,
-        );
 
         try {
             await this.fetchAndHandleBlockchainEvents(blockchainId);
@@ -154,27 +145,25 @@ class BlockchainEventListenerCommand extends Command {
         );
     }
 
-    async getContractEvents(blockchainId, contractName, currentBlock, eventsToFilter) {
+    async getContractEvents(blockchain, contractName, currentBlock, eventsToFilter) {
         const lastCheckedBlockObject = await this.repositoryModuleManager.getLastCheckedBlock(
-            blockchainId,
+            blockchain,
             contractName,
         );
 
-        const contract = this.blockchainModuleManager.getContract(blockchainId, contractName);
+        const contract = this.blockchainModuleManager.getContract(blockchain, contractName);
 
-        const result = await this.blockchainEventsModuleManager.getAllPastEvents(
-            this.blockchainEventsModuleImplementation,
-            blockchainId,
+        const result = await this.blockchainEventsService.getPastEvents(
+            blockchain,
             contractName,
             contract,
             eventsToFilter,
             lastCheckedBlockObject?.lastCheckedBlock ?? 0,
-            lastCheckedBlockObject?.lastCheckedTimestamp ?? 0,
             currentBlock,
         );
 
         if (!result.eventsMissed) {
-            await this.shardingTableService.pullBlockchainShardingTable(blockchainId, true);
+            await this.shardingTableService.pullBlockchainShardingTable(blockchain, true);
         }
 
         const { events, lastCheckedBlock } = result;

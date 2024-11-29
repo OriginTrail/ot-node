@@ -449,11 +449,6 @@ class CommandExecutor {
 
         const commands = [];
         for (const command of pendingCommands) {
-            if (command.name === 'blockchainEventListenerCommand') {
-                commands.push(command);
-                continue;
-            }
-
             if (!command?.parentId) {
                 continue;
             }

@@ -13,7 +13,6 @@ import {
     TRANSACTION_QUEUE_CONCURRENCY,
     TRANSACTION_POLLING_TIMEOUT_MILLIS,
     TRANSACTION_CONFIRMATIONS,
-    BLOCK_TIME_MILLIS,
     WS_RPC_PROVIDER_PRIORITY,
     HTTP_RPC_PROVIDER_PRIORITY,
     FALLBACK_PROVIDER_QUORUM,
@@ -24,7 +23,6 @@ import {
     CONTRACT_FUNCTION_PRIORITY,
     TRANSACTION_PRIORITY,
     CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS,
-    MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
 } from '../../../constants/constants.js';
 import Web3ServiceValidator from './web3-service-validator.js';
 
@@ -457,10 +455,6 @@ class Web3Service {
     async getBlockNumber() {
         const latestBlock = await this.provider.getBlock('latest');
         return latestBlock.number;
-    }
-
-    getBlockTimeMillis() {
-        return BLOCK_TIME_MILLIS.DEFAULT;
     }
 
     async getIdentityId() {
@@ -912,32 +906,6 @@ class Web3Service {
         }
 
         return value.toString();
-    }
-
-    async getTransaction(transactionHash) {
-        return this.provider.getTransaction(transactionHash);
-    }
-
-    getMaxNumberOfHistoricalBlocksForSync() {
-        if (!this.maxNumberOfHistoricalBlocksForSync) {
-            this.maxNumberOfHistoricalBlocksForSync = Math.round(
-                MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / this.getBlockTimeMillis(),
-            );
-        }
-        return this.maxNumberOfHistoricalBlocksForSync;
-    }
-
-    async processBlockRange(fromBlock, toBlock, contract, topics) {
-        const newEvents = await Promise.all(
-            topics.map((topic) => contract.queryFilter(topic, fromBlock, toBlock)),
-        );
-        return newEvents;
-    }
-
-    isOlderThan(timestamp, olderThanInMills) {
-        if (!timestamp) return true;
-        const timestampThirtyDaysInPast = new Date().getTime() - olderThanInMills;
-        return timestamp < timestampThirtyDaysInPast;
     }
 
     async isAssetStorageContract(contractAddress) {

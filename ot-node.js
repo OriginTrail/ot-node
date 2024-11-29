@@ -51,6 +51,8 @@ class OTNode {
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
 
+        this.initializeBlockchainEventsService();
+
         await this.initializeRouters();
         await this.startNetworkModule();
         await this.initializeBLSService();
@@ -290,6 +292,19 @@ class OTNode {
         } catch (error) {
             this.logger.error(
                 `Unable to initialize sharding table service. Error message: ${error.message} OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
+    }
+
+    initializeBlockchainEventsService() {
+        try {
+            const blockchainEventsService = this.container.resolve('blockchainEventsService');
+            blockchainEventsService.initializeBlockchainEventsServices();
+            this.logger.info('Blockchain Events Service initialized successfully');
+        } catch (error) {
+            this.logger.error(
+                `Unable to initialize Blockchain Events Service. Error message: ${error.message} OT-node shutting down...`,
             );
             this.stop(1);
         }
