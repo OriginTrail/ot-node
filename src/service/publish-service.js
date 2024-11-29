@@ -47,14 +47,13 @@ class PublishService extends OperationService {
             responseStatus,
             errorMessage,
             operationId,
-            datasetRoot,
         );
 
         if (localStore) {
             return;
         }
 
-        const { completedNumber, failedNumber } = datasetRootStatus[datasetRoot];
+        const { completedNumber, failedNumber } = datasetRootStatus[operationId];
 
         const totalResponses = completedNumber + failedNumber;
         const isAllNodesResponded = numberOfShardNodes === totalResponses;

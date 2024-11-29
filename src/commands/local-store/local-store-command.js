@@ -31,7 +31,6 @@ class LocalStoreCommand extends Command {
             blockchain,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetId,
-            datasetRoot,
         } = command.data;
 
         try {
@@ -40,7 +39,7 @@ class LocalStoreCommand extends Command {
                 blockchain,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
-            const dataset = await this.operationIdService.getCachedOperationIdData(operationId);
+            const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
@@ -63,6 +62,18 @@ class LocalStoreCommand extends Command {
                 //     );
                 // }
                 await Promise.all(storePromises);
+                await this.operationService.processResponse(
+                    command,
+                    OPERATION_REQUEST_STATUS.COMPLETED,
+                    {
+                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                        messageData: {
+                            signature: `signature-${Math.floor(Math.random() * 1000000) + 1}`,
+                        },
+                    },
+                    null,
+                    true,
+                );
             } else if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
                 const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
                     blockchain,
