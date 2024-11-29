@@ -22,6 +22,7 @@ class PublishService extends OperationService {
             OPERATION_ID_STATUS.COMPLETED,
         ];
         this.operationMutex = new Mutex();
+        this.signatureStorageService = ctx.signatureStorageService;
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
@@ -30,19 +31,19 @@ class PublishService extends OperationService {
             blockchain,
             numberOfFoundNodes,
             leftoverNodes,
-            keyword,
             batchSize,
             minAckResponses,
+            datasetRoot,
         } = command.data;
 
-        const keywordsStatuses = await this.getResponsesStatuses(
+        const datasetRootStatus = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
             operationId,
-            keyword,
+            datasetRoot,
         );
 
-        const { completedNumber, failedNumber } = keywordsStatuses[keyword];
+        const { completedNumber, failedNumber } = datasetRootStatus[datasetRoot];
 
         const totalResponses = completedNumber + failedNumber;
         const isAllNodesResponded = numberOfFoundNodes === totalResponses;
@@ -51,7 +52,7 @@ class PublishService extends OperationService {
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response with status: ${responseStatus} for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+            } response with status: ${responseStatus} for operationId: ${operationId}, dataset root: ${datasetRoot}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
                 numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
@@ -60,7 +61,7 @@ class PublishService extends OperationService {
         );
         if (responseData.errorMessage) {
             this.logger.trace(
-                `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
+                `Error message for operation id: ${operationId}, dataset root: ${datasetRoot} : ${responseData.errorMessage}`,
             );
         }
 
@@ -68,10 +69,13 @@ class PublishService extends OperationService {
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
             completedNumber === minAckResponses
         ) {
+            const signatures = await this.signatureStorageService.getSignaturesFromStorage(
+                operationId,
+            );
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                null,
+                signatures,
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);

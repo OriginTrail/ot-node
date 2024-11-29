@@ -109,7 +109,7 @@ const copyAssertion = async (g) => {
         }
 
         try {
-            await tripleStoreModuleManager.insertAssertion(
+            await tripleStoreModuleManager.insertKnowledgeCollection(
                 toImplementation,
                 toRepository,
                 g.substring('assertion:'.length),

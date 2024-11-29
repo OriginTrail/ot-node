@@ -26,21 +26,21 @@ class ProtocolMessageCommand extends Command {
     }
 
     async sendProtocolMessage(command, message, messageType) {
-        const { node, operationId, keyword } = command.data;
+        const { node, operationId, datasetRoot } = command.data;
 
-        const keywordUuid = uuidv5(keyword, uuidv5.URL);
+        const uuid = uuidv5(datasetRoot, uuidv5.URL);
 
         const response = await this.networkModuleManager.sendMessage(
             node.protocol,
             node.id,
             messageType,
             operationId,
-            keywordUuid,
+            uuid,
             message,
             this.messageTimeout(),
         );
 
-        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
+        this.networkModuleManager.removeCachedSession(operationId, uuid, node.id);
 
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
@@ -79,9 +79,9 @@ class ProtocolMessageCommand extends Command {
     }
 
     async recover(command) {
-        const { node, operationId, keyword } = command.data;
-        const keywordUuid = uuidv5(keyword, uuidv5.URL);
-        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
+        const { node, operationId, datasetRoot } = command.data;
+        const uuid = uuidv5(datasetRoot, uuidv5.URL);
+        this.networkModuleManager.removeCachedSession(operationId, uuid, node.id);
 
         await this.markResponseAsFailed(command, command.message);
         return Command.empty();

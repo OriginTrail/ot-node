@@ -12,6 +12,7 @@ import {
     GROUPED_CONTRACT_EVENTS,
     ZERO_BYTES32,
     ERROR_TYPE,
+    OPERATION_ID_STATUS,
 } from '../../constants/constants.js';
 
 let fetchEventsFailedCount = 0;
@@ -30,6 +31,10 @@ class BlockchainEventListenerCommand extends Command {
         this.shardingTableService = ctx.shardingTableService;
         this.paranetService = ctx.paranetService;
         this.blockchainEventsModuleManager = ctx.blockchainEventsModuleManager;
+        this.fileService = ctx.fileService;
+        this.dataService = ctx.dataService;
+        this.operationIdService = ctx.operationIdService;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.blockchainEventsModuleImplementation =
             this.blockchainEventsModuleManager.getImplementation();
@@ -456,6 +461,45 @@ class BlockchainEventListenerCommand extends Command {
                 );
             }),
         );
+    }
+
+    async handleAssetMintedEvents(blockEvents) {
+        for (const event of blockEvents) {
+            const eventData = JSON.parse(event.data);
+
+            const { assetContract, tokenId, state, publishOperationId } = eventData;
+            const blockchain = event.blockchainId;
+
+            // eslint-disable-next-line no-await-in-loop
+            const operationId = await this.operationIdService.generateOperationId(
+                OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
+            );
+
+            const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
+
+            // eslint-disable-next-line no-await-in-loop
+            const data = await this.fileService.readFile(datasetPath, true);
+
+            const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
+
+            // eslint-disable-next-line no-await-in-loop
+            await this.commandExecutor.add({
+                name: 'validateAssertionMetadataCommand',
+                sequence: ['storeAssertionCommand'],
+                delay: 0,
+                data: {
+                    operationId,
+                    ual,
+                    blockchain,
+                    contract: assetContract,
+                    tokenId,
+                    merkleRoot: state,
+                    assertion: data.assertion,
+                    cachedMerkleRoot: data.merkleRoot,
+                },
+                transactional: false,
+            });
+        }
     }
 
     async handleStateFinalizedEvents(blockEvents) {

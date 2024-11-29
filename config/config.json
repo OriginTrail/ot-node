@@ -8,7 +8,7 @@
                         "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/develop"
+                            "branch": "v8/develop"
                         }
                     }
                 }
@@ -197,7 +197,7 @@
                         "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/develop"
+                            "branch": "v8/develop"
                         }
                     }
                 }

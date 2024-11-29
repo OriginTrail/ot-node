@@ -15,33 +15,33 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     }
 
     async execute(command) {
-        const {
-            operationId,
-            keyword,
-            leftoverNodes,
-            numberOfFoundNodes,
-            blockchain,
-            minAckResponses,
-            hashFunctionId,
-            assertionId,
-            tokenId,
-            contract,
-        } = command.data;
-        let isValid = true;
+        // const {
+        // operationId,
+        // keyword,
+        // leftoverNodes,
+        // numberOfFoundNodes,
+        // blockchain,
+        // minAckResponses,
+        // hashFunctionId,
+        // assertionId,
+        // tokenId,
+        // contract,
+        // } = command.data;
+        const isValid = true;
         // perform check only first time not for every batch
-        if (leftoverNodes.length === numberOfFoundNodes) {
-            isValid = await this.validateBidsForNeighbourhood(
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                hashFunctionId,
-                assertionId,
-                leftoverNodes,
-                minAckResponses,
-                operationId,
-            );
-        }
+        // if (leftoverNodes.length === numberOfFoundNodes) {
+        //     isValid = await this.validateBidsForNeighbourhood(
+        //         blockchain,
+        //         contract,
+        //         tokenId,
+        //         keyword,
+        //         hashFunctionId,
+        //         assertionId,
+        //         leftoverNodes,
+        //         minAckResponses,
+        //         operationId,
+        //     );
+        // }
         if (isValid) {
             return super.execute(command);
         }

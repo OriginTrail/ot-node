@@ -160,6 +160,14 @@ class ShardRepository {
             where: blockchainId ? { blockchainId } : {},
         });
     }
+
+    async isNodePartOfShard(blockchainId, peerId) {
+        const nodeIsPartOfShard = await this.model.findOne({
+            where: { blockchainId, peerId },
+        });
+
+        return !!nodeIsPartOfShard;
+    }
 }
 
 export default ShardRepository;

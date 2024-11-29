@@ -18,7 +18,7 @@ class HandleProtocolMessageCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, operationId, keywordUuid, protocol } = command.data;
+        const { remotePeerId, operationId, uuid, protocol } = command.data;
 
         try {
             const { messageType, messageData } = await this.prepareMessage(command.data);
@@ -27,7 +27,7 @@ class HandleProtocolMessageCommand extends Command {
                 remotePeerId,
                 messageType,
                 operationId,
-                keywordUuid,
+                uuid,
                 messageData,
             );
         } catch (error) {
@@ -38,7 +38,7 @@ class HandleProtocolMessageCommand extends Command {
             await this.handleError(error.message, command);
         }
 
-        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
+        this.networkModuleManager.removeCachedSession(operationId, uuid, remotePeerId);
 
         return Command.empty();
     }
@@ -47,32 +47,14 @@ class HandleProtocolMessageCommand extends Command {
         throw Error('prepareMessage not implemented');
     }
 
-    async validateNeighborhood(
-        blockchain,
-        keyword,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        ual,
-    ) {
-        const closestNodes = await this.shardingTableService.findNeighbourhood(
-            blockchain,
-            keyword,
-            await this.blockchainModuleManager.getR2(blockchain),
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-            true, // filter inactive nodes
-        );
+    async validateShard(blockchain) {
         const peerId = this.networkModuleManager.getPeerId().toB58String();
-        for (const { peerId: otherPeerId } of closestNodes) {
-            if (otherPeerId === peerId) {
-                return true;
-            }
-        }
-        this.logger.warn(
-            `Invalid neighborhood for ual: ${ual} on blockchain: ${blockchain} with hashFunctionId: ${hashFunctionId}, proximityScoreFunctionsPairId: ${proximityScoreFunctionsPairId}`,
+        const isNodePartOfShard = await this.shardingTableService.isNodePartOfShard(
+            blockchain,
+            peerId,
         );
 
-        return false;
+        return isNodePartOfShard;
     }
 
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
@@ -88,6 +70,29 @@ class HandleProtocolMessageCommand extends Command {
         }
     }
 
+    async getAgreementData(blockchain, contract, tokenId, keyword, hashFunctionId, operationId) {
+        const agreementId = this.serviceAgreementService.generateId(
+            blockchain,
+            contract,
+            tokenId,
+            keyword,
+            hashFunctionId,
+        );
+        this.logger.info(
+            `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, blockchain: ${blockchain} keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId: ${operationId}`,
+        );
+
+        const agreementData = await this.blockchainModuleManager.getAgreementData(
+            blockchain,
+            agreementId,
+        );
+
+        return {
+            agreementId,
+            agreementData,
+        };
+    }
+
     async validateBid(
         contract,
         tokenId,
@@ -96,30 +101,9 @@ class HandleProtocolMessageCommand extends Command {
         blockchain,
         assertionId,
         operationId,
+        agreementId,
+        agreementData,
     ) {
-        const getAgreementData = async () => {
-            const agreementId = this.serviceAgreementService.generateId(
-                blockchain,
-                contract,
-                tokenId,
-                keyword,
-                hashFunctionId,
-            );
-            this.logger.info(
-                `Calculated agreement id: ${agreementId} for contract: ${contract}, token id: ${tokenId}, keyword: ${keyword}, hash function id: ${hashFunctionId}, operationId: ${operationId}`,
-            );
-
-            const agreementData = await this.blockchainModuleManager.getAgreementData(
-                blockchain,
-                agreementId,
-            );
-
-            return {
-                agreementId,
-                agreementData,
-            };
-        };
-
         const getAsk = async () => {
             const peerRecord = await this.repositoryModuleManager.getPeerRecord(
                 this.networkModuleManager.getPeerId().toB58String(),
@@ -129,13 +113,11 @@ class HandleProtocolMessageCommand extends Command {
             return this.blockchainModuleManager.convertToWei(blockchain, peerRecord.ask);
         };
 
-        const [{ agreementId, agreementData }, blockchainAssertionSize, r0, ask] =
-            await Promise.all([
-                getAgreementData(),
-                this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
-                this.blockchainModuleManager.getR0(blockchain),
-                getAsk(),
-            ]);
+        const [blockchainAssertionSize, r0, ask] = await Promise.all([
+            this.blockchainModuleManager.getAssertionSize(blockchain, assertionId),
+            this.blockchainModuleManager.getR0(blockchain),
+            getAsk(),
+        ]);
         const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
         if (!agreementData) {
             this.logger.warn(
@@ -176,70 +158,38 @@ class HandleProtocolMessageCommand extends Command {
         };
     }
 
-    async validateReceivedData(
-        operationId,
-        assertionId,
-        blockchain,
-        contract,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-    ) {
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-        this.logger.trace(`Validating neighborhood for ual: ${ual}`);
-        if (
-            !(await this.validateNeighborhood(
-                blockchain,
-                keyword,
-                hashFunctionId,
-                proximityScoreFunctionsPairId,
-                ual,
-            ))
-        ) {
+    async validateReceivedData(operationId, datasetRoot, dataset, blockchain) {
+        this.logger.trace(`Validating shard for datasetRoot: ${datasetRoot}`);
+        const isShardValid = await this.validateShard(blockchain);
+        if (!isShardValid) {
+            this.logger.warn(
+                `Invalid shard on blockchain: ${blockchain}, operationId: ${operationId}`,
+            );
             return {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                 messageData: { errorMessage: 'Invalid neighbourhood' },
             };
         }
 
-        this.logger.trace(`Validating assertion with ual: ${ual}`);
-        await this.validateAssertionId(blockchain, contract, tokenId, assertionId, ual);
-        this.logger.trace(`Validating bid for asset with ual: ${ual}`);
-        const { errorMessage, agreementId, agreementData } = await this.validateBid(
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            blockchain,
-            assertionId,
-            operationId,
+        const isValidAssertion = await this.validationService.validateDatasetRoot(
+            dataset,
+            datasetRoot,
         );
 
-        if (errorMessage) {
+        if (!isValidAssertion) {
             return {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                messageData: { errorMessage },
+                messageData: {
+                    errorMessage: `Invalid dataset root for asset ???. Received value , received value from request: ${datasetRoot}`,
+                },
             };
         }
-
-        await this.operationIdService.cacheOperationIdData(operationId, {
-            assertionId,
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            agreementId,
-            agreementData,
-        });
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
     }
 
     async handleError(errorMessage, command) {
-        const { operationId, blockchain, remotePeerId, keywordUuid, protocol } = command.data;
+        const { operationId, blockchain, remotePeerId, uuid, protocol } = command.data;
 
         await super.handleError(operationId, blockchain, errorMessage, this.errorType, true);
         await this.networkModuleManager.sendMessageResponse(
@@ -247,10 +197,10 @@ class HandleProtocolMessageCommand extends Command {
             remotePeerId,
             NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
             operationId,
-            keywordUuid,
+            uuid,
             { errorMessage },
         );
-        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, remotePeerId);
+        this.networkModuleManager.removeCachedSession(operationId, uuid, remotePeerId);
     }
 }
 

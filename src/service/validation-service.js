@@ -80,15 +80,10 @@ class ValidationService {
         }
     }
 
-    async validateAssertionId(assertion, assertionId) {
-        const calculatedAssertionId = await this.validationModuleManager.calculateRoot(assertion);
+    async validateDatasetRoot(dataset, datasetRoot) {
+        const calculatedDatasetRoot = await this.validationModuleManager.calculateRoot(dataset);
 
-        if (assertionId !== calculatedAssertionId) {
-            // todo after corrective component is implemented, update this logic
-            this.logger.warn(
-                `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
-            );
-        }
+        return datasetRoot === calculatedDatasetRoot;
     }
 }
 

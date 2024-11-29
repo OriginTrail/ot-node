@@ -7,39 +7,24 @@ class PendingStorageService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
-        this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;
     }
 
-    async cacheAssertion(
-        repository,
-        blockchain,
-        contract,
-        tokenId,
-        assertionId,
-        assertion,
-        operationId,
-    ) {
-        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
+    async cacheDataset(operationId, datasetRoot, dataset) {
         this.logger.debug(
-            `Caching ${assertionId} assertion for ual: ${ual}, operation id: ${operationId} in file in ${repository} pending storage`,
-        );
-
-        const pendingStorageFolderPath = this.fileService.getPendingStorageFolderPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
+            `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage`,
         );
 
         await this.fileService.writeContentsToFile(
-            pendingStorageFolderPath,
-            assertionId,
-            JSON.stringify(assertion),
+            this.fileService.getPendingStorageCachePath(),
+            operationId,
+            JSON.stringify({
+                merkleRoot: datasetRoot,
+                assertion: dataset,
+            }),
         );
     }
 
@@ -50,13 +35,7 @@ class PendingStorageService {
             `Reading cached assertion for ual: ${ual}, assertion id: ${assertionId}, operation id: ${operationId} from file in ${repository} pending storage`,
         );
         try {
-            const documentPath = await this.fileService.getPendingStorageDocumentPath(
-                repository,
-                blockchain,
-                contract,
-                tokenId,
-                assertionId,
-            );
+            const documentPath = await this.fileService.getPendingStorageDocumentPath(operationId);
 
             const data = await this.fileService.readFile(documentPath, true);
             return data;
@@ -68,14 +47,7 @@ class PendingStorageService {
         }
     }
 
-    async removeCachedAssertion(
-        repository,
-        blockchain,
-        contract,
-        tokenId,
-        assertionId,
-        operationId,
-    ) {
+    async removeCachedAssertion(repository, blockchain, contract, tokenId, operationId) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
@@ -83,11 +55,7 @@ class PendingStorageService {
         );
 
         const pendingAssertionPath = await this.fileService.getPendingStorageDocumentPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-            assertionId,
+            operationId,
         );
         await this.fileService.removeFile(pendingAssertionPath);
 
@@ -108,31 +76,8 @@ class PendingStorageService {
         }
     }
 
-    async assetHasPendingState(repository, blockchain, contract, tokenId, assertionId) {
-        try {
-            const documentPath = await this.fileService.getPendingStorageDocumentPath(
-                repository,
-                blockchain,
-                contract,
-                tokenId,
-                assertionId,
-            );
-            this.logger.trace(
-                `Checking if assertion exists in pending storage at path: ${documentPath}`,
-            );
-            return this.fileService.pathExists(documentPath);
-        } catch (error) {
-            return false;
-        }
-    }
-
-    async getPendingState(repository, blockchain, contract, tokenId) {
-        return this.fileService.getPendingStorageLatestDocument(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
+    async getPendingState(operationId) {
+        return this.fileService.getPendingStorageLatestDocument(operationId);
     }
 
     async moveAndDeletePendingState(

@@ -13,7 +13,7 @@ class GetController extends BaseController {
     }
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
-        const { operationId, keywordUuid, messageType } = message.header;
+        const { operationId, uuid, messageType } = message.header;
         const [handleInitCommand, handleRequestCommand] = this.getCommandSequence(protocol);
         let commandName;
         switch (messageType) {
@@ -34,7 +34,7 @@ class GetController extends BaseController {
             data: {
                 remotePeerId,
                 operationId,
-                keywordUuid,
+                uuid,
                 protocol,
                 assertionId: message.data.assertionId,
                 blockchain: message.data.blockchain,
