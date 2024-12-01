@@ -19,7 +19,7 @@ class BlockchainEventRepository {
                     event: event.event,
                     data: event.data,
                     block: event.block,
-                    blockchainId: event.blockchainId,
+                    blockchain: event.blockchain,
                     processed: false,
                 })),
                 {
@@ -33,10 +33,10 @@ class BlockchainEventRepository {
         return insertedEvents;
     }
 
-    async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {
+    async getAllUnprocessedBlockchainEvents(eventNames, blockchain) {
         return this.model.findAll({
             where: {
-                blockchainId,
+                blockchain,
                 processed: false,
                 event: { [Sequelize.Op.in]: eventNames },
             },
@@ -44,14 +44,14 @@ class BlockchainEventRepository {
         });
     }
 
-    async blockchainEventExists(contract, event, data, block, blockchainId) {
+    async blockchainEventExists(contract, event, data, block, blockchain) {
         const dbEvent = await this.model.findOne({
             where: {
                 contract,
                 event,
                 data,
                 block,
-                blockchainId,
+                blockchain,
             },
         });
         return !!dbEvent;

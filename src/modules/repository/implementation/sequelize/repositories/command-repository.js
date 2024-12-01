@@ -68,6 +68,23 @@ class CommandRepository {
             limit,
         });
     }
+
+    async findUnfinalizedCommandsByName(name) {
+        return this.model.findAll({
+            where: {
+                name,
+                status: {
+                    [Sequelize.Op.notIn]: [
+                        COMMAND_STATUS.COMPLETED,
+                        COMMAND_STATUS.FAILED,
+                        COMMAND_STATUS.EXPIRED,
+                        COMMAND_STATUS.UNKNOWN,
+                    ],
+                },
+            },
+            raw: true,
+        });
+    }
 }
 
 export default CommandRepository;

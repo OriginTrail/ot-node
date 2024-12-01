@@ -17,9 +17,16 @@ class BlockchainEventsService {
         }
     }
 
+    async getBlock(blockchain, tag = 'latest') {
+        return this.blockchainEventsModuleManager.getBlock(
+            this.blockchainEventsServicesImplementations[blockchain],
+            blockchain,
+            tag,
+        );
+    }
+
     async getPastEvents(
         blockchain,
-        contract,
         contractName,
         eventsToFilter,
         lastCheckedBlock,
@@ -29,7 +36,6 @@ class BlockchainEventsService {
         return this.blockchainEventsModuleManager.getPastEvents(
             this.blockchainEventsServicesImplementations[blockchain],
             blockchain,
-            contract,
             contractName,
             eventsToFilter,
             lastCheckedBlock,

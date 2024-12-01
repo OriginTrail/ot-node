@@ -33,9 +33,6 @@ class ShardingTableService {
         await Promise.all(pullBlockchainShardingTables);
 
         await this.networkModuleManager.onPeerConnected((connection) => {
-            this.logger.trace(
-                `Node connected to ${connection.remotePeer.toB58String()}, updating sharding table last seen and last dialed.`,
-            );
             this.updatePeerRecordLastSeenAndLastDialed(connection.remotePeer.toB58String()).catch(
                 (error) => {
                     this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
@@ -47,7 +44,7 @@ class ShardingTableService {
     async pullBlockchainShardingTable(blockchainId, force = false) {
         const lastCheckedBlock = await this.repositoryModuleManager.getLastCheckedBlock(
             blockchainId,
-            CONTRACTS.SHARDING_TABLE_CONTRACT,
+            CONTRACTS.SHARDING_TABLE,
         );
 
         if (

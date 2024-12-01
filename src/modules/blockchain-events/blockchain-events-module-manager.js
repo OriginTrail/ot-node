@@ -10,7 +10,6 @@ class BlockchainEventsModuleManager extends BaseModuleManager {
     async getPastEvents(
         implementationName,
         blockchain,
-        contract,
         contractName,
         eventsToFilter,
         lastCheckedBlock,
@@ -20,7 +19,6 @@ class BlockchainEventsModuleManager extends BaseModuleManager {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.getPastEvents(
                 blockchain,
-                contract,
                 contractName,
                 eventsToFilter,
                 lastCheckedBlock,

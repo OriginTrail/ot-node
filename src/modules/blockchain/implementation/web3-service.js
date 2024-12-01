@@ -3,7 +3,6 @@ import { ethers, BigNumber } from 'ethers';
 import axios from 'axios';
 import async from 'async';
 import { setTimeout as sleep } from 'timers/promises';
-import { createRequire } from 'module';
 
 import {
     SOLIDITY_ERROR_STRING_PREFIX,
@@ -23,39 +22,9 @@ import {
     CONTRACT_FUNCTION_PRIORITY,
     TRANSACTION_PRIORITY,
     CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS,
+    ABIs,
 } from '../../../constants/constants.js';
 import Web3ServiceValidator from './web3-service-validator.js';
-
-const require = createRequire(import.meta.url);
-
-const ABIs = {
-    ContentAsset: require('dkg-evm-module/abi/ContentAssetV2.json'),
-    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorageV2.json'),
-    AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
-    Staking: require('dkg-evm-module/abi/Staking.json'),
-    StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
-    Token: require('dkg-evm-module/abi/Token.json'),
-    HashingProxy: require('dkg-evm-module/abi/HashingProxy.json'),
-    Hub: require('dkg-evm-module/abi/Hub.json'),
-    IdentityStorage: require('dkg-evm-module/abi/IdentityStorage.json'),
-    Log2PLDSF: require('dkg-evm-module/abi/Log2PLDSF.json'),
-    ParametersStorage: require('dkg-evm-module/abi/ParametersStorage.json'),
-    Profile: require('dkg-evm-module/abi/Profile.json'),
-    ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
-    ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
-    ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
-    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
-    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
-    ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
-    ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
-    ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
-    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
-    ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
-    UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
-    LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
-    ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
-    ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
-};
 
 const SCORING_FUNCTIONS = {
     1: 'Log2PLDSF',
@@ -232,25 +201,22 @@ class Web3Service {
         }
     }
 
-    getABIs() {
-        return ABIs;
-    }
-
     async initializeContracts() {
+        this.contracts = {};
         this.contractAddresses = {};
 
         this.logger.info(
             `Initializing contracts with hub contract address: ${this.config.hubContractAddress}`,
         );
-        this.HubContract = new ethers.Contract(
+        this.contracts.Hub = new ethers.Contract(
             this.config.hubContractAddress,
-            this.getABIs().Hub,
+            ABIs.Hub,
             this.operationalWallets[0],
         );
-        this.contractAddresses[this.config.hubContractAddress] = this.HubContract;
+        this.contractAddresses[this.config.hubContractAddress] = this.contracts.Hub;
 
         const contractsArray = await this.callContractFunction(
-            this.HubContract,
+            this.contracts.Hub,
             'getAllContracts',
             [],
         );
@@ -261,7 +227,7 @@ class Web3Service {
 
         this.scoringFunctionsContracts = {};
         const scoringFunctionsArray = await this.callContractFunction(
-            this.ScoringProxyContract,
+            this.contracts.ScoringProxy,
             'getAllScoreFunctions',
             [],
         );
@@ -271,7 +237,7 @@ class Web3Service {
 
         this.assetStorageContracts = {};
         const assetStoragesArray = await this.callContractFunction(
-            this.HubContract,
+            this.contracts.Hub,
             'getAllAssetStorages',
             [],
         );
@@ -351,7 +317,7 @@ class Web3Service {
     initializeAssetStorageContract(assetStorageAddress) {
         this.assetStorageContracts[assetStorageAddress.toLowerCase()] = new ethers.Contract(
             assetStorageAddress,
-            this.getABIs().ContentAssetStorage,
+            ABIs.ContentAssetStorage,
             this.operationalWallets[0],
         );
         this.contractAddresses[assetStorageAddress] =
@@ -361,17 +327,13 @@ class Web3Service {
     initializeScoringContract(id, contractAddress) {
         const contractName = SCORING_FUNCTIONS[id];
 
-        if (this.getABIs()[contractName] != null) {
+        if (ABIs[contractName] != null) {
             this.scoringFunctionsContracts[id] = new ethers.Contract(
                 contractAddress,
-                this.getABIs()[contractName],
+                ABIs[contractName],
                 this.operationalWallets[0],
             );
             this.contractAddresses[contractAddress] = this.scoringFunctionsContracts[id];
-        } else {
-            this.logger.trace(
-                `Skipping initialisation of contract with id: ${id}, address: ${contractAddress}`,
-            );
         }
     }
 
@@ -402,17 +364,13 @@ class Web3Service {
     }
 
     initializeContract(contractName, contractAddress) {
-        if (this.getABIs()[contractName] != null) {
-            this[`${contractName}Contract`] = new ethers.Contract(
+        if (ABIs[contractName] != null) {
+            this.contracts[contractName] = new ethers.Contract(
                 contractAddress,
-                this.getABIs()[contractName],
+                ABIs[contractName],
                 this.operationalWallets[0],
             );
-            this.contractAddresses[contractAddress] = this[`${contractName}Contract`];
-        } else {
-            this.logger.trace(
-                `Skipping initialisation of contract: ${contractName}, address: ${contractAddress}`,
-            );
+            this.contractAddresses[contractAddress] = this.contracts[contractName];
         }
     }
 
@@ -446,7 +404,7 @@ class Web3Service {
     }
 
     async getTokenBalance(publicKey) {
-        const tokenBalance = await this.callContractFunction(this.TokenContract, 'balanceOf', [
+        const tokenBalance = await this.callContractFunction(this.contracts.Token, 'balanceOf', [
             publicKey,
         ]);
         return Number(ethers.utils.formatEther(tokenBalance));
@@ -464,10 +422,10 @@ class Web3Service {
 
         const promises = this.operationalWallets.map((wallet) =>
             this.callContractFunction(
-                this.IdentityStorageContract,
+                this.contracts.IdentityStorage,
                 'getIdentityId',
                 [wallet.address],
-                CONTRACTS.IDENTITY_STORAGE_CONTRACT,
+                CONTRACTS.IDENTITY_STORAGE,
             ).then((identityId) => [wallet.address, Number(identityId)]),
         );
         const results = await Promise.all(promises);
@@ -542,7 +500,7 @@ class Web3Service {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 await this._executeContractFunction(
-                    this.ProfileContract,
+                    this.contracts.Profile,
                     'createProfile',
                     [
                         this.getManagementKey(),
@@ -909,26 +867,26 @@ class Web3Service {
     }
 
     async isAssetStorageContract(contractAddress) {
-        return this.callContractFunction(this.HubContract, 'isAssetStorage(address)', [
+        return this.callContractFunction(this.contracts.Hub, 'isAssetStorage(address)', [
             contractAddress,
         ]);
     }
 
     async getMinProofWindowOffsetPerc() {
         return this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'minProofWindowOffsetPerc',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
     }
 
     async getMaxProofWindowOffsetPerc() {
         return this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'maxProofWindowOffsetPerc',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
     }
 
@@ -1007,7 +965,7 @@ class Web3Service {
 
     async getUnfinalizedState(tokenId) {
         return this.callContractFunction(
-            this.UnfinalizedStateStorageContract,
+            this.contracts.UnfinalizedStateStorage,
             'getUnfinalizedState',
             [tokenId],
         );
@@ -1015,7 +973,7 @@ class Web3Service {
 
     async getAgreementData(agreementId) {
         const result = await this.callContractFunction(
-            this.ServiceAgreementStorageProxyContract,
+            this.contracts.ServiceAgreementStorageProxy,
             'getAgreementData',
             [agreementId],
         );
@@ -1035,7 +993,7 @@ class Web3Service {
 
     async getAssertionSize(assertionId) {
         const assertionSize = await this.callContractFunction(
-            this.AssertionStorageContract,
+            this.contracts.AssertionStorage,
             'getAssertionSize',
             [assertionId],
         );
@@ -1044,7 +1002,7 @@ class Web3Service {
 
     async getAssertionTriplesNumber(assertionId) {
         const assertionTriplesNumber = await this.callContractFunction(
-            this.AssertionStorageContract,
+            this.contracts.AssertionStorage,
             'getAssertionTriplesNumber',
             [assertionId],
         );
@@ -1053,7 +1011,7 @@ class Web3Service {
 
     async getAssertionChunksNumber(assertionId) {
         const assertionChunksNumber = await this.callContractFunction(
-            this.AssertionStorageContract,
+            this.contracts.AssertionStorage,
             'getAssertionChunksNumber',
             [assertionId],
         );
@@ -1062,7 +1020,7 @@ class Web3Service {
 
     async getAssertionData(assertionId) {
         const assertionData = await this.callContractFunction(
-            this.AssertionStorageContract,
+            this.contracts.AssertionStorage,
             'getAssertion',
             [assertionId],
         );
@@ -1076,8 +1034,8 @@ class Web3Service {
 
     selectCommitManagerContract(latestStateIndex) {
         return latestStateIndex === 0
-            ? this.CommitManagerV1Contract
-            : this.CommitManagerV1U1Contract;
+            ? this.contracts.CommitManagerV1
+            : this.contracts.CommitManagerV1U1;
     }
 
     async isCommitWindowOpen(agreementId, epoch, latestStateIndex) {
@@ -1090,7 +1048,7 @@ class Web3Service {
 
     async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex) {
         return this.callContractFunction(
-            this.CommitManagerV1U1Contract,
+            this.contracts.CommitManagerV1U1,
             'isUpdateCommitWindowOpen',
             [agreementId, epoch, stateIndex],
         );
@@ -1118,10 +1076,10 @@ class Web3Service {
 
     async getMinimumStake() {
         const minimumStake = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'minimumStake',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
 
         return Number(ethers.utils.formatEther(minimumStake));
@@ -1129,10 +1087,10 @@ class Web3Service {
 
     async getMaximumStake() {
         const maximumStake = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'maximumStake',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
 
         return Number(ethers.utils.formatEther(maximumStake));
@@ -1140,40 +1098,40 @@ class Web3Service {
 
     async getR2() {
         const r2 = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'r2',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
         return r2;
     }
 
     async getR1() {
         const r1 = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'r1',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
         return r1;
     }
 
     async getR0() {
         const r0 = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'r0',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
         return r0;
     }
 
     async getFinalizationCommitsNumber() {
         const finalizationCommitsNumber = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'finalizationCommitsNumber',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
         return finalizationCommitsNumber;
     }
@@ -1235,7 +1193,7 @@ class Web3Service {
                 'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))';
         }
         return this.queueTransaction(
-            this.CommitManagerV1U1Contract,
+            this.contracts.CommitManagerV1U1,
             functionName,
             [submitCommitArgs],
             callback,
@@ -1244,7 +1202,9 @@ class Web3Service {
     }
 
     selectProofManagerContract(latestStateIndex) {
-        return latestStateIndex === 0 ? this.ProofManagerV1Contract : this.ProofManagerV1U1Contract;
+        return latestStateIndex === 0
+            ? this.contracts.ProofManagerV1
+            : this.contracts.ProofManagerV1U1;
     }
 
     async isProofWindowOpen(agreementId, epoch, latestStateIndex) {
@@ -1292,12 +1252,12 @@ class Web3Service {
     }
 
     async getShardingTableHead() {
-        return this.callContractFunction(this.ShardingTableStorageContract, 'head', []);
+        return this.callContractFunction(this.contracts.ShardingTableStorage, 'head', []);
     }
 
     async getShardingTableLength() {
         const nodesCount = await this.callContractFunction(
-            this.ShardingTableStorageContract,
+            this.contracts.ShardingTableStorage,
             'nodesCount',
             [],
         );
@@ -1306,7 +1266,7 @@ class Web3Service {
 
     async getShardingTablePage(startingIdentityId, nodesNum) {
         return this.callContractFunction(
-            this.ShardingTableContract,
+            this.contracts.ShardingTable,
             'getShardingTable(uint72,uint72)',
             [startingIdentityId, nodesNum],
         );
@@ -1374,45 +1334,45 @@ class Web3Service {
 
     async getUpdateCommitWindowDuration() {
         const commitWindowDurationPerc = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'updateCommitWindowDuration',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
         return Number(commitWindowDurationPerc);
     }
 
     async getCommitWindowDurationPerc() {
         const commitWindowDurationPerc = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'commitWindowDurationPerc',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
         return Number(commitWindowDurationPerc);
     }
 
     async getProofWindowDurationPerc() {
         return this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'proofWindowDurationPerc',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
     }
 
     async getEpochLength() {
         const epochLength = await this.callContractFunction(
-            this.ParametersStorageContract,
+            this.contracts.ParametersStorage,
             'epochLength',
             [],
-            CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
+            CONTRACTS.PARAMETERS_STORAGE,
         );
         return Number(epochLength);
     }
 
     async isHashFunction(hashFunctionId) {
-        return this.callContractFunction(this.HashingProxyContract, 'isHashFunction(uint8)', [
+        return this.callContractFunction(this.contracts.HashingProxy, 'isHashFunction(uint8)', [
             hashFunctionId,
         ]);
     }
@@ -1426,7 +1386,7 @@ class Web3Service {
             this.scoringFunctionsContracts[1],
             'getParameters',
             [],
-            CONTRACTS.LOG2PLDSF_CONTRACT,
+            CONTRACTS.LOG2PLDSF,
         );
 
         const params = {};
@@ -1461,14 +1421,16 @@ class Web3Service {
     }
 
     async hasPendingUpdate(tokenId) {
-        return this.callContractFunction(this.UnfinalizedStateStorageContract, 'hasPendingUpdate', [
-            tokenId,
-        ]);
+        return this.callContractFunction(
+            this.contracts.UnfinalizedStateStorage,
+            'hasPendingUpdate',
+            [tokenId],
+        );
     }
 
     async getAgreementScoreFunctionId(agreementId) {
         return this.callContractFunction(
-            this.ServiceAgreementStorageProxyContract,
+            this.contracts.ServiceAgreementStorageProxy,
             'getAgreementScoreFunctionId',
             [agreementId],
         );
@@ -1479,7 +1441,7 @@ class Web3Service {
             this.scoringFunctionsContracts[2],
             'getParameters',
             [],
-            CONTRACTS.LINEAR_SUM_CONTRACT,
+            CONTRACTS.LINEAR_SUM,
         );
         return {
             distanceScaleFactor: BigNumber.from(linearSumParams[0]),
@@ -1491,52 +1453,52 @@ class Web3Service {
 
     async getParanetKnowledgeAssetsCount(paranetId) {
         return this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'getKnowledgeAssetsCount',
             [paranetId],
-            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            CONTRACTS.PARANETS_REGISTRY,
         );
     }
 
     async getParanetKnowledgeAssetsWithPagination(paranetId, offset, limit) {
         return this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'getKnowledgeAssetsWithPagination',
             [paranetId, offset, limit],
-            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            CONTRACTS.PARANETS_REGISTRY,
         );
     }
 
     async getParanetMetadata(paranetId) {
         return this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'getParanetMetadata',
             [paranetId],
-            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            CONTRACTS.PARANETS_REGISTRY,
         );
     }
 
     async getName(paranetId) {
         return this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'getName',
             [paranetId],
-            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            CONTRACTS.PARANETS_REGISTRY,
         );
     }
 
     async getDescription(paranetId) {
         return this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'getDescription',
             [paranetId],
-            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            CONTRACTS.PARANETS_REGISTRY,
         );
     }
 
     async getParanetKnowledgeAssetLocator(knowledgeAssetId) {
         const [knowledgeAssetStorageContract, kaTokenId] = await this.callContractFunction(
-            this.ParanetKnowledgeAssetsRegistryContract,
+            this.contracts.ParanetKnowledgeAssetsRegistry,
             'getKnowledgeAssetLocator',
             [knowledgeAssetId],
         );
@@ -1547,7 +1509,7 @@ class Web3Service {
 
     async getKnowledgeAssetLocatorFromParanetId(paranetId) {
         const [paranetKAStorageContract, paranetKATokenId] = await this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'getParanetKnowledgeAssetLocator',
             [paranetId],
         );
@@ -1558,16 +1520,16 @@ class Web3Service {
 
     async paranetExists(paranetId) {
         return this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'paranetExists',
             [paranetId],
-            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            CONTRACTS.PARANETS_REGISTRY,
         );
     }
 
     async getParanetId(knowledgeAssetId) {
         return this.callContractFunction(
-            this.ParanetKnowledgeAssetsRegistryContract,
+            this.contracts.ParanetKnowledgeAssetsRegistry,
             'getParanetId',
             [knowledgeAssetId],
         );
@@ -1575,57 +1537,45 @@ class Web3Service {
 
     async isParanetKnowledgeAsset(knowledgeAssetId) {
         return this.callContractFunction(
-            this.ParanetKnowledgeAssetsRegistryContract,
+            this.contracts.ParanetKnowledgeAssetsRegistry,
             'isParanetKnowledgeAsset',
             [knowledgeAssetId],
         );
     }
 
     async isCuratedNode(paranetId, identityId) {
-        return this.callContractFunction(this.ParanetsRegistryContract, 'isCuratedNode', [
+        return this.callContractFunction(this.contracts.ParanetsRegistry, 'isCuratedNode', [
             paranetId,
             identityId,
         ]);
     }
 
     async getNodesAccessPolicy(paranetId) {
-        return this.callContractFunction(this.ParanetsRegistryContract, 'getNodesAccessPolicy', [
+        return this.callContractFunction(this.contracts.ParanetsRegistry, 'getNodesAccessPolicy', [
             paranetId,
         ]);
     }
 
     async getParanetCuratedNodes(paranetId) {
         return this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'getCuratedNodes',
             [paranetId],
-            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            CONTRACTS.PARANETS_REGISTRY,
         );
     }
 
     async getNodeId(identityId) {
-        return this.callContractFunction(this.ProfileStorageContract, 'getNodeId', [identityId]);
+        return this.callContractFunction(this.contracts.ProfileStorage, 'getNodeId', [identityId]);
     }
 
     async isKnowledgeAssetRegistered(paranetId, knowledgeAssetId) {
         return this.callContractFunction(
-            this.ParanetsRegistryContract,
+            this.contracts.ParanetsRegistry,
             'isKnowledgeAssetRegistered',
             [paranetId, knowledgeAssetId],
-            CONTRACTS.PARANETS_REGISTRY_CONTRACT,
+            CONTRACTS.PARANETS_REGISTRY,
         );
-    }
-
-    getContract(contractName) {
-        const finalContractName = contractName.endsWith('Contract')
-            ? contractName
-            : `${contractName}Contract`;
-
-        const contract = this[finalContractName];
-        if (contract === undefined) {
-            this.logger.error(`Could not fetch the contract ${finalContractName}.`);
-        }
-        return contract;
     }
 }
 

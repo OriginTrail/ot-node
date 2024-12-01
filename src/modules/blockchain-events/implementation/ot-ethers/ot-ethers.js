@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import ethers from 'ethers';
+import { ethers } from 'ethers';
 import BlockchainEventsService from '../blockchain-events-service.js';
 
 import {
@@ -11,16 +11,21 @@ import {
     MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
     NODE_ENVIRONMENTS,
     BLOCK_TIME_MILLIS,
+    ABIs,
+    CONTRACTS_EVENTS_LISTENED,
 } from '../../../../constants/constants.js';
 
 class OtEthers extends BlockchainEventsService {
     async initialize(config, logger) {
         await super.initialize(config, logger);
-        await this.initializeRpcProviders();
+        this.contractCallCache = {};
+        await this._initializeRpcProviders();
+        await this._initializeContracts();
     }
 
-    async initializeRpcProviders() {
+    async _initializeRpcProviders() {
         this.providers = {};
+
         for (const blockchain of this.config.blockchains) {
             const providers = [];
             for (const rpcEndpoint of this.config.rpcEndpoints[blockchain]) {
@@ -61,11 +66,19 @@ class OtEthers extends BlockchainEventsService {
                     }
 
                     this.logger.debug(
-                        `Connected to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                        `Connected to the blockchain RPC: ${
+                            rpcEndpoint.includes('apiKey')
+                                ? rpcEndpoint.split('apiKey')[0]
+                                : rpcEndpoint
+                        }.`,
                     );
                 } catch (e) {
                     this.logger.warn(
-                        `Unable to connect to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                        `Unable to connect to the blockchain RPC: ${
+                            rpcEndpoint.includes('apiKey')
+                                ? rpcEndpoint.split('apiKey')[0]
+                                : rpcEndpoint
+                        }.`,
                     );
                 }
             }
@@ -86,25 +99,49 @@ class OtEthers extends BlockchainEventsService {
         }
     }
 
-    maskRpcUrl(url) {
-        if (url.includes('apiKey')) {
-            return url.split('apiKey')[0];
+    async _initializeContracts() {
+        this.contracts = {};
+
+        for (const blockchain of this.config.blockchains) {
+            this.contracts[blockchain] = {};
+
+            this.logger.info(
+                `Initializing contracts with hub contract address: ${this.config.hubContractAddress[blockchain]}`,
+            );
+            this.contracts[blockchain].Hub = new ethers.Contract(
+                this.config.hubContractAddress[blockchain],
+                ABIs.Hub,
+                this.providers[blockchain],
+            );
+
+            const contractsAray = await this.contracts[blockchain].Hub.getAllContracts();
+            const assetStoragesArray = await this.contracts[blockchain].Hub.getAllAssetStorages();
+
+            const allContracts = [...contractsAray, ...assetStoragesArray];
+
+            for (const [contractName, contractAddress] of allContracts) {
+                if (
+                    CONTRACTS_EVENTS_LISTENED.includes(contractName) &&
+                    ABIs[contractName] != null
+                ) {
+                    this.contracts[blockchain][contractName] = new ethers.Contract(
+                        contractAddress,
+                        ABIs[contractName],
+                        this.providers[blockchain],
+                    );
+                }
+            }
+
+            this.logger.info(`Contracts initialized`);
         }
-        return url;
     }
 
-    async getBlock(blockchain, tag = 'latest') {
+    async getBlock(blockchain, tag) {
         return this.providers[blockchain].getBlock(tag);
     }
 
-    async getPastEvents(
-        blockchain,
-        contractName,
-        contract,
-        eventsToFilter,
-        lastCheckedBlock,
-        currentBlock,
-    ) {
+    async getPastEvents(blockchain, contractName, eventsToFilter, lastCheckedBlock, currentBlock) {
+        const contract = this.contracts[blockchain][contractName];
         if (!contract) {
             // this will happen when we have different set of contracts on different blockchains
             // eg LinearSum contract is available on gnosis but not on NeuroWeb, so the node should not fetch events
@@ -116,17 +153,10 @@ class OtEthers extends BlockchainEventsService {
             };
         }
 
-        let fromBlock;
-        let eventsMissed = false;
-        if (
-            currentBlock - lastCheckedBlock >
-            (await this._getMaxNumberOfHistoricalBlocksForSync(blockchain))
-        ) {
-            fromBlock = currentBlock;
-            eventsMissed = true;
-        } else {
-            fromBlock = lastCheckedBlock + 1;
-        }
+        const maxBlocksToSync = await this._getMaxNumberOfHistoricalBlocksForSync(blockchain);
+        let fromBlock =
+            currentBlock - lastCheckedBlock > maxBlocksToSync ? currentBlock : lastCheckedBlock + 1;
+        const eventsMissed = currentBlock - lastCheckedBlock > maxBlocksToSync;
 
         const topics = [];
         for (const filterName in contract.filters) {
@@ -151,7 +181,7 @@ class OtEthers extends BlockchainEventsService {
                     contract,
                     topics,
                 );
-                newEvents.forEach((e) => events.push(...e));
+                events.push(...newEvents.flat());
                 fromBlock = toBlock + 1;
             }
         } catch (error) {
@@ -199,7 +229,7 @@ class OtEthers extends BlockchainEventsService {
         }
 
         const latestBlock = await this.getBlock(blockchain);
-        const olderBlock = await this.getBlock(latestBlock.number - blockRange);
+        const olderBlock = await this.getBlock(blockchain, latestBlock.number - blockRange);
 
         const timeDiffMillis = (latestBlock.timestamp - olderBlock.timestamp) * 1000;
         return timeDiffMillis / blockRange;
