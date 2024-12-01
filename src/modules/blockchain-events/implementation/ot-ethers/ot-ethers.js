@@ -1,6 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { ethers, BigNumber } from 'ethers';
-import { setTimeout as sleep } from 'timers/promises';
+import { ethers } from 'ethers';
 import BlockchainEventsService from '../blockchain-events-service.js';
 
 import {
@@ -13,26 +12,19 @@ import {
     NODE_ENVIRONMENTS,
     BLOCK_TIME_MILLIS,
     ABIs,
-    CACHED_FUNCTIONS,
-    SOLIDITY_ERROR_STRING_PREFIX,
-    SOLIDITY_PANIC_CODE_PREFIX,
-    SOLIDITY_PANIC_REASONS,
-    ZERO_PREFIX,
-    CACHE_DATA_TYPES,
+    CONTRACTS_EVENTS_LISTENED,
 } from '../../../../constants/constants.js';
-import Web3ServiceValidator from './web3-service-validator.js';
 
 class OtEthers extends BlockchainEventsService {
     async initialize(config, logger) {
         await super.initialize(config, logger);
         this.contractCallCache = {};
-        await this.initializeRpcProviders();
-        await this.initializeContracts();
+        await this._initializeRpcProviders();
+        await this._initializeContracts();
     }
 
-    async initializeRpcProviders() {
+    async _initializeRpcProviders() {
         this.providers = {};
-        this.operationalWallets = {};
 
         for (const blockchain of this.config.blockchains) {
             const providers = [];
@@ -74,11 +66,19 @@ class OtEthers extends BlockchainEventsService {
                     }
 
                     this.logger.debug(
-                        `Connected to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                        `Connected to the blockchain RPC: ${
+                            rpcEndpoint.includes('apiKey')
+                                ? rpcEndpoint.split('apiKey')[0]
+                                : rpcEndpoint
+                        }.`,
                     );
                 } catch (e) {
                     this.logger.warn(
-                        `Unable to connect to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
+                        `Unable to connect to the blockchain RPC: ${
+                            rpcEndpoint.includes('apiKey')
+                                ? rpcEndpoint.split('apiKey')[0]
+                                : rpcEndpoint
+                        }.`,
                     );
                 }
             }
@@ -96,296 +96,48 @@ class OtEthers extends BlockchainEventsService {
                     `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
                 );
             }
-
-            this.operationalWallets[blockchain] = this.getValidOperationalWallets(blockchain);
-            if (this.operationalWallets.length === 0) {
-                throw Error(
-                    'Unable to initialize web3 service, all operational wallets provided are invalid',
-                );
-            }
         }
     }
 
-    maskRpcUrl(url) {
-        if (url.includes('apiKey')) {
-            return url.split('apiKey')[0];
-        }
-        return url;
-    }
-
-    async getBlock(blockchain, tag = 'latest') {
-        return this.providers[blockchain].getBlock(tag);
-    }
-
-    getValidOperationalWallets(blockchain) {
-        const wallets = [];
-        this.config.operationalWallets[blockchain].forEach((wallet) => {
-            try {
-                wallets.push(new ethers.Wallet(wallet.privateKey, this.providers[blockchain]));
-            } catch (error) {
-                this.logger.warn(
-                    `Invalid evm private key, unable to create wallet instance. Wallet public key: ${wallet.evmAddress}. Error: ${error.message}`,
-                );
-            }
-        });
-        return wallets;
-    }
-
-    async initializeContracts() {
+    async _initializeContracts() {
         this.contracts = {};
-        this.contractAddresses = {};
-        this.scoringFunctionsContracts = {};
-        this.assetStorageContracts = {};
 
         for (const blockchain of this.config.blockchains) {
             this.contracts[blockchain] = {};
-            this.contractAddresses[blockchain] = {};
 
             this.logger.info(
                 `Initializing contracts with hub contract address: ${this.config.hubContractAddress[blockchain]}`,
             );
-            this.contracts[blockchain].HubContract = new ethers.Contract(
+            this.contracts[blockchain].Hub = new ethers.Contract(
                 this.config.hubContractAddress[blockchain],
-                this.getABIs().Hub,
-                this.operationalWallets[blockchain][0],
-            );
-            this.contractAddresses[blockchain][this.config.hubContractAddress] =
-                this.contracts[blockchain].HubContract;
-
-            const contractsArray = await this.callContractFunction(
-                blockchain,
-                this.contracts[blockchain].HubContract,
-                'getAllContracts',
-                [],
+                ABIs.Hub,
+                this.providers[blockchain],
             );
 
-            // Filter contracts that we want to monitor events for
-            const eventsContracts = this.contractsToMonitor.map((contractName) =>
-                contractName.endsWith('Contract')
-                    ? contractName.slice(0, -'Contract'.length)
-                    : contractName,
-            );
+            const contractsAray = await this.contracts[blockchain].Hub.getAllContracts();
+            const assetStoragesArray = await this.contracts[blockchain].Hub.getAllAssetStorages();
 
-            const filteredContracts = contractsArray.filter(([contractName]) =>
-                eventsContracts.includes(contractName),
-            );
+            const allContracts = [...contractsAray, ...assetStoragesArray];
 
-            filteredContracts.forEach(([contractName, contractAddress]) => {
-                this.initializeContract(blockchain, contractName, contractAddress);
-            });
+            for (const [contractName, contractAddress] of allContracts) {
+                if (
+                    CONTRACTS_EVENTS_LISTENED.includes(contractName) &&
+                    ABIs[contractName] != null
+                ) {
+                    this.contracts[blockchain][contractName] = new ethers.Contract(
+                        contractAddress,
+                        ABIs[contractName],
+                        this.providers[blockchain],
+                    );
+                }
+            }
 
             this.logger.info(`Contracts initialized`);
         }
     }
 
-    getABIs() {
-        return ABIs;
-    }
-
-    initializeContract(blockchain, contractName, contractAddress) {
-        if (this.getABIs()[contractName] != null) {
-            this.contracts[blockchain][`${contractName}Contract`] = new ethers.Contract(
-                contractAddress,
-                this.getABIs()[contractName],
-                this.operationalWallets[blockchain][0],
-            );
-            this.contractAddresses[blockchain][contractAddress] =
-                this.contracts[blockchain][`${contractName}Contract`];
-        } else {
-            this.logger.trace(
-                `Skipping initialisation of contract: ${contractName}, address: ${contractAddress}`,
-            );
-        }
-    }
-
-    async callContractFunction(
-        blockchain,
-        contractInstance,
-        functionName,
-        args,
-        contractName = null,
-    ) {
-        const maxNumberOfRetries = 3;
-        const retryDelayInSec = 12;
-        let retryCount = 0;
-        let result = this.getContractCallCache(blockchain, contractName, functionName);
-        try {
-            if (!result) {
-                while (retryCount < maxNumberOfRetries) {
-                    result = await contractInstance[functionName](...args);
-                    const resultIsValid = Web3ServiceValidator.validateResult(
-                        functionName,
-                        contractName,
-                        result,
-                        this.logger,
-                    );
-                    if (resultIsValid) {
-                        this.setContractCallCache(blockchain, contractName, functionName, result);
-                        return result;
-                    }
-                    if (retryCount === maxNumberOfRetries - 1) {
-                        return null;
-                    }
-                    await sleep(retryDelayInSec * 1000);
-                    retryCount += 1;
-                }
-            }
-        } catch (error) {
-            this._decodeContractCallError(contractInstance, functionName, error, args);
-        }
-        return result;
-    }
-
-    getContractCallCache(blockchain, contractName, functionName) {
-        if (
-            CACHED_FUNCTIONS[contractName]?.[functionName] &&
-            this.contractCallCache[blockchain][contractName]?.[functionName]
-        ) {
-            return this.contractCallCache[blockchain][contractName][functionName];
-        }
-        return null;
-    }
-
-    setContractCallCache(blockchain, contractName, functionName, value) {
-        if (CACHED_FUNCTIONS[contractName]?.[functionName]) {
-            const type = CACHED_FUNCTIONS[contractName][functionName];
-            if (!this.contractCallCache[blockchain][contractName]) {
-                this.contractCallCache[blockchain][contractName] = {};
-            }
-            switch (type) {
-                case CACHE_DATA_TYPES.NUMBER:
-                    this.contractCallCache[blockchain][contractName][functionName] = Number(value);
-                    break;
-                default:
-                    this.contractCallCache[blockchain][contractName][functionName] = value;
-            }
-        }
-    }
-
-    _decodeContractCallError(contractInstance, functionName, error, args) {
-        try {
-            const decodedErrorData = this._decodeErrorData(error, contractInstance.interface);
-
-            const functionFragment = contractInstance.interface.getFunction(
-                error.transaction.data.slice(0, 10),
-            );
-            const inputs = functionFragment.inputs
-                .map((input, i) => {
-                    const argName = input.name;
-                    const argValue = this._formatArgument(args[i]);
-                    return `${argName}=${argValue}`;
-                })
-                .join(', ');
-
-            throw new Error(`Call ${functionName}(${inputs}) failed, reason: ${decodedErrorData}`);
-        } catch (decodeError) {
-            this.logger.warn(`Unable to decode contract call error: ${decodeError}`);
-            throw error;
-        }
-    }
-
-    _decodeErrorData(evmError, contractInterface) {
-        let errorData;
-
-        try {
-            errorData = this._getErrorData(evmError);
-        } catch (error) {
-            return error.message;
-        }
-
-        // Handle empty error data
-        if (errorData === ZERO_PREFIX) {
-            return 'Empty error data.';
-        }
-
-        // Handle standard solidity string error
-        if (errorData.startsWith(SOLIDITY_ERROR_STRING_PREFIX)) {
-            const encodedReason = errorData.slice(SOLIDITY_ERROR_STRING_PREFIX.length);
-            try {
-                return ethers.utils.defaultAbiCoder.decode(['string'], `0x${encodedReason}`)[0];
-            } catch (error) {
-                return error.message;
-            }
-        }
-
-        // Handle solidity panic code
-        if (errorData.startsWith(SOLIDITY_PANIC_CODE_PREFIX)) {
-            const encodedReason = errorData.slice(SOLIDITY_PANIC_CODE_PREFIX.length);
-            let code;
-            try {
-                [code] = ethers.utils.defaultAbiCoder.decode(['uint256'], `0x${encodedReason}`);
-            } catch (error) {
-                return error.message;
-            }
-
-            return SOLIDITY_PANIC_REASONS[code] ?? 'Unknown Solidity panic code.';
-        }
-
-        // Try parsing a custom error using the contract ABI
-        try {
-            const decodedCustomError = contractInterface.parseError(errorData);
-            const formattedArgs = decodedCustomError.errorFragment.inputs
-                .map((input, i) => {
-                    const argName = input.name;
-                    const argValue = this._formatArgument(decodedCustomError.args[i]);
-                    return `${argName}=${argValue}`;
-                })
-                .join(', ');
-            return `custom error ${decodedCustomError.name}(${formattedArgs})`;
-        } catch (error) {
-            return `Failed to decode custom error data. Error: ${error}`;
-        }
-    }
-
-    _getErrorData(error) {
-        let nestedError = error;
-        while (nestedError && nestedError.error) {
-            nestedError = nestedError.error;
-        }
-        const errorData = nestedError.data;
-
-        if (errorData === undefined) {
-            throw error;
-        }
-
-        let returnData = typeof errorData === 'string' ? errorData : errorData.data;
-
-        if (typeof returnData === 'object' && returnData.data) {
-            returnData = returnData.data;
-        }
-
-        if (returnData === undefined || typeof returnData !== 'string') {
-            throw error;
-        }
-
-        return returnData;
-    }
-
-    _formatArgument(value) {
-        if (value === null || value === undefined) {
-            return 'null';
-        }
-
-        if (typeof value === 'string') {
-            return value;
-        }
-
-        if (typeof value === 'number' || BigNumber.isBigNumber(value)) {
-            return value.toString();
-        }
-
-        if (Array.isArray(value)) {
-            return `[${value.map((v) => this._formatArgument(v)).join(', ')}]`;
-        }
-
-        if (typeof value === 'object') {
-            const formattedEntries = Object.entries(value).map(
-                ([k, v]) => `${k}: ${this._formatArgument(v)}`,
-            );
-            return `{${formattedEntries.join(', ')}}`;
-        }
-
-        return value.toString();
+    async getBlock(blockchain, tag) {
+        return this.providers[blockchain].getBlock(tag);
     }
 
     async getPastEvents(blockchain, contractName, eventsToFilter, lastCheckedBlock, currentBlock) {
@@ -401,17 +153,10 @@ class OtEthers extends BlockchainEventsService {
             };
         }
 
-        let fromBlock;
-        let eventsMissed = false;
-        if (
-            currentBlock - lastCheckedBlock >
-            (await this._getMaxNumberOfHistoricalBlocksForSync(blockchain))
-        ) {
-            fromBlock = currentBlock;
-            eventsMissed = true;
-        } else {
-            fromBlock = lastCheckedBlock + 1;
-        }
+        const maxBlocksToSync = await this._getMaxNumberOfHistoricalBlocksForSync(blockchain);
+        let fromBlock =
+            currentBlock - lastCheckedBlock > maxBlocksToSync ? currentBlock : lastCheckedBlock + 1;
+        const eventsMissed = currentBlock - lastCheckedBlock > maxBlocksToSync;
 
         const topics = [];
         for (const filterName in contract.filters) {
@@ -436,7 +181,7 @@ class OtEthers extends BlockchainEventsService {
                     contract,
                     topics,
                 );
-                newEvents.forEach((e) => events.push(...e));
+                events.push(...newEvents.flat());
                 fromBlock = toBlock + 1;
             }
         } catch (error) {
