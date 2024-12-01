@@ -6,7 +6,7 @@ class ParanetRepository {
         this.model = models.paranet;
     }
 
-    async createParanetRecord(name, description, paranetId, blockchainId) {
+    async createParanetRecord(name, description, paranetId, blockchainId, options) {
         return this.model.create(
             {
                 name,
@@ -17,6 +17,7 @@ class ParanetRepository {
             },
             {
                 ignoreDuplicates: true,
+                ...options,
             },
         );
     }
@@ -30,7 +31,7 @@ class ParanetRepository {
         });
     }
 
-    async addToParanetKaCount(paranetId, blockchainId, kaCount) {
+    async addToParanetKaCount(paranetId, blockchainId, kaCount, options) {
         return this.model.update(
             {
                 kaCount: Sequelize.literal(`ka_count + ${kaCount}`),
@@ -40,6 +41,7 @@ class ParanetRepository {
                     paranetId,
                     blockchainId,
                 },
+                ...options,
             },
         );
     }
@@ -64,7 +66,7 @@ class ParanetRepository {
         });
     }
 
-    async incrementParanetKaCount(paranetId, blockchainId) {
+    async incrementParanetKaCount(paranetId, blockchainId, options) {
         return this.model.update(
             {
                 kaCount: Sequelize.literal(`ka_count + 1`),
@@ -74,6 +76,7 @@ class ParanetRepository {
                     paranetId,
                     blockchainId,
                 },
+                ...options,
             },
         );
     }

@@ -11,14 +11,24 @@ class OperationResponseRepository {
         };
     }
 
-    async createOperationResponseRecord(status, operation, operationId, datasetRoot, message) {
+    async createOperationResponseRecord(
+        status,
+        operation,
+        operationId,
+        datasetRoot,
+        message,
+        options,
+    ) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
-        await this.models[`${operationModel}_response`].create({
-            status,
-            message,
-            operationId,
-            datasetRoot,
-        });
+        await this.models[`${operationModel}_response`].create(
+            {
+                status,
+                message,
+                operationId,
+                datasetRoot,
+            },
+            options,
+        );
     }
 
     async getOperationResponsesStatuses(operation, operationId) {
@@ -43,12 +53,13 @@ class OperationResponseRepository {
         });
     }
 
-    async removeOperationResponse(ids, operation) {
+    async removeOperationResponse(ids, operation, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         await this.models[`${operationModel}_response`].destroy({
             where: {
                 id: { [Sequelize.Op.in]: ids },
             },
+            ...options,
         });
     }
 }

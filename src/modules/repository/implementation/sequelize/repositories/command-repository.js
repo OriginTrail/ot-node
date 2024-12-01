@@ -7,20 +7,21 @@ class CommandRepository {
         this.model = models.commands;
     }
 
-    async updateCommand(update, opts) {
-        await this.model.update(update, opts);
+    async updateCommand(update, options) {
+        await this.model.update(update, options);
     }
 
-    async destroyCommand(name) {
+    async destroyCommand(name, options) {
         await this.model.destroy({
             where: {
                 name: { [Sequelize.Op.eq]: name },
             },
+            ...options,
         });
     }
 
-    async createCommand(command, opts) {
-        return this.model.create(command, opts);
+    async createCommand(command, options) {
+        return this.model.create(command, options);
     }
 
     async getCommandsWithStatus(statusArray, excludeNameArray) {
@@ -42,11 +43,12 @@ class CommandRepository {
         });
     }
 
-    async removeCommands(ids) {
+    async removeCommands(ids, options) {
         await this.model.destroy({
             where: {
                 id: { [Sequelize.Op.in]: ids },
             },
+            ...options,
         });
     }
 

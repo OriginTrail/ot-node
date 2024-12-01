@@ -6,15 +6,15 @@ class MissedParanetAssetRepository {
         this.model = models.missed_paranet_asset;
     }
 
-    async createMissedParanetAssetRecord(missedParanetAsset) {
-        return this.model.create(missedParanetAsset);
+    async createMissedParanetAssetRecord(missedParanetAsset, options) {
+        return this.model.create(missedParanetAsset, options);
     }
 
     async getMissedParanetAssetsRecordsWithRetryCount(
         paranetUal,
         retryCountLimit,
         retryDelayInMs,
-        count = null,
+        limit,
     ) {
         const now = new Date();
         const delayDate = new Date(now.getTime() - retryDelayInMs);
@@ -37,8 +37,8 @@ class MissedParanetAssetRepository {
             ),
         };
 
-        if (count !== null) {
-            queryOptions.limit = count;
+        if (limit !== null) {
+            queryOptions.limit = limit;
         }
 
         return this.model.findAll(queryOptions);
@@ -52,11 +52,12 @@ class MissedParanetAssetRepository {
         return !!missedParanetAssetRecord;
     }
 
-    async removeMissedParanetAssetRecordsByUAL(ual) {
+    async removeMissedParanetAssetRecordsByUAL(ual, options) {
         await this.model.destroy({
             where: {
                 ual,
             },
+            ...options,
         });
     }
 

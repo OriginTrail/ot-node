@@ -6,13 +6,16 @@ class TokenRepository {
         this.model = models.token;
     }
 
-    async saveToken(tokenId, userId, tokenName, expiresAt) {
-        return this.model.create({
-            id: tokenId,
-            userId,
-            expiresAt,
-            name: tokenName,
-        });
+    async saveToken(tokenId, userId, tokenName, expiresAt, options) {
+        return this.model.create(
+            {
+                id: tokenId,
+                userId,
+                expiresAt,
+                name: tokenName,
+            },
+            options,
+        );
     }
 
     async isTokenRevoked(tokenId) {

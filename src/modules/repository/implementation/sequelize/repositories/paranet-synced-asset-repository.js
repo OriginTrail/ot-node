@@ -13,17 +13,21 @@ class ParanetSyncedAssetRepository {
         sender,
         transactionHash,
         dataSource,
+        options,
     ) {
-        return this.model.create({
-            blockchainId,
-            ual,
-            paranetUal,
-            publicAssertionId,
-            privateAssertionId,
-            sender,
-            transactionHash,
-            dataSource,
-        });
+        return this.model.create(
+            {
+                blockchainId,
+                ual,
+                paranetUal,
+                publicAssertionId,
+                privateAssertionId,
+                sender,
+                transactionHash,
+                dataSource,
+            },
+            options,
+        );
     }
 
     async getParanetSyncedAssetRecordByUAL(ual) {
