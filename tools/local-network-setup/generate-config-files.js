@@ -70,10 +70,6 @@ async function generateNodeConfig(nodeIndex) {
     template.modules.httpClient = generateHttpClientConfig(template.modules.httpClient, nodeIndex);
     template.modules.network = generateNetworkConfig(template.modules.network, nodeIndex);
     template.modules.repository = generateRepositoryConfig(template.modules.repository, nodeIndex);
-    template.modules.blockchainEvents = generateBlockchainEventsConfig(
-        template.modules.blockchainEvents,
-        nodeIndex,
-    );
     template.appDataPath = `data${nodeIndex}`;
     template.logLevel = process.env.LOG_LEVEL ?? template.logLevel;
 
@@ -173,73 +169,6 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
     }
 
     return blockchainConfig;
-}
-
-function generateBlockchainEventsConfig(templateBlockchainEventsConfig, nodeIndex) {
-    const blockchainEventsConfig = JSON.parse(JSON.stringify(templateBlockchainEventsConfig));
-
-    for (const implementationName in blockchainEventsConfig.implementation) {
-        blockchainEventsConfig.implementation[implementationName].config = {
-            ...blockchainEventsConfig.implementation[implementationName].config,
-            hubContractAddress: {
-                'hardhat1:31337': hubContractAddress,
-                'hardhat2:31337': hubContractAddress,
-            },
-            rpcEndpoints: {
-                'hardhat1:31337': [process.env.RPC_ENDPOINT_BC1],
-                'hardhat2:31337': [process.env.RPC_ENDPOINT_BC2],
-            },
-            operationalWallets: {
-                'hardhat1:31337': [
-                    {
-                        evmAddress: publicKeys[nodeIndex + 1],
-                        privateKey: privateKeys[nodeIndex + 1],
-                    },
-                ],
-                'hardhat2:31337': [
-                    {
-                        evmAddress: publicKeys[nodeIndex + 1],
-                        privateKey: privateKeys[nodeIndex + 1],
-                    },
-                ],
-            },
-        };
-
-        // Used for testing, add a few more wallets to later nodes
-        if (nodeIndex == 3) {
-            blockchainEventsConfig.implementation[implementationName].config.operationalWallets[
-                'hardhat1:31337'
-            ].push({
-                evmAddress: publicKeys[publicKeys.length - 1 - 1],
-                privateKey: privateKeys[privateKeys.length - 1 - 1],
-            });
-
-            blockchainEventsConfig.implementation[implementationName].config.operationalWallets[
-                'hardhat2:31337'
-            ].push({
-                evmAddress: publicKeys[publicKeys.length - 1 - 2],
-                privateKey: privateKeys[privateKeys.length - 1 - 2],
-            });
-        }
-
-        if (nodeIndex == 4) {
-            blockchainEventsConfig.implementation[implementationName].config.operationalWallets[
-                'hardhat1:31337'
-            ].push({
-                evmAddress: publicKeys[publicKeys.length - 1 - 3],
-                privateKey: privateKeys[privateKeys.length - 1 - 3],
-            });
-
-            blockchainEventsConfig.implementation[implementationName].config.operationalWallets[
-                'hardhat2:31337'
-            ].push({
-                evmAddress: publicKeys[publicKeys.length - 1 - 4],
-                privateKey: privateKeys[privateKeys.length - 1 - 4],
-            });
-        }
-
-        return blockchainEventsConfig;
-    }
 }
 
 function generateHttpClientConfig(templateHttpClientConfig, nodeIndex) {

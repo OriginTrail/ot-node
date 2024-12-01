@@ -754,46 +754,59 @@ export const LOCAL_STORE_TYPES = {
 
 /**
  * Contract names
- * @type {{SHARDING_TABLE_CONTRACT: string}}
+ * @type {{SHARDING_TABLE: string}}
  */
 export const CONTRACTS = {
-    CONTENT_ASSET_CONTRACT: 'ContentAssetContract',
-    SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
-    STAKING_CONTRACT: 'StakingContract',
-    PROFILE_CONTRACT: 'ProfileContract',
-    HUB_CONTRACT: 'HubContract',
-    CONTENT_ASSET: 'ContentAssetContract',
-    COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
-    PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
-    IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
-    LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
-    LINEAR_SUM_CONTRACT: 'LinearSumContract',
-    PARANETS_REGISTRY_CONTRACT: 'ParanetsRegistry',
+    SHARDING_TABLE: 'ShardingTable',
+    STAKING: 'Staking',
+    PROFILE: 'Profile',
+    HUB: 'Hub',
+    CONTENT_ASSET: 'ContentAsset',
+    COMMIT_MANAGER_V1_U1: 'CommitManagerV1U1',
+    PARAMETERS_STORAGE: 'ParametersStorage',
+    IDENTITY_STORAGE: 'IdentityStorage',
+    LOG2PLDSF: 'Log2PLDSF',
+    LINEAR_SUM: 'LinearSum',
+    PARANETS_REGISTRY: 'ParanetsRegistry',
 };
 
-export const CONTRACT_EVENTS = {
-    HUB: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
-    SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
-    STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
-    PROFILE: ['AskUpdated'],
-    CONTENT_ASSET: ['AssetMinted'],
-    COMMIT_MANAGER_V1: ['StateFinalized'],
-    PARAMETERS_STORAGE: ['ParameterChanged'],
-    LOG2PLDSF: ['ParameterChanged'],
-    LINEAR_SUM: ['ParameterChanged'],
+export const SHARDING_TABLE_RELATED_EVENTS = {
+    ShardingTable: ['NodeAdded', 'NodeRemoved'],
+    Staking: ['StakeIncreased', 'StakeWithdrawalStarted'],
+    Profile: ['AskUpdated'],
 };
 
-export const GROUPED_CONTRACT_EVENTS = {};
+export const CONTRACTS_EVENTS = {
+    HUB: {
+        contract: 'Hub',
+        events: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
+    },
+    CONTENT_ASSET: { contract: 'ContentAsset', events: ['AssetMinted'] },
+    PARAMETERS_STORAGE: { contract: 'ParametersStorage', events: ['ParameterChanged'] },
+    SHARDING_TABLE: { contract: 'ShardingTable', events: ['NodeAdded', 'NodeRemoved'] },
+    STAKING: { contract: 'Staking', events: ['StakeIncreased', 'StakeWithdrawalStarted'] },
+    PROFILE: { contract: 'Profile', events: ['AskUpdated'] },
+};
 
-export const CONTRACT_EVENT_TO_GROUP_MAPPING = (() => {
-    const mapping = {};
-    Object.entries(GROUPED_CONTRACT_EVENTS).forEach(([groupName, { events }]) => {
-        events.forEach((eventName) => {
-            mapping[eventName] = groupName;
-        });
-    });
-    return mapping;
-})();
+export const CONTRACTS_EVENTS_LISTENED = Object.values(CONTRACTS_EVENTS).map(
+    (value) => value.contract,
+);
+
+export const BLOCKCHAIN_EVENT_PRIORITIES = {
+    NewContract: 1,
+    ContractChanged: 1,
+    NewAssetStorage: 1,
+    AssetStorageChanged: 1,
+    NodeAdded: 2,
+    NodeRemoved: 2,
+    ParameterChanged: 2,
+    StakeIncreased: 3,
+    StakeWithdrawalStarted: 3,
+    AskUpdated: 3,
+    AssetMinted: 4,
+};
+
+export const DEFAULT_BLOCKCHAIN_EVENT_PRIORITY = Infinity;
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
@@ -804,8 +817,6 @@ export const NODE_ENVIRONMENTS = {
 };
 
 export const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 1000;
-
-export const DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS = 10 * 1000;
 
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,

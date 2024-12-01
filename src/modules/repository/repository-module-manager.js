@@ -56,16 +56,16 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('command').getCommandWithId(id);
     }
 
-    async getCommandWithNameAndStatus(name, statusArray) {
-        return this.getRepository('command').getCommandWithNameAndStatus(name, statusArray);
-    }
-
     async removeCommands(ids) {
         return this.getRepository('command').removeCommands(ids);
     }
 
     async findFinalizedCommands(timestamp, limit) {
         return this.getRepository('command').findFinalizedCommands(timestamp, limit);
+    }
+
+    async findUnfinalizedCommandsByName(limit) {
+        return this.getRepository('command').findUnfinalizedCommandsByName(limit);
     }
 
     async createOperationIdRecord(handlerData) {

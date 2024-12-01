@@ -44,14 +44,13 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+        this.initializeBlockchainEventsService();
         await this.initializeParanets();
 
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
         await this.initializeShardingTableService();
-
-        this.initializeBlockchainEventsService();
 
         await this.initializeRouters();
         await this.startNetworkModule();

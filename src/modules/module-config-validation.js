@@ -12,7 +12,7 @@ class ModuleConfigValidation {
         if (typeof this[`validate${capitalizedName}`] === 'function') {
             this[`validate${capitalizedName}`](config);
         } else {
-            throw Error(`Missing validation for ${capitalizedName}`);
+            throw new Error(`Missing validation for ${capitalizedName}`);
         }
     }
 
@@ -36,8 +36,62 @@ class ModuleConfigValidation {
         return true;
     }
 
-    validateBlockchainEvents() {
-        return true;
+    validateBlockchainEvents(config) {
+        const occurences = {};
+        for (const implementation of Object.values(config.implementation)) {
+            // eslint-disable-next-line no-continue
+            if (!implementation.enabled) {
+                continue;
+            }
+
+            if (implementation.config.blockchains.length === 0) {
+                throw new Error(
+                    'Blockchains must be specified in the blockchain events service config.',
+                );
+            }
+
+            if (
+                implementation.config.blockchains.length >
+                Object.keys(implementation.config.rpcEndpoints).length
+            ) {
+                throw new Error('Missing RPC edpoints in the blockchain events service config.');
+            }
+
+            if (
+                implementation.config.blockchains.length >
+                Object.keys(implementation.config.hubContractAddress).length
+            ) {
+                throw new Error('Missing hub addresses in the blockchain events service config.');
+            }
+
+            for (const blockchain of implementation.config.blockchains) {
+                if (!occurences[blockchain]) {
+                    occurences[blockchain] = 0;
+                }
+                occurences[blockchain] += 1;
+
+                if (occurences[blockchain] > 1) {
+                    throw new Error(
+                        `Exactly one blockchain events service for blockchain ${blockchain} needs to be defined.`,
+                    );
+                }
+
+                if (
+                    !implementation.config.rpcEndpoints[blockchain] ||
+                    implementation.config.rpcEndpoints[blockchain].length === 0
+                ) {
+                    throw new Error(
+                        `RPC endpoint is not defined for blockchain: ${blockchain} in the blockchain events service config.`,
+                    );
+                }
+
+                if (!implementation.config.hubContractAddress[blockchain]) {
+                    throw new Error(
+                        `Hub contract address is not defined for blockchain: ${blockchain} in the blockchain events service config.`,
+                    );
+                }
+            }
+        }
     }
 
     validateTripleStore(config) {
@@ -57,7 +111,9 @@ class ModuleConfigValidation {
         }
         for (const repository of Object.values(TRIPLE_STORE_REPOSITORIES)) {
             if (occurences[repository] !== 1) {
-                throw Error(`Exactly one config for repository ${repository} needs to be defined.`);
+                throw new Error(
+                    `Exactly one config for repository ${repository} needs to be defined.`,
+                );
             }
         }
     }

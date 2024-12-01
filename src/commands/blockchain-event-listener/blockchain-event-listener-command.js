@@ -1,43 +1,28 @@
-import { setTimeout } from 'timers/promises';
 import Command from '../command.js';
 import {
+    BLOCKCHAIN_EVENT_PRIORITIES,
     CONTENT_ASSET_HASH_FUNCTION_ID,
     CONTRACTS,
-    TRIPLE_STORE_REPOSITORIES,
-    NODE_ENVIRONMENTS,
-    PENDING_STORAGE_REPOSITORIES,
-    CONTRACT_EVENTS,
-    MAXIMUM_FETCH_EVENTS_FAILED_COUNT,
-    DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS,
-    CONTRACT_EVENT_TO_GROUP_MAPPING,
-    GROUPED_CONTRACT_EVENTS,
-    ZERO_BYTES32,
+    CONTRACTS_EVENTS,
+    CONTRACTS_EVENTS_LISTENED,
+    DEFAULT_BLOCKCHAIN_EVENT_PRIORITY,
     ERROR_TYPE,
     OPERATION_ID_STATUS,
+    SHARDING_TABLE_RELATED_EVENTS,
 } from '../../constants/constants.js';
-
-const fetchEventsFailedCount = {};
-const eventNames = Object.values(CONTRACT_EVENTS).flat();
 
 class BlockchainEventListenerCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.tripleStoreService = ctx.tripleStoreService;
-        this.pendingStorageService = ctx.pendingStorageService;
         this.ualService = ctx.ualService;
         this.hashingService = ctx.hashingService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.shardingTableService = ctx.shardingTableService;
-        this.paranetService = ctx.paranetService;
         this.blockchainEventsService = ctx.blockchainEventsService;
         this.fileService = ctx.fileService;
-        this.dataService = ctx.dataService;
         this.operationIdService = ctx.operationIdService;
         this.commandExecutor = ctx.commandExecutor;
-
-        this.eventGroupsBuffer = {};
 
         this.errorType = ERROR_TYPE.BLOCKCHAIN_EVENT_LISTENER_ERROR;
     }
@@ -47,24 +32,11 @@ class BlockchainEventListenerCommand extends Command {
 
         try {
             await this.fetchAndHandleBlockchainEvents(blockchainId);
-            fetchEventsFailedCount[blockchainId] = 0;
         } catch (e) {
-            fetchEventsFailedCount[blockchainId] += 1;
-
-            if (fetchEventsFailedCount[blockchainId] >= MAXIMUM_FETCH_EVENTS_FAILED_COUNT) {
-                this.blockchainModuleManager.removeImplementation(blockchainId);
-
-                const errorMessage = `Unable to fetch new events for blockchain: ${blockchainId}. Error message: ${e.message}`;
-                this.logger.error(`${errorMessage} blockchain implementation removed.`);
-                return Command.empty();
-            }
-
             this.logger.error(
-                `Failed to get and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
+                `Failed to fetch and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
             );
-            await setTimeout(DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS);
 
-            // Try again after a delay
             return Command.repeat();
         }
 
@@ -72,77 +44,59 @@ class BlockchainEventListenerCommand extends Command {
     }
 
     async fetchAndHandleBlockchainEvents(blockchainId) {
-        const isDevEnvironment = [NODE_ENVIRONMENTS.DEVELOPMENT, NODE_ENVIRONMENTS.TEST].includes(
-            process.env.NODE_ENV,
-        );
-
-        const currentBlock = await this.blockchainModuleManager.getBlockNumber(blockchainId);
-
-        let contractsEventsConfig = [
-            { contract: CONTRACTS.SHARDING_TABLE_CONTRACT, events: CONTRACT_EVENTS.SHARDING_TABLE },
-            { contract: CONTRACTS.STAKING_CONTRACT, events: CONTRACT_EVENTS.STAKING },
-            { contract: CONTRACTS.PROFILE_CONTRACT, events: CONTRACT_EVENTS.PROFILE },
-            {
-                contract: CONTRACTS.COMMIT_MANAGER_V1_U1_CONTRACT,
-                events: CONTRACT_EVENTS.COMMIT_MANAGER_V1,
-            },
-            {
-                contract: CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
-                events: CONTRACT_EVENTS.PARAMETERS_STORAGE,
-            },
-            { contract: CONTRACTS.LOG2PLDSF_CONTRACT, events: CONTRACT_EVENTS.LOG2PLDSF },
-            { contract: CONTRACTS.LINEAR_SUM_CONTRACT, events: CONTRACT_EVENTS.LINEAR_SUM },
-        ];
-
-        const contractLastCheckedBlock = {};
-        if (isDevEnvironment) {
-            // handling sharding table node added events first for tests and local network setup
-            // because of race condition for node added and ask updated events
-
-            const {
-                events: shardingTableEvents,
-                contractName,
-                lastCheckedBlock,
-            } = await this.getContractEvents(
-                blockchainId,
-                CONTRACTS.SHARDING_TABLE_CONTRACT,
-                currentBlock,
-                CONTRACT_EVENTS.SHARDING_TABLE,
-            );
-            contractLastCheckedBlock[contractName] = lastCheckedBlock;
-            await this.handleBlockchainEvents(
-                blockchainId,
-                shardingTableEvents,
-                contractLastCheckedBlock,
-            );
-
-            contractsEventsConfig = contractsEventsConfig.filter(
-                (item) => item.contract !== CONTRACTS.SHARDING_TABLE_CONTRACT,
-            );
-        } else {
-            contractsEventsConfig.push({
-                contract: CONTRACTS.HUB_CONTRACT,
-                events: CONTRACT_EVENTS.HUB,
-            });
-        }
+        const currentBlock = (await this.blockchainEventsService.getBlock(blockchainId)).number;
 
         const contractEventsData = await Promise.all(
-            contractsEventsConfig.map(({ contract, events }) =>
+            Object.values(CONTRACTS_EVENTS).map(({ contract, events }) =>
                 this.getContractEvents(blockchainId, contract, currentBlock, events),
             ),
         );
 
-        const contractEvents = [];
-        for (const { events, contractName, lastCheckedBlock } of contractEventsData) {
-            contractEvents.push(events);
+        if (contractEventsData.some(({ eventsMissed }) => eventsMissed)) {
+            await this.shardingTableService.pullBlockchainShardingTable(blockchainId, true);
+            this.filterShardingTableRelatedEvents(contractEventsData);
+        }
+
+        const unprocessedEvents =
+            await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(
+                CONTRACTS_EVENTS_LISTENED,
+                blockchainId,
+            );
+
+        if (unprocessedEvents.length > 0) {
+            this.logger.trace(`Found ${unprocessedEvents.length} unprocessed blockchain events.`);
+        }
+
+        const contractLastCheckedBlock = {};
+        const events = unprocessedEvents;
+
+        for (const {
+            contractName,
+            lastCheckedBlock,
+            events: contractEvents,
+        } of contractEventsData) {
+            const prioritizedEvents = contractEvents.map((event) => ({
+                ...event,
+                priority:
+                    BLOCKCHAIN_EVENT_PRIORITIES[event.event] || DEFAULT_BLOCKCHAIN_EVENT_PRIORITY,
+            }));
+
+            // Collect all prioritized events
+            events.push(...prioritizedEvents);
+
+            // Update the last checked block for this contract
             contractLastCheckedBlock[contractName] = lastCheckedBlock;
         }
 
-        await this.handleBlockchainEvents(
-            blockchainId,
-            contractEvents.flat(),
-            contractLastCheckedBlock,
-        );
+        if (events.length !== 0) {
+            this.logger.trace(
+                `Storing ${events.length} events for blockchain ${blockchainId} in the database.`,
+            );
+            await this.repositoryModuleManager.insertBlockchainEvents(events);
+            await this.processEventsByPriority(events);
+        }
+
+        await this.updateLastCheckedBlocks(blockchainId, contractLastCheckedBlock);
     }
 
     async getContractEvents(blockchain, contractName, currentBlock, eventsToFilter) {
@@ -159,474 +113,230 @@ class BlockchainEventListenerCommand extends Command {
             currentBlock,
         );
 
-        if (!result.eventsMissed) {
-            await this.shardingTableService.pullBlockchainShardingTable(blockchain, true);
-        }
-
-        const { events, lastCheckedBlock } = result;
-
-        return { events, contractName, lastCheckedBlock };
+        return { ...result, contractName };
     }
 
-    async handleBlockchainEvents(blockchainId, events, contractLastCheckedBlock) {
-        const eventsForProcessing = events.filter((event) => eventNames.includes(event.event));
+    filterShardingTableRelatedEvents(contractEventsData) {
+        contractEventsData.forEach((data) => {
+            if (SHARDING_TABLE_RELATED_EVENTS[data.contractName]) {
+                // eslint-disable-next-line no-param-reassign
+                data.events = data.events.filter(
+                    (event) =>
+                        !SHARDING_TABLE_RELATED_EVENTS[data.contractName].includes(event.event),
+                );
+            }
+        });
+    }
 
-        // Store new events in the DB
-        if (eventsForProcessing?.length) {
-            this.logger.trace(
-                `${eventsForProcessing.length} blockchain events caught on blockchain ${blockchainId}.`,
-            );
-            await this.repositoryModuleManager.insertBlockchainEvents(eventsForProcessing);
+    async processEventsByPriority(events) {
+        const queues = {};
+        const eventsByPriority = events.forEach((event) => {
+            if (!queues[event.priority]) {
+                queues[event.priority] = [];
+            }
+            queues[event.priority].push(event);
+        });
+
+        // Process each priority level sequentially
+        const priorityLevels = Object.keys(eventsByPriority).sort((a, b) => a - b);
+        for (const priority of priorityLevels) {
+            const priorityLevelEvents = eventsByPriority[priority];
+
+            // eslint-disable-next-line no-await-in-loop
+            await Promise.all(priorityLevelEvents.map((event) => this.processEvent(event)));
+        }
+    }
+
+    async processEvent(event) {
+        const handlerFunctionName = `handle${event.event}Event`;
+
+        if (typeof this[handlerFunctionName] !== 'function') {
+            this.logger.warn(`No handler for event type: ${event.event}`);
+            return;
         }
 
-        // Update last checked block after inserting into db
+        this.logger.trace(`Processing event ${event.event} in block ${event.block}.`);
+        try {
+            await this[handlerFunctionName](event);
+        } catch (error) {
+            this.logger.error(
+                `Error processing event ${event.event} in block ${event.block}: ${error.message}`,
+            );
+        }
+    }
+
+    async updateLastCheckedBlocks(blockchainId, contractLastCheckedBlock) {
         await Promise.all(
             Object.entries(contractLastCheckedBlock).map(([contractName, lastCheckedBlock]) =>
                 this.repositoryModuleManager.updateLastCheckedBlock(
                     blockchainId,
                     lastCheckedBlock,
-                    Date.now(0),
+                    Date.now(),
                     contractName,
                 ),
             ),
         );
-
-        // Get unprocessed events from the DB
-        const unprocessedEvents =
-            await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(
-                eventNames,
-                blockchainId,
-            );
-
-        if (unprocessedEvents?.length) {
-            this.logger.trace(
-                `Processing ${unprocessedEvents.length} blockchain events on blockchain ${blockchainId}.`,
-            );
-            let batchedEvents = {};
-            let currentBlockNumber = 0;
-            for (const event of unprocessedEvents) {
-                if (event.block !== currentBlockNumber) {
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.handleBlockBatchedEvents(batchedEvents);
-                    batchedEvents = {};
-                    currentBlockNumber = event.block;
-                }
-
-                // Check if event should be grouped with other event
-                const eventsGroupName = CONTRACT_EVENT_TO_GROUP_MAPPING[event.event];
-                if (eventsGroupName) {
-                    // Get Events Group object containing predefined events and Grouping Key (Event Argument)
-                    const eventsGroup = GROUPED_CONTRACT_EVENTS[eventsGroupName];
-                    // Get value of the Grouping Key from the Event
-                    const groupingKeyValue = JSON.parse(event.data)[eventsGroup.groupingKey];
-
-                    if (!this.eventGroupsBuffer[blockchainId][eventsGroupName]) {
-                        this.eventGroupsBuffer[blockchainId][eventsGroupName] = {};
-                    }
-
-                    if (!this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]) {
-                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue] =
-                            [];
-                    }
-
-                    // Push event to the buffer until Events Group is not full
-                    this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue].push(
-                        event,
-                    );
-
-                    // Mark event as processed
-                    // TODO: There should be a smarter way to do this, because it will cause troubles
-                    // in case node goes offline while only catched some of the events from the group
-                    // and not all of them. Buffer will be cleared and event is already marked as processed.
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.repositoryModuleManager.markBlockchainEventsAsProcessed([event]);
-
-                    // When all expected Events from the Event Group are collected
-                    if (
-                        this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue]
-                            .length === eventsGroup.events.length
-                    ) {
-                        if (!batchedEvents[eventsGroupName]) {
-                            batchedEvents[eventsGroupName] = [];
-                        }
-
-                        // Add Events Group to the Processing Queue
-                        batchedEvents[eventsGroupName].push(
-                            this.eventGroupsBuffer[blockchainId][eventsGroupName][groupingKeyValue],
-                        );
-
-                        // Remove Events Group from the Buffer
-                        delete this.eventGroupsBuffer[blockchainId][eventsGroupName][
-                            groupingKeyValue
-                        ];
-                    }
-                } else if (batchedEvents[event.event]) {
-                    batchedEvents[event.event].push(event);
-                } else {
-                    batchedEvents[event.event] = [event];
-                }
-            }
-
-            await this.handleBlockBatchedEvents(batchedEvents);
-        }
     }
 
-    async handleBlockBatchedEvents(batchedEvents) {
-        const handleBlockEventsPromises = [];
-        for (const [eventName, blockEvents] of Object.entries(batchedEvents)) {
-            handleBlockEventsPromises.push(this.handleBlockEvents(eventName, blockEvents));
-        }
-        // eslint-disable-next-line no-await-in-loop
-        await Promise.all(handleBlockEventsPromises);
-    }
-
-    async handleBlockEvents(eventName, blockEvents) {
-        const handlerFunctionName = `handle${eventName}Events`;
-        if (!this[handlerFunctionName]) return;
-        this.logger.trace(`${blockEvents.length} ${eventName} events caught.`);
-        try {
-            await this[handlerFunctionName](blockEvents);
-            await this.repositoryModuleManager.markBlockchainEventsAsProcessed(blockEvents);
-        } catch (error) {
-            this.logger.warn(
-                `Error while processing events: ${eventName}. Error: ${error.message}`,
-            );
-        }
-    }
-
-    async handleParameterChangedEvents(blockEvents) {
-        for (const event of blockEvents) {
-            const { blockchainId, contract, data } = event;
-            const { parameterName, parameterValue } = JSON.parse(data);
-            switch (contract) {
-                case CONTRACTS.LOG2PLDSF_CONTRACT:
-                    // This invalidates contracts parameter
-                    // TODO: Create function for contract call cache invalidation
-                    this.blockchainModuleManager.setContractCallCache(
-                        blockchainId,
-                        CONTRACTS.LOG2PLDSF_CONTRACT,
-                        parameterName,
-                        null,
-                    );
-                    break;
-                case CONTRACTS.LINEAR_SUM_CONTRACT:
-                    this.blockchainModuleManager.setContractCallCache(
-                        blockchainId,
-                        CONTRACTS.LINEAR_SUM_CONTRACT,
-                        parameterName,
-                        null,
-                    );
-                    break;
-                case CONTRACTS.PARAMETERS_STORAGE_CONTRACT:
-                    this.blockchainModuleManager.setContractCallCache(
-                        blockchainId,
-                        CONTRACTS.PARAMETERS_STORAGE_CONTRACT,
-                        parameterName,
-                        parameterValue,
-                    );
-                    break;
-                default:
-                    this.logger.warn(
-                        `Unable to handle parameter changed event. Unknown contract name ${event.contract}`,
-                    );
-            }
-        }
-    }
-
-    handleNewContractEvents(blockEvents) {
-        for (const event of blockEvents) {
-            const { contractName, newContractAddress } = JSON.parse(event.data);
-            this.blockchainModuleManager.initializeContract(
-                event.blockchainId,
-                contractName,
-                newContractAddress,
-            );
-        }
-    }
-
-    async handleContractChangedEvents(blockEvents) {
-        await Promise.all(
-            blockEvents.map(async (event) => {
-                const { contractName, newContractAddress } = JSON.parse(event.data);
-                this.blockchainModuleManager.initializeContract(
-                    event.blockchainId,
-                    contractName,
-                    newContractAddress,
+    async handleParameterChangedEvent(event) {
+        const { blockchainId, contract, data } = event;
+        const { parameterName, parameterValue } = JSON.parse(data);
+        switch (contract) {
+            case CONTRACTS.PARAMETERS_STORAGE:
+                this.blockchainModuleManager.setContractCallCache(
+                    blockchainId,
+                    CONTRACTS.PARAMETERS_STORAGE,
+                    parameterName,
+                    parameterValue,
                 );
+                break;
+            default:
+                this.logger.warn(
+                    `Unable to handle parameter changed event. Unknown contract name ${event.contract}`,
+                );
+        }
+    }
 
-                if (contractName === CONTRACTS.SHARDING_TABLE_CONTRACT) {
-                    await this.shardingTableService.pullBlockchainShardingTable(
-                        event.blockchainId,
-                        true,
-                    );
-                }
-            }),
+    handleNewContractEvent(event) {
+        const { contractName, newContractAddress } = JSON.parse(event.data);
+        this.blockchainModuleManager.initializeContract(
+            event.blockchain,
+            contractName,
+            newContractAddress,
         );
     }
 
-    handleNewAssetStorageEvents(blockEvents) {
-        for (const event of blockEvents) {
-            const { newContractAddress } = JSON.parse(event.data);
-            this.blockchainModuleManager.initializeAssetStorageContract(
-                event.blockchainId,
-                newContractAddress,
-            );
+    async handleContractChangedEvent(event) {
+        const { contractName, newContractAddress } = JSON.parse(event.data);
+        this.blockchainModuleManager.initializeContract(
+            event.blockchain,
+            contractName,
+            newContractAddress,
+        );
+
+        if (contractName === CONTRACTS.SHARDING_TABLE) {
+            await this.shardingTableService.pullBlockchainShardingTable(event.blockchain, true);
         }
     }
 
-    handleAssetStorageChangedEvents(blockEvents) {
-        for (const event of blockEvents) {
-            const { newContractAddress } = JSON.parse(event.data);
-            this.blockchainModuleManager.initializeAssetStorageContract(
-                event.blockchainId,
-                newContractAddress,
-            );
-        }
-    }
-
-    async handleNodeAddedEvents(blockEvents) {
-        const peerRecords = await Promise.all(
-            blockEvents.map(async (event) => {
-                const eventData = JSON.parse(event.data);
-
-                const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchainId,
-                    eventData.nodeId,
-                );
-
-                const sha256 = await this.hashingService.callHashFunction(
-                    CONTENT_ASSET_HASH_FUNCTION_ID,
-                    nodeId,
-                );
-
-                return {
-                    peerId: nodeId,
-                    blockchainId: event.blockchainId,
-                    ask: this.blockchainModuleManager.convertFromWei(
-                        event.blockchainId,
-                        eventData.ask,
-                    ),
-                    stake: this.blockchainModuleManager.convertFromWei(
-                        event.blockchainId,
-                        eventData.stake,
-                    ),
-                    lastSeen: new Date(0),
-                    sha256,
-                };
-            }),
-        );
-        await this.repositoryModuleManager.createManyPeerRecords(peerRecords);
-    }
-
-    async handleNodeRemovedEvents(blockEvents) {
-        await Promise.all(
-            blockEvents.map(async (event) => {
-                const eventData = JSON.parse(event.data);
-
-                const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchainId,
-                    eventData.nodeId,
-                );
-
-                this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
-
-                await this.repositoryModuleManager.removePeerRecord(event.blockchainId, nodeId);
-            }),
+    handleNewAssetStorageEvent(event) {
+        const { newContractAddress } = JSON.parse(event.data);
+        this.blockchainModuleManager.initializeAssetStorageContract(
+            event.blockchain,
+            newContractAddress,
         );
     }
 
-    async handleStakeIncreasedEvents(blockEvents) {
-        await Promise.all(
-            blockEvents.map(async (event) => {
-                const eventData = JSON.parse(event.data);
-
-                const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchainId,
-                    eventData.nodeId,
-                );
-
-                await this.repositoryModuleManager.updatePeerStake(
-                    nodeId,
-                    event.blockchainId,
-                    this.blockchainModuleManager.convertFromWei(
-                        event.blockchainId,
-                        eventData.newStake,
-                    ),
-                );
-            }),
+    handleAssetStorageChangedEvent(event) {
+        const { newContractAddress } = JSON.parse(event.data);
+        this.blockchainModuleManager.initializeAssetStorageContract(
+            event.blockchain,
+            newContractAddress,
         );
     }
 
-    async handleStakeWithdrawalStartedEvents(blockEvents) {
-        await this.handleStakeIncreasedEvents(blockEvents);
-    }
+    async handleNodeAddedEvent(event) {
+        const eventData = JSON.parse(event.data);
 
-    async handleAskUpdatedEvents(blockEvents) {
-        await Promise.all(
-            blockEvents.map(async (event) => {
-                const eventData = JSON.parse(event.data);
+        const nodeId = this.blockchainModuleManager.convertHexToAscii(
+            event.blockchain,
+            eventData.nodeId,
+        );
 
-                const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    event.blockchainId,
-                    eventData.nodeId,
-                );
+        const sha256 = await this.hashingService.callHashFunction(
+            CONTENT_ASSET_HASH_FUNCTION_ID,
+            nodeId,
+        );
 
-                await this.repositoryModuleManager.updatePeerAsk(
-                    nodeId,
-                    event.blockchainId,
-                    this.blockchainModuleManager.convertFromWei(event.blockchainId, eventData.ask),
-                );
-            }),
+        await this.repositoryModuleManager.createPeerRecord(
+            nodeId,
+            event.blockchain,
+            this.blockchainModuleManager.convertFromWei(event.blockchain, eventData.ask),
+            this.blockchainModuleManager.convertFromWei(event.blockchain, eventData.stake),
+            new Date(0),
+            sha256,
         );
     }
 
-    async handleAssetMintedEvents(blockEvents) {
-        for (const event of blockEvents) {
-            const eventData = JSON.parse(event.data);
+    async handleNodeRemovedEvent(event) {
+        const eventData = JSON.parse(event.data);
 
-            const { assetContract, tokenId, state, publishOperationId } = eventData;
-            const blockchain = event.blockchainId;
+        const nodeId = this.blockchainModuleManager.convertHexToAscii(
+            event.blockchain,
+            eventData.nodeId,
+        );
 
-            // eslint-disable-next-line no-await-in-loop
-            const operationId = await this.operationIdService.generateOperationId(
-                OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
-            );
+        this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
 
-            const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
-
-            // eslint-disable-next-line no-await-in-loop
-            const data = await this.fileService.readFile(datasetPath, true);
-
-            const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.commandExecutor.add({
-                name: 'validateAssertionMetadataCommand',
-                sequence: ['storeAssertionCommand'],
-                delay: 0,
-                data: {
-                    operationId,
-                    ual,
-                    blockchain,
-                    contract: assetContract,
-                    tokenId,
-                    merkleRoot: state,
-                    assertion: data.assertion,
-                    cachedMerkleRoot: data.merkleRoot,
-                },
-                transactional: false,
-            });
-        }
+        await this.repositoryModuleManager.removePeerRecord(event.blockchain, nodeId);
     }
 
-    async handleStateFinalizedEvents(blockEvents) {
-        // todo: find a way to safely parallelize this
-        for (const event of blockEvents) {
-            const eventData = JSON.parse(event.data);
+    async handleStakeIncreasedEvent(event) {
+        const eventData = JSON.parse(event.data);
 
-            const { tokenId, keyword, hashFunctionId, state, stateIndex } = eventData;
-            const blockchain = event.blockchainId;
-            const contract = eventData.assetContract;
-            this.logger.trace(
-                `Handling event: ${event.event} for asset with ual: ${this.ualService.deriveUAL(
-                    blockchain,
-                    contract,
-                    tokenId,
-                )} with keyword: ${keyword}, assertion id: ${state}.`,
-            );
+        const nodeId = this.blockchainModuleManager.convertHexToAscii(
+            event.blockchain,
+            eventData.nodeId,
+        );
 
-            // eslint-disable-next-line no-await-in-loop
-            await Promise.all([
-                this.pendingStorageService.moveAndDeletePendingState(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-                    PENDING_STORAGE_REPOSITORIES.PUBLIC,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                    hashFunctionId,
-                    state,
-                    stateIndex,
-                ),
-                this.pendingStorageService.moveAndDeletePendingState(
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                    TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
-                    PENDING_STORAGE_REPOSITORIES.PRIVATE,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                    hashFunctionId,
-                    state,
-                    stateIndex,
-                ),
-            ]);
+        await this.repositoryModuleManager.updatePeerStake(
+            nodeId,
+            event.blockchain,
+            this.blockchainModuleManager.convertFromWei(event.blockchain, eventData.newStake),
+        );
+    }
 
-            // eslint-disable-next-line no-await-in-loop
-            const paranetsBlockchains = await this.repositoryModuleManager.getParanetsBlockchains();
+    async handleStakeWithdrawalStartedEvent(event) {
+        await this.handleStakeIncreasedEvent(event);
+    }
 
-            if (paranetsBlockchains.includes(blockchain)) {
-                // eslint-disable-next-line no-await-in-loop
-                const knowledgeAssetId = await this.paranetService.constructKnowledgeAssetId(
-                    blockchain,
-                    contract,
-                    tokenId,
-                );
+    async handleAskUpdatedEvent(event) {
+        const eventData = JSON.parse(event.data);
 
-                // eslint-disable-next-line no-await-in-loop
-                const paranetId = await this.blockchainModuleManager.getParanetId(
-                    blockchain,
-                    knowledgeAssetId,
-                );
-                if (paranetId && paranetId !== ZERO_BYTES32) {
-                    // eslint-disable-next-line no-await-in-loop
-                    const paranetExists = await this.repositoryModuleManager.paranetExists(
-                        paranetId,
-                        blockchain,
-                    );
-                    if (paranetExists) {
-                        const {
-                            paranetKAStorageContract: paranetKasContract,
-                            tokenId: paranetTokenId,
-                        } =
-                            // eslint-disable-next-line no-await-in-loop
-                            await this.blockchainModuleManager.getKnowledgeAssetLocatorFromParanetId(
-                                blockchain,
-                                paranetId,
-                            );
-                        const paranetUAL = this.ualService.deriveUAL(
-                            blockchain,
-                            paranetKasContract,
-                            paranetTokenId,
-                        );
+        const nodeId = this.blockchainModuleManager.convertHexToAscii(
+            event.blockchain,
+            eventData.nodeId,
+        );
 
-                        // eslint-disable-next-line no-await-in-loop
-                        const paranetAssetExists = await this.tripleStoreService.paranetAssetExists(
-                            blockchain,
-                            contract,
-                            tokenId,
-                            paranetKasContract,
-                            paranetTokenId,
-                        );
+        await this.repositoryModuleManager.updatePeerAsk(
+            nodeId,
+            event.blockchain,
+            this.blockchainModuleManager.convertFromWei(event.blockchain, eventData.ask),
+        );
+    }
 
-                        if (paranetAssetExists) {
-                            const kaUAL = this.ualService.deriveUAL(blockchain, contract, tokenId);
+    async handleAssetMintedEvent(event) {
+        const eventData = JSON.parse(event.data);
 
-                            // Create a record for missing Paranet KA
-                            // Paranet sync command will get it from network
-                            // eslint-disable-next-line no-await-in-loop
-                            await this.repositoryModuleManager.createMissedParanetAssetRecord({
-                                blockchainId: blockchain,
-                                ual: kaUAL,
-                                paranetUal: paranetUAL,
-                                knowledgeAssetId,
-                            });
-                        }
-                    }
-                }
-            }
-        }
+        const { assetContract, tokenId, state, publishOperationId } = eventData;
+        const { blockchain } = event;
+
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
+        );
+
+        const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
+
+        const data = await this.fileService.readFile(datasetPath, true);
+
+        const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
+
+        await this.commandExecutor.add({
+            name: 'validateAssertionMetadataCommand',
+            sequence: ['storeAssertionCommand'],
+            delay: 0,
+            data: {
+                operationId,
+                ual,
+                blockchain,
+                contract: assetContract,
+                tokenId,
+                merkleRoot: state,
+                assertion: data.assertion,
+                cachedMerkleRoot: data.merkleRoot,
+            },
+            transactional: false,
+        });
     }
 
     /**

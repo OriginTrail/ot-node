@@ -42,17 +42,6 @@ class CommandRepository {
         });
     }
 
-    async getCommandWithNameAndStatus(name, statusArray) {
-        return this.model.findAll({
-            where: {
-                name: { [Sequelize.Op.eq]: name },
-                status: {
-                    [Sequelize.Op.in]: statusArray,
-                },
-            },
-        });
-    }
-
     async removeCommands(ids) {
         await this.model.destroy({
             where: {
@@ -77,6 +66,23 @@ class CommandRepository {
             order: [['startedAt', 'asc']],
             raw: true,
             limit,
+        });
+    }
+
+    async findUnfinalizedCommandsByName(name) {
+        return this.model.findAll({
+            where: {
+                name,
+                status: {
+                    [Sequelize.Op.notIn]: [
+                        COMMAND_STATUS.COMPLETED,
+                        COMMAND_STATUS.FAILED,
+                        COMMAND_STATUS.EXPIRED,
+                        COMMAND_STATUS.UNKNOWN,
+                    ],
+                },
+            },
+            raw: true,
         });
     }
 }

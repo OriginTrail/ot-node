@@ -4,6 +4,7 @@ import {
     NODE_ENVIRONMENTS,
     ERROR_TYPE,
     COMMAND_PRIORITY,
+    MAXIMUM_FETCH_EVENTS_FAILED_COUNT,
 } from '../../constants/constants.js';
 
 class EventListenerCommand extends Command {
@@ -35,6 +36,7 @@ class EventListenerCommand extends Command {
                 return this.commandExecutor.add({
                     name: 'blockchainEventListenerCommand',
                     data: commandData,
+                    retries: MAXIMUM_FETCH_EVENTS_FAILED_COUNT,
                     transactional: false,
                     priority: COMMAND_PRIORITY.HIGHEST,
                     isBlocking: true,
