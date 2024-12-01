@@ -30,16 +30,16 @@ class BlockchainEventListenerCommand extends Command {
     async execute(command) {
         const { blockchainId } = command.data;
 
-        const operationalDatabaseTx = await this.repositoryModuleManager.transaction();
+        const repositoryTransaction = await this.repositoryModuleManager.transaction();
 
         try {
-            await this.fetchAndHandleBlockchainEvents(blockchainId, operationalDatabaseTx);
-            await operationalDatabaseTx.commit();
+            await this.fetchAndHandleBlockchainEvents(blockchainId, repositoryTransaction);
+            await repositoryTransaction.commit();
         } catch (e) {
             this.logger.error(
                 `Failed to fetch and process blockchain events for blockchain: ${blockchainId}. Error: ${e}`,
             );
-            await operationalDatabaseTx.rollback();
+            await repositoryTransaction.rollback();
 
             return Command.repeat();
         }
@@ -47,7 +47,7 @@ class BlockchainEventListenerCommand extends Command {
         return Command.empty();
     }
 
-    async fetchAndHandleBlockchainEvents(blockchainId, operationalDatabaseTx) {
+    async fetchAndHandleBlockchainEvents(blockchainId, repositoryTransaction) {
         const currentBlock = (await this.blockchainEventsService.getBlock(blockchainId)).number;
 
         const contractEventsData = await Promise.all(
@@ -97,15 +97,15 @@ class BlockchainEventListenerCommand extends Command {
                 `Storing ${events.length} events for blockchain ${blockchainId} in the database.`,
             );
             await this.repositoryModuleManager.insertBlockchainEvents(events, {
-                transaction: operationalDatabaseTx,
+                transaction: repositoryTransaction,
             });
-            await this.processEventsByPriority(events, operationalDatabaseTx);
+            await this.processEventsByPriority(events, repositoryTransaction);
         }
 
         await this.updateLastCheckedBlocks(
             blockchainId,
             contractLastCheckedBlock,
-            operationalDatabaseTx,
+            repositoryTransaction,
         );
     }
 
@@ -138,7 +138,7 @@ class BlockchainEventListenerCommand extends Command {
         });
     }
 
-    async processEventsByPriority(events, operationalDatabaseTx) {
+    async processEventsByPriority(events, repositoryTransaction) {
         const eventsByPriority = {};
         for (const event of events) {
             if (!eventsByPriority[event.priority]) {
@@ -147,8 +147,6 @@ class BlockchainEventListenerCommand extends Command {
             eventsByPriority[event.priority].push(event);
         }
 
-        console.log(JSON.stringify(eventsByPriority));
-
         // Process each priority level sequentially
         const priorityLevels = Object.keys(eventsByPriority).sort((a, b) => a - b);
         for (const priority of priorityLevels) {
@@ -156,17 +154,17 @@ class BlockchainEventListenerCommand extends Command {
 
             // eslint-disable-next-line no-await-in-loop
             await Promise.all(
-                priorityLevelEvents.map((event) => this.processEvent(event, operationalDatabaseTx)),
+                priorityLevelEvents.map((event) => this.processEvent(event, repositoryTransaction)),
             );
             // eslint-disable-next-line no-await-in-loop
             await this.repositoryModuleManager.markBlockchainEventsAsProcessed(
                 priorityLevelEvents,
-                { transaction: operationalDatabaseTx },
+                { transaction: repositoryTransaction },
             );
         }
     }
 
-    async processEvent(event, operationalDatabaseTx) {
+    async processEvent(event, repositoryTransaction) {
         const handlerFunctionName = `handle${event.event}Event`;
 
         if (typeof this[handlerFunctionName] !== 'function') {
@@ -176,7 +174,7 @@ class BlockchainEventListenerCommand extends Command {
 
         this.logger.trace(`Processing event ${event.event} in block ${event.block}.`);
         try {
-            await this[handlerFunctionName](event, operationalDatabaseTx);
+            await this[handlerFunctionName](event, repositoryTransaction);
         } catch (error) {
             this.logger.error(
                 `Error processing event ${event.event} in block ${event.block}: ${error.message}`,
@@ -184,7 +182,7 @@ class BlockchainEventListenerCommand extends Command {
         }
     }
 
-    async updateLastCheckedBlocks(blockchainId, contractLastCheckedBlock, operationalDatabaseTx) {
+    async updateLastCheckedBlocks(blockchainId, contractLastCheckedBlock, repositoryTransaction) {
         await Promise.all(
             Object.entries(contractLastCheckedBlock).map(([contractName, lastCheckedBlock]) =>
                 this.repositoryModuleManager.updateLastCheckedBlock(
@@ -192,7 +190,7 @@ class BlockchainEventListenerCommand extends Command {
                     lastCheckedBlock,
                     Date.now(),
                     contractName,
-                    { transaction: operationalDatabaseTx },
+                    { transaction: repositoryTransaction },
                 ),
             ),
         );
@@ -255,7 +253,7 @@ class BlockchainEventListenerCommand extends Command {
         );
     }
 
-    async handleNodeAddedEvent(event, operationalDatabaseTx) {
+    async handleNodeAddedEvent(event, repositoryTransaction) {
         const eventData = JSON.parse(event.data);
 
         const nodeId = this.blockchainModuleManager.convertHexToAscii(
@@ -275,11 +273,11 @@ class BlockchainEventListenerCommand extends Command {
             this.blockchainModuleManager.convertFromWei(event.blockchain, eventData.stake),
             new Date(0),
             sha256,
-            { transaction: operationalDatabaseTx },
+            { transaction: repositoryTransaction },
         );
     }
 
-    async handleNodeRemovedEvent(event, operationalDatabaseTx) {
+    async handleNodeRemovedEvent(event, repositoryTransaction) {
         const eventData = JSON.parse(event.data);
 
         const nodeId = this.blockchainModuleManager.convertHexToAscii(
@@ -290,11 +288,11 @@ class BlockchainEventListenerCommand extends Command {
         this.logger.trace(`Removing peer id: ${nodeId} from sharding table.`);
 
         await this.repositoryModuleManager.removePeerRecord(event.blockchain, nodeId, {
-            transaction: operationalDatabaseTx,
+            transaction: repositoryTransaction,
         });
     }
 
-    async handleStakeIncreasedEvent(event, operationalDatabaseTx) {
+    async handleStakeIncreasedEvent(event, repositoryTransaction) {
         const eventData = JSON.parse(event.data);
 
         const nodeId = this.blockchainModuleManager.convertHexToAscii(
@@ -306,7 +304,7 @@ class BlockchainEventListenerCommand extends Command {
             nodeId,
             event.blockchain,
             this.blockchainModuleManager.convertFromWei(event.blockchain, eventData.newStake),
-            { transaction: operationalDatabaseTx },
+            { transaction: repositoryTransaction },
         );
     }
 
@@ -314,7 +312,7 @@ class BlockchainEventListenerCommand extends Command {
         await this.handleStakeIncreasedEvent(event);
     }
 
-    async handleAskUpdatedEvent(event, operationalDatabaseTx) {
+    async handleAskUpdatedEvent(event, repositoryTransaction) {
         const eventData = JSON.parse(event.data);
 
         const nodeId = this.blockchainModuleManager.convertHexToAscii(
@@ -326,7 +324,7 @@ class BlockchainEventListenerCommand extends Command {
             nodeId,
             event.blockchain,
             this.blockchainModuleManager.convertFromWei(event.blockchain, eventData.ask),
-            { transaction: operationalDatabaseTx },
+            { transaction: repositoryTransaction },
         );
     }
 
