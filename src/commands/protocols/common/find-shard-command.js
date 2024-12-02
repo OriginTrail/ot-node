@@ -7,6 +7,9 @@ class FindShardCommand extends Command {
         this.networkModuleManager = ctx.networkModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
+        this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.FIND_NODES_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.FIND_NODES_END;
     }
 
     /**
@@ -15,14 +18,13 @@ class FindShardCommand extends Command {
      */
     async execute(command) {
         const { operationId, blockchain, datasetRoot } = command.data;
-        this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
         this.logger.debug(
             `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
         );
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.FIND_NODES_START,
+            this.operationStartEvent,
         );
 
         this.minAckResponses = await this.operationService.getMinAckResponses(blockchain);
@@ -74,7 +76,7 @@ class FindShardCommand extends Command {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.FIND_NODES_END,
+            this.operationEndEvent,
         );
 
         return this.continueSequence(

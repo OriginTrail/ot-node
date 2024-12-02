@@ -1,9 +1,13 @@
 import FindShardCommand from '../../common/find-shard-command.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class PublishFindShardCommand extends FindShardCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.errorType = ERROR_TYPE.FIND_SHARD.PUBLISH_FIND_SHARD_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_FIND_NODES_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_FIND_NODES_END;
     }
 
     getOperationCommandSequence(nodePartOfShard) {

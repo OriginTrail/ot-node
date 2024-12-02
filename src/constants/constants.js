@@ -366,7 +366,7 @@ export const ERROR_TYPE = {
         GET_PRIVATE_ASSERTION_ID_ERROR: 'GetPrivateAssertionIdError',
         GET_LOCAL_ERROR: 'GetLocalError',
         GET_NETWORK_ERROR: 'GetNetworkError',
-        GET_CURATED_PARANET_NETWORK_ERROR: 'GetCuratedParanetNetworError',
+        GET_CURATED_PARANET_NETWORK_ERROR: 'GetCuratedParanetNetworkError',
         GET_START_ERROR: 'GetStartError',
         GET_INIT_ERROR: 'GetInitError',
         GET_REQUEST_ERROR: 'GetRequestError',
@@ -401,6 +401,8 @@ export const ERROR_TYPE = {
     },
     FIND_SHARD: {
         FIND_SHARD_ERROR: 'FindShardError',
+        PUBLISH_FIND_SHARD_ERROR: 'PublishFindShardError',
+        GET_FIND_SHARD_ERROR: 'GetFindShardError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -431,6 +433,8 @@ export const OPERATION_ID_STATUS = {
         PUBLISH_LOCAL_STORE_END: 'PUBLISH_LOCAL_STORE_END',
         PUBLISH_REPLICATE_START: 'PUBLISH_REPLICATE_START',
         PUBLISH_REPLICATE_END: 'PUBLISH_REPLICATE_END',
+        PUBLISH_FIND_NODES_START: 'PUBLISH_FIND_NODES_START',
+        PUBLISH_FIND_NODES_END: 'PUBLISH_FIND_NODES_END',
         PUBLISH_END: 'PUBLISH_END',
     },
     PUBLISH_FINALIZATION: {
@@ -465,6 +469,8 @@ export const OPERATION_ID_STATUS = {
         GET_REMOTE_END: 'GET_REMOTE_END',
         GET_FETCH_FROM_NODES_START: 'GET_FETCH_FROM_NODES_START',
         GET_FETCH_FROM_NODES_END: 'GET_FETCH_FROM_NODES_END',
+        GET_FIND_NODES_START: 'GET_FIND_NODES_START',
+        GET_FIND_NODES_END: 'PUBLISH_FIND_NODES_END',
         GET_END: 'GET_END',
     },
     COMMIT_PROOF: {
