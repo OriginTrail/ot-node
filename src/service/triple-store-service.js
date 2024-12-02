@@ -218,10 +218,14 @@ class TripleStoreService {
     async getAssertion(ual, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         this.logger.debug(`Getting Assertion with the UAL: ${ual}.`);
 
+        // TODO: This is placeholder UAL construction to match expected format
+        const { blockchain: blockchainUAL, contract, tokenId } = this.ualService.resolveUAL(ual);
+        const fixeUal = `did:dkg:${blockchainUAL}/${contract}/${tokenId}/1:0`;
+
         const nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
             this.repositoryImplementations[repository],
             repository,
-            ual,
+            fixeUal,
         );
         // TODO: Verify this make sense to be commented
         // It should be returned sorted

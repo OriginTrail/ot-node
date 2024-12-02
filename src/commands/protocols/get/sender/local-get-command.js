@@ -29,7 +29,7 @@ class LocalGetCommand extends Command {
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        const response = {};
+        // const response = {};
 
         // if (paranetUAL) {
         //     const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
@@ -82,12 +82,12 @@ class LocalGetCommand extends Command {
         // else {
 
         // TODO: Don't use hardcoded repository name
-        const assertion = this.tripleStoreService.getAssertion(ual);
+        const assertion = await this.tripleStoreService.getAssertion(ual);
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                response,
+                assertion,
                 [
                     OPERATION_ID_STATUS.GET.GET_LOCAL_END,
                     OPERATION_ID_STATUS.GET.GET_END,
