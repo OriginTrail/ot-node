@@ -276,7 +276,7 @@ class TripleStoreService {
     }
 
     async getKnowledgeAssetMetadata(ual, repository = TRIPLE_STORE_REPOSITORY.DKG) {
-        this.logger.debug(`Getting Knowledge Collection Metadata with the UAL: ${ual}.`);
+        this.logger.debug(`Getting Knowledge Asset Metadata with the UAL: ${ual}.`);
 
         // TODO: This is placeholder UAL construction to match expected format
         const { blockchain: blockchainUAL, contract, tokenId } = this.ualService.resolveUAL(ual);
@@ -291,7 +291,7 @@ class TripleStoreService {
         nquads = nquads.split('\n').filter((line) => line !== '');
 
         this.logger.debug(
-            `Knowledge Collection Metadata: ${ual} ${
+            `Knowledge Asset Metadata: ${ual} ${
                 nquads.length ? '' : 'is not'
             } found in the Triple Store's ${repository} repository.`,
         );
