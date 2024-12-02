@@ -69,18 +69,11 @@ class GetService extends OperationService {
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minAckResponses
+            completedNumber <= minAckResponses
         ) {
-            await this.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                {
-                    assertion: responseData.nquads,
-                    privateAssertion: responseData.privateNquads,
-                    syncedAssetRecord: responseData.syncedAssetRecord,
-                },
-                [...this.completedStatuses],
-            );
+            await this.markOperationAsCompleted(operationId, blockchain, responseData, [
+                ...this.completedStatuses,
+            ]);
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (completedNumber < minAckResponses && (isAllNodesResponded || isBatchCompleted)) {
             const potentialCompletedNumber = completedNumber + leftoverNodes.length;

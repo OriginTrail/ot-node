@@ -17,7 +17,8 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { operationId, blockchain, ual, includeMetadata } = commandData;
+        const { operationId, blockchain, contract, tokenId, kaId, ual, includeMetadata } =
+            commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -84,10 +85,14 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //     }
         // }
 
-        const promises = [this.tripleStoreService.getAssertion(ual)];
+        const promises = [
+            this.tripleStoreService.getAssertion(blockchain, contract, tokenId, kaId),
+        ];
 
         if (includeMetadata) {
-            promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
+            promises.push(
+                this.tripleStoreService.getAssertionMetadata(blockchain, contract, tokenId, kaId),
+            );
         }
 
         const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
@@ -97,19 +102,6 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
         };
 
-        if (assertion.length) {
-            await this.operationService.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                responseData,
-                [
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                    OPERATION_ID_STATUS.GET.GET_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
-            );
-        }
-
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -117,7 +109,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         );
 
         return assertion.length
-            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: { assertion } }
+            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                   messageData: { errorMessage: `Unable to find assertion ${ual}` },

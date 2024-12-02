@@ -40,6 +40,7 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
             );
             return Command.empty();
         }
+        // TODO: Update to validate knowledge asset index
         const isValidUal = await this.validationService.validateUal(blockchain, contract, tokenId);
 
         if (!isValidUal) {
@@ -58,7 +59,11 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_END,
         );
         return this.continueSequence(
-            { ...command.data, retry: undefined, period: undefined },
+            {
+                ...command.data,
+                retry: undefined,
+                period: undefined,
+            },
             command.sequence,
         );
     }

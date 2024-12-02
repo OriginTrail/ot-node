@@ -22,7 +22,7 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, ual, includeMetadata } = command.data;
+        const { operationId, blockchain, includeMetadata, contract, tokenId, kaId } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -81,10 +81,14 @@ class LocalGetCommand extends Command {
 
         // else {
 
-        const promises = [this.tripleStoreService.getAssertion(ual)];
+        const promises = [
+            this.tripleStoreService.getAssertion(blockchain, contract, tokenId, kaId),
+        ];
 
         if (includeMetadata) {
-            promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
+            promises.push(
+                this.tripleStoreService.getAssertionMetadata(blockchain, contract, tokenId, kaId),
+            );
         }
 
         const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
