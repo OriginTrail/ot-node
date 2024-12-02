@@ -4,14 +4,10 @@ import BlockchainEventsService from '../blockchain-events-service.js';
 
 import {
     MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH,
-    WS_RPC_PROVIDER_PRIORITY,
-    HTTP_RPC_PROVIDER_PRIORITY,
-    FALLBACK_PROVIDER_QUORUM,
-    RPC_PROVIDER_STALL_TIMEOUT,
     MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
     NODE_ENVIRONMENTS,
     ABIs,
-    CONTRACT_EVENTS_LISTENED,
+    MONITORED_CONTRACTS,
 } from '../../../../constants/constants.js';
 
 class OtEthers extends BlockchainEventsService {
@@ -24,84 +20,65 @@ class OtEthers extends BlockchainEventsService {
 
     async _initializeRpcProviders() {
         this.providers = {};
-
         for (const blockchain of this.config.blockchains) {
-            const providers = [];
+            const validProviders = [];
             for (const rpcEndpoint of this.config.rpcEndpoints[blockchain]) {
-                const isWebSocket = rpcEndpoint.startsWith('ws');
-                const Provider = isWebSocket
-                    ? ethers.providers.WebSocketProvider
-                    : ethers.providers.JsonRpcProvider;
-                const priority = isWebSocket
-                    ? WS_RPC_PROVIDER_PRIORITY
-                    : HTTP_RPC_PROVIDER_PRIORITY;
-
                 try {
-                    const provider = new Provider(rpcEndpoint);
+                    const provider = new ethers.providers.JsonRpcProvider(rpcEndpoint);
+
                     // eslint-disable-next-line no-await-in-loop
                     await provider.getNetwork();
 
                     let isArchiveNode = false;
                     try {
+                        // eslint-disable-next-line no-await-in-loop
                         const block = await provider.getBlock(1);
-
                         if (block) {
                             isArchiveNode = true;
                         }
                     } catch (error) {
-                        /* empty */
+                        this.logger.warn(`RPC ${rpcEndpoint} is not an archive node.`);
                     }
 
                     if (isArchiveNode) {
-                        providers.push({
-                            provider,
-                            priority,
-                            weight: 1,
-                            stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
-                        });
+                        validProviders.push(provider);
+                        this.logger.info(`Connected to archive node: ${rpcEndpoint}`);
                     } else {
-                        this.logger.warn(`${rpcEndpoint} RPC is not an Archive Node, skipping...`);
-                        continue;
+                        this.logger.warn(`Skipping non-archive node: ${rpcEndpoint}`);
                     }
-
-                    this.logger.debug(
-                        `Connected to the blockchain RPC: ${
-                            rpcEndpoint.includes('apiKey')
-                                ? rpcEndpoint.split('apiKey')[0]
-                                : rpcEndpoint
-                        }.`,
-                    );
-                } catch (e) {
-                    this.logger.warn(
-                        `Unable to connect to the blockchain RPC: ${
-                            rpcEndpoint.includes('apiKey')
-                                ? rpcEndpoint.split('apiKey')[0]
-                                : rpcEndpoint
-                        }.`,
+                } catch (error) {
+                    this.logger.error(
+                        `Failed to initialize provider: ${rpcEndpoint}. Error: ${error.message}`,
                     );
                 }
             }
 
-            try {
-                this.providers[blockchain] = new ethers.providers.FallbackProvider(
-                    providers,
-                    FALLBACK_PROVIDER_QUORUM,
-                );
-
-                // eslint-disable-next-line no-await-in-loop
-                await this.providers[blockchain].getNetwork();
-            } catch (e) {
-                throw new Error(
-                    `RPC Fallback Provider initialization failed. Fallback Provider quorum: ${FALLBACK_PROVIDER_QUORUM}. Error: ${e.message}.`,
-                );
+            if (validProviders.length === 0) {
+                throw new Error(`No valid providers found for blockchain: ${blockchain}`);
             }
+
+            this.providers[blockchain] = validProviders;
+            this.logger.info(
+                `Initialized ${validProviders.length} valid providers for blockchain: ${blockchain}`,
+            );
         }
+    }
+
+    _getRandomProvider(blockchain) {
+        const blockchainProviders = this.providers[blockchain];
+        if (!blockchainProviders || blockchainProviders.length === 0) {
+            throw new Error(`No providers available for blockchain: ${blockchain}`);
+        }
+        const randomIndex = Math.floor(Math.random() * blockchainProviders.length);
+        return blockchainProviders[randomIndex];
     }
 
     async _initializeContracts() {
         this.contracts = {};
 
         for (const blockchain of this.config.blockchains) {
+            const provider = this._getRandomProvider(blockchain);
+
             this.contracts[blockchain] = {};
 
             this.logger.info(
@@ -110,7 +87,7 @@ class OtEthers extends BlockchainEventsService {
             this.contracts[blockchain].Hub = new ethers.Contract(
                 this.config.hubContractAddress[blockchain],
                 ABIs.Hub,
-                this.providers[blockchain],
+                provider,
             );
 
             const contractsAray = await this.contracts[blockchain].Hub.getAllContracts();
@@ -119,11 +96,11 @@ class OtEthers extends BlockchainEventsService {
             const allContracts = [...contractsAray, ...assetStoragesArray];
 
             for (const [contractName, contractAddress] of allContracts) {
-                if (CONTRACT_EVENTS_LISTENED.includes(contractName) && ABIs[contractName] != null) {
+                if (MONITORED_CONTRACTS.includes(contractName) && ABIs[contractName] != null) {
                     this.contracts[blockchain][contractName] = new ethers.Contract(
                         contractAddress,
                         ABIs[contractName],
-                        this.providers[blockchain],
+                        provider,
                     );
                 }
             }
@@ -133,34 +110,49 @@ class OtEthers extends BlockchainEventsService {
     }
 
     async getBlock(blockchain, tag) {
-        return this.providers[blockchain].getBlock(tag);
+        const provider = this._getRandomProvider(blockchain);
+        return provider.getBlock(tag);
     }
 
-    async getPastEvents(blockchain, contractName, eventsToFilter, lastCheckedBlock, currentBlock) {
-        const contract = this.contracts[blockchain][contractName];
-        if (!contract) {
-            // this will happen when we have different set of contracts on different blockchains
-            // eg LinearSum contract is available on gnosis but not on NeuroWeb, so the node should not fetch events
-            // from LinearSum contract on NeuroWeb blockchain
-            return {
-                events: [],
-                lastCheckedBlock: currentBlock,
-                eventsMissed: false,
-            };
-        }
-
+    async getPastEvents(blockchain, contractNames, eventsToFilter, lastCheckedBlock, currentBlock) {
         const maxBlocksToSync = await this._getMaxNumberOfHistoricalBlocksForSync(blockchain);
         let fromBlock =
             currentBlock - lastCheckedBlock > maxBlocksToSync ? currentBlock : lastCheckedBlock + 1;
         const eventsMissed = currentBlock - lastCheckedBlock > maxBlocksToSync;
 
+        if (eventsMissed) {
+            return {
+                events: [],
+                lastCheckedBlock: currentBlock,
+                eventsMissed,
+            };
+        }
+
+        const contractAddresses = [];
         const topics = [];
-        for (const filterName in contract.filters) {
-            if (!eventsToFilter.includes(filterName)) {
+        const addressToContractNameMap = {};
+
+        for (const contractName of contractNames) {
+            const contract = this.contracts[blockchain][contractName];
+
+            if (!contract) {
                 continue;
             }
-            const filter = contract.filters[filterName]().topics[0];
-            topics.push(filter);
+
+            const contractTopics = [];
+            for (const filterName in contract.filters) {
+                if (!eventsToFilter.includes(filterName)) {
+                    continue;
+                }
+                const filter = contract.filters[filterName]().topics[0];
+                contractTopics.push(filter);
+            }
+
+            if (contractTopics.length > 0) {
+                contractAddresses.push(contract.address);
+                topics.push(...contractTopics);
+                addressToContractNameMap[contract.address.toLowerCase()] = contractName;
+            }
         }
 
         const events = [];
@@ -171,38 +163,55 @@ class OtEthers extends BlockchainEventsService {
                     fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
                     currentBlock,
                 );
-                const newEvents = await this._processBlockRange(
-                    fromBlock,
-                    toBlock,
-                    contract,
-                    topics,
-                );
-                events.push(...newEvents.flat());
+                const provider = this._getRandomProvider(blockchain);
+                const newLogs = await provider.send('eth_getLogs', [
+                    {
+                        address: contractAddresses,
+                        fromBlock: ethers.BigNumber.from(fromBlock).toHexString(),
+                        toBlock: ethers.BigNumber.from(toBlock).toHexString(),
+                        topics: [topics],
+                    },
+                ]);
+
+                for (const log of newLogs) {
+                    const contractName = addressToContractNameMap[log.address];
+                    const contract = this.contracts[blockchain][contractName];
+
+                    try {
+                        const parsedLog = contract.interface.parseLog(log);
+                        events.push({
+                            contract: contractName,
+                            event: parsedLog.name,
+                            data: JSON.stringify(
+                                Object.fromEntries(
+                                    Object.entries(parsedLog.args).map(([k, v]) => [
+                                        k,
+                                        ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
+                                    ]),
+                                ),
+                            ),
+                            blockNumber: parseInt(log.blockNumber, 16),
+                            transactionIndex: parseInt(log.transactionIndex, 16),
+                            logIndex: parseInt(log.logIndex, 16),
+                            blockchain,
+                        });
+                    } catch (error) {
+                        this.logger.warn(
+                            `Failed to parse log for contract: ${contract.constructor.name}. Error: ${error.message}`,
+                        );
+                    }
+                }
+
                 fromBlock = toBlock + 1;
             }
         } catch (error) {
             this.logger.warn(
-                `Unable to process block range from: ${fromBlock} to: ${toBlock} for contract ${contractName} on blockchain: ${blockchain}. Error: ${error.message}`,
+                `Unable to process block range from: ${fromBlock} to: ${toBlock} on blockchain: ${blockchain}. Error: ${error.message}`,
             );
         }
 
         return {
-            events: events.map((event) => ({
-                contract: contractName,
-                event: event.event,
-                data: JSON.stringify(
-                    Object.fromEntries(
-                        Object.entries(event.args).map(([k, v]) => [
-                            k,
-                            ethers.BigNumber.isBigNumber(v) ? v.toString() : v,
-                        ]),
-                    ),
-                ),
-                blockNumber: event.blockNumber,
-                transactionIndex: event.transactionIndex,
-                logIndex: event.logIndex,
-                blockchain,
-            })),
+            events,
             lastCheckedBlock: toBlock,
             eventsMissed,
         };
@@ -233,15 +242,6 @@ class OtEthers extends BlockchainEventsService {
 
         const timeDiffMillis = (latestBlock.timestamp - olderBlock.timestamp) * 1000;
         return timeDiffMillis / blockRange;
-    }
-
-    async _processBlockRange(fromBlock, toBlock, contract, topics) {
-        // TODO: When migrated to ether v6, we should query
-        // all contracts/topics in one query, not supported in ethers v5
-        const newEvents = await Promise.all(
-            topics.map((topic) => contract.queryFilter(topic, fromBlock, toBlock)),
-        );
-        return newEvents;
     }
 }
 

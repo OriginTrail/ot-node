@@ -36,7 +36,7 @@ class BlockchainEventRepository {
         return insertedEvents;
     }
 
-    async getAllUnprocessedBlockchainEvents(eventNames, blockchain) {
+    async getAllUnprocessedBlockchainEvents(blockchain, eventNames) {
         return this.model.findAll({
             where: {
                 blockchain,

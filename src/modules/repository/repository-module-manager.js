@@ -295,10 +295,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('blockchain_event').insertBlockchainEvents(events, options);
     }
 
-    async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {
+    async getAllUnprocessedBlockchainEvents(blockchain, eventNames) {
         return this.getRepository('blockchain_event').getAllUnprocessedBlockchainEvents(
+            blockchain,
             eventNames,
-            blockchainId,
         );
     }
 
@@ -324,23 +324,15 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('blockchain_event').findProcessedEvents(timestamp, limit);
     }
 
-    async removeLastCheckedBlockForContract(contract, options = {}) {
-        return this.getRepository('blockchain').removeLastCheckedBlockForContract(
-            contract,
-            options,
-        );
+    async getLastCheckedBlock(blockchain) {
+        return this.getRepository('blockchain').getLastCheckedBlock(blockchain);
     }
 
-    async getLastCheckedBlock(blockchainId, contract) {
-        return this.getRepository('blockchain').getLastCheckedBlock(blockchainId, contract);
-    }
-
-    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract, options = {}) {
+    async updateLastCheckedBlock(blockchain, currentBlock, timestamp, options = {}) {
         return this.getRepository('blockchain').updateLastCheckedBlock(
-            blockchainId,
+            blockchain,
             currentBlock,
             timestamp,
-            contract,
             options,
         );
     }

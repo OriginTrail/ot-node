@@ -27,7 +27,7 @@ class BlockchainEventsService {
 
     async getPastEvents(
         blockchain,
-        contractName,
+        contractNames,
         eventsToFilter,
         lastCheckedBlock,
         lastCheckedTimestamp,
@@ -36,7 +36,7 @@ class BlockchainEventsService {
         return this.blockchainEventsModuleManager.getPastEvents(
             this.blockchainEventsServicesImplementations[blockchain],
             blockchain,
-            contractName,
+            contractNames,
             eventsToFilter,
             lastCheckedBlock,
             lastCheckedTimestamp,
