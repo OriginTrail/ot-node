@@ -91,11 +91,11 @@ class LocalGetCommand extends Command {
             );
         }
 
-        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
+        const [assertion, metadata] = await Promise.all(promises);
 
         const responseData = {
             assertion,
-            ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
+            ...(includeMetadata && metadata && { metadata }),
         };
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(

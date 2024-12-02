@@ -95,11 +95,11 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             );
         }
 
-        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
+        const [assertion, metadata] = await Promise.all(promises);
 
         const responseData = {
             assertion,
-            ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
+            ...(includeMetadata && metadata && { metadata }),
         };
 
         await this.operationIdService.updateOperationIdStatus(
