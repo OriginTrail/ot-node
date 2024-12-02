@@ -95,7 +95,32 @@
                     "ot-blazegraph": {
                         "enabled": false,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                        "config": {}
+                        "config": {
+                            "publicCurrent": {
+                                "url": "http://localhost:9999",
+                                "name": "kb",
+                                "username": "admin",
+                                "password": ""
+                            },
+                             "publicHistory": {
+                                "url": "http://localhost:9999",
+                                "name": "public-history",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "privateCurrent": {
+                                "url": "http://localhost:9999",
+                                "name": "private-current",
+                                "username": "admin",
+                                "password": ""
+                            },
+                            "privateHistory": {
+                                "url": "http://localhost:9999",
+                                "name": "private-history",
+                                "username": "admin",
+                                "password": ""
+                            }
+                        }
                     },
                     "ot-fuseki": {
                         "enabled": false,
@@ -319,15 +344,13 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "implementation": {
-                        "quest-telemetry": {
-                            "enabled": true,
-                            "package": "./telemetry/implementation/quest-telemetry.js",
-                            "config": {
-                                "ip_endpoint": "http::addr=localhost:10000",
-                                "sendTelemetryData": false
-                            }                      
-                        }
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "ip_endpoint": "http::addr=localhost:10000",
+                            "sendTelemetryData": false
+                        }                      
                     }
                 }
             }
@@ -489,15 +512,13 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "implementation": {
-                        "quest-telemetry": {
-                            "enabled": true,
-                            "package": "./telemetry/implementation/quest-telemetry.js",
-                            "config": {
-                                "ip_endpoint": "http::addr=localhost:10000",
-                                "sendTelemetryData": false
-                            }                      
-                        }
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "ip_endpoint": "http::addr=localhost:10000",
+                            "sendTelemetryData": false
+                        }                      
                     }
                 }
             }
@@ -658,15 +679,13 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "implementation": {
-                        "quest-telemetry": {
-                            "enabled": true,
-                            "package": "./telemetry/implementation/quest-telemetry.js",
-                            "config": {
-                                "ip_endpoint": "http::addr=localhost:10000",
-                                "sendTelemetryData": false
-                            }                      
-                        }
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "ip_endpoint": "http::addr=localhost:10000",
+                            "sendTelemetryData": false
+                        }                      
                     }
                 }
             }
@@ -850,15 +869,13 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "implementation": {
-                        "quest-telemetry": {
-                            "enabled": true,
-                            "package": "./telemetry/implementation/quest-telemetry.js",
-                            "config": {
-                                "ip_endpoint": "http::addr=localhost:10000",
-                                "sendTelemetryData": false
-                            }                      
-                        }
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "ip_endpoint": "http::addr=localhost:10000",
+                            "sendTelemetryData": false
+                        }                      
                     }
                 }
             }
