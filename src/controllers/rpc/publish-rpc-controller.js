@@ -21,8 +21,14 @@ class PublishController extends BaseController {
                 retries: 3,
             });
 
-            await this.operationIdService.cacheOperationIdData(operationId, {
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
                 dataset: message.data.dataset,
+                datasetRoot: message.data.datasetRoot,
+            });
+
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, {
+                dataset: message.data.dataset,
+                datasetRoot: message.data.datasetRoot,
             });
         } else {
             throw new Error('Unknown message type');
@@ -33,6 +39,7 @@ class PublishController extends BaseController {
             remotePeerId,
             operationId,
             protocol,
+            dataset: message.data.dataset,
             datasetRoot: message.data.datasetRoot,
             blockchain: message.data.blockchain,
         };

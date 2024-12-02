@@ -39,26 +39,24 @@ class LocalStoreCommand extends Command {
                 blockchain,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
+
             const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
-                if (cachedData.public.dataset && cachedData.public.datasetRoot) {
-                    storePromises.push(
-                        this.pendingStorageService.cacheDataset(
-                            operationId,
-                            cachedData.public.datasetRoot,
-                            cachedData.public.dataset,
-                        ),
-                    );
-                }
-                // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
+
+                // if (cachedData.dataset && cachedData.datasetRoot) {
                 //     storePromises.push(
                 //         this.pendingStorageService.cacheDataset(
                 //             operationId,
-                //             datasetRoot,
-                //             dataset,
+                //             cachedData.datasetRoot,
+                //             cachedData.dataset,
                 //         ),
+                //     );
+                // }
+                // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
+                //     storePromises.push(
+                //         this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset),
                 //     );
                 // }
                 await Promise.all(storePromises);
@@ -88,6 +86,33 @@ class LocalStoreCommand extends Command {
 
                 await this.tripleStoreModuleManager.initializeParanetRepository(paranetRepository);
                 await this.paranetService.initializeParanetRecord(blockchain, paranetId);
+
+                if (cachedData && cachedData.datasetRoot) {
+                    // await this.tripleStoreService.localStoreAsset(
+                    //     paranetRepository,
+                    //     cachedData.public.assertionId,
+                    //     cachedData.public.assertion,
+                    //     blockchain,
+                    //     contract,
+                    //     tokenId,
+                    //     keyword,
+                    //     LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                    //     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                    // );
+                }
+                if (cachedData && cachedData.datasetRoot) {
+                    // await this.tripleStoreService.localStoreAsset(
+                    //     paranetRepository,
+                    //     cachedData.private.assertionId,
+                    //     cachedData.private.assertion,
+                    //     blockchain,
+                    //     contract,
+                    //     tokenId,
+                    //     keyword,
+                    //     LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
+                    //     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
+                    // );
+                }
 
                 await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
                 // await this.repositoryModuleManager.createParanetSyncedAssetRecord(

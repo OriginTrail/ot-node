@@ -17,6 +17,7 @@ class PublishController extends BaseController {
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.pendingStorageService = ctx.pendingStorageService;
     }
 
     async handleRequest(req, res) {
@@ -53,13 +54,17 @@ class PublishController extends BaseController {
         );
 
         try {
-            await this.operationIdService.cacheOperationIdData(operationId, {
-                public: {
-                    dataset,
-                    datasetRoot,
-                },
-                blockchain,
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
+                dataset,
+                datasetRoot,
             });
+
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, {
+                dataset,
+                datasetRoot,
+            });
+
+            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
 
             const commandSequence = ['publishFindShardCommand'];
 

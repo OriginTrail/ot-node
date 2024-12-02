@@ -19,6 +19,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.ualService = ctx.ualService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.blsService = ctx.blsService;
+        this.operationIdService = ctx.operationIdService;
+        this.pendingStorageService = ctx.pendingStorageService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
     }

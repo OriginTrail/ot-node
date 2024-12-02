@@ -71,7 +71,9 @@ class LocalStoreController extends BaseController {
             )}. Operation id: ${operationId}`,
         );
 
-        await this.operationIdService.cacheOperationIdData(operationId, cachedAssertions);
+        await this.operationIdService.cacheOperationIdDataToMemory(operationId, cachedAssertions);
+
+        await this.operationIdService.cacheOperationIdDataToFile(operationId, cachedAssertions);
 
         const commandSequence = ['validateAssetCommand', 'localStoreCommand'];
 

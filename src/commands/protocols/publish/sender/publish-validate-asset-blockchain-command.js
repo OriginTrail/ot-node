@@ -31,6 +31,7 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             blockchain,
             contract,
             tokenId,
+            datasetRoot,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
         } = command.data;
 
@@ -60,28 +61,26 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             return Command.retry();
         }
 
-        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { dataset: cachedData } = await this.operationIdService.getCachedOperationIdData(
+            operationId,
+        );
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        this.logger.info(
-            `Validating asset's public assertion with id: ${cachedData.public.assertionId} ual: ${ual}`,
+        this.logger.debug(
+            `Validating asset's public assertion with id: ${datasetRoot} ual: ${ual}`,
         );
 
-        if (blockchainAssertionId !== cachedData.public.assertionId) {
+        if (blockchainAssertionId !== datasetRoot) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
+                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${datasetRoot}`,
                 this.errorType,
                 true,
             );
             return Command.empty();
         }
 
-        await this.validationService.validateAssertion(
-            cachedData.public.assertionId,
-            blockchain,
-            cachedData.public.assertion,
-        );
+        await this.validationService.validateAssertion(datasetRoot, blockchain, cachedData);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

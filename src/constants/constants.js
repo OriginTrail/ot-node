@@ -212,6 +212,7 @@ export const PERMANENT_COMMANDS = [
     'updateCleanerCommand',
     'updateResponseCleanerCommand',
     'startParanetSyncCommands',
+    'pendingStorageCleanerCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -548,6 +549,11 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  * finalized commands command cleanup interval time 24h
  */
+
+export const PUBLISH_STORAGE_MEMORY_CLEANUP_COMMAND_CLEANUP_TIME_MILLS = 4 * 60 * 60 * 1000;
+
+export const PUBLISH_STORAGE_FILE_CLEANUP_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
 export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const GET_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
@@ -590,6 +596,8 @@ export const COMMAND_STATUS = {
     COMPLETED: 'COMPLETED',
     REPEATING: 'REPEATING',
 };
+
+export const PENDING_STORAGE_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
 
 export const OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
 
