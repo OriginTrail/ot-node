@@ -91,7 +91,7 @@ class LocalGetCommand extends Command {
 
         const responseData = {
             assertion,
-            ...(includeMetadata && KCMetadata && { metadata: KCMetadata }),
+            ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
         };
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(
