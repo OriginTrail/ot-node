@@ -87,7 +87,7 @@ class LocalGetCommand extends Command {
             promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
         }
 
-        const [assertion, KCMetadata] = await Promise.all(promises);
+        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
 
         const responseData = {
             assertion,
