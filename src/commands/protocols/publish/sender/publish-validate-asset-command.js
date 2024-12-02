@@ -2,6 +2,7 @@ import ValidateAssetCommand from '../../../common/validate-asset-command.js';
 import Command from '../../../command.js';
 import {
     OPERATION_ID_STATUS,
+    ERROR_TYPE,
     LOCAL_STORE_TYPES,
     PARANET_ACCESS_POLICY,
 } from '../../../../constants/constants.js';
@@ -10,6 +11,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSET_ERROR;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -37,7 +39,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.VALIDATE_ASSET_START,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_START,
         );
 
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
@@ -122,7 +124,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.VALIDATE_ASSET_END,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END,
         );
         return this.continueSequence(
             { ...command.data, paranetId, retry: undefined, period: undefined },

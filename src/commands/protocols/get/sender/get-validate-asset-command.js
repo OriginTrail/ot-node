@@ -1,11 +1,12 @@
 import ValidateAssetCommand from '../../../common/validate-asset-command.js';
 import Command from '../../../command.js';
-import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class GetValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.errorType = ERROR_TYPE.GET.GET_VALIDATE_ASSET_ERROR;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -26,7 +27,7 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.VALIDATE_ASSET_START,
+            OPERATION_ID_STATUS.GET.GET_VALIDATE_ASSET_START,
         );
 
         const isUAL = this.ualService.isUAL(ual);
@@ -55,7 +56,7 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.VALIDATE_ASSET_END,
+            OPERATION_ID_STATUS.GET.GET_VALIDATE_ASSET_END,
         );
         return this.continueSequence(
             { ...command.data, retry: undefined, period: undefined },
