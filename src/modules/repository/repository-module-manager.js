@@ -302,15 +302,22 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async markBlockchainEventsAsProcessed(events, transaction = null) {
+    async markBlockchainEventsAsProcessed(events, options = {}) {
         return this.getRepository('blockchain_event').markBlockchainEventsAsProcessed(
             events,
-            transaction,
+            options,
         );
     }
 
-    async removeEvents(ids, transaction = null) {
-        return this.getRepository('blockchain_event').removeEvents(ids, transaction);
+    async markAllContractBlockchainEventsAsProcessed(contract, options = {}) {
+        return this.getRepository('blockchain_event').markAllContractBlockchainEventsAsProcessed(
+            contract,
+            options,
+        );
+    }
+
+    async removeEvents(ids, options = {}) {
+        return this.getRepository('blockchain_event').removeEvents(ids, options);
     }
 
     async findProcessedEvents(timestamp, limit) {

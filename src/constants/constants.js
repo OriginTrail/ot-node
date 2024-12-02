@@ -176,7 +176,7 @@ export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
-export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
+export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MILLS = 10 * 1000; // 10 seconds
 
 export const PARANET_SYNC_FREQUENCY_MILLS = 1 * 60 * 1000;
 
@@ -770,43 +770,22 @@ export const CONTRACTS = {
     PARANETS_REGISTRY: 'ParanetsRegistry',
 };
 
-export const SHARDING_TABLE_RELATED_EVENTS = {
-    ShardingTable: ['NodeAdded', 'NodeRemoved'],
-    Staking: ['StakeIncreased', 'StakeWithdrawalStarted'],
-    Profile: ['AskUpdated'],
-};
-
-export const CONTRACTS_EVENTS = {
+export const CONTRACT_EVENTS = {
     HUB: {
         contract: 'Hub',
         events: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
     },
     CONTENT_ASSET: { contract: 'ContentAsset', events: ['AssetMinted'] },
     PARAMETERS_STORAGE: { contract: 'ParametersStorage', events: ['ParameterChanged'] },
-    SHARDING_TABLE: { contract: 'ShardingTable', events: ['NodeAdded', 'NodeRemoved'] },
-    STAKING: { contract: 'Staking', events: ['StakeIncreased', 'StakeWithdrawalStarted'] },
-    PROFILE: { contract: 'Profile', events: ['AskUpdated'] },
 };
 
-export const CONTRACTS_EVENTS_LISTENED = Object.values(CONTRACTS_EVENTS).map(
+export const CONTRACT_EVENTS_LISTENED = Object.values(CONTRACT_EVENTS).map(
     (value) => value.contract,
 );
 
-export const BLOCKCHAIN_EVENT_PRIORITIES = {
-    NewContract: 1,
-    ContractChanged: 1,
-    NewAssetStorage: 1,
-    AssetStorageChanged: 1,
-    NodeAdded: 2,
-    NodeRemoved: 2,
-    ParameterChanged: 2,
-    StakeIncreased: 3,
-    StakeWithdrawalStarted: 3,
-    AskUpdated: 3,
-    AssetMinted: 4,
+export const CONTRACT_INDEPENDENT_EVENTS = {
+    ContentAsset: ['AssetMinted'],
 };
-
-export const DEFAULT_BLOCKCHAIN_EVENT_PRIORITY = Infinity;
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
@@ -821,10 +800,6 @@ export const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 1000;
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,
     DEVELOPMENT: 4 * 1000,
-};
-
-export const BLOCK_TIME_MILLIS = {
-    HARDHAT: 5_000,
 };
 
 export const TRANSACTION_CONFIRMATIONS = 1;

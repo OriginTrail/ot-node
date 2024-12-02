@@ -265,7 +265,8 @@ class CommandExecutor {
             handler.logger.warn(`Command will not be executed.`);
             return;
         }
-        if (name === 'eventListenerCommand') {
+
+        if (['eventListenerCommand', 'shardingTableCheckCommand'].includes(name)) {
             await this.add(handler.default(), 0, true);
         } else {
             await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);

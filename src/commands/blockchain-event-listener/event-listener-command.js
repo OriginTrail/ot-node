@@ -37,9 +37,9 @@ class EventListenerCommand extends Command {
                     name: 'blockchainEventListenerCommand',
                     data: commandData,
                     retries: MAXIMUM_FETCH_EVENTS_FAILED_COUNT,
-                    transactional: false,
                     priority: COMMAND_PRIORITY.HIGHEST,
                     isBlocking: true,
+                    transactional: false,
                 });
             }),
         );
@@ -71,6 +71,7 @@ class EventListenerCommand extends Command {
     default(map) {
         const command = {
             name: 'eventListenerCommand',
+            delay: 0,
             data: {},
             transactional: false,
             period: this.calculateCommandPeriod(),
