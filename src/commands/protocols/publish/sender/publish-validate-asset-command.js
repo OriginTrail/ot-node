@@ -10,7 +10,6 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.pendingStorageService = ctx.pendingStorageService;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {

@@ -10,7 +10,6 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.pendingStorageService = ctx.pendingStorageService;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -66,7 +65,9 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             operationId,
         );
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        this.logger.info(`Validating asset's public assertion with id: ${datasetRoot} ual: ${ual}`);
+        this.logger.debug(
+            `Validating asset's public assertion with id: ${datasetRoot} ual: ${ual}`,
+        );
 
         if (blockchainAssertionId !== datasetRoot) {
             await this.handleError(
