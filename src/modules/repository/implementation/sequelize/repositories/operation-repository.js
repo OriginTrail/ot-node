@@ -11,20 +11,24 @@ class OperationRepository {
         };
     }
 
-    async createOperationRecord(operation, operationId, status) {
+    async createOperationRecord(operation, operationId, status, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
-        return this.models[operationModel].create({
-            operationId,
-            status,
-        });
+        return this.models[operationModel].create(
+            {
+                operationId,
+                status,
+            },
+            options,
+        );
     }
 
-    async removeOperationRecords(operation, ids) {
+    async removeOperationRecords(operation, ids, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         return this.models[operationModel].destroy({
             where: {
                 id: { [Sequelize.Op.in]: ids },
             },
+            ...options,
         });
     }
 
@@ -50,7 +54,7 @@ class OperationRepository {
         });
     }
 
-    async updateOperationStatus(operation, operationId, status) {
+    async updateOperationStatus(operation, operationId, status, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         await this.models[operationModel].update(
             { status },
@@ -58,6 +62,7 @@ class OperationRepository {
                 where: {
                     operationId,
                 },
+                ...options,
             },
         );
     }

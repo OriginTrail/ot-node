@@ -12,7 +12,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getImplementation().module.getRepository(repoName);
     }
 
-    transaction(execFn) {
+    async transaction(execFn) {
         if (this.initialized) {
             return this.getImplementation().module.transaction(execFn);
         }
@@ -24,28 +24,28 @@ class RepositoryModuleManager extends BaseModuleManager {
         }
     }
 
-    async query(query) {
+    async query(query, options = {}) {
         if (this.initialized) {
-            return this.getImplementation().module.query(query);
+            return this.getImplementation().module.query(query, options);
         }
     }
 
-    async destroyAllRecords(table) {
+    async destroyAllRecords(table, options = {}) {
         if (this.initialized) {
-            return this.getImplementation().module.destroyAllRecords(table);
+            return this.getImplementation().module.destroyAllRecords(table, options);
         }
     }
 
-    async updateCommand(update, opts) {
-        return this.getRepository('command').updateCommand(update, opts);
+    async updateCommand(update, options = {}) {
+        return this.getRepository('command').updateCommand(update, options);
     }
 
-    async destroyCommand(name) {
-        return this.getRepository('command').destroyCommand(name);
+    async destroyCommand(name, options = {}) {
+        return this.getRepository('command').destroyCommand(name, options);
     }
 
-    async createCommand(command, opts) {
-        return this.getRepository('command').createCommand(command, opts);
+    async createCommand(command, options = {}) {
+        return this.getRepository('command').createCommand(command, options);
     }
 
     async getCommandsWithStatus(statusArray, excludeNameArray = []) {
@@ -56,8 +56,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('command').getCommandWithId(id);
     }
 
-    async removeCommands(ids) {
-        return this.getRepository('command').removeCommands(ids);
+    async removeCommands(ids, options = {}) {
+        return this.getRepository('command').removeCommands(ids, options);
     }
 
     async findFinalizedCommands(timestamp, limit) {
@@ -68,35 +68,41 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('command').findUnfinalizedCommandsByName(limit);
     }
 
-    async createOperationIdRecord(handlerData) {
-        return this.getRepository('operation_id').createOperationIdRecord(handlerData);
+    async createOperationIdRecord(handlerData, options = {}) {
+        return this.getRepository('operation_id').createOperationIdRecord(handlerData, options);
     }
 
-    async updateOperationIdRecord(data, operationId) {
-        return this.getRepository('operation_id').updateOperationIdRecord(data, operationId);
+    async updateOperationIdRecord(data, operationId, options = {}) {
+        return this.getRepository('operation_id').updateOperationIdRecord(
+            data,
+            operationId,
+            options,
+        );
     }
 
     async getOperationIdRecord(operationId) {
         return this.getRepository('operation_id').getOperationIdRecord(operationId);
     }
 
-    async removeOperationIdRecord(timeToBeDeleted, statuses) {
+    async removeOperationIdRecord(timeToBeDeleted, statuses, options = {}) {
         return this.getRepository('operation_id').removeOperationIdRecord(
             timeToBeDeleted,
             statuses,
+            options,
         );
     }
 
-    async createOperationRecord(operation, operationId, status) {
+    async createOperationRecord(operation, operationId, status, options = {}) {
         return this.getRepository('operation').createOperationRecord(
             operation,
             operationId,
             status,
+            options,
         );
     }
 
-    async removeOperationRecords(operation, ids) {
-        return this.getRepository('operation').removeOperationRecords(operation, ids);
+    async removeOperationRecords(operation, ids, options = {}) {
+        return this.getRepository('operation').removeOperationRecords(operation, ids, options);
     }
 
     async findProcessedOperations(operation, timestamp, limit) {
@@ -107,21 +113,30 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('operation').getOperationStatus(operation, operationId);
     }
 
-    async updateOperationStatus(operation, operationId, status) {
+    async updateOperationStatus(operation, operationId, status, options = {}) {
         return this.getRepository('operation').updateOperationStatus(
             operation,
             operationId,
             status,
+            options,
         );
     }
 
-    async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
+    async createOperationResponseRecord(
+        status,
+        operation,
+        operationId,
+        keyword,
+        errorMessage,
+        options = {},
+    ) {
         return this.getRepository('operation_response').createOperationResponseRecord(
             status,
             operation,
             operationId,
             keyword,
             errorMessage,
+            options,
         );
     }
 
@@ -140,20 +155,23 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async removeOperationResponse(ids, operation) {
-        return this.getRepository('operation_response').removeOperationResponse(ids, operation);
+    async removeOperationResponse(ids, operation, options = {}) {
+        return this.getRepository('operation_response').removeOperationResponse(
+            ids,
+            operation,
+            options,
+        );
     }
 
-    // Sharding Table
-    async createManyPeerRecords(peers) {
-        return this.getRepository('shard').createManyPeerRecords(peers);
+    async createManyPeerRecords(peers, options = {}) {
+        return this.getRepository('shard').createManyPeerRecords(peers, options);
     }
 
-    async removeShardingTablePeerRecords(blockchain) {
-        return this.getRepository('shard').removeShardingTablePeerRecords(blockchain);
+    async removeShardingTablePeerRecords(blockchain, options = {}) {
+        return this.getRepository('shard').removeShardingTablePeerRecords(blockchain, options);
     }
 
-    async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256) {
+    async createPeerRecord(peerId, blockchain, ask, stake, lastSeen, sha256, options = {}) {
         return this.getRepository('shard').createPeerRecord(
             peerId,
             blockchain,
@@ -161,6 +179,7 @@ class RepositoryModuleManager extends BaseModuleManager {
             stake,
             lastSeen,
             sha256,
+            options,
         );
     }
 
@@ -184,32 +203,36 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').getPeersToDial(limit, dialFrequencyMillis);
     }
 
-    async removePeerRecord(blockchain, peerId) {
-        return this.getRepository('shard').removePeerRecord(blockchain, peerId);
+    async removePeerRecord(blockchain, peerId, options = {}) {
+        return this.getRepository('shard').removePeerRecord(blockchain, peerId, options);
     }
 
-    async updatePeerRecordLastDialed(peerId, timestamp) {
-        return this.getRepository('shard').updatePeerRecordLastDialed(peerId, timestamp);
+    async updatePeerRecordLastDialed(peerId, timestamp, options = {}) {
+        return this.getRepository('shard').updatePeerRecordLastDialed(peerId, timestamp, options);
     }
 
-    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
-        return this.getRepository('shard').updatePeerRecordLastSeenAndLastDialed(peerId, timestamp);
+    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp, options = {}) {
+        return this.getRepository('shard').updatePeerRecordLastSeenAndLastDialed(
+            peerId,
+            timestamp,
+            options,
+        );
     }
 
-    async updatePeerAsk(peerId, blockchainId, ask) {
-        return this.getRepository('shard').updatePeerAsk(peerId, blockchainId, ask);
+    async updatePeerAsk(peerId, blockchainId, ask, options = {}) {
+        return this.getRepository('shard').updatePeerAsk(peerId, blockchainId, ask, options);
     }
 
-    async updatePeerStake(peerId, blockchainId, stake) {
-        return this.getRepository('shard').updatePeerStake(peerId, blockchainId, stake);
+    async updatePeerStake(peerId, blockchainId, stake, options = {}) {
+        return this.getRepository('shard').updatePeerStake(peerId, blockchainId, stake, options);
     }
 
     async getNeighbourhood(assertionId, r2) {
         return this.getRepository('shard').getNeighbourhood(assertionId, r2);
     }
 
-    async cleanShardingTable(blockchainId) {
-        return this.getRepository('shard').cleanShardingTable(blockchainId);
+    async cleanShardingTable(blockchainId, options = {}) {
+        return this.getRepository('shard').cleanShardingTable(blockchainId, options);
     }
 
     async isNodePartOfShard(blockchainId, peerId) {
@@ -224,6 +247,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         value1 = null,
         value2 = null,
         value3 = null,
+        options = {},
     ) {
         return this.getRepository('event').createEventRecord(
             operationId,
@@ -233,6 +257,7 @@ class RepositoryModuleManager extends BaseModuleManager {
             value1,
             value2,
             value3,
+            options,
         );
     }
 
@@ -240,16 +265,22 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('event').getUnpublishedEvents();
     }
 
-    async destroyEvents(ids) {
-        return this.getRepository('event').destroyEvents(ids);
+    async destroyEvents(ids, options = {}) {
+        return this.getRepository('event').destroyEvents(ids, options);
     }
 
     async getUser(username) {
         return this.getRepository('user').getUser(username);
     }
 
-    async saveToken(tokenId, userId, tokenName, expiresAt) {
-        return this.getRepository('token').saveToken(tokenId, userId, tokenName, expiresAt);
+    async saveToken(tokenId, userId, tokenName, expiresAt, options = {}) {
+        return this.getRepository('token').saveToken(
+            tokenId,
+            userId,
+            tokenName,
+            expiresAt,
+            options,
+        );
     }
 
     async isTokenRevoked(tokenId) {
@@ -260,8 +291,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('token').getTokenAbilities(tokenId);
     }
 
-    async insertBlockchainEvents(events) {
-        return this.getRepository('blockchain_event').insertBlockchainEvents(events);
+    async insertBlockchainEvents(events, options = {}) {
+        return this.getRepository('blockchain_event').insertBlockchainEvents(events, options);
     }
 
     async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {
@@ -271,253 +302,58 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async markBlockchainEventsAsProcessed(events) {
-        return this.getRepository('blockchain_event').markBlockchainEventsAsProcessed(events);
+    async markBlockchainEventsAsProcessed(events, transaction = null) {
+        return this.getRepository('blockchain_event').markBlockchainEventsAsProcessed(
+            events,
+            transaction,
+        );
     }
 
-    async removeBlockchainEvents(contract) {
-        return this.getRepository('blockchain_event').removeBlockchainEvents(contract);
-    }
-
-    async removeEvents(ids) {
-        return this.getRepository('blockchain_event').removeEvents(ids);
+    async removeEvents(ids, transaction = null) {
+        return this.getRepository('blockchain_event').removeEvents(ids, transaction);
     }
 
     async findProcessedEvents(timestamp, limit) {
         return this.getRepository('blockchain_event').findProcessedEvents(timestamp, limit);
     }
 
-    async removeLastCheckedBlockForContract(contract) {
-        return this.getRepository('blockchain').removeLastCheckedBlockForContract(contract);
+    async removeLastCheckedBlockForContract(contract, options = {}) {
+        return this.getRepository('blockchain').removeLastCheckedBlockForContract(
+            contract,
+            options,
+        );
     }
 
     async getLastCheckedBlock(blockchainId, contract) {
         return this.getRepository('blockchain').getLastCheckedBlock(blockchainId, contract);
     }
 
-    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
+    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract, options = {}) {
         return this.getRepository('blockchain').updateLastCheckedBlock(
             blockchainId,
             currentBlock,
             timestamp,
             contract,
+            options,
         );
     }
 
-    async getOrCreateParanetById(paranetId) {
-        return this.getRepository('paranet').getOrCreateParanet(paranetId);
-    }
-
-    async addToParanetKaCount(paranetId, blockchainId, kaCount) {
-        return this.getRepository('paranet').addToParanetKaCount(paranetId, blockchainId, kaCount);
-    }
-
-    async updateServiceAgreementRecord(
-        blockchainId,
-        contract,
-        tokenId,
-        agreementId,
-        startTime,
-        epochsNumber,
-        epochLength,
-        scoreFunctionId,
-        proofWindowOffsetPerc,
-        hashFunctionId,
-        keyword,
-        assertionId,
-        stateIndex,
-        dataSource,
-        lastCommitEpoch,
-        lastProofEpoch,
-    ) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').updateServiceAgreementRecord(
-                blockchainId,
-                contract,
-                tokenId,
-                agreementId,
-                startTime,
-                epochsNumber,
-                epochLength,
-                scoreFunctionId,
-                proofWindowOffsetPerc,
-                hashFunctionId,
-                keyword,
-                assertionId,
-                stateIndex,
-                dataSource,
-                lastCommitEpoch,
-                lastProofEpoch,
-            );
-        }
-    }
-
-    async updateServiceAgreementForTokenId(tokenId, agreementId, keyword, assertionId, stateIndex) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').updateServiceAgreementForTokenId(
-                tokenId,
-                agreementId,
-                keyword,
-                assertionId,
-                stateIndex,
-            );
-        }
-    }
-
-    async serviceAgreementExists(blockchain, tokenId) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').serviceAgreementExists(
-                blockchain,
-                tokenId,
-            );
-        }
-    }
-
-    async bulkCreateServiceAgreementRecords(records) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').bulkCreateServiceAgreementRecords(
-                records,
-            );
-        }
-    }
-
-    async getServiceAgreementRecord(agreementId) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').getServiceAgreementRecord(agreementId);
-        }
-    }
-
-    async updateServiceAgreementLastCommitEpoch(agreementId, lastCommitEpoch) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').updateServiceAgreementLastCommitEpoch(
-                agreementId,
-                lastCommitEpoch,
-            );
-        }
-    }
-
-    async updateServiceAgreementLastProofEpoch(agreementId, lastProofEpoch) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').updateServiceAgreementLastProofEpoch(
-                agreementId,
-                lastProofEpoch,
-            );
-        }
-    }
-
-    async removeServiceAgreementRecord(blockchainId, contract, tokenId) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').removeServiceAgreementRecord(
-                blockchainId,
-                contract,
-                tokenId,
-            );
-        }
-    }
-
-    async getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
-        if (this.initialized) {
-            return this.getRepository(
-                'service_agreement',
-            ).getCountOfServiceAgreementsByBlockchainAndContract(blockchainId, contract);
-        }
-    }
-
-    async removeServiceAgreementsByBlockchainAndContract(blockchainId, contract) {
-        if (this.initialized) {
-            return this.getRepository(
-                'service_agreement',
-            ).removeServiceAgreementsByBlockchainAndContract(blockchainId, contract);
-        }
-    }
-
-    async getEligibleAgreementsForSubmitCommit(
-        timestampSeconds,
-        blockchain,
-        commitWindowDurationPerc,
-        ask,
-        startTimeDelay,
-    ) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').getEligibleAgreementsForSubmitCommit(
-                timestampSeconds,
-                blockchain,
-                commitWindowDurationPerc,
-                ask,
-                startTimeDelay,
-            );
-        }
-    }
-
-    async getEligibleAgreementsForSubmitProof(
-        timestampSeconds,
-        blockchain,
-        proofWindowDurationPerc,
-    ) {
-        if (this.initialized) {
-            return this.getRepository('service_agreement').getEligibleAgreementsForSubmitProof(
-                timestampSeconds,
-                blockchain,
-                proofWindowDurationPerc,
-            );
-        }
-    }
-
-    async removeServiceAgreements(agreementIds) {
-        return this.getRepository('service_agreement').removeServiceAgreements(agreementIds);
-    }
-
-    async removeServiceAgreementsForBlockchain(blockchainId) {
-        return this.getRepository('service_agreement').removeServiceAgreementsForBlockchain(
+    async addToParanetKaCount(paranetId, blockchainId, kaCount, options = {}) {
+        return this.getRepository('paranet').addToParanetKaCount(
+            paranetId,
             blockchainId,
+            kaCount,
+            options,
         );
     }
 
-    async updateServiceAgreementEpochsNumber(agreementId, epochsNumber) {
-        return this.getRepository('service_agreement').updateServiceAgreementEpochsNumber(
-            agreementId,
-            epochsNumber,
-        );
-    }
-
-    async getNumberOfActiveServiceAgreements() {
-        return this.getRepository('service_agreement').getNumberOfActiveServiceAgreements();
-    }
-
-    async getServiceAgreements(fromTokenId, batchSize) {
-        return this.getRepository('service_agreement').getServiceAgreements(fromTokenId, batchSize);
-    }
-
-    async getServiceAgreementsTokenIds(fromTokenId, blockchainId) {
-        return this.getRepository('service_agreement').getServiceAgreementsTokenIds(
-            fromTokenId,
-            blockchainId,
-        );
-    }
-
-    async getLatestServiceAgreementTokenId(blockchainId) {
-        return this.getRepository('service_agreement').getLatestServiceAgreementTokenId(
-            blockchainId,
-        );
-    }
-
-    async findDuplicateServiceAgreements(blockchainId) {
-        return this.getRepository('service_agreement').findDuplicateServiceAgreements(blockchainId);
-    }
-
-    async findServiceAgreementsByTokenIds(tokenIds, blockchainId) {
-        return this.getRepository('service_agreement').findServiceAgreementsByTokenIds(
-            tokenIds,
-            blockchainId,
-        );
-    }
-
-    async createParanetRecord(name, description, paranetId, blockchainId) {
+    async createParanetRecord(name, description, paranetId, blockchainId, options = {}) {
         this.getRepository('paranet').createParanetRecord(
             name,
             description,
             paranetId,
             blockchainId,
+            options,
         );
     }
 
@@ -536,9 +372,10 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async createMissedParanetAssetRecord(missedParanetAssset) {
+    async createMissedParanetAssetRecord(missedParanetAssset, options = {}) {
         return this.getRepository('missed_paranet_asset').createMissedParanetAssetRecord(
             missedParanetAssset,
+            options,
         );
     }
 
@@ -552,15 +389,18 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('missed_paranet_asset').missedParanetAssetRecordExists(ual);
     }
 
-    async removeMissedParanetAssetRecordsByUAL(ual) {
-        return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecordsByUAL(ual);
+    async removeMissedParanetAssetRecordsByUAL(ual, options = {}) {
+        return this.getRepository('missed_paranet_asset').removeMissedParanetAssetRecordsByUAL(
+            ual,
+            options,
+        );
     }
 
     async getMissedParanetAssetsRecordsWithRetryCount(
         paranetUal,
         retryCountLimit,
         retryDelayInMs,
-        count,
+        limit = null,
     ) {
         return this.getRepository(
             'missed_paranet_asset',
@@ -568,7 +408,7 @@ class RepositoryModuleManager extends BaseModuleManager {
             paranetUal,
             retryCountLimit,
             retryDelayInMs,
-            count,
+            limit,
         );
     }
 
@@ -597,6 +437,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         sender,
         transactionHash,
         dataSource,
+        options = {},
     ) {
         return this.getRepository('paranet_synced_asset').createParanetSyncedAssetRecord(
             blockchainId,
@@ -607,6 +448,7 @@ class RepositoryModuleManager extends BaseModuleManager {
             sender,
             transactionHash,
             dataSource,
+            options,
         );
     }
 
@@ -624,8 +466,12 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('paranet_synced_asset').paranetSyncedAssetRecordExists(ual);
     }
 
-    async incrementParanetKaCount(paranetId, blockchainId) {
-        return this.getRepository('paranet').incrementParanetKaCount(paranetId, blockchainId);
+    async incrementParanetKaCount(paranetId, blockchainId, options = {}) {
+        return this.getRepository('paranet').incrementParanetKaCount(
+            paranetId,
+            blockchainId,
+            options,
+        );
     }
 }
 

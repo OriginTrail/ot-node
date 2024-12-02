@@ -11,16 +11,28 @@ class EventRepository {
         this.model = models.event;
     }
 
-    async createEventRecord(operationId, blockchainId, name, timestamp, value1, value2, value3) {
-        return this.model.create({
-            operationId,
-            blockchainId,
-            name,
-            timestamp,
-            value1,
-            value2,
-            value3,
-        });
+    async createEventRecord(
+        operationId,
+        blockchainId,
+        name,
+        timestamp,
+        value1,
+        value2,
+        value3,
+        options,
+    ) {
+        return this.model.create(
+            {
+                operationId,
+                blockchainId,
+                name,
+                timestamp,
+                value1,
+                value2,
+                value3,
+            },
+            options,
+        );
     }
 
     async getUnpublishedEvents() {
@@ -66,13 +78,14 @@ class EventRepository {
         });
     }
 
-    async destroyEvents(ids) {
+    async destroyEvents(ids, options) {
         await this.model.destroy({
             where: {
                 id: {
                     [Sequelize.Op.in]: ids,
                 },
             },
+            ...options,
         });
     }
 }

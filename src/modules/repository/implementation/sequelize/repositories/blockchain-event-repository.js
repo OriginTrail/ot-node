@@ -6,7 +6,7 @@ class BlockchainEventRepository {
         this.model = models.blockchain_event;
     }
 
-    async insertBlockchainEvents(events) {
+    async insertBlockchainEvents(events, options) {
         const chunkSize = 10000;
         let insertedEvents = [];
 
@@ -24,6 +24,7 @@ class BlockchainEventRepository {
                 })),
                 {
                     ignoreDuplicates: true,
+                    ...options,
                 },
             );
 
@@ -57,21 +58,23 @@ class BlockchainEventRepository {
         return !!dbEvent;
     }
 
-    async markBlockchainEventsAsProcessed(events) {
+    async markBlockchainEventsAsProcessed(events, options) {
         const idsForUpdate = events.flatMap((event) => event.id);
         return this.model.update(
             { processed: true },
             {
                 where: { id: { [Sequelize.Op.in]: idsForUpdate } },
+                ...options,
             },
         );
     }
 
-    async removeEvents(ids) {
+    async removeEvents(ids, options) {
         await this.model.destroy({
             where: {
                 id: { [Sequelize.Op.in]: ids },
             },
+            ...options,
         });
     }
 
