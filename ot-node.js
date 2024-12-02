@@ -353,9 +353,9 @@ class OTNode {
         telemetryModuleManager.listenOnEvents((eventData) => {
             telemetryModuleManager.createEventRecord(
                 eventData.operationId,
+                eventData.timestamp,
                 eventData.blockchainId,
                 eventData.lastEvent,
-                eventData.timestamp,
                 eventData.value1,
                 eventData.value2,
                 eventData.value3,

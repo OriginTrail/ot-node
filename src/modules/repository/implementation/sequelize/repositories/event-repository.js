@@ -11,18 +11,6 @@ class EventRepository {
         this.model = models.event;
     }
 
-    async createEventRecord(operationId, blockchainId, name, timestamp, value1, value2, value3) {
-        return this.model.create({
-            operationId,
-            blockchainId,
-            name,
-            timestamp,
-            value1,
-            value2,
-            value3,
-        });
-    }
-
     async getUnpublishedEvents() {
         // events without COMPLETE/FAILED status which are older than 30min
         // are also considered finished

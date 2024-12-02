@@ -1,24 +1,27 @@
 import { Sender } from '@questdb/nodejs-client';
 
-class TelemetryQuest {
+class QuestTelemetry {
     async initialize(config, logger) {
-        this.config = config; 
-        this.logger = logger; 
+        this.config = config;
+        this.logger = logger;
     }
 
-    async sendEventTelemetry(
-        operationId = '',
+    listenOnEvents(eventEmitter, onEventReceived) {
+        return eventEmitter.on('operation_status_changed', onEventReceived);
+    }
+
+    async sendTelemetryData(
+        operationId,
+        timestamp,
         blockchainId = '',
         name = '',
-        timestamp, 
         value1 = null,
         value2 = null,
-        value3 = null
+        value3 = null,
     ) {
         try {
-            const configString = 'http::addr=localhost:10000'; 
-            const sender = Sender.fromConfig(configString);
-            const table = sender.table('event'); 
+            const sender = Sender.fromConfig(this.config.ip_endpoint);
+            const table = sender.table('event');
 
             table.symbol('operationId', operationId || 'NULL');
             table.symbol('blockchainId', blockchainId || 'NULL');
@@ -28,16 +31,15 @@ class TelemetryQuest {
             if (value3 !== null) table.symbol('value3', value3);
             table.timestampColumn('timestamp', timestamp * 1000);
 
-            await table.at(Date.now(), 'ms'); 
+            await table.at(Date.now(), 'ms');
             await sender.flush();
             await sender.close();
 
-            this.logger.info('Event telemetry successfully logged to QuestDB');
+            this.logger.info('Event telemetry successfully sent to QuestDB');
         } catch (err) {
             this.logger.error(`Error sending telemetry to QuestDB: ${err.message}`);
-            throw err; 
         }
     }
 }
 
-export default TelemetryQuest;
+export default QuestTelemetry;

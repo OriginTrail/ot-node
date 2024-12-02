@@ -1,5 +1,4 @@
 import BaseModuleManager from '../base-module-manager.js';
-import influx from './implementation/influx/influx.js';
 
 class RepositoryModuleManager extends BaseModuleManager {
     getName() {
@@ -207,26 +206,6 @@ class RepositoryModuleManager extends BaseModuleManager {
 
     async cleanShardingTable(blockchainId) {
         return this.getRepository('shard').cleanShardingTable(blockchainId);
-    }
-
-    async createEventRecord(
-        operationId,
-        blockchainId,
-        name,
-        timestamp,
-        value1 = null,
-        value2 = null,
-        value3 = null,
-    ) {
-        return influx.sendEventTelemetry(
-            operationId,
-            blockchainId,
-            name,
-            timestamp,
-            value1,
-            value2,
-            value3,
-    );
     }
 
     async getUnpublishedEvents() {

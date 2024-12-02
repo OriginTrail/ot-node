@@ -151,17 +151,13 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "quest-telemetry": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./telemetry/implementation/quest-telemetry.js",
                         "config": {
-                            "sendTelemetryData": false,
-                            "signalingServerUrl": "null"
-                        }
-                    },
-                    "local-telemetry": {
-                        "enabled": false,
-                        "package": "./telemetry/implementation/local-telemetry.js"                        
+                            "ip_endpoint": "http::addr=localhost:10000",
+                            "sendTelemetryData": false
+                        }                      
                     }
                 }
             }
@@ -323,17 +319,15 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
-                        "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
-                        "config": {
-                            "sendTelemetryData": false,
-                            "signalingServerUrl": "null"
+                    "implementation": {
+                        "quest-telemetry": {
+                            "enabled": true,
+                            "package": "./telemetry/implementation/quest-telemetry.js",
+                            "config": {
+                                "ip_endpoint": "http::addr=localhost:10000",
+                                "sendTelemetryData": false
+                            }                      
                         }
-                    },
-                    "local-telemetry": {
-                        "enabled": false,
-                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
@@ -495,17 +489,15 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
-                        "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
-                        "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://v8-testnet-signaling.origin-trail.network/signal"
+                    "implementation": {
+                        "quest-telemetry": {
+                            "enabled": true,
+                            "package": "./telemetry/implementation/quest-telemetry.js",
+                            "config": {
+                                "ip_endpoint": "http::addr=localhost:10000",
+                                "sendTelemetryData": false
+                            }                      
                         }
-                    },
-                    "local-telemetry": {
-                        "enabled": false,
-                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
@@ -666,17 +658,15 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
-                        "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
-                        "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://devnet-signaling.origin-trail.network/signal"
+                    "implementation": {
+                        "quest-telemetry": {
+                            "enabled": true,
+                            "package": "./telemetry/implementation/quest-telemetry.js",
+                            "config": {
+                                "ip_endpoint": "http::addr=localhost:10000",
+                                "sendTelemetryData": false
+                            }                      
                         }
-                    },
-                    "local-telemetry": {
-                        "enabled": false,
-                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
@@ -860,17 +850,15 @@
             "telemetry": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
-                        "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
-                        "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
+                    "implementation": {
+                        "quest-telemetry": {
+                            "enabled": true,
+                            "package": "./telemetry/implementation/quest-telemetry.js",
+                            "config": {
+                                "ip_endpoint": "http::addr=localhost:10000",
+                                "sendTelemetryData": false
+                            }                      
                         }
-                    },
-                    "local-telemetry": {
-                        "enabled": false,
-                        "package": "./telemetry/implementation/local-telemetry.js"                        
                     }
                 }
             }
