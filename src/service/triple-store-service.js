@@ -222,15 +222,13 @@ class TripleStoreService {
         const { blockchain: blockchainUAL, contract, tokenId } = this.ualService.resolveUAL(ual);
         const fixeUal = `did:dkg:${blockchainUAL}/${contract}/${tokenId}/1:0`;
 
-        const nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
+        let nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
             this.repositoryImplementations[repository],
             repository,
             fixeUal,
         );
-        // TODO: Verify this make sense to be commented
-        // It should be returned sorted
-        // There shouldn't be any blank nodes
-        // nquads = await this.dataService.toNQuads(nquads, MEDIA_TYPES.N_QUADS);
+
+        nquads = nquads.split('\n').filter((line) => line !== '');
 
         this.logger.debug(
             `Assertion: ${ual} ${
