@@ -10,7 +10,7 @@ class PublishController extends BaseController {
     }
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
-        const { operationId, uuid, messageType } = message.header;
+        const { operationId, messageType } = message.header;
 
         const command = { sequence: [], delay: 0, transactional: false, data: {} };
         const [handleRequestCommand] = this.getCommandSequence(protocol);
@@ -38,7 +38,6 @@ class PublishController extends BaseController {
             ...command.data,
             remotePeerId,
             operationId,
-            uuid,
             protocol,
             dataset: message.data.dataset,
             datasetRoot: message.data.datasetRoot,

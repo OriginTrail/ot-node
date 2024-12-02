@@ -14,6 +14,14 @@ class UALService {
     isUAL(ual) {
         if (!ual.startsWith('did:dkg:')) return false;
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
+        parts.push(...parts.pop().split(':'));
+        if (parts.length === 4) {
+            return (
+                this.isContract(parts[1]) &&
+                !Number.isNaN(Number(parts[2])) &&
+                !Number.isNaN(Number(parts[3]))
+            );
+        }
         if (parts.length === 3) {
             // eslint-disable-next-line no-restricted-globals
             return this.isContract(parts[1]) && !Number.isNaN(Number(parts[2]));
@@ -36,6 +44,28 @@ class UALService {
 
     resolveUAL(ual) {
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
+        parts.push(...parts.pop().split(':'));
+        if (parts.length === 4) {
+            const contract = parts[1];
+            if (!this.isContract(contract)) {
+                throw new Error(`Invalid contract format: ${contract}`);
+            }
+            let blockchainName = parts[0];
+            if (blockchainName.split(':').length === 1) {
+                for (const implementation of this.blockchainModuleManager.getImplementationNames()) {
+                    if (implementation.split(':')[0] === blockchainName) {
+                        blockchainName = implementation;
+                        break;
+                    }
+                }
+            }
+            return {
+                blockchain: blockchainName,
+                contract,
+                tokenId: Number(parts[2]),
+                stateId: Number(parts[3]),
+            };
+        }
         if (parts.length === 3) {
             const contract = parts[1];
             if (!this.isContract(contract)) {

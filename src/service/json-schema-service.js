@@ -71,6 +71,7 @@ class JsonSchemaService {
 
         switch (version) {
             case 'v0':
+                // case 'v1':
                 break;
             default:
                 throw Error(`HTTP API version: ${version} isn't supported.`);

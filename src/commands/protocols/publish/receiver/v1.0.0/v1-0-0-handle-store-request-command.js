@@ -43,8 +43,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
         );
 
-        await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
-
         this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -73,6 +71,8 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
+
+        await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
