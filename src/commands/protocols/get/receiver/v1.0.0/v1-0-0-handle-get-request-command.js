@@ -17,7 +17,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { operationId, blockchain, ual } = commandData;
+        const { operationId, blockchain, ual, includeMetadata } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -84,12 +84,24 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //     }
         // }
 
-        const assertion = await this.tripleStoreService.getAssertion(ual);
+        const promises = [this.tripleStoreService.getAssertion(ual)];
+
+        if (includeMetadata) {
+            promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
+        }
+
+        const [assertion, KCMetadata] = await Promise.all(promises);
+
+        const responseData = {
+            assertion,
+            ...(includeMetadata && KCMetadata && { metadata: KCMetadata }),
+        };
+
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                assertion,
+                responseData,
                 [
                     OPERATION_ID_STATUS.GET.GET_LOCAL_END,
                     OPERATION_ID_STATUS.GET.GET_END,

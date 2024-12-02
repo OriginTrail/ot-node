@@ -22,7 +22,7 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, ual } = command.data;
+        const { operationId, blockchain, ual, includeMetadata } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -81,13 +81,23 @@ class LocalGetCommand extends Command {
 
         // else {
 
-        // TODO: Don't use hardcoded repository name
-        const assertion = await this.tripleStoreService.getAssertion(ual);
+        const promises = [this.tripleStoreService.getAssertion(ual)];
+
+        if (includeMetadata) {
+            promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
+        }
+
+        const [assertion, KCMetadata] = await Promise.all(promises);
+
+        const responseData = {
+            assertion,
+            ...(includeMetadata && KCMetadata && { metadata: KCMetadata }),
+        };
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                assertion,
+                responseData,
                 [
                     OPERATION_ID_STATUS.GET.GET_LOCAL_END,
                     OPERATION_ID_STATUS.GET.GET_END,

@@ -174,6 +174,15 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async getKnowledgeAssetMetadata(implementationName, repository, ual) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getKnowledgeAssetMetadata(
+                repository,
+                ual,
+            );
+        }
+    }
+
     async knowledgeCollectionMetadataExists(implementationName, repository, ual) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(

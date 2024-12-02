@@ -344,11 +344,24 @@ class OtTripleStore {
 
     async getKnowledgeCollectionMetadata(repository, ual) {
         const query = `
-            CONSTRUCT { ?s ?p ?o . }
+            CONSTRUCT { ?ual ?p ?o . }
             WHERE {
                 GRAPH <${BASE_NAMED_GRAPHS.METADATA}> {
                     ?ual ?p ?o .
                     FILTER(STRSTARTS(STR(?ual), "${ual}/"))
+                }
+            }
+        `;
+
+        return this.construct(repository, query);
+    }
+
+    async getKnowledgeAssetMetadata(repository, ual) {
+        const query = `
+            CONSTRUCT { <${ual}> ?p ?o . }
+            WHERE {
+                GRAPH <${BASE_NAMED_GRAPHS.METADATA}> {
+                    <${ual}> ?p ?o .
                 }
             }
         `;

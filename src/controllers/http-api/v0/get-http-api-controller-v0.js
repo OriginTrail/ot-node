@@ -149,7 +149,7 @@ class GetController extends BaseController {
         let tokenId;
         let contract;
         try {
-            const { id, paranetUAL } = req.body;
+            const { id, paranetUAL, includeMetadata } = req.body;
 
             ({ blockchain, tokenId, contract } = this.ualService.resolveUAL(id));
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
@@ -167,6 +167,7 @@ class GetController extends BaseController {
                 delay: 0,
                 data: {
                     ual: id,
+                    includeMetadata,
                     blockchain,
                     operationId,
                     hashFunctionId,
