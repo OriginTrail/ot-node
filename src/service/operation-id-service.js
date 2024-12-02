@@ -101,7 +101,7 @@ class OperationIdService {
         this.eventEmitter.emit(eventName, eventData);
     }
 
-    async cacheOperationIdData(operationId, data) {
+    async cacheOperationIdDataToMemory(operationId, data) {
         this.logger.debug(`Caching data for operation id: ${operationId} in memory`);
 
         this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };

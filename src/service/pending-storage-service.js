@@ -56,8 +56,8 @@ class PendingStorageService {
         try {
             // Define the paths to the directories we want to clean
             const storagePaths = [
-                this.fileService.getPendingStorageCachePath(''),
-                this.fileService.getSignatureStorageCachePath(''),
+                this.fileService.getPendingStorageCachePath(),
+                this.fileService.getSignatureStorageCachePath(),
             ];
 
             const filesToDelete = [];

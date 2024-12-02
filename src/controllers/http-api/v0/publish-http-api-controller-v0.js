@@ -54,7 +54,12 @@ class PublishController extends BaseController {
         );
 
         try {
-            await this.operationIdService.cacheOperationIdData(operationId, {
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
+                dataset,
+                datasetRoot,
+            });
+
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, {
                 dataset,
                 datasetRoot,
             });

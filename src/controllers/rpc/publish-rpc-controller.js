@@ -6,7 +6,6 @@ class PublishController extends BaseController {
         super(ctx);
         this.operationService = ctx.publishService;
         this.commandExecutor = ctx.commandExecutor;
-        this.pendingStorageService = ctx.pendingStorageService;
         this.operationIdService = ctx.operationIdService;
     }
 
@@ -22,7 +21,12 @@ class PublishController extends BaseController {
                 retries: 3,
             });
 
-            await this.operationIdService.cacheOperationIdData(operationId, {
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
+                dataset: message.data.dataset,
+                datasetRoot: message.data.datasetRoot,
+            });
+
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, {
                 dataset: message.data.dataset,
                 datasetRoot: message.data.datasetRoot,
             });
@@ -36,6 +40,7 @@ class PublishController extends BaseController {
             operationId,
             uuid,
             protocol,
+            dataset: message.data.dataset,
             datasetRoot: message.data.datasetRoot,
             blockchain: message.data.blockchain,
         };

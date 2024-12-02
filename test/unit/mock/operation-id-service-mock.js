@@ -3,7 +3,9 @@ class OperationIdServiceMock {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
-    cacheOperationIdData(operationId, data) {}
+    cacheOperationIdDataToFile(operationId, data) {}
+
+    cacheOperationIdDataToMemory(operationId, data) {}
 
     async updateOperationIdStatus(
         operationId,
