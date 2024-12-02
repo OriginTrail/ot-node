@@ -22,14 +22,14 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, ual } = command.data;
+        const { operationId, blockchain, ual, includeMetadata } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        const response = {};
+        // const response = {};
 
         // if (paranetUAL) {
         //     const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
@@ -81,13 +81,23 @@ class LocalGetCommand extends Command {
 
         // else {
 
-        // TODO: Don't use hardcoded repository name
-        const assertion = this.tripleStoreService.getAssertion(ual);
+        const promises = [this.tripleStoreService.getAssertion(ual)];
+
+        if (includeMetadata) {
+            promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
+        }
+
+        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
+
+        const responseData = {
+            assertion,
+            ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
+        };
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                response,
+                responseData,
                 [
                     OPERATION_ID_STATUS.GET.GET_LOCAL_END,
                     OPERATION_ID_STATUS.GET.GET_END,
