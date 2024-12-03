@@ -7,6 +7,7 @@ import {
     MEDIA_TYPES,
     UAL_PREDICATE,
     BASE_NAMED_GRAPHS,
+    TRIPLE_ANNOTATION_LABEL_PREDICATE,
 } from '../../../constants/constants.js';
 
 class OtTripleStore {
@@ -158,6 +159,25 @@ class OtTripleStore {
         return this.construct(repository, query);
     }
 
+    async getKnowledgeCollectionPublicFromUnifiedGraph(repository, namedGraph, ual, sort) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT { ?s ?p ?o . }
+            WHERE {
+                GRAPH <${namedGraph}> {
+                    << ?s ?p ?o >> ${UAL_PREDICATE} ?ual .
+                    FILTER(STRSTARTS(STR(?ual), "${ual}/"))
+                    FILTER NOT EXISTS {
+                        << ?s ?p ?o >> ${TRIPLE_ANNOTATION_LABEL_PREDICATE} "private" .
+                    }
+                }
+            }
+            ${sort ? 'ORDER BY ?s' : ''}
+        `;
+
+        return this.construct(repository, query);
+    }
+
     async knowledgeCollectionExistsInUnifiedGraph(repository, namedGraph, ual) {
         const query = `
             ASK
@@ -207,6 +227,23 @@ class OtTripleStore {
             WHERE {
                 GRAPH <${namedGraph}> {
                     << ?s ?p ?o >> ${UAL_PREDICATE} <${ual}> .
+                }
+            }
+        `;
+
+        return this.construct(repository, query);
+    }
+
+    async getKnowledgeAssetPublicFromUnifiedGraph(repository, namedGraph, ual) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT { ?s ?p ?o . }
+            WHERE {
+                GRAPH <${namedGraph}> {
+                    << ?s ?p ?o >> ${UAL_PREDICATE} <${ual}> .
+                    FILTER NOT EXISTS {
+                        << ?s ?p ?o >> ${TRIPLE_ANNOTATION_LABEL_PREDICATE} "private" .
+                    }
                 }
             }
         `;
@@ -268,6 +305,25 @@ class OtTripleStore {
         return this.construct(repository, query);
     }
 
+    async getKnowledgeCollectionNamedGraphsPublic(repository, ual, sort) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT { ?s ?p ?o . }
+            WHERE {
+                GRAPH ?g {
+                    ?s ?p ?o .
+                    FILTER NOT EXISTS {
+                        << ?s ?p ?o >> ${TRIPLE_ANNOTATION_LABEL_PREDICATE} "private" .
+                    }
+                }
+                FILTER(STRSTARTS(STR(?g), "${ual}/"))
+            }
+            ${sort ? 'ORDER BY ?s' : ''}
+        `;
+
+        return this.construct(repository, query);
+    }
+
     async knowledgeCollectionNamedGraphsExist(repository, ual) {
         const query = `
             ASK {
@@ -296,6 +352,23 @@ class OtTripleStore {
             WHERE {
                 GRAPH <${ual}> {
                     ?s ?p ?o .
+                }
+            }
+        `;
+
+        return this.construct(repository, query);
+    }
+
+    async getKnowledgeAssetNamedGraphPublic(repository, ual) {
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT  { ?s ?p ?o } 
+            WHERE {
+                GRAPH <${ual}> {
+                    ?s ?p ?o .
+                    FILTER NOT EXISTS {
+                        << ?s ?p ?o >> ${TRIPLE_ANNOTATION_LABEL_PREDICATE} "private" .
+                    }
                 }
             }
         `;

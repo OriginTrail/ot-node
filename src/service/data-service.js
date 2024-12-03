@@ -1,11 +1,6 @@
 import jsonld from 'jsonld';
 import toNQuadsWorker from '../workers/data-service-toNQuads-worker.js';
-import {
-    SCHEMA_CONTEXT,
-    MEDIA_TYPES,
-    XML_DATA_TYPES,
-    PRIVATE_ASSERTION_PREDICATE,
-} from '../constants/constants.js';
+import { SCHEMA_CONTEXT, MEDIA_TYPES, XML_DATA_TYPES } from '../constants/constants.js';
 
 const ALGORITHM = 'URDNA2015';
 
@@ -125,15 +120,6 @@ class DataService {
             default:
                 return value;
         }
-    }
-
-    getPrivateAssertionId(publicAssertion) {
-        const privateAssertionLinkTriple = publicAssertion.filter((triple) =>
-            triple.includes(PRIVATE_ASSERTION_PREDICATE),
-        )[0];
-        if (!privateAssertionLinkTriple) return;
-
-        return privateAssertionLinkTriple.match(/"(.*?)"/)[1];
     }
 }
 
