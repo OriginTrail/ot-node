@@ -44,6 +44,7 @@ class UALService {
 
     resolveUAL(ual) {
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
+        // TODO: Resolve UAL with state
         // parts.push(...parts.pop().split(':'));
         if (parts.length === 4) {
             const contract = parts[1];
