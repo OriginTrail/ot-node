@@ -261,7 +261,7 @@ class TripleStoreService {
         blockchain,
         contract,
         knowledgeCollectionId,
-        kaId,
+        knowledgeAssetId,
         repository = TRIPLE_STORE_REPOSITORY.DKG,
     ) {
         const ual = `did:dkg:${blockchain}/${contract}/${tokenId}${kaId ? `/${kaId}` : ''}`;
