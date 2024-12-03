@@ -18,9 +18,11 @@ class QueryCommand extends Command {
     }
 
     async execute(command) {
-        const { queryType, operationId } = command.data;
+        const { repository, operationId, namedGraphs, labels } = command.data;
 
-        let { query, repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT } = command.data;
+        let { query } = command.data;
+
+        const queryType = this.tripleStoreService.getQueryType(query);
 
         let data;
 
@@ -29,7 +31,7 @@ class QueryCommand extends Command {
             null,
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
-        repository = this.validateRepositoryName(repository);
+
         // check if it's federated query
         const pattern = /SERVICE\s+<([^>]+)>/g;
         const matches = [];
@@ -50,12 +52,22 @@ class QueryCommand extends Command {
         try {
             switch (queryType) {
                 case QUERY_TYPES.CONSTRUCT: {
-                    data = await this.tripleStoreService.construct(repository, query);
+                    data = await this.tripleStoreService.construct(
+                        repository,
+                        query,
+                        namedGraphs,
+                        labels,
+                    );
                     break;
                 }
                 case QUERY_TYPES.SELECT: {
                     data = await this.dataService.parseBindings(
-                        await this.tripleStoreService.select(repository, query),
+                        await this.tripleStoreService.select(
+                            repository,
+                            query,
+                            namedGraphs,
+                            labels,
+                        ),
                     );
                     break;
                 }
