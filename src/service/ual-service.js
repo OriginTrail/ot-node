@@ -63,7 +63,7 @@ class UALService {
                 blockchain: blockchainName,
                 contract,
                 tokenId: Number(parts[2]),
-                kaId: Number(parts[3]),
+                knowledgeAssetId: Number(parts[3]),
             };
         }
         if (parts.length === 3) {
