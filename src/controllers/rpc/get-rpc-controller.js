@@ -36,7 +36,7 @@ class GetController extends BaseController {
                 blockchain: message.data.blockchain,
                 contract: message.data.contract,
                 knowledgeCollectionId: message.data.knowledgeCollectionId,
-                kaId: message.data.kaId,
+                knowledgeAssetId: message.data.knowledgeAssetId,
                 includeMetadata: message.data.includeMetadata,
                 hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
                 state: message.data.state ?? DEFAULT_GET_STATE,
