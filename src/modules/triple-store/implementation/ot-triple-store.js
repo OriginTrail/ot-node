@@ -237,7 +237,7 @@ class OtTripleStore {
     async getKnowledgeAssetPublicFromUnifiedGraph(repository, namedGraph, ual) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT { ?s ?p ?o . }
+            CONSTRUCT { ?s ?p ?o }
             WHERE {
                 GRAPH <${namedGraph}> {
                     << ?s ?p ?o >> ${UAL_PREDICATE} <${ual}> .
