@@ -10,6 +10,22 @@ class TelemetryModuleManager extends BaseModuleManager {
         return 'telemetry';
     }
 
+    async initialize() {
+        await super.initialize();
+
+        this.listenOnEvents((eventData) => {
+            this.sendTelemetryData(
+                eventData.operationId,
+                eventData.timestamp,
+                eventData.blockchainId,
+                eventData.lastEvent,
+                eventData.value1,
+                eventData.value2,
+                eventData.value3,
+            );
+        });
+    }
+
     listenOnEvents(onEventReceived) {
         if (this.config.modules.telemetry.enabled && this.initialized) {
             return this.getImplementation().module.listenOnEvents(
