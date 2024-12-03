@@ -62,7 +62,7 @@ class UALService {
             return {
                 blockchain: blockchainName,
                 contract,
-                tokenId: Number(parts[2]),
+                knowledgeCollectionId: Number(parts[2]),
                 knowledgeAssetId: Number(parts[3]),
             };
         }
