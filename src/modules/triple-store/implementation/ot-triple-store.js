@@ -308,7 +308,7 @@ class OtTripleStore {
     async getKnowledgeCollectionNamedGraphsPublic(repository, ual, sort) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT { ?s ?p ?o . }
+            CONSTRUCT { ?s ?p ?o }
             WHERE {
                 GRAPH ?g {
                     ?s ?p ?o .
