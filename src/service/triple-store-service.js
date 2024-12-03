@@ -6,7 +6,7 @@ import {
     SCHEMA_CONTEXT,
     UAL_PREDICATE,
     BASE_NAMED_GRAPHS,
-    QUERY_TYPES,
+    TRIPLE_STORE_REPOSITORY,
 } from '../constants/constants.js';
 
 class TripleStoreService {
@@ -215,19 +215,19 @@ class TripleStoreService {
         ]);
     }
 
-    async construct(repository, query, namedGraphs = null, labels = null) {
+    async construct(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.construct(
             this.repositoryImplementations[repository],
             repository,
-            this.buildQuery(query, namedGraphs, labels),
+            query,
         );
     }
 
-    async select(repository, query, namedGraphs = null, labels = null) {
+    async select(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.select(
             this.repositoryImplementations[repository],
             repository,
-            this.buildQuery(query, namedGraphs, labels),
+            query,
         );
     }
 
@@ -237,64 +237,6 @@ class TripleStoreService {
             repository,
             this.buildQuery(query, namedGraphs, labels),
         );
-    }
-
-    getQueryType(query) {
-        if (!query || typeof query !== 'string') {
-            return null;
-        }
-
-        const noComments = query.replace(/#.*$/gm, '').trim();
-        const withoutBase = noComments.replace(/BASE\s+<[^>]+>\s*/gi, '').trim();
-        const withoutPrefixes = withoutBase.replace(/PREFIX\s+[^\s]+\s+<[^>]+>\s*/gi, '').trim();
-
-        const normalizedQuery = withoutPrefixes.toUpperCase();
-
-        if (normalizedQuery.startsWith('SELECT')) {
-            return QUERY_TYPES.SELECT;
-        }
-        if (normalizedQuery.startsWith('CONSTRUCT')) {
-            return QUERY_TYPES.CONSTRUCT;
-        }
-
-        return null;
-    }
-
-    buildQuery(baseQuery, graphs = [], labels = []) {
-        let query = baseQuery.trim();
-
-        const prefixMatches = query.match(/PREFIX\s+[^\s]+\s+<[^>]+>/gi) || [];
-        const prefixes = prefixMatches.join('\n');
-
-        const queryWithoutPrefixes = query.replace(/PREFIX\s+[^\s]+\s+<[^>]+>/gi, '').trim();
-
-        const whereMatch = queryWithoutPrefixes.match(/WHERE\s*{([\s\S]*)}/i);
-        if (!whereMatch) {
-            throw new Error('Base query must contain a WHERE clause.');
-        }
-        const whereClause = whereMatch[1].trim();
-
-        query = '';
-        if (prefixes) {
-            query = `${prefixes}\n\n`;
-        }
-
-        if (Array.isArray(graphs) && graphs.length > 0) {
-            query += 'WHERE {\n';
-            graphs.forEach((graph) => {
-                query += `  GRAPH <${graph}> {\n    ${whereClause}\n  }\n`;
-            });
-            query += '}';
-        } else {
-            query += `WHERE {\n  ${whereClause}\n}`;
-        }
-
-        if (Array.isArray(labels) && labels.length > 0) {
-            const filters = labels.map((label) => `FILTER(stagod(?????, "${label}"))`).join('\n');
-            query += `\n${filters}`;
-        }
-
-        return query;
     }
 }
 
