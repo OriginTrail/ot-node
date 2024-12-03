@@ -69,7 +69,7 @@ class GetService extends OperationService {
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber <= minAckResponses
+            completedNumber === minAckResponses
         ) {
             await this.markOperationAsCompleted(operationId, blockchain, responseData, [
                 ...this.completedStatuses,
