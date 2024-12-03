@@ -374,6 +374,16 @@ class Web3Service {
         }
     }
 
+    getContractAddress(contractName) {
+        const contract = this.contracts[contractName];
+
+        if (!contract) {
+            return null;
+        }
+
+        return contract.address;
+    }
+
     async providerReady() {
         return this.provider.getNetwork();
     }

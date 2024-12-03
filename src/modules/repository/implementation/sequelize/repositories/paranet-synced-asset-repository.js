@@ -30,23 +30,25 @@ class ParanetSyncedAssetRepository {
         );
     }
 
-    async getParanetSyncedAssetRecordByUAL(ual) {
+    async getParanetSyncedAssetRecordByUAL(ual, options) {
         return this.model.findOne({
             where: { ual },
+            ...options,
         });
     }
 
-    async getParanetSyncedAssetRecordsCountByDataSource(paranetUal, dataSource) {
+    async getParanetSyncedAssetRecordsCountByDataSource(paranetUal, dataSource, options) {
         return this.model.count({
             where: {
                 paranetUal,
                 dataSource,
             },
+            ...options,
         });
     }
 
-    async paranetSyncedAssetRecordExists(ual) {
-        const paranetSyncedAssetRecord = await this.getParanetSyncedAssetRecordByUAL(ual);
+    async paranetSyncedAssetRecordExists(ual, options) {
+        const paranetSyncedAssetRecord = await this.getParanetSyncedAssetRecordByUAL(ual, options);
 
         return !!paranetSyncedAssetRecord;
     }

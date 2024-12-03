@@ -4,9 +4,10 @@ class BlockchainRepository {
         this.model = models.blockchain;
     }
 
-    async getLastCheckedBlock(blockchain) {
+    async getLastCheckedBlock(blockchain, options) {
         return this.model.findOne({
             where: { blockchain },
+            ...options,
         });
     }
 

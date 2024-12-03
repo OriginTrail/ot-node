@@ -77,36 +77,39 @@ class OtEthers extends BlockchainEventsService {
         this.contracts = {};
 
         for (const blockchain of this.config.blockchains) {
-            const provider = this._getRandomProvider(blockchain);
-
             this.contracts[blockchain] = {};
 
             this.logger.info(
                 `Initializing contracts with hub contract address: ${this.config.hubContractAddress[blockchain]}`,
             );
-            this.contracts[blockchain].Hub = new ethers.Contract(
+            this.contracts[blockchain].Hub = this.config.hubContractAddress[blockchain];
+
+            const provider = this._getRandomProvider(blockchain);
+            const hubContract = new ethers.Contract(
                 this.config.hubContractAddress[blockchain],
                 ABIs.Hub,
                 provider,
             );
 
-            const contractsAray = await this.contracts[blockchain].Hub.getAllContracts();
-            const assetStoragesArray = await this.contracts[blockchain].Hub.getAllAssetStorages();
+            const contractsAray = await hubContract.getAllContracts();
+            const assetStoragesArray = await hubContract.getAllAssetStorages();
 
             const allContracts = [...contractsAray, ...assetStoragesArray];
 
             for (const [contractName, contractAddress] of allContracts) {
                 if (MONITORED_CONTRACTS.includes(contractName) && ABIs[contractName] != null) {
-                    this.contracts[blockchain][contractName] = new ethers.Contract(
-                        contractAddress,
-                        ABIs[contractName],
-                        provider,
-                    );
+                    this.contracts[blockchain][contractName] = contractAddress;
                 }
             }
-
-            this.logger.info(`Contracts initialized`);
         }
+    }
+
+    getContractAddress(blockchain, contractName) {
+        return this.contracts[blockchain][contractName];
+    }
+
+    updateContractAddress(blockchain, contractName, contractAddress) {
+        this.contracts[blockchain][contractName] = contractAddress;
     }
 
     async getBlock(blockchain, tag) {
@@ -133,12 +136,14 @@ class OtEthers extends BlockchainEventsService {
         const addressToContractNameMap = {};
 
         for (const contractName of contractNames) {
-            const contract = this.contracts[blockchain][contractName];
+            const contractAddress = this.contracts[blockchain][contractName];
 
-            if (!contract) {
+            if (!contractAddress) {
                 continue;
             }
 
+            const provider = this._getRandomProvider(blockchain);
+            const contract = new ethers.Contract(contractAddress, ABIs[contractName], provider);
             const contractTopics = [];
             for (const filterName in contract.filters) {
                 if (!eventsToFilter.includes(filterName)) {
@@ -175,12 +180,14 @@ class OtEthers extends BlockchainEventsService {
 
                 for (const log of newLogs) {
                     const contractName = addressToContractNameMap[log.address];
-                    const contract = this.contracts[blockchain][contractName];
+                    const contractInterface = new ethers.utils.Interface(ABIs[contractName]);
 
                     try {
-                        const parsedLog = contract.interface.parseLog(log);
+                        const parsedLog = contractInterface.parseLog(log);
                         events.push({
+                            blockchain,
                             contract: contractName,
+                            contractAddress: log.address,
                             event: parsedLog.name,
                             data: JSON.stringify(
                                 Object.fromEntries(
@@ -193,11 +200,10 @@ class OtEthers extends BlockchainEventsService {
                             blockNumber: parseInt(log.blockNumber, 16),
                             transactionIndex: parseInt(log.transactionIndex, 16),
                             logIndex: parseInt(log.logIndex, 16),
-                            blockchain,
                         });
                     } catch (error) {
                         this.logger.warn(
-                            `Failed to parse log for contract: ${contract.constructor.name}. Error: ${error.message}`,
+                            `Failed to parse log for contract: ${contractName}. Error: ${error.message}`,
                         );
                     }
                 }
@@ -212,7 +218,6 @@ class OtEthers extends BlockchainEventsService {
 
         return {
             events,
-            lastCheckedBlock: toBlock,
             eventsMissed,
         };
     }

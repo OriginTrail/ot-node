@@ -38,7 +38,7 @@ class ShardRepository {
         );
     }
 
-    async getAllPeerRecords(blockchainId) {
+    async getAllPeerRecords(blockchainId, options) {
         const query = {
             where: {
                 blockchainId,
@@ -53,12 +53,13 @@ class ShardRepository {
                 'sha256',
             ],
             order: [['sha256', 'asc']],
+            ...options,
         };
 
         return this.model.findAll(query);
     }
 
-    async getPeerRecordsByIds(blockchainId, peerIds) {
+    async getPeerRecordsByIds(blockchainId, peerIds, options) {
         return this.model.findAll({
             where: {
                 blockchainId,
@@ -66,27 +67,30 @@ class ShardRepository {
                     [Sequelize.Op.in]: peerIds,
                 },
             },
+            ...options,
         });
     }
 
-    async getPeerRecord(peerId, blockchainId) {
+    async getPeerRecord(peerId, blockchainId, options) {
         return this.model.findOne({
             where: {
                 blockchainId,
                 peerId,
             },
+            ...options,
         });
     }
 
-    async getPeersCount(blockchainId) {
+    async getPeersCount(blockchainId, options) {
         return this.model.count({
             where: {
                 blockchainId,
             },
+            ...options,
         });
     }
 
-    async getPeersToDial(limit, dialFrequencyMillis) {
+    async getPeersToDial(limit, dialFrequencyMillis, options) {
         const result = await this.model.findAll({
             attributes: ['peer_id'],
             where: {
@@ -98,6 +102,7 @@ class ShardRepository {
             group: ['peer_id', 'last_dialed'],
             limit,
             raw: true,
+            ...options,
         });
         return (result ?? []).map((record) => ({ peerId: record.peer_id }));
     }
@@ -170,9 +175,10 @@ class ShardRepository {
         });
     }
 
-    async isNodePartOfShard(blockchainId, peerId) {
+    async isNodePartOfShard(blockchainId, peerId, options) {
         const nodeIsPartOfShard = await this.model.findOne({
             where: { blockchainId, peerId },
+            ...options,
         });
 
         return !!nodeIsPartOfShard;

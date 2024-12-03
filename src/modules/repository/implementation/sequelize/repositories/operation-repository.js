@@ -32,7 +32,7 @@ class OperationRepository {
         });
     }
 
-    async findProcessedOperations(operation, timestamp, limit) {
+    async findProcessedOperations(operation, timestamp, limit, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         return this.models[`${operationModel}`].findAll({
             where: {
@@ -41,16 +41,18 @@ class OperationRepository {
             order: [['createdAt', 'asc']],
             raw: true,
             limit,
+            ...options,
         });
     }
 
-    async getOperationStatus(operation, operationId) {
+    async getOperationStatus(operation, operationId, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         return this.models[operationModel].findOne({
             attributes: ['status'],
             where: {
                 operationId,
             },
+            ...options,
         });
     }
 

@@ -22,12 +22,13 @@ class ParanetRepository {
         );
     }
 
-    async getParanet(paranetId, blockchainId) {
+    async getParanet(paranetId, blockchainId, options) {
         return this.model.findOne({
             where: {
                 paranetId,
                 blockchainId,
             },
+            ...options,
         });
     }
 
@@ -46,23 +47,25 @@ class ParanetRepository {
         );
     }
 
-    async paranetExists(paranetId, blockchainId) {
+    async paranetExists(paranetId, blockchainId, options) {
         const paranetRecord = await this.model.findOne({
             where: {
                 paranetId,
                 blockchainId,
             },
+            ...options,
         });
         return !!paranetRecord;
     }
 
-    async getParanetKnowledgeAssetsCount(paranetId, blockchainId) {
+    async getParanetKnowledgeAssetsCount(paranetId, blockchainId, options) {
         return this.model.findAll({
             attributes: ['ka_count'],
             where: {
                 paranetId,
                 blockchainId,
             },
+            ...options,
         });
     }
 
@@ -81,11 +84,12 @@ class ParanetRepository {
         );
     }
 
-    async getParanetsBlockchains() {
+    async getParanetsBlockchains(options) {
         return this.model.findAll({
             attributes: [
                 [Sequelize.fn('DISTINCT', Sequelize.col('blockchain_id')), 'blockchain_id'],
             ],
+            ...options,
         });
     }
 }
