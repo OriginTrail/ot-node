@@ -162,7 +162,7 @@ class OtTripleStore {
     async getKnowledgeCollectionPublicFromUnifiedGraph(repository, namedGraph, ual, sort) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT { ?s ?p ?o . }
+            CONSTRUCT { ?s ?p ?o }
             WHERE {
                 GRAPH <${namedGraph}> {
                     << ?s ?p ?o >> ${UAL_PREDICATE} ?ual .
