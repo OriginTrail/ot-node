@@ -351,7 +351,7 @@ class OTNode {
     startTelemetryModule() {
         const telemetryModuleManager = this.container.resolve('telemetryModuleManager');
         telemetryModuleManager.listenOnEvents((eventData) => {
-            telemetryModuleManager.createEventRecord(
+            telemetryModuleManager.sendTelemetryData(
                 eventData.operationId,
                 eventData.timestamp,
                 eventData.blockchainId,
