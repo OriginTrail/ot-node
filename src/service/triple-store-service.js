@@ -222,11 +222,13 @@ class TripleStoreService {
         knowledgeAssetId,
         repository = TRIPLE_STORE_REPOSITORY.DKG,
     ) {
-        const ual = `did:dkg:${blockchain}/${contract}/${tokenId}${kaId ? `/${kaId}` : ''}`;
+        const ual = `did:dkg:${blockchain}/${contract}/${knowledgeCollectionId}${
+            knowledgeAssetId ? `/${knowledgeAssetId}` : ''
+        }`;
         this.logger.debug(`Getting Assertion with the UAL: ${ual}.`);
 
         let nquads;
-        if (kaId) {
+        if (knowledgeAssetId) {
             nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
                 this.repositoryImplementations[repository],
                 repository,
@@ -264,10 +266,12 @@ class TripleStoreService {
         knowledgeAssetId,
         repository = TRIPLE_STORE_REPOSITORY.DKG,
     ) {
-        const ual = `did:dkg:${blockchain}/${contract}/${tokenId}${kaId ? `/${kaId}` : ''}`;
+        const ual = `did:dkg:${blockchain}/${contract}/${knowledgeCollectionId}${
+            knowledgeAssetId ? `/${knowledgeAssetId}` : ''
+        }`;
         this.logger.debug(`Getting Assertion Metadata with the UAL: ${ual}.`);
         let nquads;
-        if (kaId) {
+        if (knowledgeAssetId) {
             nquads = await this.tripleStoreModuleManager.getKnowledgeAssetMetadata(
                 this.repositoryImplementations[repository],
                 repository,

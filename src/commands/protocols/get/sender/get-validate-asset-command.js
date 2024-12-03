@@ -22,7 +22,7 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, contract, tokenId, ual } = command.data;
+        const { operationId, blockchain, contract, knowledgeCollectionId, ual } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -41,7 +41,11 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
             return Command.empty();
         }
         // TODO: Update to validate knowledge asset index
-        const isValidUal = await this.validationService.validateUal(blockchain, contract, tokenId);
+        const isValidUal = await this.validationService.validateUal(
+            blockchain,
+            contract,
+            knowledgeCollectionId,
+        );
 
         if (!isValidUal) {
             await this.handleError(

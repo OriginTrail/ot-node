@@ -14,8 +14,8 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         return {
             ...super.getNextCommandData(command),
             contract: command.data.contract,
-            tokenId: command.data.tokenId,
-            kaId: command.data.kaId,
+            knowledgeCollectionId: command.data.knowledgeCollectionId,
+            knowledgeAssetId: command.data.knowledgeAssetId,
             includeMetadata: command.data.includeMetadata,
             ual: command.data.ual,
             assetSync: command.data.assetSync,

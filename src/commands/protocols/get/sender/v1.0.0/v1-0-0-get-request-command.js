@@ -34,8 +34,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
         const {
             blockchain,
             contract,
-            tokenId,
-            kaId,
+            knowledgeCollectionId,
+            knowledgeAssetId,
             includeMetadata,
             ual,
             hashFunctionId,
@@ -47,8 +47,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
         return {
             blockchain,
             contract,
-            tokenId,
-            kaId,
+            knowledgeCollectionId,
+            knowledgeAssetId,
             includeMetadata,
             ual,
             hashFunctionId,
