@@ -32,6 +32,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    getContractAddress(blockchain, contractName) {
+        return this.callImplementationFunction(blockchain, 'getContractAddress', [contractName]);
+    }
+
     setContractCallCache(blockchain, contractName, functionName, value) {
         return this.callImplementationFunction(blockchain, 'setContractCallCache', [
             contractName,

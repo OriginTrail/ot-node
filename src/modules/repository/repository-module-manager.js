@@ -324,13 +324,14 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('blockchain_event').findProcessedEvents(timestamp, limit);
     }
 
-    async getLastCheckedBlock(blockchain) {
-        return this.getRepository('blockchain').getLastCheckedBlock(blockchain);
+    async getLastCheckedBlock(blockchain, contract = null) {
+        return this.getRepository('blockchain').getLastCheckedBlock(blockchain, contract);
     }
 
-    async updateLastCheckedBlock(blockchain, currentBlock, timestamp, options = {}) {
+    async updateLastCheckedBlock(blockchain, contracts, currentBlock, timestamp, options = {}) {
         return this.getRepository('blockchain').updateLastCheckedBlock(
             blockchain,
+            contracts,
             currentBlock,
             timestamp,
             options,

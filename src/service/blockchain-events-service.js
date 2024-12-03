@@ -17,6 +17,23 @@ class BlockchainEventsService {
         }
     }
 
+    getContractAddress(blockchain, contractName) {
+        return this.blockchainEventsModuleManager.getContractAddress(
+            this.blockchainEventsServicesImplementations[blockchain],
+            blockchain,
+            contractName,
+        );
+    }
+
+    updateContractAddress(blockchain, contractName, contractAddress) {
+        return this.blockchainEventsModuleManager.updateContractAddress(
+            this.blockchainEventsServicesImplementations[blockchain],
+            blockchain,
+            contractName,
+            contractAddress,
+        );
+    }
+
     async getBlock(blockchain, tag = 'latest') {
         return this.blockchainEventsModuleManager.getBlock(
             this.blockchainEventsServicesImplementations[blockchain],
