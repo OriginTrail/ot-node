@@ -5,7 +5,6 @@ class QuestTelemetry {
         this.config = config;
         this.logger = logger;
         this.sender = Sender.fromConfig(this.config.ip_endpoint);
-        this.table = this.sender.table('event');
     }
 
     listenOnEvents(eventEmitter, onEventReceived) {
@@ -22,15 +21,17 @@ class QuestTelemetry {
         value3 = null,
     ) {
         try {
-            this.table.symbol('operationId', operationId || 'NULL');
-            this.table.symbol('blockchainId', blockchainId || 'NULL');
-            this.table.symbol('name', name || 'NULL');
-            if (value1 !== null) this.table.symbol('value1', value1);
-            if (value2 !== null) this.table.symbol('value2', value2);
-            if (value3 !== null) this.table.symbol('value3', value3);
-            this.table.timestampColumn('timestamp', timestamp * 1000);
+            const table = this.sender.table('event');
 
-            await this.table.at(Date.now(), 'ms');
+            table.symbol('operationId', operationId || 'NULL');
+            table.symbol('blockchainId', blockchainId || 'NULL');
+            table.symbol('name', name || 'NULL');
+            if (value1 !== null) table.symbol('value1', value1);
+            if (value2 !== null) table.symbol('value2', value2);
+            if (value3 !== null) table.symbol('value3', value3);
+            table.timestampColumn('timestamp', timestamp * 1000);
+
+            await table.at(Date.now(), 'ms');
             await this.sender.flush();
             await this.sender.close();
 
