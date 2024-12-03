@@ -95,32 +95,7 @@
                     "ot-blazegraph": {
                         "enabled": false,
                         "package": "./triple-store/implementation/ot-blazegraph/ot-blazegraph.js",
-                        "config": {
-                            "publicCurrent": {
-                                "url": "http://localhost:9999",
-                                "name": "kb",
-                                "username": "admin",
-                                "password": ""
-                            },
-                             "publicHistory": {
-                                "url": "http://localhost:9999",
-                                "name": "public-history",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "privateCurrent": {
-                                "url": "http://localhost:9999",
-                                "name": "private-current",
-                                "username": "admin",
-                                "password": ""
-                            },
-                            "privateHistory": {
-                                "url": "http://localhost:9999",
-                                "name": "private-history",
-                                "username": "admin",
-                                "password": ""
-                            }
-                        }
+                        "config": {}
                     },
                     "ot-fuseki": {
                         "enabled": false,
