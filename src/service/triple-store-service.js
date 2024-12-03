@@ -260,7 +260,7 @@ class TripleStoreService {
     async getAssertionMetadata(
         blockchain,
         contract,
-        tokenId,
+        knowledgeCollectionId,
         kaId,
         repository = TRIPLE_STORE_REPOSITORY.DKG,
     ) {
