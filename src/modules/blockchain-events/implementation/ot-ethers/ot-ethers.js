@@ -10,9 +10,8 @@ import {
     RPC_PROVIDER_STALL_TIMEOUT,
     MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS,
     NODE_ENVIRONMENTS,
-    BLOCK_TIME_MILLIS,
     ABIs,
-    CONTRACTS_EVENTS_LISTENED,
+    CONTRACT_EVENTS_LISTENED,
 } from '../../../../constants/constants.js';
 
 class OtEthers extends BlockchainEventsService {
@@ -120,10 +119,7 @@ class OtEthers extends BlockchainEventsService {
             const allContracts = [...contractsAray, ...assetStoragesArray];
 
             for (const [contractName, contractAddress] of allContracts) {
-                if (
-                    CONTRACTS_EVENTS_LISTENED.includes(contractName) &&
-                    ABIs[contractName] != null
-                ) {
+                if (CONTRACT_EVENTS_LISTENED.includes(contractName) && ABIs[contractName] != null) {
                     this.contracts[blockchain][contractName] = new ethers.Contract(
                         contractAddress,
                         ABIs[contractName],
@@ -202,7 +198,9 @@ class OtEthers extends BlockchainEventsService {
                         ]),
                     ),
                 ),
-                block: event.blockNumber,
+                blockNumber: event.blockNumber,
+                transactionIndex: event.transactionIndex,
+                logIndex: event.logIndex,
                 blockchain,
             })),
             lastCheckedBlock: toBlock,
@@ -212,22 +210,24 @@ class OtEthers extends BlockchainEventsService {
 
     async _getMaxNumberOfHistoricalBlocksForSync(blockchain) {
         if (!this.maxNumberOfHistoricalBlocksForSync) {
-            const blockTimeMillis = await this._getBlockTimeMillis(blockchain);
+            if (
+                [NODE_ENVIRONMENTS.DEVELOPMENT, NODE_ENVIRONMENTS.TEST].includes(
+                    process.env.NODE_ENV,
+                )
+            ) {
+                this.maxNumberOfHistoricalBlocksForSync = Infinity;
+            } else {
+                const blockTimeMillis = await this._getBlockTimeMillis(blockchain);
 
-            this.maxNumberOfHistoricalBlocksForSync = Math.round(
-                MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / blockTimeMillis,
-            );
+                this.maxNumberOfHistoricalBlocksForSync = Math.round(
+                    MAX_BLOCKCHAIN_EVENT_SYNC_OF_HISTORICAL_BLOCKS_IN_MILLS / blockTimeMillis,
+                );
+            }
         }
         return this.maxNumberOfHistoricalBlocksForSync;
     }
 
     async _getBlockTimeMillis(blockchain, blockRange = 1000) {
-        if (
-            [NODE_ENVIRONMENTS.DEVELOPMENT, NODE_ENVIRONMENTS.TEST].includes(process.env.NODE_ENV)
-        ) {
-            return BLOCK_TIME_MILLIS.HARDHAT;
-        }
-
         const latestBlock = await this.getBlock(blockchain);
         const olderBlock = await this.getBlock(blockchain, latestBlock.number - blockRange);
 
@@ -236,6 +236,8 @@ class OtEthers extends BlockchainEventsService {
     }
 
     async _processBlockRange(fromBlock, toBlock, contract, topics) {
+        // TODO: When migrated to ether v6, we should query
+        // all contracts/topics in one query, not supported in ethers v5
         const newEvents = await Promise.all(
             topics.map((topic) => contract.queryFilter(topic, fromBlock, toBlock)),
         );

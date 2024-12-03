@@ -45,12 +45,12 @@ class OTNode {
 
         await this.initializeModules();
         this.initializeBlockchainEventsService();
+        await this.initializeShardingTableService();
         await this.initializeParanets();
 
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
-        await this.initializeShardingTableService();
 
         await this.initializeRouters();
         await this.startNetworkModule();

@@ -18,7 +18,9 @@ class BlockchainEventRepository {
                     contract: event.contract,
                     event: event.event,
                     data: event.data,
-                    block: event.block,
+                    blockNumber: event.blockNumber,
+                    transactionIndex: event.transactionIndex,
+                    logIndex: event.logIndex,
                     blockchain: event.blockchain,
                     processed: false,
                 })),
@@ -41,21 +43,12 @@ class BlockchainEventRepository {
                 processed: false,
                 event: { [Sequelize.Op.in]: eventNames },
             },
-            order: [['block', 'asc']],
+            order: [
+                ['blockNumber', 'asc'],
+                ['transactionIndex', 'asc'],
+                ['logIndex', 'asc'],
+            ],
         });
-    }
-
-    async blockchainEventExists(contract, event, data, block, blockchain) {
-        const dbEvent = await this.model.findOne({
-            where: {
-                contract,
-                event,
-                data,
-                block,
-                blockchain,
-            },
-        });
-        return !!dbEvent;
     }
 
     async markBlockchainEventsAsProcessed(events, options) {
@@ -64,6 +57,16 @@ class BlockchainEventRepository {
             { processed: true },
             {
                 where: { id: { [Sequelize.Op.in]: idsForUpdate } },
+                ...options,
+            },
+        );
+    }
+
+    async markAllContractBlockchainEventsAsProcessed(contract, options) {
+        return this.model.update(
+            { processed: true },
+            {
+                where: { contract },
                 ...options,
             },
         );
