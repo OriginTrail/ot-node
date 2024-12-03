@@ -4,6 +4,14 @@ class BlockchainEventsService {
         this.config = config;
     }
 
+    getContractAddress() {
+        throw Error('getContractAddress not implemented');
+    }
+
+    updateContractAddress() {
+        throw Error('updateContractAddress not implemented');
+    }
+
     async getBlock() {
         throw Error('getBlock not implemented');
     }

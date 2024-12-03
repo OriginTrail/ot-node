@@ -8,6 +8,7 @@ export default (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             contract: DataTypes.STRING,
+            contractAddress: DataTypes.STRING,
             blockchain: DataTypes.STRING,
             event: DataTypes.STRING,
             data: DataTypes.TEXT,

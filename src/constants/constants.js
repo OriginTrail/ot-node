@@ -770,22 +770,19 @@ export const CONTRACTS = {
     PARANETS_REGISTRY: 'ParanetsRegistry',
 };
 
-export const CONTRACT_EVENTS = {
-    HUB: {
-        contract: 'Hub',
-        events: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
-    },
-    CONTENT_ASSET: { contract: 'ContentAsset', events: ['AssetMinted'] },
-    PARAMETERS_STORAGE: { contract: 'ParametersStorage', events: ['ParameterChanged'] },
-};
-
-export const CONTRACT_EVENTS_LISTENED = Object.values(CONTRACT_EVENTS).map(
-    (value) => value.contract,
-);
-
-export const CONTRACT_INDEPENDENT_EVENTS = {
+export const MONITORED_CONTRACT_EVENTS = {
+    Hub: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
+    ParametersStorage: ['ParameterChanged'],
     ContentAsset: ['AssetMinted'],
 };
+
+export const MONITORED_CONTRACTS = Object.keys(MONITORED_CONTRACT_EVENTS);
+
+export const MONITORED_EVENTS = Object.values(MONITORED_CONTRACT_EVENTS).flatMap(
+    (events) => events,
+);
+
+export const CONTRACT_INDEPENDENT_EVENTS = {};
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',

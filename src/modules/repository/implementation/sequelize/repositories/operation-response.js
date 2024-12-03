@@ -31,17 +31,18 @@ class OperationResponseRepository {
         );
     }
 
-    async getOperationResponsesStatuses(operation, operationId) {
+    async getOperationResponsesStatuses(operation, operationId, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         return this.models[`${operationModel}_response`].findAll({
             attributes: ['status', 'datasetRoot'],
             where: {
                 operationId,
             },
+            ...options,
         });
     }
 
-    async findProcessedOperationResponse(timestamp, limit, operation) {
+    async findProcessedOperationResponse(timestamp, limit, operation, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         return this.models[`${operationModel}_response`].findAll({
             where: {
@@ -50,6 +51,7 @@ class OperationResponseRepository {
             order: [['createdAt', 'asc']],
             raw: true,
             limit,
+            ...options,
         });
     }
 
