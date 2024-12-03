@@ -185,7 +185,9 @@ class OtEthers extends BlockchainEventsService {
                     try {
                         const parsedLog = contractInterface.parseLog(log);
                         events.push({
+                            blockchain,
                             contract: contractName,
+                            contractAddress: log.address,
                             event: parsedLog.name,
                             data: JSON.stringify(
                                 Object.fromEntries(
@@ -198,7 +200,6 @@ class OtEthers extends BlockchainEventsService {
                             blockNumber: parseInt(log.blockNumber, 16),
                             transactionIndex: parseInt(log.transactionIndex, 16),
                             logIndex: parseInt(log.logIndex, 16),
-                            blockchain,
                         });
                     } catch (error) {
                         this.logger.warn(

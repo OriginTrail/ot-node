@@ -6,10 +6,6 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 primaryKey: true,
             },
-            contract: {
-                type: DataTypes.STRING,
-                primaryKey: true,
-            },
             lastCheckedBlock: DataTypes.BIGINT,
             lastCheckedTimestamp: DataTypes.BIGINT,
         },

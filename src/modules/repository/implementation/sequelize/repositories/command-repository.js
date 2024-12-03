@@ -24,7 +24,7 @@ class CommandRepository {
         return this.model.create(command, options);
     }
 
-    async getCommandsWithStatus(statusArray, excludeNameArray) {
+    async getCommandsWithStatus(statusArray, excludeNameArray, options) {
         return this.model.findAll({
             where: {
                 status: {
@@ -32,14 +32,16 @@ class CommandRepository {
                 },
                 name: { [Sequelize.Op.notIn]: excludeNameArray },
             },
+            ...options,
         });
     }
 
-    async getCommandWithId(id) {
+    async getCommandWithId(id, options) {
         return this.model.findOne({
             where: {
                 id,
             },
+            ...options,
         });
     }
 
@@ -52,7 +54,7 @@ class CommandRepository {
         });
     }
 
-    async findFinalizedCommands(timestamp, limit) {
+    async findFinalizedCommands(timestamp, limit, options) {
         return this.model.findAll({
             where: {
                 status: {
@@ -68,10 +70,11 @@ class CommandRepository {
             order: [['startedAt', 'asc']],
             raw: true,
             limit,
+            ...options,
         });
     }
 
-    async findUnfinalizedCommandsByName(name) {
+    async findUnfinalizedCommandsByName(name, options) {
         return this.model.findAll({
             where: {
                 name,
@@ -85,6 +88,7 @@ class CommandRepository {
                 },
             },
             raw: true,
+            ...options,
         });
     }
 }

@@ -15,13 +15,14 @@ class BlockchainEventRepository {
             // eslint-disable-next-line no-await-in-loop
             const insertedChunk = await this.model.bulkCreate(
                 chunk.map((event) => ({
+                    blockchain: event.blockchain,
                     contract: event.contract,
+                    contractAddress: event.contractAddress,
                     event: event.event,
                     data: event.data,
                     blockNumber: event.blockNumber,
                     transactionIndex: event.transactionIndex,
                     logIndex: event.logIndex,
-                    blockchain: event.blockchain,
                     processed: false,
                 })),
                 {
@@ -36,7 +37,7 @@ class BlockchainEventRepository {
         return insertedEvents;
     }
 
-    async getAllUnprocessedBlockchainEvents(blockchain, eventNames) {
+    async getAllUnprocessedBlockchainEvents(blockchain, eventNames, options) {
         return this.model.findAll({
             where: {
                 blockchain,
@@ -48,25 +49,15 @@ class BlockchainEventRepository {
                 ['transactionIndex', 'asc'],
                 ['logIndex', 'asc'],
             ],
+            ...options,
         });
     }
 
-    async markBlockchainEventsAsProcessed(events, options) {
-        const idsForUpdate = events.flatMap((event) => event.id);
+    async markAllBlockchainEventsAsProcessed(blockchain, options) {
         return this.model.update(
             { processed: true },
             {
-                where: { id: { [Sequelize.Op.in]: idsForUpdate } },
-                ...options,
-            },
-        );
-    }
-
-    async markAllContractBlockchainEventsAsProcessed(contract, options) {
-        return this.model.update(
-            { processed: true },
-            {
-                where: { contract },
+                where: { blockchain },
                 ...options,
             },
         );
@@ -81,7 +72,34 @@ class BlockchainEventRepository {
         });
     }
 
-    async findProcessedEvents(timestamp, limit) {
+    async removeContractEventsAfterBlock(
+        blockchain,
+        contract,
+        contractAddress,
+        blockNumber,
+        transactionIndex,
+        options,
+    ) {
+        return this.model.destroy({
+            where: {
+                blockchain,
+                contract,
+                contractAddress,
+                [Sequelize.Op.or]: [
+                    // Events in blocks after the given blockNumber
+                    { blockNumber: { [Sequelize.Op.gt]: blockNumber } },
+                    // Events in the same blockNumber but with a higher transactionIndex
+                    {
+                        blockNumber,
+                        transactionIndex: { [Sequelize.Op.gt]: transactionIndex },
+                    },
+                ],
+            },
+            ...options,
+        });
+    }
+
+    async findProcessedEvents(timestamp, limit, options) {
         return this.model.findAll({
             where: {
                 processed: true,
@@ -90,6 +108,7 @@ class BlockchainEventRepository {
             order: [['createdAt', 'asc']],
             raw: true,
             limit,
+            ...options,
         });
     }
 }

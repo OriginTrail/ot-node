@@ -14,6 +14,10 @@ export async function up({ context: { queryInterface, Sequelize } }) {
     await queryInterface.addColumn('blockchain_event', 'log_index', {
         type: Sequelize.BIGINT,
     });
+
+    await queryInterface.addColumn('blockchain_event', 'contract_address', {
+        type: Sequelize.STRING,
+    });
 }
 
 export async function down({ context: { queryInterface, Sequelize } }) {
@@ -28,4 +32,6 @@ export async function down({ context: { queryInterface, Sequelize } }) {
     await queryInterface.removeColumn('blockchain_event', 'transaction_index');
 
     await queryInterface.removeColumn('blockchain_event', 'log_index');
+
+    await queryInterface.removeColumn('blockchain_event', 'contract_address');
 }

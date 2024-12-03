@@ -782,9 +782,7 @@ export const MONITORED_EVENTS = Object.values(MONITORED_CONTRACT_EVENTS).flatMap
     (events) => events,
 );
 
-export const CONTRACT_INDEPENDENT_EVENTS = {
-    ContentAsset: ['AssetMinted'],
-};
+export const CONTRACT_INDEPENDENT_EVENTS = {};
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',

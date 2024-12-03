@@ -10,11 +10,12 @@ class OperationIdRepository {
         return this.model.create(handlerData, options);
     }
 
-    async getOperationIdRecord(operationId) {
+    async getOperationIdRecord(operationId, options) {
         return this.model.findOne({
             where: {
                 operationId,
             },
+            ...options,
         });
     }
 

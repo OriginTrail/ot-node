@@ -44,46 +44,30 @@ class BlockchainEventListenerCommand extends Command {
             return Command.repeat();
         }
 
+        await this.repositoryModuleManager.markAllBlockchainEventsAsProcessed(blockchainId);
+
         return Command.empty();
     }
 
     async fetchAndHandleBlockchainEvents(blockchainId, repositoryTransaction) {
-        const currentBlock = (await this.blockchainEventsService.getBlock(blockchainId)).number;
-        const lastCheckedBlockRecords = await this.repositoryModuleManager.getLastCheckedBlock(
+        this.currentBlock = (await this.blockchainEventsService.getBlock(blockchainId)).number;
+        const lastCheckedBlockRecord = await this.repositoryModuleManager.getLastCheckedBlock(
             blockchainId,
+            { transaction: repositoryTransaction },
         );
 
-        const groupedLastCheckedBlocks = {};
-        MONITORED_CONTRACTS.forEach((contract) => {
-            const record = lastCheckedBlockRecords.find((r) => r.contract === contract);
-            const lastCheckedBlock = record ? record.lastCheckedBlock : 0;
-            if (!groupedLastCheckedBlocks[lastCheckedBlock]) {
-                groupedLastCheckedBlocks[lastCheckedBlock] = [];
-            }
-            groupedLastCheckedBlocks[lastCheckedBlock].push(contract);
-        });
+        const { events: newEvents, eventsMissed } =
+            await this.blockchainEventsService.getPastEvents(
+                blockchainId,
+                MONITORED_CONTRACTS,
+                MONITORED_EVENTS,
+                lastCheckedBlockRecord?.lastCheckedBlock ?? 0,
+                this.currentBlock,
+            );
 
-        const groupedEventsResults = await Promise.all(
-            Object.entries(groupedLastCheckedBlocks).map(async ([lastCheckedBlock, contracts]) => {
-                const eventsToFilter = contracts.flatMap(
-                    (contract) => MONITORED_CONTRACT_EVENTS[contract] || [],
-                );
-                return this.blockchainEventsService.getPastEvents(
-                    blockchainId,
-                    contracts,
-                    eventsToFilter,
-                    lastCheckedBlock,
-                    currentBlock,
-                );
-            }),
-        );
-
-        if (groupedEventsResults.some(({ eventsMissed }) => eventsMissed)) {
+        if (eventsMissed) {
             // TODO: Add some logic for missed events in the future
         }
-
-        const newEvents = groupedEventsResults.flatMap(({ events }) => events);
-        const lastCheckedBlock = currentBlock;
 
         if (newEvents.length !== 0) {
             this.logger.trace(
@@ -94,8 +78,7 @@ class BlockchainEventListenerCommand extends Command {
             });
             await this.repositoryModuleManager.updateLastCheckedBlock(
                 blockchainId,
-                MONITORED_CONTRACTS,
-                lastCheckedBlock,
+                this.currentBlock,
                 Date.now(),
                 { transaction: repositoryTransaction },
             );
@@ -105,6 +88,7 @@ class BlockchainEventListenerCommand extends Command {
             await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(
                 blockchainId,
                 MONITORED_EVENTS,
+                { transaction: repositoryTransaction },
             );
 
         if (unprocessedEvents.length > 0) {
@@ -113,17 +97,17 @@ class BlockchainEventListenerCommand extends Command {
             );
         }
 
-        const independentEvents = [];
-        const dependentEvents = [];
+        this.independentEvents = [];
+        this.dependentEvents = [];
         for (const event of unprocessedEvents) {
             if (this.isIndependentEvent(event.contract, event.event)) {
-                independentEvents.push(event);
+                this.independentEvents.push(event);
             } else {
-                dependentEvents.push(event);
+                this.dependentEvents.push(event);
             }
         }
 
-        dependentEvents.sort((a, b) => {
+        this.dependentEvents.sort((a, b) => {
             if (a.blockNumber !== b.blockNumber) {
                 return a.blockNumber - b.blockNumber;
             }
@@ -134,13 +118,9 @@ class BlockchainEventListenerCommand extends Command {
         });
 
         await Promise.all([
-            this.processIndependentEvents(independentEvents, repositoryTransaction),
-            this.processDependentEvents(dependentEvents, repositoryTransaction),
+            this.processIndependentEvents(repositoryTransaction),
+            this.processDependentEvents(repositoryTransaction),
         ]);
-
-        await this.repositoryModuleManager.markBlockchainEventsAsProcessed(unprocessedEvents, {
-            transaction: repositoryTransaction,
-        });
     }
 
     isIndependentEvent(contractName, eventName) {
@@ -148,25 +128,64 @@ class BlockchainEventListenerCommand extends Command {
         return contractIndependentEvents.includes(eventName);
     }
 
-    async processIndependentEvents(independentEvents, repositoryTransaction) {
+    async processIndependentEvents(repositoryTransaction) {
         await Promise.all(
-            independentEvents.map((event) => this.processEvent(event, repositoryTransaction)),
+            this.independentEvents.map((event) => this.processEvent(event, repositoryTransaction)),
         );
     }
 
-    async processDependentEvents(dependentEvents, repositoryTransaction) {
-        for (const event of dependentEvents) {
-            if (this.invalidatedContracts.has(event.contract)) {
+    async processDependentEvents(repositoryTransaction) {
+        let index = 0;
+
+        while (index < this.dependentEvents.length) {
+            const event = this.dependentEvents[index];
+
+            // Step 1: Handle invalidated contracts
+            if (this.invalidatedContracts.has(event.contractAddress)) {
                 this.logger.info(
-                    `Skipping event ${event.event} for blockchain: ${event.blockchain}, invalidated contract: ${event.contract}`,
+                    `Skipping event ${event.event} for blockchain: ${event.blockchain}, ` +
+                        `invalidated contract: ${event.contract} (${event.contractAddress})`,
                 );
-                continue;
+
+                this.dependentEvents.splice(index, 1); // Remove the invalidated event
+                continue; // Restart the loop with the updated array
             }
 
+            // Step 2: Handle new dependent events
+            if (this.newDependentEvents?.length > 0) {
+                this.logger.info(
+                    `Adding ${this.newDependentEvents.length} new dependent events before processing.`,
+                );
+
+                // Merge new events into the unprocessed part of the array
+                const combinedEvents = [
+                    ...this.dependentEvents.slice(index), // Unprocessed events
+                    ...this.newDependentEvents, // New events
+                ].sort((a, b) => {
+                    if (a.blockNumber !== b.blockNumber) {
+                        return a.blockNumber - b.blockNumber;
+                    }
+                    if (a.transactionIndex !== b.transactionIndex) {
+                        return a.transactionIndex - b.transactionIndex;
+                    }
+                    return a.logIndex - b.logIndex;
+                });
+
+                // Update dependentEvents: add back processed events + sorted combined events
+                this.dependentEvents = [...this.dependentEvents.slice(0, index), ...combinedEvents];
+
+                // Reset the new events buffer
+                this.newDependentEvents = [];
+            }
+
+            // Step 3: Process the current event
             // eslint-disable-next-line no-await-in-loop
             await this.processEvent(event, repositoryTransaction);
+
+            index += 1; // Move to the next event
         }
 
+        // Clear invalidated contracts after processing
         this.invalidatedContracts.clear();
     }
 
@@ -226,22 +245,45 @@ class BlockchainEventListenerCommand extends Command {
         const blockchainEventsServiceContractAddress =
             this.blockchainEventsService.getContractAddress(event.blockchain, contractName);
 
-        if (newContractAddress !== blockchainEventsServiceContractAddress) {
+        if (
+            blockchainEventsServiceContractAddress &&
+            newContractAddress !== blockchainEventsServiceContractAddress
+        ) {
             this.blockchainEventsService.updateContractAddress(
                 event.blockchain,
                 contractName,
                 newContractAddress,
             );
 
-            this.invalidatedContracts.add(contractName);
+            this.invalidatedContracts.add(blockchainEventsServiceContractAddress);
 
-            await this.repositoryModuleManager.updateLastCheckedBlock(
+            await this.repositoryModuleManager.removeContractEventsAfterBlock(
                 event.blockchain,
-                [contractName],
+                contractName,
+                event.contractAddress,
                 event.blockNumber,
-                Date.now(),
+                event.transactionIndex,
                 { transaction: repositoryTransaction },
             );
+
+            const { events: newEvents } = await this.blockchainEventsService.getPastEvents(
+                event.blockchain,
+                [contractName],
+                MONITORED_CONTRACT_EVENTS[contractName],
+                event.blockNumber,
+                this.currentBlock,
+            );
+
+            if (newEvents.length !== 0) {
+                this.logger.trace(
+                    `Storing ${newEvents.length} new events for blockchain ${event.blockchain} in the database.`,
+                );
+                await this.repositoryModuleManager.insertBlockchainEvents(newEvents, {
+                    transaction: repositoryTransaction,
+                });
+
+                this.newDependentEvents = newEvents;
+            }
         }
     }
 
@@ -264,22 +306,45 @@ class BlockchainEventListenerCommand extends Command {
         const blockchainEventsServiceContractAddress =
             this.blockchainEventsService.getContractAddress(event.blockchain, contractName);
 
-        if (newContractAddress !== blockchainEventsServiceContractAddress) {
+        if (
+            blockchainEventsServiceContractAddress &&
+            newContractAddress !== blockchainEventsServiceContractAddress
+        ) {
             this.blockchainEventsService.updateContractAddress(
                 event.blockchain,
                 contractName,
                 newContractAddress,
             );
 
-            this.invalidatedContracts.add(contractName);
+            this.invalidatedContracts.add(blockchainEventsServiceContractAddress);
 
-            await this.repositoryModuleManager.updateLastCheckedBlock(
+            await this.repositoryModuleManager.removeContractEventsAfterBlock(
                 event.blockchain,
-                [contractName],
+                contractName,
+                event.contractAddress,
                 event.blockNumber,
-                Date.now(),
+                event.transactionIndex,
                 { transaction: repositoryTransaction },
             );
+
+            const { events: newEvents } = await this.blockchainEventsService.getPastEvents(
+                event.blockchain,
+                [contractName],
+                MONITORED_CONTRACT_EVENTS[contractName],
+                event.blockNumber,
+                this.currentBlock,
+            );
+
+            if (newEvents.length !== 0) {
+                this.logger.trace(
+                    `Storing ${newEvents.length} new events for blockchain ${event.blockchain} in the database.`,
+                );
+                await this.repositoryModuleManager.insertBlockchainEvents(newEvents, {
+                    transaction: repositoryTransaction,
+                });
+
+                this.newDependentEvents = newEvents;
+            }
         }
     }
 
@@ -301,22 +366,45 @@ class BlockchainEventListenerCommand extends Command {
         const blockchainEventsServiceContractAddress =
             this.blockchainEventsService.getContractAddress(event.blockchain, contractName);
 
-        if (newContractAddress !== blockchainEventsServiceContractAddress) {
+        if (
+            blockchainEventsServiceContractAddress &&
+            newContractAddress !== blockchainEventsServiceContractAddress
+        ) {
             this.blockchainEventsService.updateContractAddress(
                 event.blockchain,
                 contractName,
                 newContractAddress,
             );
 
-            this.invalidatedContracts.add(contractName);
+            this.invalidatedContracts.add(blockchainEventsServiceContractAddress);
 
-            await this.repositoryModuleManager.updateLastCheckedBlock(
+            await this.repositoryModuleManager.removeContractEventsAfterBlock(
                 event.blockchain,
-                [contractName],
+                contractName,
+                event.contractAddress,
                 event.blockNumber,
-                Date.now(),
+                event.transactionIndex,
                 { transaction: repositoryTransaction },
             );
+
+            const { events: newEvents } = await this.blockchainEventsService.getPastEvents(
+                event.blockchain,
+                [contractName],
+                MONITORED_CONTRACT_EVENTS[contractName],
+                event.blockNumber,
+                this.currentBlock,
+            );
+
+            if (newEvents.length !== 0) {
+                this.logger.trace(
+                    `Storing ${newEvents.length} new events for blockchain ${event.blockchain} in the database.`,
+                );
+                await this.repositoryModuleManager.insertBlockchainEvents(newEvents, {
+                    transaction: repositoryTransaction,
+                });
+
+                this.newDependentEvents = newEvents;
+            }
         }
     }
 
@@ -338,22 +426,45 @@ class BlockchainEventListenerCommand extends Command {
         const blockchainEventsServiceContractAddress =
             this.blockchainEventsService.getContractAddress(event.blockchain, contractName);
 
-        if (newContractAddress !== blockchainEventsServiceContractAddress) {
+        if (
+            blockchainEventsServiceContractAddress &&
+            newContractAddress !== blockchainEventsServiceContractAddress
+        ) {
             this.blockchainEventsService.updateContractAddress(
                 event.blockchain,
                 contractName,
                 newContractAddress,
             );
 
-            this.invalidatedContracts.add(contractName);
+            this.invalidatedContracts.add(blockchainEventsServiceContractAddress);
 
-            await this.repositoryModuleManager.updateLastCheckedBlock(
+            await this.repositoryModuleManager.removeContractEventsAfterBlock(
                 event.blockchain,
-                [contractName],
+                contractName,
+                event.contractAddress,
                 event.blockNumber,
-                Date.now(),
+                event.transactionIndex,
                 { transaction: repositoryTransaction },
             );
+
+            const { events: newEvents } = await this.blockchainEventsService.getPastEvents(
+                event.blockchain,
+                [contractName],
+                MONITORED_CONTRACT_EVENTS[contractName],
+                event.blockNumber,
+                this.currentBlock,
+            );
+
+            if (newEvents.length !== 0) {
+                this.logger.trace(
+                    `Storing ${newEvents.length} new events for blockchain ${event.blockchain} in the database.`,
+                );
+                await this.repositoryModuleManager.insertBlockchainEvents(newEvents, {
+                    transaction: repositoryTransaction,
+                });
+
+                this.newDependentEvents = newEvents;
+            }
         }
     }
 
