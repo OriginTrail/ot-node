@@ -131,19 +131,11 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async createOperationResponseRecord(
-        status,
-        operation,
-        operationId,
-        keyword,
-        errorMessage,
-        options = {},
-    ) {
+    async createOperationResponseRecord(status, operation, operationId, errorMessage, options) {
         return this.getRepository('operation_response').createOperationResponseRecord(
             status,
             operation,
             operationId,
-            keyword,
             errorMessage,
             options,
         );

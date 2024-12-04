@@ -2,7 +2,12 @@
 import { setTimeout } from 'timers/promises';
 import { formatAssertion } from 'assertion-tools';
 
-import { SCHEMA_CONTEXT, UAL_PREDICATE, BASE_NAMED_GRAPHS } from '../constants/constants.js';
+import {
+    SCHEMA_CONTEXT,
+    UAL_PREDICATE,
+    BASE_NAMED_GRAPHS,
+    TRIPLE_STORE_REPOSITORY,
+} from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -208,6 +213,96 @@ class TripleStoreService {
                 ual,
             ),
         ]);
+    }
+
+    async getAssertion(ual, repository = TRIPLE_STORE_REPOSITORY.DKG) {
+        this.logger.debug(`Getting Assertion with the UAL: ${ual}.`);
+
+        // TODO: This is placeholder UAL construction to match expected format
+        const { blockchain: blockchainUAL, contract, tokenId } = this.ualService.resolveUAL(ual);
+        const fixedUal = `did:dkg:${blockchainUAL}/${contract}/${tokenId}/1:0`;
+
+        let nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
+            this.repositoryImplementations[repository],
+            repository,
+            fixedUal,
+        );
+
+        nquads = nquads.split('\n').filter((line) => line !== '');
+
+        this.logger.debug(
+            `Assertion: ${ual} ${
+                nquads.length ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
+        );
+
+        if (nquads.length) {
+            this.logger.debug(
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
+            );
+        }
+
+        return nquads;
+    }
+
+    async getKnowledgeCollectionMetadata(ual, repository = TRIPLE_STORE_REPOSITORY.DKG) {
+        this.logger.debug(`Getting Knowledge Collection Metadata with the UAL: ${ual}.`);
+
+        // TODO: This is placeholder UAL construction to match expected format
+        const { blockchain: blockchainUAL, contract, tokenId } = this.ualService.resolveUAL(ual);
+        const fixedUal = `did:dkg:${blockchainUAL}/${contract}/${tokenId}/1:0`;
+
+        let nquads = await this.tripleStoreModuleManager.getKnowledgeCollectionMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            fixedUal,
+        );
+
+        nquads = nquads.split('\n').filter((line) => line !== '');
+
+        this.logger.debug(
+            `Knowledge Collection Metadata: ${ual} ${
+                nquads.length ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
+        );
+
+        if (nquads.length) {
+            this.logger.debug(
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
+            );
+        }
+
+        return nquads;
+    }
+
+    async getKnowledgeAssetMetadata(ual, repository = TRIPLE_STORE_REPOSITORY.DKG) {
+        this.logger.debug(`Getting Knowledge Asset Metadata with the UAL: ${ual}.`);
+
+        // TODO: This is placeholder UAL construction to match expected format
+        const { blockchain: blockchainUAL, contract, tokenId } = this.ualService.resolveUAL(ual);
+        const fixedUal = `did:dkg:${blockchainUAL}/${contract}/${tokenId}/1`;
+
+        let nquads = await this.tripleStoreModuleManager.getKnowledgeAssetMetadata(
+            this.repositoryImplementations[repository],
+            repository,
+            fixedUal,
+        );
+
+        nquads = nquads.split('\n').filter((line) => line !== '');
+
+        this.logger.debug(
+            `Knowledge Asset Metadata: ${ual} ${
+                nquads.length ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
+        );
+
+        if (nquads.length) {
+            this.logger.debug(
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
+            );
+        }
+
+        return nquads;
     }
 
     async construct(repository, query) {

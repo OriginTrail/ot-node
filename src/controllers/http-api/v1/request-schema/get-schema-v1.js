@@ -16,7 +16,7 @@ export default () => ({
             minimum: 1,
         },
         paranetUAL: {
-            type: ['string', 'null'],
+            type: 'string',
         },
     },
 });

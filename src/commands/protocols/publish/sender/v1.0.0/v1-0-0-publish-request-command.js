@@ -6,7 +6,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         super(ctx);
         this.operationService = ctx.publishService;
         this.signatureStorageService = ctx.signatureStorageService;
-
+        this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
 
@@ -14,11 +14,9 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         const { datasetRoot, operationId } = command.data;
 
         // TODO: Backwards compatibility, send blockchain without chainId
-        const blockchain = command.data.blockchain.split(':')[0];
+        const { blockchain } = command.data;
 
-        const {
-            public: { dataset },
-        } = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         return {
             dataset,

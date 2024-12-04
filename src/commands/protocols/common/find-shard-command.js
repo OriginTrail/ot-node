@@ -1,5 +1,5 @@
 import Command from '../../command.js';
-import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../constants/constants.js';
 
 class FindShardCommand extends Command {
     constructor(ctx) {
@@ -14,28 +14,44 @@ class FindShardCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, errorType, networkProtocols, minAckResponses } =
-            command.data;
-
-        this.errorType = errorType;
-        this.logger.debug(`Searching for shard for operationId: ${operationId}`);
-
+        const { operationId, blockchain, datasetRoot } = command.data;
+        this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
+        this.logger.debug(
+            `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
+        );
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.FIND_NODES_START,
         );
 
-        // TODO: protocol selection
+        this.minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+
+        const networkProtocols = this.operationService.getNetworkProtocols();
+
         const shardNodes = [];
+        let nodePartOfShard = false;
+        const currentPeerId = this.networkModuleManager.getPeerId().toB58String();
+
         const foundNodes = await this.findShardNodes(blockchain);
         for (const node of foundNodes) {
-            if (node.id !== this.networkModuleManager.getPeerId().toB58String()) {
+            if (node.id === currentPeerId) {
+                nodePartOfShard = true;
+            } else {
                 shardNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
         }
 
-        this.logger.debug(`Found ${shardNodes.length} node(s) for operationId: ${operationId}`);
+        const commandSequence = this.getOperationCommandSequence(nodePartOfShard);
+
+        command.sequence.push(...commandSequence);
+
+        this.logger.debug(
+            `Found ${
+                shardNodes.length + nodePartOfShard ? 1 : 0
+            } node(s) for operationId: ${operationId}`,
+        );
+        // TODO: Log local node
         this.logger.trace(
             `Found shard: ${JSON.stringify(
                 shardNodes.map((node) => node.id),
@@ -44,11 +60,11 @@ class FindShardCommand extends Command {
             )}`,
         );
 
-        if (shardNodes.length < minAckResponses) {
+        if (shardNodes.length + (nodePartOfShard ? 1 : 0) < this.minAckResponses) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Unable to find enough nodes for operationId: ${operationId}. Minimum number of nodes required: ${minAckResponses}`,
+                `Unable to find enough nodes for operationId: ${operationId}. Minimum number of nodes required: ${this.minAckResponses}`,
                 this.errorType,
                 true,
             );
@@ -65,7 +81,7 @@ class FindShardCommand extends Command {
             {
                 ...command.data,
                 leftoverNodes: shardNodes,
-                numberOfShardNodes: shardNodes.length,
+                numberOfShardNodes: shardNodes.length + nodePartOfShard ? 1 : 0,
             },
             command.sequence,
         );
@@ -85,6 +101,10 @@ class FindShardCommand extends Command {
         );
 
         return nodesFound;
+    }
+
+    getOperationCommandSequence() {
+        throw Error('getOperationCommandSequence() is not defined');
     }
 
     /**
