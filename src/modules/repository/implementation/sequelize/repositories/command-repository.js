@@ -7,23 +7,24 @@ class CommandRepository {
         this.model = models.commands;
     }
 
-    async updateCommand(update, opts) {
-        await this.model.update(update, opts);
+    async updateCommand(update, options) {
+        await this.model.update(update, options);
     }
 
-    async destroyCommand(name) {
+    async destroyCommand(name, options) {
         await this.model.destroy({
             where: {
                 name: { [Sequelize.Op.eq]: name },
             },
+            ...options,
         });
     }
 
-    async createCommand(command, opts) {
-        return this.model.create(command, opts);
+    async createCommand(command, options) {
+        return this.model.create(command, options);
     }
 
-    async getCommandsWithStatus(statusArray, excludeNameArray) {
+    async getCommandsWithStatus(statusArray, excludeNameArray, options) {
         return this.model.findAll({
             where: {
                 status: {
@@ -31,26 +32,29 @@ class CommandRepository {
                 },
                 name: { [Sequelize.Op.notIn]: excludeNameArray },
             },
+            ...options,
         });
     }
 
-    async getCommandWithId(id) {
+    async getCommandWithId(id, options) {
         return this.model.findOne({
             where: {
                 id,
             },
+            ...options,
         });
     }
 
-    async removeCommands(ids) {
+    async removeCommands(ids, options) {
         await this.model.destroy({
             where: {
                 id: { [Sequelize.Op.in]: ids },
             },
+            ...options,
         });
     }
 
-    async findFinalizedCommands(timestamp, limit) {
+    async findFinalizedCommands(timestamp, limit, options) {
         return this.model.findAll({
             where: {
                 status: {
@@ -66,6 +70,25 @@ class CommandRepository {
             order: [['startedAt', 'asc']],
             raw: true,
             limit,
+            ...options,
+        });
+    }
+
+    async findUnfinalizedCommandsByName(name, options) {
+        return this.model.findAll({
+            where: {
+                name,
+                status: {
+                    [Sequelize.Op.notIn]: [
+                        COMMAND_STATUS.COMPLETED,
+                        COMMAND_STATUS.FAILED,
+                        COMMAND_STATUS.EXPIRED,
+                        COMMAND_STATUS.UNKNOWN,
+                    ],
+                },
+            },
+            raw: true,
+            ...options,
         });
     }
 }

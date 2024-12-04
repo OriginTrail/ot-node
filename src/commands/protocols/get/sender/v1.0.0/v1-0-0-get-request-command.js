@@ -31,19 +31,26 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { contract, tokenId, assertionId, state, hashFunctionId, paranetUAL, paranetId } =
-            command.data;
-        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
-
-        // TODO: Backwards compatibility, send blockchain without chainId
-        const blockchain = command.data.blockchain.split(':')[0];
+        const {
+            blockchain,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            includeMetadata,
+            ual,
+            hashFunctionId,
+            paranetUAL,
+            paranetId,
+        } = command.data;
+        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 2;
 
         return {
             blockchain,
             contract,
-            tokenId,
-            assertionId,
-            state,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            includeMetadata,
+            ual,
             hashFunctionId,
             proximityScoreFunctionsPairId,
             paranetUAL,
@@ -52,18 +59,18 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command, responseData) {
-        if (responseData?.nquads) {
-            try {
-                await this.validationService.validateAssertion(
-                    command.data.assertionId,
-                    command.data.blockchain,
-                    responseData.nquads,
-                );
-            } catch (e) {
-                return this.handleNack(command, {
-                    errorMessage: e.message,
-                });
-            }
+        if (responseData?.assertion) {
+            // TODO: Add this validation
+            // try {
+            //     await this.validationService.validateAssertion(
+            //         command.data.blockchain,
+            //         responseData.assertion,
+            //     );
+            // } catch (e) {
+            //     return this.handleNack(command, {
+            //         errorMessage: e.message,
+            //     });
+            // }
 
             await this.operationService.processResponse(
                 command,
