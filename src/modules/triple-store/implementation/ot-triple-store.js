@@ -293,7 +293,7 @@ class OtTripleStore {
     async getKnowledgeAssetNamedGraph(repository, ual) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT { ?s ?p ?o . }
+            CONSTRUCT  { ?s ?p ?o } 
             WHERE {
                 GRAPH <${ual}> {
                     ?s ?p ?o .
@@ -301,7 +301,7 @@ class OtTripleStore {
             }
         `;
 
-        return this.select(repository, query);
+        return this.construct(repository, query);
     }
 
     async knowledgeAssetNamedGraphExists(repository, ual) {
@@ -345,11 +345,24 @@ class OtTripleStore {
 
     async getKnowledgeCollectionMetadata(repository, ual) {
         const query = `
-            CONSTRUCT { ?s ?p ?o . }
+            CONSTRUCT { ?ual ?p ?o . }
             WHERE {
                 GRAPH <${BASE_NAMED_GRAPHS.METADATA}> {
                     ?ual ?p ?o .
                     FILTER(STRSTARTS(STR(?ual), "${ual}/"))
+                }
+            }
+        `;
+
+        return this.construct(repository, query);
+    }
+
+    async getKnowledgeAssetMetadata(repository, ual) {
+        const query = `
+            CONSTRUCT { <${ual}> ?p ?o . }
+            WHERE {
+                GRAPH <${BASE_NAMED_GRAPHS.METADATA}> {
+                    <${ual}> ?p ?o .
                 }
             }
         `;

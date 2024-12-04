@@ -6,15 +6,16 @@ class MissedParanetAssetRepository {
         this.model = models.missed_paranet_asset;
     }
 
-    async createMissedParanetAssetRecord(missedParanetAsset) {
-        return this.model.create(missedParanetAsset);
+    async createMissedParanetAssetRecord(missedParanetAsset, options) {
+        return this.model.create(missedParanetAsset, options);
     }
 
     async getMissedParanetAssetsRecordsWithRetryCount(
         paranetUal,
         retryCountLimit,
         retryDelayInMs,
-        count = null,
+        limit,
+        options,
     ) {
         const now = new Date();
         const delayDate = new Date(now.getTime() - retryDelayInMs);
@@ -35,44 +36,53 @@ class MissedParanetAssetRepository {
                 Sequelize.literal(`COUNT(ual) < ${retryCountLimit}`),
                 Sequelize.literal(`MAX(created_at) <= '${delayDate.toISOString()}'`),
             ),
+            ...options,
         };
 
-        if (count !== null) {
-            queryOptions.limit = count;
+        if (limit !== null) {
+            queryOptions.limit = limit;
         }
 
         return this.model.findAll(queryOptions);
     }
 
-    async missedParanetAssetRecordExists(ual) {
+    async missedParanetAssetRecordExists(ual, options) {
         const missedParanetAssetRecord = await this.model.findOne({
             where: { ual },
+            ...options,
         });
 
         return !!missedParanetAssetRecord;
     }
 
-    async removeMissedParanetAssetRecordsByUAL(ual) {
+    async removeMissedParanetAssetRecordsByUAL(ual, options) {
         await this.model.destroy({
             where: {
                 ual,
             },
+            ...options,
         });
     }
 
-    async getCountOfMissedAssetsOfParanet(paranetUal) {
+    async getCountOfMissedAssetsOfParanet(paranetUal, options) {
         const records = await this.model.findAll({
             attributes: ['paranet_ual', 'ual'],
             where: {
                 paranetUal,
             },
             group: ['paranet_ual', 'ual'],
+            ...options,
         });
 
         return records.length;
     }
 
-    async getFilteredCountOfMissedAssetsOfParanet(paranetUal, retryCountLimit, retryDelayInMs) {
+    async getFilteredCountOfMissedAssetsOfParanet(
+        paranetUal,
+        retryCountLimit,
+        retryDelayInMs,
+        options,
+    ) {
         const now = new Date();
         const delayDate = new Date(now.getTime() - retryDelayInMs);
 
@@ -93,6 +103,7 @@ class MissedParanetAssetRepository {
                     [Sequelize.Op.lte]: delayDate,
                 },
             },
+            ...options,
         });
 
         return records.length;

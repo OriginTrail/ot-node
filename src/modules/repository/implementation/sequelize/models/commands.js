@@ -18,6 +18,7 @@ export default (sequelize, DataTypes) => {
             name: DataTypes.STRING,
             data: DataTypes.JSON,
             priority: DataTypes.BIGINT,
+            isBlocking: DataTypes.BOOLEAN,
             sequence: DataTypes.JSON,
             readyAt: DataTypes.BIGINT,
             delay: DataTypes.BIGINT,

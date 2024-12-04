@@ -4,27 +4,22 @@ class BlockchainRepository {
         this.model = models.blockchain;
     }
 
-    async getLastCheckedBlock(blockchainId, contract) {
+    async getLastCheckedBlock(blockchain, options) {
         return this.model.findOne({
-            where: { blockchainId, contract },
+            where: { blockchain },
+            ...options,
         });
     }
 
-    async removeLastCheckedBlockForContract(contract) {
-        return this.model.destroy({
-            where: {
-                contract,
+    async updateLastCheckedBlock(blockchain, currentBlock, timestamp, options) {
+        return this.model.upsert(
+            {
+                blockchain,
+                lastCheckedBlock: currentBlock,
+                lastCheckedTimestamp: timestamp,
             },
-        });
-    }
-
-    async updateLastCheckedBlock(blockchainId, currentBlock, timestamp, contract) {
-        return this.model.upsert({
-            blockchainId,
-            contract,
-            lastCheckedBlock: currentBlock,
-            lastCheckedTimestamp: timestamp,
-        });
+            options,
+        );
     }
 }
 

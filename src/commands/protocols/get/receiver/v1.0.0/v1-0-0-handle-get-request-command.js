@@ -17,7 +17,15 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { operationId, blockchain, ual } = commandData;
+        const {
+            operationId,
+            blockchain,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            ual,
+            includeMetadata,
+        } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -84,19 +92,32 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //     }
         // }
 
-        const assertion = await this.tripleStoreService.getAssertion(ual);
-        if (assertion.length) {
-            await this.operationService.markOperationAsCompleted(
-                operationId,
+        const promises = [
+            this.tripleStoreService.getAssertion(
                 blockchain,
-                assertion,
-                [
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                    OPERATION_ID_STATUS.GET.GET_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
+                contract,
+                knowledgeCollectionId,
+                knowledgeAssetId,
+            ),
+        ];
+
+        if (includeMetadata) {
+            promises.push(
+                this.tripleStoreService.getAssertionMetadata(
+                    blockchain,
+                    contract,
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
+                ),
             );
         }
+
+        const [assertion, metadata] = await Promise.all(promises);
+
+        const responseData = {
+            assertion,
+            ...(includeMetadata && metadata && { metadata }),
+        };
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -105,7 +126,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         );
 
         return assertion.length
-            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: { assertion } }
+            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                   messageData: { errorMessage: `Unable to find assertion ${ual}` },
