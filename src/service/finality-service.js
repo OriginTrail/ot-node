@@ -32,8 +32,6 @@ class FinalityService extends OperationService {
         const { operationId, blockchain, numberOfFoundNodes, leftoverNodes, batchSize } =
             command.data;
 
-        let { minimumNumberOfNodeReplications } = command.data;
-
         const responseStatusesFromDB = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,
@@ -46,7 +44,8 @@ class FinalityService extends OperationService {
         const isAllNodesResponded = numberOfFoundNodes === totalResponses;
         const isBatchCompleted = totalResponses % batchSize === 0;
 
-        minimumNumberOfNodeReplications = minimumNumberOfNodeReplications ?? numberOfFoundNodes;
+        const minimumNumberOfNodeReplications =
+            command.data.minimumNumberOfNodeReplications ?? numberOfFoundNodes;
 
         this.logger.debug(
             `Processing ${
@@ -66,7 +65,7 @@ class FinalityService extends OperationService {
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber >= minimumNumberOfNodeReplications
+            completedNumber === minimumNumberOfNodeReplications
         ) {
             await this.markOperationAsCompleted(
                 operationId,
@@ -109,9 +108,10 @@ class FinalityService extends OperationService {
     }
 
     async getBatchSize() {
-        return 2;
+        return 20;
     }
 
+    // this is not used, because instead of predefined minAckResponses, we use minimumNumberOfNodeReplications from the client
     async getMinAckResponses() {
         return 1;
     }

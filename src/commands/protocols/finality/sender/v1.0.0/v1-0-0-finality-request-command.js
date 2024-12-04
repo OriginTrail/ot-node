@@ -10,7 +10,6 @@ class FinalityRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.finalityService;
-        this.signatureStorageService = ctx.signatureStorageService;
         this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.FINALITY.FINALITY_REQUEST_ERROR;
     }
@@ -31,20 +30,13 @@ class FinalityRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const {
-            ual,
-            operationId,
-            numberOfShardNodes,
-            blockchain,
-            minimumNumberOfNodeReplications,
-        } = command.data;
+        const { ual, operationId, numberOfShardNodes, blockchain } = command.data;
 
         return {
             ual,
             operationId,
             numberOfShardNodes,
             blockchain,
-            minimumNumberOfNodeReplications,
         };
     }
 
