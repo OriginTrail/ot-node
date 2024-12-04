@@ -13,6 +13,10 @@ export async function up({ context: { queryInterface } }) {
     `);
 
     await queryInterface.sequelize.query(`
+        update service_agreement set blockchain_id='otp:${chainId}'
+    `);
+
+    await queryInterface.sequelize.query(`
         update blockchain_event set blockchain_id='otp:${chainId}'
     `);
 
@@ -24,6 +28,10 @@ export async function up({ context: { queryInterface } }) {
 export async function down({ context: { queryInterface } }) {
     await queryInterface.sequelize.query(`
         update shard set blockchain_id='otp'
+    `);
+
+    await queryInterface.sequelize.query(`
+        update service_agreement set blockchain_id='otp'
     `);
 
     await queryInterface.sequelize.query(`
