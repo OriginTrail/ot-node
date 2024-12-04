@@ -1,4 +1,5 @@
 import { BigNumber, ethers } from 'ethers';
+import { createRequire } from 'module';
 
 export const WS_RPC_PROVIDER_PRIORITY = 2;
 
@@ -175,7 +176,7 @@ export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
-export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
+export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MILLS = 10 * 1000; // 10 seconds
 
 export const PARANET_SYNC_FREQUENCY_MILLS = 1 * 60 * 1000;
 
@@ -198,6 +199,7 @@ export const DIAL_PEERS_CONCURRENCY = 10;
 export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
 
 export const PERMANENT_COMMANDS = [
+    'eventListenerCommand',
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
     'shardingTableCheckCommand',
@@ -227,6 +229,37 @@ export const TRANSACTION_PRIORITY = {
     MEDIUM: 5,
     LOW: 10,
     LOWEST: 20,
+};
+
+const require = createRequire(import.meta.url);
+
+export const ABIs = {
+    ContentAsset: require('dkg-evm-module/abi/ContentAssetV2.json'),
+    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorageV2.json'),
+    AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
+    Staking: require('dkg-evm-module/abi/Staking.json'),
+    StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
+    Token: require('dkg-evm-module/abi/Token.json'),
+    HashingProxy: require('dkg-evm-module/abi/HashingProxy.json'),
+    Hub: require('dkg-evm-module/abi/Hub.json'),
+    IdentityStorage: require('dkg-evm-module/abi/IdentityStorage.json'),
+    Log2PLDSF: require('dkg-evm-module/abi/Log2PLDSF.json'),
+    ParametersStorage: require('dkg-evm-module/abi/ParametersStorage.json'),
+    Profile: require('dkg-evm-module/abi/Profile.json'),
+    ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
+    ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
+    ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
+    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
+    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
+    ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
+    ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
+    ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
+    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
+    ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
+    UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
+    LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
+    ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
+    ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
 };
 
 export const CONTRACT_FUNCTION_PRIORITY = {
@@ -335,6 +368,8 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
 export const MAX_OPEN_SESSIONS = 10;
 
 export const ERROR_TYPE = {
+    EVENT_LISTENER_ERROR: 'EventListenerError',
+    BLOCKCHAIN_EVENT_LISTENER_ERROR: 'BlockchainEventListenerError',
     DIAL_PROTOCOL_ERROR: 'DialProtocolError',
     VALIDATE_ASSET_ERROR: 'ValidateAssetError',
     PUBLISH: {
@@ -736,46 +771,35 @@ export const LOCAL_STORE_TYPES = {
 
 /**
  * Contract names
- * @type {{SHARDING_TABLE_CONTRACT: string}}
+ * @type {{SHARDING_TABLE: string}}
  */
 export const CONTRACTS = {
-    CONTENT_ASSET_CONTRACT: 'ContentAssetContract',
-    SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
-    STAKING_CONTRACT: 'StakingContract',
-    PROFILE_CONTRACT: 'ProfileContract',
-    HUB_CONTRACT: 'HubContract',
-    CONTENT_ASSET: 'ContentAssetContract',
-    COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
-    PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
-    IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
-    LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
-    LINEAR_SUM_CONTRACT: 'LinearSumContract',
-    PARANETS_REGISTRY_CONTRACT: 'ParanetsRegistry',
+    SHARDING_TABLE: 'ShardingTable',
+    STAKING: 'Staking',
+    PROFILE: 'Profile',
+    HUB: 'Hub',
+    CONTENT_ASSET: 'ContentAsset',
+    COMMIT_MANAGER_V1_U1: 'CommitManagerV1U1',
+    PARAMETERS_STORAGE: 'ParametersStorage',
+    IDENTITY_STORAGE: 'IdentityStorage',
+    LOG2PLDSF: 'Log2PLDSF',
+    LINEAR_SUM: 'LinearSum',
+    PARANETS_REGISTRY: 'ParanetsRegistry',
 };
 
-export const CONTRACT_EVENTS = {
-    HUB: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
-    SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
-    STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
-    PROFILE: ['AskUpdated'],
-    CONTENT_ASSET: ['AssetMinted'],
-    COMMIT_MANAGER_V1: ['StateFinalized'],
-    PARAMETERS_STORAGE: ['ParameterChanged'],
-    LOG2PLDSF: ['ParameterChanged'],
-    LINEAR_SUM: ['ParameterChanged'],
+export const MONITORED_CONTRACT_EVENTS = {
+    Hub: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
+    ParametersStorage: ['ParameterChanged'],
+    ContentAsset: ['AssetMinted'],
 };
 
-export const GROUPED_CONTRACT_EVENTS = {};
+export const MONITORED_CONTRACTS = Object.keys(MONITORED_CONTRACT_EVENTS);
 
-export const CONTRACT_EVENT_TO_GROUP_MAPPING = (() => {
-    const mapping = {};
-    Object.entries(GROUPED_CONTRACT_EVENTS).forEach(([groupName, { events }]) => {
-        events.forEach((eventName) => {
-            mapping[eventName] = groupName;
-        });
-    });
-    return mapping;
-})();
+export const MONITORED_EVENTS = Object.values(MONITORED_CONTRACT_EVENTS).flatMap(
+    (events) => events,
+);
+
+export const CONTRACT_INDEPENDENT_EVENTS = {};
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
@@ -787,19 +811,9 @@ export const NODE_ENVIRONMENTS = {
 
 export const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 1000;
 
-export const DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS = 10 * 1000;
-
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,
     DEVELOPMENT: 4 * 1000,
-};
-
-export const BLOCK_TIME_MILLIS = {
-    OTP: 12_000,
-    HARDHAT: 5_000,
-    GNOSIS: 5_000,
-    DEFAULT: 12_000,
-    BASE: 2_000,
 };
 
 export const TRANSACTION_CONFIRMATIONS = 1;

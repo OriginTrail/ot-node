@@ -74,6 +74,7 @@ class CommandExecutor {
     async _execute(executeCommand) {
         const command = executeCommand;
         const now = Date.now();
+
         await this._update(command, {
             startedAt: now,
         });
@@ -82,7 +83,7 @@ class CommandExecutor {
             commandId: command.id,
             commandName: command.name,
         };
-        if (command.data?.operationId !== undefined) {
+        if (command.data?.operationId) {
             commandContext.operationId = command.data.operationId;
         }
         const loggerWithContext = this.logger.child(commandContext);
@@ -107,7 +108,7 @@ class CommandExecutor {
             });
             return;
         }
-        if (command.deadlineAt !== undefined && now > command.deadlineAt) {
+        if (command.deadlineAt && now > command.deadlineAt) {
             loggerWithContext.warn('Command is too late...');
             await this._update(command, {
                 status: COMMAND_STATUS.EXPIRED,
@@ -264,7 +265,13 @@ class CommandExecutor {
             handler.logger.warn(`Command will not be executed.`);
             return;
         }
-        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+
+        if (['eventListenerCommand', 'shardingTableCheckCommand'].includes(name)) {
+            await this.add(handler.default(), 0, true);
+        } else {
+            await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+        }
+
         if (this.verboseLoggingEnabled) {
             handler.logger.trace(`Permanent command created.`);
         }
@@ -278,10 +285,33 @@ class CommandExecutor {
      */
     async add(addCommand, addDelay, insert = true) {
         let command = addCommand;
+
+        if (command.isBlocking) {
+            // Check the db to see if there are unfinalized instances of the same command
+            const unfinalizedBlockingCommands =
+                await this.repositoryModuleManager.findUnfinalizedCommandsByName(command.name);
+
+            for (const unfinalizedCommand of unfinalizedBlockingCommands) {
+                if (command.id && command.id === unfinalizedCommand.id) {
+                    if (insert) {
+                        this.logger.warn(`Inserting duplicate of command ${command.id}!`);
+                    }
+                    continue;
+                }
+
+                if (JSON.stringify(unfinalizedCommand.data) === JSON.stringify(command.data)) {
+                    this.logger.info(
+                        `Skipping blocking command: ${command.name} because of unfinalized instance of this command with id: ${unfinalizedCommand.id}`,
+                    );
+                    return;
+                }
+            }
+        }
+
         let delay = addDelay ?? 0;
 
         if (delay > MAX_COMMAND_DELAY_IN_MILLS) {
-            if (command.readyAt === undefined) {
+            if (!command.readyAt) {
                 command.readyAt = Date.now();
             }
             command.readyAt += delay;
@@ -315,7 +345,7 @@ class CommandExecutor {
      */
     async _handleRetry(retryCommand, handler) {
         const command = retryCommand;
-        if (command.retries !== undefined && command.retries > 1) {
+        if (command.retries && command.retries > 1) {
             command.data = handler.pack(command.data);
             await this._update(command, {
                 status: COMMAND_STATUS.PENDING,
@@ -341,7 +371,7 @@ class CommandExecutor {
      * @private
      */
     async _handleError(command, handler, error) {
-        if (command.retries !== undefined && command.retries > 0) {
+        if (command.retries && command.retries > 0) {
             await this._update(command, {
                 retries: command.retries - 1,
             });
@@ -382,6 +412,7 @@ class CommandExecutor {
         command.delay = command.delay ?? 0;
         command.transactional = command.transactional ?? 0;
         command.priority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+        command.isBlocking = command.isBlocking ?? false;
         command.status = COMMAND_STATUS.PENDING;
 
         if (!command.data) {
@@ -444,6 +475,11 @@ class CommandExecutor {
 
         const commands = [];
         for (const command of pendingCommands) {
+            if (command?.isBlocking) {
+                commands.push(command);
+                continue;
+            }
+
             if (!command?.parentId) {
                 continue;
             }
@@ -465,6 +501,7 @@ class CommandExecutor {
                     name: commandModel.name,
                     data: commandModel.data,
                     priority: commandModel.priority ?? DEFAULT_COMMAND_PRIORITY,
+                    isBlocking: commandModel.isBlocking ?? false,
                     readyAt: commandModel.readyAt,
                     delay: commandModel.delay,
                     startedAt: commandModel.startedAt,
