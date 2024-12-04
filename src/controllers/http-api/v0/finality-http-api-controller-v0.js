@@ -41,12 +41,12 @@ class FinalityController extends BaseController {
 
             const commandSequence = ['finalityFindShardCommand', 'networkFinalityCommand'];
 
-            const { contract, tokenId } = this.ualService.resolveUAL(ual);
+            const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
 
             const datasetRoot = await this.blockchainModuleManager.getLatestAssertionId(
                 blockchain,
                 contract,
-                tokenId,
+                knowledgeCollectionId,
             );
 
             await this.commandExecutor.add({
