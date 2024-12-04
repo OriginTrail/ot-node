@@ -10,25 +10,6 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
     }
 
-    async getKeywords(command) {
-        const { blockchain, contract, tokenId } = command.data;
-        const locationKeyword = await this.ualService.calculateLocationKeyword(
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return [locationKeyword];
-    }
-
-    async getBatchSize() {
-        return 2;
-    }
-
-    async getMinAckResponses() {
-        return 1;
-    }
-
     /**
      * Builds default networkGetCommand
      * @param map

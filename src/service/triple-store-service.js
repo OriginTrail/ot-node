@@ -1,8 +1,12 @@
 /* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
 import { formatAssertion } from 'assertion-tools';
-
-import { SCHEMA_CONTEXT, BASE_NAMED_GRAPHS } from '../constants/constants.js';
+import {
+    SCHEMA_CONTEXT,
+    UAL_PREDICATE,
+    BASE_NAMED_GRAPHS,
+    TRIPLE_STORE_REPOSITORY,
+} from '../constants/constants.js';
 
 class TripleStoreService {
     constructor(ctx) {
@@ -210,6 +214,108 @@ class TripleStoreService {
                 ual,
             ),
         ]);
+    }
+
+    async checkIfKnowledgeCollectionExistsInUnifiedGraph(
+        ual,
+        repository = TRIPLE_STORE_REPOSITORY.DKG,
+    ) {
+        const knowledgeCollectionExists =
+            await this.tripleStoreModuleManager.knowledgeCollectionExistsInUnifiedGraph(
+                this.repositoryImplementations[repository],
+                repository,
+                BASE_NAMED_GRAPHS.UNIFIED,
+                ual,
+            );
+
+        return knowledgeCollectionExists;
+    }
+
+    async getAssertion(
+        blockchain,
+        contract,
+        knowledgeCollectionId,
+        knowledgeAssetId,
+        repository = TRIPLE_STORE_REPOSITORY.DKG,
+    ) {
+        const ual = `did:dkg:${blockchain}/${contract}/${knowledgeCollectionId}${
+            knowledgeAssetId ? `/${knowledgeAssetId}` : ''
+        }`;
+
+        this.logger.debug(`Getting Assertion with the UAL: ${ual}.`);
+
+        let nquads;
+        if (knowledgeAssetId) {
+            nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
+                this.repositoryImplementations[repository],
+                repository,
+                `${ual}:0`, // TO DO: Add state with implemented update
+            );
+        } else {
+            nquads = await this.tripleStoreModuleManager.getKnowledgeCollectionNamedGraphs(
+                this.repositoryImplementations[repository],
+                repository,
+                ual,
+            );
+        }
+
+        nquads = nquads.split('\n').filter((line) => line !== '');
+
+        this.logger.debug(
+            `Assertion: ${ual} ${
+                nquads.length ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
+        );
+
+        if (nquads.length) {
+            this.logger.debug(
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
+            );
+        }
+
+        return nquads;
+    }
+
+    async getAssertionMetadata(
+        blockchain,
+        contract,
+        knowledgeCollectionId,
+        knowledgeAssetId,
+        repository = TRIPLE_STORE_REPOSITORY.DKG,
+    ) {
+        const ual = `did:dkg:${blockchain}/${contract}/${knowledgeCollectionId}${
+            knowledgeAssetId ? `/${knowledgeAssetId}` : ''
+        }`;
+        this.logger.debug(`Getting Assertion Metadata with the UAL: ${ual}.`);
+        let nquads;
+        if (knowledgeAssetId) {
+            nquads = await this.tripleStoreModuleManager.getKnowledgeAssetMetadata(
+                this.repositoryImplementations[repository],
+                repository,
+                ual,
+            );
+        } else {
+            nquads = await this.tripleStoreModuleManager.getKnowledgeCollectionMetadata(
+                this.repositoryImplementations[repository],
+                repository,
+                ual,
+            );
+        }
+        nquads = nquads.split('\n').filter((line) => line !== '');
+
+        this.logger.debug(
+            `Knowledge Asset Metadata: ${ual} ${
+                nquads.length ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
+        );
+
+        if (nquads.length) {
+            this.logger.debug(
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
+            );
+        }
+
+        return nquads;
     }
 
     async construct(repository, query) {

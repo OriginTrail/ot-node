@@ -32,6 +32,10 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
+    getContractAddress(blockchain, contractName) {
+        return this.callImplementationFunction(blockchain, 'getContractAddress', [contractName]);
+    }
+
     setContractCallCache(blockchain, contractName, functionName, value) {
         return this.callImplementationFunction(blockchain, 'setContractCallCache', [
             contractName,
@@ -154,28 +158,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getShardingTablePage', [
             startingIdentityId,
             nodesNum,
-        ]);
-    }
-
-    async getTransaction(blockchain, transactionHash) {
-        return this.callImplementationFunction(blockchain, 'getTransaction', [transactionHash]);
-    }
-
-    async getAllPastEvents(
-        blockchain,
-        contractName,
-        eventsToFilter,
-        lastCheckedBlock,
-        lastCheckedTimestamp,
-        currentBlock,
-    ) {
-        return this.callImplementationFunction(blockchain, 'getAllPastEvents', [
-            blockchain,
-            contractName,
-            eventsToFilter,
-            lastCheckedBlock,
-            lastCheckedTimestamp,
-            currentBlock,
         ]);
     }
 
@@ -447,10 +429,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async getBlockchainTimestamp(blockchain) {
         return this.callImplementationFunction(blockchain, 'getBlockchainTimestamp');
-    }
-
-    getBlockTimeMillis(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getBlockTimeMillis');
     }
 
     async hasPendingUpdate(blockchain, tokenId) {

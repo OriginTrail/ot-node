@@ -160,6 +160,26 @@
                         }
                     }
                 }
+            },
+            "blockchainEvents": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
+                        "config": {
+                            "blockchains": ["hardhat1:31337", "hardhat2:31337"],
+                            "rpcEndpoints": {
+                                "hardhat1:31337": ["http://localhost:8545"],
+                                "hardhat2:31337": ["http://localhost:9545"]
+                            },
+                            "hubContractAddress": {
+                                "hardhat1:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                                "hardhat2:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+                            }
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 500000,
@@ -325,6 +345,26 @@
                         "config": {
                             "sendTelemetryData": false,
                             "signalingServerUrl": "null"
+                        }
+                    }
+                }
+            },
+            "blockchainEvents": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
+                        "config": {
+                            "blockchains": ["hardhat1:31337", "hardhat2:31337"],
+                            "rpcEndpoints": {
+                                "hardhat1:31337": ["http://localhost:8545"],
+                                "hardhat2:31337": ["http://localhost:9545"]
+                            },
+                            "hubContractAddress": {
+                                "hardhat1:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                                "hardhat2:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+                            }
                         }
                     }
                 }
@@ -496,6 +536,24 @@
                         }
                     }
                 }
+            },
+            "blockchainEvents": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
+                        "config": {
+                            "blockchains": ["base:84532"],
+                            "rpcEndpoints": {
+                                "base:84532": ["https://sepolia.base.org"]
+                            },
+                            "hubContractAddress": {
+                                "base:84532": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692"
+                            }
+                        }
+                    }
+                }
             }
         },
         "maximumAssertionSizeInKb": 500000,
@@ -660,6 +718,24 @@
                         "config": {
                             "sendTelemetryData": true,
                             "signalingServerUrl": "https://devnet-signaling.origin-trail.network/signal"
+                        }
+                    }
+                }
+            },
+            "blockchainEvents": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
+                        "config": {
+                            "blockchains": ["base:84532"],
+                            "rpcEndpoints": {
+                                "base:84532": ["https://sepolia.base.org"]
+                            },
+                            "hubContractAddress": {
+                                "base:84532": "0xAB4A4794Fc1F415C24807B947280aCa8dC492238"
+                            }
                         }
                     }
                 }
@@ -850,6 +926,28 @@
                         "config": {
                             "sendTelemetryData": true,
                             "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
+                        }
+                    }
+                }
+            },
+            "blockchainEvents": {
+                "enabled": true,
+                "implementation": {
+                    "ot-ethers": {
+                        "enabled": true,
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
+                        "config": {
+                            "blockchains": ["otp:2043"],
+                            "rpcEndpoints": {
+                                "otp:2043": [
+                                    "https://astrosat-parachain-rpc.origin-trail.network",
+                                    "https://astrosat.origintrail.network/",
+                                    "https://astrosat-2.origintrail.network/"
+                                ]
+                            },
+                            "hubContractAddress": {
+                                "otp:2043": "0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA"
+                            }
                         }
                     }
                 }
