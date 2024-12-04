@@ -12,7 +12,6 @@ import ParanetRepository from './repositories/paranet-repository.js';
 import OperationIdRepository from './repositories/operation-id-repository.js';
 import OperationRepository from './repositories/operation-repository.js';
 import OperationResponseRepository from './repositories/operation-response.js';
-import ServiceAgreementRepository from './repositories/service-agreement-repository.js';
 import ShardRepository from './repositories/shard-repository.js';
 import TokenRepository from './repositories/token-repository.js';
 import UserRepository from './repositories/user-repository.js';
@@ -43,7 +42,6 @@ class SequelizeRepository {
             operation_id: new OperationIdRepository(this.models),
             operation: new OperationRepository(this.models),
             operation_response: new OperationResponseRepository(this.models),
-            service_agreement: new ServiceAgreementRepository(this.models),
             shard: new ShardRepository(this.models),
             token: new TokenRepository(this.models),
             user: new UserRepository(this.models),
@@ -75,7 +73,7 @@ class SequelizeRepository {
     }
 
     async createDatabaseIfNotExists() {
-        const connection = await mysql.createConnection({
+        const connection = mysql.createConnection({
             host: process.env.SEQUELIZE_REPOSITORY_HOST,
             port: process.env.SEQUELIZE_REPOSITORY_PORT,
             user: process.env.SEQUELIZE_REPOSITORY_USER,
@@ -88,7 +86,7 @@ class SequelizeRepository {
     }
 
     async dropDatabase() {
-        const connection = await mysql.createConnection({
+        const connection = mysql.createConnection({
             host: process.env.SEQUELIZE_REPOSITORY_HOST,
             port: process.env.SEQUELIZE_REPOSITORY_PORT,
             user: process.env.SEQUELIZE_REPOSITORY_USER,
@@ -129,20 +127,23 @@ class SequelizeRepository {
         });
     }
 
-    transaction(execFn) {
-        return this.models.sequelize.transaction(async (t) => execFn(t));
+    async transaction(execFn) {
+        if (execFn) {
+            return this.models.sequelize.transaction(async (t) => execFn(t));
+        }
+        return this.models.sequelize.transaction();
     }
 
     getRepository(repositoryName) {
         return this.repositories[repositoryName];
     }
 
-    async query(query) {
-        return this.models.sequelize.query(query);
+    async query(query, options) {
+        return this.models.sequelize.query(query, options);
     }
 
-    async destroyAllRecords(table) {
-        return this.models[table].destroy({ where: {} });
+    async destroyAllRecords(table, options) {
+        return this.models[table].destroy({ where: {}, ...options });
     }
 }
 

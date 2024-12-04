@@ -2,11 +2,7 @@ export default (sequelize, DataTypes) => {
     const blockchain = sequelize.define(
         'blockchain',
         {
-            blockchainId: {
-                type: DataTypes.STRING,
-                primaryKey: true,
-            },
-            contract: {
+            blockchain: {
                 type: DataTypes.STRING,
                 primaryKey: true,
             },

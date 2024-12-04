@@ -6,31 +6,27 @@ class SignatureStorageService {
         this.fileService = ctx.fileService;
     }
 
-    async addSignatureToStorage(blockchain, operationId, signature) {
-        const signatureStorageFolder = await this.fileService.getSignatureStorageFolderPath(
-            blockchain,
-            operationId,
-        );
+    async addSignatureToStorage(operationId, identityId, signature) {
         await this.fileService.appendContentsToFile(
-            signatureStorageFolder,
+            this.fileService.getSignatureStorageCachePath(),
             operationId,
-            `${JSON.stringify(signature)}\n`,
+            `${JSON.stringify({ identityId, signature })}\n`,
         );
     }
 
-    async getSignaturesFromStorage(blockchain, operationId) {
-        const signatureStorageFile = await this.fileService.getSignatureStorageFilePath(
-            blockchain,
-            operationId,
-        );
+    async getSignaturesFromStorage(operationId) {
+        const signatureStorageFile = this.fileService.getSignatureStorageDocumentPath(operationId);
 
         const rawSignatures = await this.fileService.readFile(signatureStorageFile);
-        const signaturesArray = rawSignatures
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line);
+        const signaturesArray = [];
+        for (const line of rawSignatures.split('\n')) {
+            const trimmedLine = line.trim();
+            if (trimmedLine) {
+                signaturesArray.push(JSON.parse(trimmedLine));
+            }
+        }
 
-        return JSON.stringify(signaturesArray);
+        return signaturesArray;
     }
 }
 

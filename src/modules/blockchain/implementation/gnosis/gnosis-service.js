@@ -1,10 +1,6 @@
 import axios from 'axios';
 import Web3Service from '../web3-service.js';
-import {
-    BLOCK_TIME_MILLIS,
-    GNOSIS_DEFAULT_GAS_PRICE,
-    NODE_ENVIRONMENTS,
-} from '../../../../constants/constants.js';
+import { GNOSIS_DEFAULT_GAS_PRICE, NODE_ENVIRONMENTS } from '../../../../constants/constants.js';
 
 class GnosisService extends Web3Service {
     constructor(ctx) {
@@ -19,10 +15,6 @@ class GnosisService extends Web3Service {
                 : GNOSIS_DEFAULT_GAS_PRICE.TESTNET,
             'gwei',
         );
-    }
-
-    getBlockTimeMillis() {
-        return BLOCK_TIME_MILLIS.GNOSIS;
     }
 
     async getGasPrice() {
