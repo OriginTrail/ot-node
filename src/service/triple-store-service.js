@@ -4,6 +4,7 @@ import { kcTools } from 'assertion-tools';
 
 import {
     SCHEMA_CONTEXT,
+    UAL_PREDICATE,
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
 } from '../constants/constants.js';
@@ -318,7 +319,7 @@ class TripleStoreService {
         return nquads;
     }
 
-    async construct(repository, query) {
+    async construct(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.construct(
             this.repositoryImplementations[repository],
             repository,
@@ -326,7 +327,7 @@ class TripleStoreService {
         );
     }
 
-    async select(repository, query) {
+    async select(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.select(
             this.repositoryImplementations[repository],
             repository,
@@ -334,11 +335,11 @@ class TripleStoreService {
         );
     }
 
-    async queryVoid(repository, query) {
+    async queryVoid(repository, query, namedGraphs = null, labels = null) {
         return this.tripleStoreModuleManager.queryVoid(
             this.repositoryImplementations[repository],
             repository,
-            query,
+            this.buildQuery(query, namedGraphs, labels),
         );
     }
 }

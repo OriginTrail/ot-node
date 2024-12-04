@@ -18,44 +18,44 @@ class QueryCommand extends Command {
     }
 
     async execute(command) {
-        const { queryType, operationId } = command.data;
-
-        let { query, repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT } = command.data;
-
-        let data;
+        const { operationId, query, queryType } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             null,
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
-        repository = this.validateRepositoryName(repository);
+
+        let data;
+
+        // TODO: Review federated query logic for V8
+
         // check if it's federated query
-        const pattern = /SERVICE\s+<([^>]+)>/g;
-        const matches = [];
-        let match;
-        // eslint-disable-next-line no-cond-assign
-        while ((match = pattern.exec(query)) !== null) {
-            matches.push(match[1]);
-        }
-        if (matches.length > 0) {
-            for (const repositoryInOriginalQuery of matches) {
-                const federatedQueryRepositoryName = `http://localhost:9999/blazegraph/namespace/${this.paranetService.getParanetRepositoryName(
-                    repositoryInOriginalQuery,
-                )}/sparql`;
-                this.validateRepositoryName(repositoryInOriginalQuery);
-                query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
-            }
-        }
+        // const pattern = /SERVICE\s+<([^>]+)>/g;
+        // const matches = [];
+        // let match;
+        // // eslint-disable-next-line no-cond-assign
+        // while ((match = pattern.exec(query)) !== null) {
+        //     matches.push(match[1]);
+        // }
+        // if (matches.length > 0) {
+        //     for (const repositoryInOriginalQuery of matches) {
+        //         const federatedQueryRepositoryName = `http://localhost:9999/blazegraph/namespace/${this.paranetService.getParanetRepositoryName(
+        //             repositoryInOriginalQuery,
+        //         )}/sparql`;
+        //         this.validateRepositoryName(repositoryInOriginalQuery);
+        //         query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
+        //     }
+        // }
         try {
             switch (queryType) {
                 case QUERY_TYPES.CONSTRUCT: {
-                    data = await this.tripleStoreService.construct(repository, query);
+                    data = await this.tripleStoreService.construct(query);
                     break;
                 }
                 case QUERY_TYPES.SELECT: {
                     data = await this.dataService.parseBindings(
-                        await this.tripleStoreService.select(repository, query),
+                        await this.tripleStoreService.select(query),
                     );
                     break;
                 }

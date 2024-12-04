@@ -81,7 +81,11 @@ class UALService {
                     }
                 }
             }
-            return { blockchain: blockchainName, contract, tokenId: Number(parts[2]) };
+            return {
+                blockchain: blockchainName,
+                contract,
+                knowledgeCollectionId: Number(parts[2]),
+            };
         }
         if (parts.length === 2) {
             const parts2 = parts[0].split(':');
