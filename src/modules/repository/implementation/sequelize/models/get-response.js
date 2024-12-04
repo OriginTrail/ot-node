@@ -8,7 +8,6 @@ export default (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             operationId: DataTypes.UUID,
-            datasetRoot: DataTypes.STRING,
             status: DataTypes.STRING,
             message: DataTypes.TEXT,
             createdAt: DataTypes.DATE,

@@ -1,11 +1,5 @@
 import Command from '../../../command.js';
-import {
-    OPERATION_ID_STATUS,
-    ERROR_TYPE,
-    GET_STATES,
-    TRIPLE_STORE_REPOSITORIES,
-    PENDING_STORAGE_REPOSITORIES,
-} from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -28,126 +22,103 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, contract, tokenId, assertionId, state, paranetUAL } =
-            command.data;
+        const {
+            operationId,
+            blockchain,
+            includeMetadata,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+        } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        const response = {};
+        // const response = {};
 
-        if (paranetUAL) {
-            const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+        // if (paranetUAL) {
+        //     const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
 
-            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-            const syncedAssetRecord =
-                await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+        //     const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        //     const syncedAssetRecord =
+        //         await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
 
-            const nquads = await this.tripleStoreService.getAssertion(
-                paranetRepository,
-                syncedAssetRecord.publicAssertionId,
-            );
+        //     const nquads = await this.tripleStoreService.getAssertion(
+        //         paranetRepository,
+        //         syncedAssetRecord.publicAssertionId,
+        //     );
 
-            let privateNquads;
-            if (syncedAssetRecord.privateAssertionId) {
-                privateNquads = await this.tripleStoreService.getAssertion(
-                    paranetRepository,
-                    syncedAssetRecord.privateAssertionId,
-                );
-            }
+        //     let privateNquads;
+        //     if (syncedAssetRecord.privateAssertionId) {
+        //         privateNquads = await this.tripleStoreService.getAssertion(
+        //             paranetRepository,
+        //             syncedAssetRecord.privateAssertionId,
+        //         );
+        //     }
 
-            if (nquads?.length) {
-                response.assertion = nquads;
-                if (privateNquads?.length) {
-                    response.privateAssertion = privateNquads;
-                }
-            } else {
-                this.handleError(
-                    operationId,
-                    blockchain,
-                    `Couldn't find locally asset with ${ual} in paranet ${paranetUAL}`,
-                    this.errorType,
-                );
-            }
+        //     if (nquads?.length) {
+        //         response.assertion = nquads;
+        //         if (privateNquads?.length) {
+        //             response.privateAssertion = privateNquads;
+        //         }
+        //     } else {
+        //         this.handleError(
+        //             operationId,
+        //             blockchain,
+        //             `Couldn't find locally asset with ${ual} in paranet ${paranetUAL}`,
+        //             this.errorType,
+        //         );
+        //     }
 
-            await this.operationService.markOperationAsCompleted(
-                operationId,
+        //     await this.operationService.markOperationAsCompleted(
+        //         operationId,
+        //         blockchain,
+        //         response,
+        //         [
+        //             OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+        //             OPERATION_ID_STATUS.GET.GET_END,
+        //             OPERATION_ID_STATUS.COMPLETED,
+        //         ],
+        //     );
+
+        //     return Command.empty();
+        // }
+
+        // else {
+
+        const promises = [
+            this.tripleStoreService.getAssertion(
                 blockchain,
-                response,
-                [
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                    OPERATION_ID_STATUS.GET.GET_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
-            );
+                contract,
+                knowledgeCollectionId,
+                knowledgeAssetId,
+            ),
+        ];
 
-            return Command.empty();
-        }
-
-        if (
-            state !== GET_STATES.FINALIZED &&
-            blockchain != null &&
-            contract != null &&
-            tokenId != null
-        ) {
-            for (const repository of [
-                PENDING_STORAGE_REPOSITORIES.PRIVATE,
-                PENDING_STORAGE_REPOSITORIES.PUBLIC,
-            ]) {
-                // eslint-disable-next-line no-await-in-loop
-                const stateIsPending = await this.pendingStorageService.assetHasPendingState(
-                    repository,
+        if (includeMetadata) {
+            promises.push(
+                this.tripleStoreService.getAssertionMetadata(
                     blockchain,
                     contract,
-                    tokenId,
-                    assertionId,
-                );
-
-                if (stateIsPending) {
-                    // eslint-disable-next-line no-await-in-loop
-                    const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
-                        repository,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        assertionId,
-                        operationId,
-                    );
-
-                    if (cachedAssertion?.public?.assertion?.length) {
-                        response.assertion = cachedAssertion.public.assertion;
-                        if (cachedAssertion?.private?.assertion?.length) {
-                            response.privateAssertion = cachedAssertion.private.assertion;
-                        }
-                        break;
-                    }
-                }
-            }
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
+                ),
+            );
         }
 
-        if (!response?.assertion?.length) {
-            for (const repository of [
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-            ]) {
-                // eslint-disable-next-line no-await-in-loop
-                response.assertion = await this.tripleStoreService.getAssertion(
-                    repository,
-                    assertionId,
-                );
-                if (response?.assertion?.length) break;
-            }
-        }
+        const [assertion, metadata] = await Promise.all(promises);
 
-        if (response?.assertion?.length) {
+        const responseData = {
+            assertion,
+            ...(includeMetadata && metadata && { metadata }),
+        };
+        if (assertion.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                response,
+                responseData,
                 [
                     OPERATION_ID_STATUS.GET.GET_LOCAL_END,
                     OPERATION_ID_STATUS.GET.GET_END,
@@ -157,6 +128,7 @@ class LocalGetCommand extends Command {
 
             return Command.empty();
         }
+        // }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

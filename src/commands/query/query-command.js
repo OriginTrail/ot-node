@@ -69,7 +69,9 @@ class QueryCommand extends Command {
                 OPERATION_ID_STATUS.QUERY.QUERY_END,
             );
 
-            await this.operationIdService.cacheOperationIdData(operationId, data);
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, data);
+
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, data);
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,

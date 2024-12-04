@@ -44,17 +44,17 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+        this.initializeBlockchainEventsService();
+        await this.initializeShardingTableService();
         await this.initializeParanets();
 
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
-        await this.initializeShardingTableService();
-
-        await this.initializeBlockchainEventListenerService();
 
         await this.initializeRouters();
         await this.startNetworkModule();
+        await this.initializeBLSService();
         this.startTelemetryModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
@@ -132,20 +132,6 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'eventEmitter', eventEmitter);
 
         this.logger.info('Event emitter initialized');
-    }
-
-    async initializeBlockchainEventListenerService() {
-        try {
-            const eventListenerService = this.container.resolve('blockchainEventListenerService');
-            await eventListenerService.initialize();
-            eventListenerService.startListeningOnEvents();
-            this.logger.info('Event Listener Service initialized successfully');
-        } catch (error) {
-            this.logger.error(
-                `Unable to initialize event listener service. Error message: ${error.message} OT-node shutting down...`,
-            );
-            this.stop(1);
-        }
     }
 
     async initializeRouters() {
@@ -310,6 +296,19 @@ class OTNode {
         }
     }
 
+    initializeBlockchainEventsService() {
+        try {
+            const blockchainEventsService = this.container.resolve('blockchainEventsService');
+            blockchainEventsService.initializeBlockchainEventsServices();
+            this.logger.info('Blockchain Events Service initialized successfully');
+        } catch (error) {
+            this.logger.error(
+                `Unable to initialize Blockchain Events Service. Error message: ${error.message} OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
+    }
+
     async removeUpdateFile() {
         const updateFilePath = this.fileService.getUpdateFilePath();
         await this.fileService.removeFile(updateFilePath).catch((error) => {
@@ -401,6 +400,18 @@ class OTNode {
         }
         this.config.assetSync.syncParanets = validParanets;
         tripleStoreService.initializeRepositories();
+    }
+
+    async initializeBLSService() {
+        try {
+            const blsService = this.container.resolve('blsService');
+            await blsService.initialize();
+        } catch (error) {
+            this.logger.error(
+                `Unable to initialize BLS Service. Error message: ${error.message} OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
     }
 
     stop(code = 0) {
