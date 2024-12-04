@@ -1,41 +1,10 @@
-import jsonld from 'jsonld';
-import toNQuadsWorker from '../workers/data-service-toNQuads-worker.js';
-import { SCHEMA_CONTEXT, MEDIA_TYPES, XML_DATA_TYPES } from '../constants/constants.js';
-
-const ALGORITHM = 'URDNA2015';
+import { kcTools } from 'assertion-tools';
+import { XML_DATA_TYPES } from '../constants/constants.js';
 
 class DataService {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
-    }
-
-    async toNQuads(content, inputFormat) {
-        const options = {
-            algorithm: ALGORITHM,
-            format: MEDIA_TYPES.N_QUADS,
-        };
-        if (inputFormat) {
-            options.inputFormat = inputFormat;
-        }
-        return toNQuadsWorker(content, options);
-    }
-
-    async compact(content) {
-        const result = await jsonld.compact(content, {
-            '@context': SCHEMA_CONTEXT,
-        });
-
-        return result;
-    }
-
-    async canonize(content) {
-        const nquads = await this.toNQuads(content);
-        if (nquads && nquads.length === 0) {
-            throw new Error('File format is corrupted, no n-quads extracted.');
-        }
-
-        return nquads;
     }
 
     createTripleAnnotations(groupedTriples, annotationPredicate, annotations) {
@@ -50,34 +19,11 @@ class DataService {
     }
 
     countDistinctSubjects(triples) {
-        const distinctSubjects = new Set();
-
-        for (const triple of triples) {
-            const [subject, ,] = triple.split(' ');
-
-            distinctSubjects.add(subject);
-        }
-
-        return distinctSubjects.size;
+        return kcTools.countDistinctSubjects(triples);
     }
 
     groupTriplesBySubject(triples, sort = true) {
-        const groupedTriples = {};
-
-        for (const triple of triples) {
-            const [subject, ,] = triple.split(' ');
-            if (!groupedTriples[subject]) {
-                groupedTriples[subject] = [];
-            }
-            groupedTriples[subject].push(triple);
-        }
-
-        let subjects = Object.keys(groupedTriples);
-        if (sort) {
-            subjects = subjects.sort();
-        }
-
-        return subjects.map((subject) => groupedTriples[subject]);
+        return kcTools.groupNquadsBySubject(triples, sort);
     }
 
     /**
