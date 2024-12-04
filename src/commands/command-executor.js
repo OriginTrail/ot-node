@@ -7,6 +7,7 @@ import {
     COMMAND_STATUS,
     DEFAULT_COMMAND_DELAY_IN_MILLS,
     COMMAND_QUEUE_PARALLELISM,
+    DEFAULT_COMMAND_PRIORITY,
 } from '../constants/constants.js';
 
 /**
@@ -20,7 +21,7 @@ class CommandExecutor {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
 
-        this.queue = async.queue((command, callback = () => {}) => {
+        this.queue = async.priorityQueue((command, callback = () => {}) => {
             this._execute(command)
                 .then((result) => {
                     callback(result);
@@ -73,6 +74,7 @@ class CommandExecutor {
     async _execute(executeCommand) {
         const command = executeCommand;
         const now = Date.now();
+
         await this._update(command, {
             startedAt: now,
         });
@@ -81,7 +83,7 @@ class CommandExecutor {
             commandId: command.id,
             commandName: command.name,
         };
-        if (command.data && command.data.operationId) {
+        if (command.data?.operationId) {
             commandContext.operationId = command.data.operationId;
         }
         const loggerWithContext = this.logger.child(commandContext);
@@ -263,7 +265,13 @@ class CommandExecutor {
             handler.logger.warn(`Command will not be executed.`);
             return;
         }
-        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+
+        if (['eventListenerCommand', 'shardingTableCheckCommand'].includes(name)) {
+            await this.add(handler.default(), 0, true);
+        } else {
+            await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+        }
+
         if (this.verboseLoggingEnabled) {
             handler.logger.trace(`Permanent command created.`);
         }
@@ -277,10 +285,33 @@ class CommandExecutor {
      */
     async add(addCommand, addDelay, insert = true) {
         let command = addCommand;
+
+        if (command.isBlocking) {
+            // Check the db to see if there are unfinalized instances of the same command
+            const unfinalizedBlockingCommands =
+                await this.repositoryModuleManager.findUnfinalizedCommandsByName(command.name);
+
+            for (const unfinalizedCommand of unfinalizedBlockingCommands) {
+                if (command.id && command.id === unfinalizedCommand.id) {
+                    if (insert) {
+                        this.logger.warn(`Inserting duplicate of command ${command.id}!`);
+                    }
+                    continue;
+                }
+
+                if (JSON.stringify(unfinalizedCommand.data) === JSON.stringify(command.data)) {
+                    this.logger.info(
+                        `Skipping blocking command: ${command.name} because of unfinalized instance of this command with id: ${unfinalizedCommand.id}`,
+                    );
+                    return;
+                }
+            }
+        }
+
         let delay = addDelay ?? 0;
 
         if (delay > MAX_COMMAND_DELAY_IN_MILLS) {
-            if (command.readyAt == null) {
+            if (!command.readyAt) {
                 command.readyAt = Date.now();
             }
             command.readyAt += delay;
@@ -290,16 +321,19 @@ class CommandExecutor {
         if (insert) {
             command = await this._insert(command);
         }
+
+        const commandPriority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+
         if (delay) {
             setTimeout(
                 (timeoutCommand) => {
-                    this.queue.push(timeoutCommand);
+                    this.queue.push(timeoutCommand, commandPriority);
                 },
                 delay,
                 command,
             );
         } else {
-            this.queue.push(command);
+            this.queue.push(command, commandPriority);
         }
     }
 
@@ -311,7 +345,7 @@ class CommandExecutor {
      */
     async _handleRetry(retryCommand, handler) {
         const command = retryCommand;
-        if (command.retries > 1) {
+        if (command.retries && command.retries > 1) {
             command.data = handler.pack(command.data);
             await this._update(command, {
                 status: COMMAND_STATUS.PENDING,
@@ -337,7 +371,7 @@ class CommandExecutor {
      * @private
      */
     async _handleError(command, handler, error) {
-        if (command.retries > 0) {
+        if (command.retries && command.retries > 0) {
             await this._update(command, {
                 retries: command.retries - 1,
             });
@@ -373,28 +407,27 @@ class CommandExecutor {
             [command.name] = command.sequence;
             command.sequence = command.sequence.slice(1);
         }
-        if (!command.readyAt) {
-            command.readyAt = Date.now(); // take current time
-        }
-        if (command.delay == null) {
-            command.delay = 0;
-        }
-        if (!command.transactional) {
-            command.transactional = 0;
-        }
+
+        command.readyAt = command.readyAt || Date.now();
+        command.delay = command.delay ?? 0;
+        command.transactional = command.transactional ?? 0;
+        command.priority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+        command.isBlocking = command.isBlocking ?? false;
+        command.status = COMMAND_STATUS.PENDING;
+
         if (!command.data) {
             const commandInstance = this.commandResolver.resolve(command.name);
             if (commandInstance) {
                 command.data = commandInstance.pack(command.data);
             }
         }
-        command.status = COMMAND_STATUS.PENDING;
-        const opts = {};
-        if (transaction != null) {
-            opts.transaction = transaction;
-        }
+
+        const opts = transaction ? { transaction } : {};
+
         const model = await this.repositoryModuleManager.createCommand(command, opts);
+
         command.id = model.id;
+
         return command;
     }
 
@@ -442,6 +475,11 @@ class CommandExecutor {
 
         const commands = [];
         for (const command of pendingCommands) {
+            if (command?.isBlocking) {
+                commands.push(command);
+                continue;
+            }
+
             if (!command?.parentId) {
                 continue;
             }
@@ -462,6 +500,8 @@ class CommandExecutor {
                     id: commandModel.id,
                     name: commandModel.name,
                     data: commandModel.data,
+                    priority: commandModel.priority ?? DEFAULT_COMMAND_PRIORITY,
+                    isBlocking: commandModel.isBlocking ?? false,
                     readyAt: commandModel.readyAt,
                     delay: commandModel.delay,
                     startedAt: commandModel.startedAt,

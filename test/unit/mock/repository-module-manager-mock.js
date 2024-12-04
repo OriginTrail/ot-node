@@ -130,14 +130,13 @@ class RepositoryModuleManagerMock {
         );
     }
 
-    async createOperationResponseRecord(status, operation, operationId, keyword, errorMessage) {
+    async createOperationResponseRecord(status, operation, operationId, errorMessage) {
         this.responseStatuses = [
             ...this.responseStatuses,
             {
                 id: this.responseStatuses[this.responseStatuses.length - 1].id + 1,
                 status,
                 operationId,
-                keyword,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             },

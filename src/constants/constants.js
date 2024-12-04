@@ -1,4 +1,5 @@
 import { BigNumber, ethers } from 'ethers';
+import { createRequire } from 'module';
 
 export const WS_RPC_PROVIDER_PRIORITY = 2;
 
@@ -32,8 +33,7 @@ export const ZERO_ADDRESS = ethers.constants.AddressZero;
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
-export const PRIVATE_ASSERTION_PREDICATE =
-    'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
+export const TRIPLE_ANNOTATION_LABEL_PREDICATE = 'https://ontology.origintrail.io/dkg/1.0#label';
 export const UAL_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#UAL>';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
@@ -62,7 +62,21 @@ export const LIBP2P_KEY_DIRECTORY = 'libp2p';
 
 export const LIBP2P_KEY_FILENAME = 'privateKey';
 
+export const BLS_KEY_DIRECTORY = 'bls';
+
+export const BLS_KEY_FILENAME = 'secretKey';
+
 export const TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
+
+export const COMMAND_PRIORITY = {
+    HIGHEST: 0,
+    HIGH: 1,
+    MEDIUM: 5,
+    LOW: 10,
+    LOWEST: 20,
+};
+
+export const DEFAULT_COMMAND_PRIORITY = COMMAND_PRIORITY.MEDIUM;
 
 export const DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
@@ -161,7 +175,7 @@ export const NETWORK_API_BLACK_LIST_TIME_WINDOW_MINUTES = 60;
 
 export const HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR = 16000;
 
-export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MINUTES = 30;
+export const SHARDING_TABLE_CHECK_COMMAND_FREQUENCY_MILLS = 10 * 1000; // 10 seconds
 
 export const PARANET_SYNC_FREQUENCY_MILLS = 1 * 60 * 1000;
 
@@ -184,6 +198,7 @@ export const DIAL_PEERS_CONCURRENCY = 10;
 export const MIN_DIAL_FREQUENCY_MILLIS = 60 * 60 * 1000;
 
 export const PERMANENT_COMMANDS = [
+    'eventListenerCommand',
     'otnodeUpdateCommand',
     'sendTelemetryCommand',
     'shardingTableCheckCommand',
@@ -198,6 +213,7 @@ export const PERMANENT_COMMANDS = [
     'updateCleanerCommand',
     'updateResponseCleanerCommand',
     'startParanetSyncCommands',
+    'pendingStorageCleanerCommand',
 ];
 
 export const MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
@@ -207,18 +223,52 @@ export const DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 export const DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
 
 export const TRANSACTION_PRIORITY = {
+    HIGHEST: 0,
     HIGH: 1,
-    REGULAR: 2,
+    MEDIUM: 5,
+    LOW: 10,
+    LOWEST: 20,
+};
+
+const require = createRequire(import.meta.url);
+
+export const ABIs = {
+    ContentAsset: require('dkg-evm-module/abi/ContentAssetV2.json'),
+    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorageV2.json'),
+    AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
+    Staking: require('dkg-evm-module/abi/Staking.json'),
+    StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
+    Token: require('dkg-evm-module/abi/Token.json'),
+    HashingProxy: require('dkg-evm-module/abi/HashingProxy.json'),
+    Hub: require('dkg-evm-module/abi/Hub.json'),
+    IdentityStorage: require('dkg-evm-module/abi/IdentityStorage.json'),
+    Log2PLDSF: require('dkg-evm-module/abi/Log2PLDSF.json'),
+    ParametersStorage: require('dkg-evm-module/abi/ParametersStorage.json'),
+    Profile: require('dkg-evm-module/abi/Profile.json'),
+    ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
+    ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
+    ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
+    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
+    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
+    ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
+    ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
+    ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
+    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
+    ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
+    UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
+    LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
+    ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
+    ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
 };
 
 export const CONTRACT_FUNCTION_PRIORITY = {
     'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.REGULAR,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.REGULAR,
+        TRANSACTION_PRIORITY.MEDIUM,
+    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.MEDIUM,
     'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
         TRANSACTION_PRIORITY.HIGH,
     'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
-    sendProof: TRANSACTION_PRIORITY.REGULAR,
+    sendProof: TRANSACTION_PRIORITY.MEDIUM,
 };
 
 export const COMMAND_RETRIES = {
@@ -312,11 +362,17 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
         INIT: 60 * 1000,
         REQUEST: 5 * 60 * 1000,
     },
+    FINALITY: {
+        INIT: 60 * 1000,
+        REQUEST: 60 * 1000,
+    },
 };
 
 export const MAX_OPEN_SESSIONS = 10;
 
 export const ERROR_TYPE = {
+    EVENT_LISTENER_ERROR: 'EventListenerError',
+    BLOCKCHAIN_EVENT_LISTENER_ERROR: 'BlockchainEventListenerError',
     DIAL_PROTOCOL_ERROR: 'DialProtocolError',
     VALIDATE_ASSET_ERROR: 'ValidateAssetError',
     PUBLISH: {
@@ -328,6 +384,8 @@ export const ERROR_TYPE = {
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
         PUBLISH_ERROR: 'PublishError',
     },
+    VALIDATE_ASSERTION_METADATA_ERROR: 'ValidateAssertionMetadataError',
+    STORE_ASSERTION_ERROR: 'StoreAssertionError',
     UPDATE: {
         UPDATE_INIT_ERROR: 'UpdateInitError',
         UPDATE_REQUEST_ERROR: 'UpdateRequestError',
@@ -379,6 +437,15 @@ export const ERROR_TYPE = {
         START_PARANET_SYNC_ERROR: 'StartParanetSyncError',
         PARANET_SYNC_ERROR: 'ParanetSyncError',
     },
+    FIND_SHARD: {
+        FIND_SHARD_ERROR: 'FindShardError',
+    },
+    FINALITY: {
+        FINALITY_ERROR: 'FinalityError',
+        FINALITY_NETWORK_ERROR: 'FinalityNetworkError',
+        FINALITY_REQUEST_ERROR: 'FinalityRequestError',
+        FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',
@@ -409,6 +476,16 @@ export const OPERATION_ID_STATUS = {
         PUBLISH_REPLICATE_START: 'PUBLISH_REPLICATE_START',
         PUBLISH_REPLICATE_END: 'PUBLISH_REPLICATE_END',
         PUBLISH_END: 'PUBLISH_END',
+    },
+    PUBLISH_FINALIZATION: {
+        PUBLISH_FINALIZATION_START: 'PUBLISH_FINALIZATION_START',
+        PUBLISH_FINALIZATION_METADATA_VALIDATION_START:
+            'PUBLISH_FINALIZATION_METADATA_VALIDATION_START',
+        PUBLISH_FINALIZATION_METADATA_VALIDATION_END:
+            'PUBLISH_FINALIZATION_METADATA_VALIDATION_END',
+        PUBLISH_FINALIZATION_STORE_ASSERTION_START: 'PUBLISH_FINALIZATION_STORE_ASSERTION_START',
+        PUBLISH_FINALIZATION_STORE_ASSERTION_END: 'PUBLISH_FINALIZATION_STORE_ASSERTION_END',
+        PUBLISH_FINALIZATION_END: 'PUBLISH_FINALIZATION_END',
     },
     UPDATE: {
         UPDATE_START: 'UPDATE_START',
@@ -474,12 +551,21 @@ export const OPERATION_ID_STATUS = {
         PARANET_SYNC_NEW_KAS_SYNC_START: 'PARANET_SYNC_NEW_KAS_SYNC_START',
         PARANET_SYNC_NEW_KAS_SYNC_END: 'PARANET_SYNC_NEW_KAS_SYNC_END',
     },
+    FINALITY: {
+        FINALITY_START: 'FINALITY_START',
+        FINALITY_END: 'FINALITY_END',
+        FINALITY_REMOTE_START: 'FINALITY_REMOTE_START',
+        FINALITY_REMOTE_END: 'FINALITY_REMOTE_START',
+        FINALITY_FETCH_FROM_NODES_START: 'FINALITY_FETCH_FROM_NODES_START',
+        FINALITY_FETCH_FROM_NODES_END: 'FINALITY_FETCH_FROM_NODES_END',
+    },
 };
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
     UPDATE: 'update',
     GET: 'get',
+    FINALITY: 'finality',
 };
 
 export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
@@ -516,6 +602,11 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  * @constant {number} FINALIZED_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  * finalized commands command cleanup interval time 24h
  */
+
+export const PUBLISH_STORAGE_MEMORY_CLEANUP_COMMAND_CLEANUP_TIME_MILLS = 4 * 60 * 60 * 1000;
+
+export const PUBLISH_STORAGE_FILE_CLEANUP_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
 export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const GET_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
@@ -558,6 +649,8 @@ export const COMMAND_STATUS = {
     COMPLETED: 'COMPLETED',
     REPEATING: 'REPEATING',
 };
+
+export const PENDING_STORAGE_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
 
 export const OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
 
@@ -639,8 +732,19 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
+        finality: {
+            method: 'post',
+            path: '/finality',
+            options: {},
+        },
     },
-    v1: {},
+    v1: {
+        // get: {
+        //     method: 'post',
+        //     path: '/get',
+        //     options: { rateLimit: true },
+        // },
+    },
 };
 
 /**
@@ -651,6 +755,7 @@ export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
+    FINALITY: ['/finality/1.0.0'],
 };
 
 export const OPERATION_STATUS = {
@@ -690,46 +795,35 @@ export const LOCAL_STORE_TYPES = {
 
 /**
  * Contract names
- * @type {{SHARDING_TABLE_CONTRACT: string}}
+ * @type {{SHARDING_TABLE: string}}
  */
 export const CONTRACTS = {
-    CONTENT_ASSET_CONTRACT: 'ContentAssetContract',
-    SHARDING_TABLE_CONTRACT: 'ShardingTableContract',
-    STAKING_CONTRACT: 'StakingContract',
-    PROFILE_CONTRACT: 'ProfileContract',
-    HUB_CONTRACT: 'HubContract',
-    CONTENT_ASSET: 'ContentAssetContract',
-    COMMIT_MANAGER_V1_U1_CONTRACT: 'CommitManagerV1U1Contract',
-    PARAMETERS_STORAGE_CONTRACT: 'ParametersStorageContract',
-    IDENTITY_STORAGE_CONTRACT: 'IdentityStorageContract',
-    LOG2PLDSF_CONTRACT: 'Log2PLDSFContract',
-    LINEAR_SUM_CONTRACT: 'LinearSumContract',
-    PARANETS_REGISTRY_CONTRACT: 'ParanetsRegistry',
+    SHARDING_TABLE: 'ShardingTable',
+    STAKING: 'Staking',
+    PROFILE: 'Profile',
+    HUB: 'Hub',
+    CONTENT_ASSET: 'ContentAsset',
+    COMMIT_MANAGER_V1_U1: 'CommitManagerV1U1',
+    PARAMETERS_STORAGE: 'ParametersStorage',
+    IDENTITY_STORAGE: 'IdentityStorage',
+    LOG2PLDSF: 'Log2PLDSF',
+    LINEAR_SUM: 'LinearSum',
+    PARANETS_REGISTRY: 'ParanetsRegistry',
 };
 
-export const CONTRACT_EVENTS = {
-    HUB: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
-    SHARDING_TABLE: ['NodeAdded', 'NodeRemoved'],
-    STAKING: ['StakeIncreased', 'StakeWithdrawalStarted'],
-    PROFILE: ['AskUpdated'],
-    CONTENT_ASSET: ['AssetMinted'],
-    COMMIT_MANAGER_V1: ['StateFinalized'],
-    PARAMETERS_STORAGE: ['ParameterChanged'],
-    LOG2PLDSF: ['ParameterChanged'],
-    LINEAR_SUM: ['ParameterChanged'],
+export const MONITORED_CONTRACT_EVENTS = {
+    Hub: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
+    ParametersStorage: ['ParameterChanged'],
+    ContentAsset: ['AssetMinted'],
 };
 
-export const GROUPED_CONTRACT_EVENTS = {};
+export const MONITORED_CONTRACTS = Object.keys(MONITORED_CONTRACT_EVENTS);
 
-export const CONTRACT_EVENT_TO_GROUP_MAPPING = (() => {
-    const mapping = {};
-    Object.entries(GROUPED_CONTRACT_EVENTS).forEach(([groupName, { events }]) => {
-        events.forEach((eventName) => {
-            mapping[eventName] = groupName;
-        });
-    });
-    return mapping;
-})();
+export const MONITORED_EVENTS = Object.values(MONITORED_CONTRACT_EVENTS).flatMap(
+    (events) => events,
+);
+
+export const CONTRACT_INDEPENDENT_EVENTS = {};
 
 export const NODE_ENVIRONMENTS = {
     DEVELOPMENT: 'development',
@@ -741,19 +835,9 @@ export const NODE_ENVIRONMENTS = {
 
 export const MAXIMUM_FETCH_EVENTS_FAILED_COUNT = 1000;
 
-export const DELAY_BETWEEN_FAILED_FETCH_EVENTS_MILLIS = 10 * 1000;
-
 export const CONTRACT_EVENT_FETCH_INTERVALS = {
     MAINNET: 10 * 1000,
     DEVELOPMENT: 4 * 1000,
-};
-
-export const BLOCK_TIME_MILLIS = {
-    OTP: 12_000,
-    HARDHAT: 5_000,
-    GNOSIS: 5_000,
-    DEFAULT: 12_000,
-    BASE: 2_000,
 };
 
 export const TRANSACTION_CONFIRMATIONS = 1;
@@ -827,3 +911,7 @@ export const LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY = 1000;
 
 export const LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS = 5;
 export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
+
+export const TRIPLE_STORE_REPOSITORY = {
+    DKG: 'dkg',
+};

@@ -8,30 +8,34 @@ class OperationResponseRepository {
             publish_response: models.publish_response,
             update_response: models.update_response,
             publish_paranet_response: models.publish_paranet_response,
+            finality_response: models.finality_response,
         };
     }
 
-    async createOperationResponseRecord(status, operation, operationId, datasetRoot, message) {
+    async createOperationResponseRecord(status, operation, operationId, message, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
-        await this.models[`${operationModel}_response`].create({
-            status,
-            message,
-            operationId,
-            datasetRoot,
-        });
+        await this.models[`${operationModel}_response`].create(
+            {
+                status,
+                message,
+                operationId,
+            },
+            options,
+        );
     }
 
-    async getOperationResponsesStatuses(operation, operationId) {
+    async getOperationResponsesStatuses(operation, operationId, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         return this.models[`${operationModel}_response`].findAll({
-            attributes: ['status', 'datasetRoot'],
+            attributes: ['status'],
             where: {
                 operationId,
             },
+            ...options,
         });
     }
 
-    async findProcessedOperationResponse(timestamp, limit, operation) {
+    async findProcessedOperationResponse(timestamp, limit, operation, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         return this.models[`${operationModel}_response`].findAll({
             where: {
@@ -40,15 +44,17 @@ class OperationResponseRepository {
             order: [['createdAt', 'asc']],
             raw: true,
             limit,
+            ...options,
         });
     }
 
-    async removeOperationResponse(ids, operation) {
+    async removeOperationResponse(ids, operation, options) {
         const operationModel = operation.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         await this.models[`${operationModel}_response`].destroy({
             where: {
                 id: { [Sequelize.Op.in]: ids },
             },
+            ...options,
         });
     }
 }
