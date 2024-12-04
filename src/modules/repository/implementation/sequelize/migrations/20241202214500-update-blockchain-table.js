@@ -4,6 +4,7 @@ export async function up({ context: { queryInterface } }) {
     if (tableInfo.blockchain_id) {
         await queryInterface.renameColumn('blockchain', 'blockchain_id', 'blockchain');
     }
+    await queryInterface.removeIndex('blockchain', 'contract_index');
     await queryInterface.removeColumn('blockchain', 'contract');
 }
 
