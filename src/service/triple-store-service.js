@@ -232,7 +232,7 @@ class TripleStoreService {
             nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
                 this.repositoryImplementations[repository],
                 repository,
-                `${ual}:0`,
+                `${ual}:0`, // TO DO: Add state with implemented update
             );
         } else {
             nquads = await this.tripleStoreModuleManager.getKnowledgeCollectionNamedGraphs(
