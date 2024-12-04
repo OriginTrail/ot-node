@@ -1,3 +1,5 @@
+import os from 'os';
+import { chmod } from 'fs';
 import { spawn } from 'child_process';
 import { BLS_KEY_FILENAME, NODE_ENVIRONMENTS } from '../constants/constants.js';
 
@@ -11,6 +13,17 @@ class BLSService {
     }
 
     async initialize() {
+        if (os.platform() !== 'win32') {
+            chmod(this.binaryPath, '755', (err) => {
+                if (err) {
+                    throw err;
+                }
+                this.logger.debug(
+                    `Permissions for binary ${this.binaryPath} have been set to 755.`,
+                );
+            });
+        }
+
         if (!this.config.blsPublicKey) {
             const devEnvironment =
                 process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
