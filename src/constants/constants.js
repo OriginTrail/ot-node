@@ -332,7 +332,7 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
     },
     FINALITY: {
         INIT: 60 * 1000,
-        REQUEST: 5 * 60 * 1000,
+        REQUEST: 60 * 1000,
     },
 };
 
