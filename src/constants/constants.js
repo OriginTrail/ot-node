@@ -363,6 +363,10 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
         INIT: 60 * 1000,
         REQUEST: 5 * 60 * 1000,
     },
+    FINALITY: {
+        INIT: 60 * 1000,
+        REQUEST: 60 * 1000,
+    },
 };
 
 export const MAX_OPEN_SESSIONS = 10;
@@ -436,6 +440,12 @@ export const ERROR_TYPE = {
     },
     FIND_SHARD: {
         FIND_SHARD_ERROR: 'FindShardError',
+    },
+    FINALITY: {
+        FINALITY_ERROR: 'FinalityError',
+        FINALITY_NETWORK_ERROR: 'FinalityNetworkError',
+        FINALITY_REQUEST_ERROR: 'FinalityRequestError',
+        FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -542,12 +552,21 @@ export const OPERATION_ID_STATUS = {
         PARANET_SYNC_NEW_KAS_SYNC_START: 'PARANET_SYNC_NEW_KAS_SYNC_START',
         PARANET_SYNC_NEW_KAS_SYNC_END: 'PARANET_SYNC_NEW_KAS_SYNC_END',
     },
+    FINALITY: {
+        FINALITY_START: 'FINALITY_START',
+        FINALITY_END: 'FINALITY_END',
+        FINALITY_REMOTE_START: 'FINALITY_REMOTE_START',
+        FINALITY_REMOTE_END: 'FINALITY_REMOTE_START',
+        FINALITY_FETCH_FROM_NODES_START: 'FINALITY_FETCH_FROM_NODES_START',
+        FINALITY_FETCH_FROM_NODES_END: 'FINALITY_FETCH_FROM_NODES_END',
+    },
 };
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
     UPDATE: 'update',
     GET: 'get',
+    FINALITY: 'finality',
 };
 
 export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
@@ -714,6 +733,11 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
+        finality: {
+            method: 'post',
+            path: '/finality',
+            options: {},
+        },
     },
     v1: {
         // get: {
@@ -732,6 +756,7 @@ export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
+    FINALITY: ['/finality/1.0.0'],
 };
 
 export const OPERATION_STATUS = {

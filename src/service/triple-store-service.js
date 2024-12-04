@@ -215,6 +215,21 @@ class TripleStoreService {
         ]);
     }
 
+    async checkIfKnowledgeCollectionExistsInUnifiedGraph(
+        ual,
+        repository = TRIPLE_STORE_REPOSITORY.DKG,
+    ) {
+        const knowledgeCollectionExists =
+            await this.tripleStoreModuleManager.knowledgeCollectionExistsInUnifiedGraph(
+                this.repositoryImplementations[repository],
+                repository,
+                BASE_NAMED_GRAPHS.UNIFIED,
+                ual,
+            );
+
+        return knowledgeCollectionExists;
+    }
+
     async getAssertion(
         blockchain,
         contract,
@@ -225,6 +240,7 @@ class TripleStoreService {
         const ual = `did:dkg:${blockchain}/${contract}/${knowledgeCollectionId}${
             knowledgeAssetId ? `/${knowledgeAssetId}` : ''
         }`;
+
         this.logger.debug(`Getting Assertion with the UAL: ${ual}.`);
 
         let nquads;

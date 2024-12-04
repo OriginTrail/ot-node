@@ -8,6 +8,7 @@ class OperationResponseRepository {
             publish_response: models.publish_response,
             update_response: models.update_response,
             publish_paranet_response: models.publish_paranet_response,
+            finality_response: models.finality_response,
         };
     }
 

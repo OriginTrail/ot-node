@@ -8,6 +8,7 @@ class OperationRepository {
             publish: models.publish,
             update: models.update,
             publish_paranet: models.publish_paranet,
+            finality: models.finality,
         };
     }
 
