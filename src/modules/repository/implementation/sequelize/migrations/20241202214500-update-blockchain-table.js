@@ -6,6 +6,17 @@ export async function up({ context: { queryInterface } }) {
     }
 
     await queryInterface.sequelize.query(`
+        DELETE t1
+        FROM blockchain t1
+        JOIN blockchain t2
+        ON t1.blockchain = t2.blockchain
+        AND (
+            t1.last_checked_block > t2.last_checked_block OR
+            (t1.last_checked_block = t2.last_checked_block AND t1.last_checked_timestamp > t2.last_checked_timestamp)
+        );
+    `);
+
+    await queryInterface.sequelize.query(`
         ALTER TABLE blockchain DROP PRIMARY KEY, ADD PRIMARY KEY (blockchain);
     `);
 
@@ -21,6 +32,6 @@ export async function down({ context: { queryInterface, Sequelize } }) {
     });
 
     await queryInterface.sequelize.query(`
-        ALTER TABLE blockchain DROP PRIMARY KEY, ADD PRIMARY KEY (blockchainId, contract);
+        ALTER TABLE blockchain DROP PRIMARY KEY, ADD PRIMARY KEY (blockchain_id, contract);
     `);
 }
