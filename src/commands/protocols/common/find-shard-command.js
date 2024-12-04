@@ -10,6 +10,11 @@ class FindShardCommand extends Command {
         this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.FIND_NODES_START;
         this.operationEndEvent = OPERATION_ID_STATUS.FIND_NODES_END;
+        this.getMinAckResponsesStartEvent =
+            OPERATION_ID_STATUS.FIND_NODES_GET_MIN_ACK_RESPONSES_START;
+        this.getMinAckResponsesEndEvent = OPERATION_ID_STATUS.FIND_NODES_GET_MIN_ACK_RESPONSES_END;
+        this.findShardNodesStartEvent = OPERATION_ID_STATUS.FIND_NODES_FIND_SHARD_NODES_START;
+        this.findShardNodesEndEvent = OPERATION_ID_STATUS.FIND_NODES_FIND_SHARD_NODES_END;
     }
 
     /**
@@ -27,7 +32,17 @@ class FindShardCommand extends Command {
             this.operationStartEvent,
         );
 
+        this.operationIdService.emitChangeEvent(
+            this.getMinAckResponsesStartEvent,
+            operationId,
+            blockchain,
+        );
         this.minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+        this.operationIdService.emitChangeEvent(
+            this.getMinAckResponsesEndEvent,
+            operationId,
+            blockchain,
+        );
 
         const networkProtocols = this.operationService.getNetworkProtocols();
 
@@ -35,7 +50,18 @@ class FindShardCommand extends Command {
         let nodePartOfShard = false;
         const currentPeerId = this.networkModuleManager.getPeerId().toB58String();
 
+        this.operationIdService.emitChangeEvent(
+            this.findShardNodesStartEvent,
+            operationId,
+            blockchain,
+        );
         const foundNodes = await this.findShardNodes(blockchain);
+        this.operationIdService.emitChangeEvent(
+            this.findShardNodesEndEvent,
+            operationId,
+            blockchain,
+        );
+
         for (const node of foundNodes) {
             if (node.id === currentPeerId) {
                 nodePartOfShard = true;

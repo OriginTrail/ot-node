@@ -1,5 +1,9 @@
 import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
-import { NETWORK_MESSAGE_TIMEOUT_MILLS, ERROR_TYPE } from '../../../../../constants/constants.js';
+import {
+    NETWORK_MESSAGE_TIMEOUT_MILLS,
+    ERROR_TYPE,
+    OPERATION_ID_STATUS,
+} from '../../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -8,6 +12,15 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         this.signatureStorageService = ctx.signatureStorageService;
         this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
+
+        this.operationStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REQUEST_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REQUEST_END;
+        this.prepareMessageStartEvent =
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_REQUEST_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent =
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_REQUEST_PREPARE_MESSAGE_END;
+        this.sendMessageStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_SEND_MESSAGE_START;
+        this.sendMessageEndEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_SEND_MESSAGE_END;
     }
 
     async prepareMessage(command) {
@@ -16,7 +29,19 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         // TODO: Backwards compatibility, send blockchain without chainId
         const { blockchain } = command.data;
 
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.prepareMessageStartEvent,
+        );
+
         const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.prepareMessageEndEvent,
+        );
 
         return {
             dataset,

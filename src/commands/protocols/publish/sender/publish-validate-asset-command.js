@@ -12,6 +12,16 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         super(ctx);
         this.operationService = ctx.publishService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSET_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END;
+        this.paranetExistsStartEvent =
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_START;
+        this.paranetExistsEndEvent =
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_END;
+        this.nodesAccessPolicyCheckStartEvent =
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_START;
+        this.nodesAccessPolicyChEvent =
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_END;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -39,7 +49,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_START,
+            this.operationStartEvent,
         );
 
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
@@ -72,10 +82,22 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     paranetContract,
                     paranetTokenId,
                 );
+
+                this.operationIdService.emitChangeEvent(
+                    this.paranetExistsStartEvent,
+                    operationId,
+                    blockchain,
+                );
                 const paranetExists = await this.blockchainModuleManager.paranetExists(
                     paranetBlockchain,
                     paranetId,
                 );
+                this.operationIdService.emitChangeEvent(
+                    this.paranetExistsEndEvent,
+                    operationId,
+                    blockchain,
+                );
+
                 if (!paranetExists) {
                     await this.handleError(
                         operationId,
@@ -86,6 +108,11 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     return Command.empty();
                 }
 
+                this.operationIdService.emitChangeEvent(
+                    this.nodesAccessPolicyCheckStartEvent,
+                    operationId,
+                    blockchain,
+                );
                 const nodesAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
                     blockchain,
                     paranetId,
@@ -115,6 +142,11 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     );
                     return Command.empty();
                 }
+                this.operationIdService.emitChangeEvent(
+                    this.nodesAccessPolicyCheckEnd,
+                    operationId,
+                    blockchain,
+                );
             } catch (error) {
                 await this.handleError(operationId, blockchain, error.message, this.errorType);
                 return Command.empty();
@@ -124,7 +156,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END,
+            this.operationEndEvent,
         );
         return this.continueSequence(
             { ...command.data, paranetId, retry: undefined, period: undefined },

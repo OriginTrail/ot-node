@@ -1,10 +1,17 @@
 import Command from '../../command.js';
-import { NETWORK_MESSAGE_TYPES, OPERATION_REQUEST_STATUS } from '../../../constants/constants.js';
+import {
+    NETWORK_MESSAGE_TYPES,
+    OPERATION_REQUEST_STATUS,
+    OPERATION_ID_STATUS,
+} from '../../../constants/constants.js';
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
+
+        this.sendMessageStartEvent = OPERATION_ID_STATUS.PROTOCOL_SEND_MESSAGE_START;
+        this.sendMessageEndEvent = OPERATION_ID_STATUS.PROTOCOL_SEND_MESSAGE_END;
     }
 
     async executeProtocolMessageCommand(command, messageType) {
@@ -25,8 +32,13 @@ class ProtocolMessageCommand extends Command {
     }
 
     async sendProtocolMessage(command, message, messageType) {
-        const { node, operationId } = command.data;
+        const { node, operationId, blockchain } = command.data;
 
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.sendMessageStartEvent,
+        );
         const response = await this.networkModuleManager.sendMessage(
             node.protocol,
             node.id,
@@ -34,6 +46,11 @@ class ProtocolMessageCommand extends Command {
             operationId,
             message,
             this.messageTimeout(),
+        );
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.sendMessageEndEvent,
         );
 
         this.networkModuleManager.removeCachedSession(operationId, node.id);

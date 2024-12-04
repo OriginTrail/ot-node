@@ -1,4 +1,5 @@
 import Command from '../../command.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../constants/constants.js';
 
 class NetworkProtocolCommand extends Command {
     constructor(ctx) {
@@ -6,6 +7,16 @@ class NetworkProtocolCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
+
+        this.errorType = ERROR_TYPE.NETWORK_PROTOCOL_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_END;
+        this.getBatchSizeStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_BATCH_SIZE_START;
+        this.getBatchSizeEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_BATCH_SIZE_END;
+        this.getMinAckResponseStartEvent =
+            OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_MIN_ACK_RESPONSE_START;
+        this.getMinAckResponseEndEvent =
+            OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_MIN_ACK_RESPONSE_END;
     }
 
     /**
@@ -13,10 +24,29 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain } = command.data;
+        const { blockchain, operationId } = command.data;
 
+        this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
+
+        this.operationIdService.emitChangeEvent(
+            this.getBatchSizeStartEvent,
+            operationId,
+            blockchain,
+        );
         const batchSize = await this.operationService.getBatchSize(blockchain);
+        this.operationIdService.emitChangeEvent(this.getBatchSizeEndEvent, operationId, blockchain);
+
+        this.operationIdService.emitChangeEvent(
+            this.getMinAckResponseStartEvent,
+            operationId,
+            blockchain,
+        );
         const minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+        this.operationIdService.emitChangeEvent(
+            this.getMinAckResponseEndEvent,
+            operationId,
+            blockchain,
+        );
 
         const commandSequence = [
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
@@ -34,6 +64,8 @@ class NetworkProtocolCommand extends Command {
             },
             transactional: false,
         });
+
+        this.operationIdService.emitChangeEvent(this.operationEndEvent, operationId, blockchain);
 
         return Command.empty();
     }
