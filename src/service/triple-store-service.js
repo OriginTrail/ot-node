@@ -1,9 +1,9 @@
 /* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
-import { formatAssertion } from 'assertion-tools';
+import { kcTools } from 'assertion-tools';
+
 import {
     SCHEMA_CONTEXT,
-    UAL_PREDICATE,
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
 } from '../constants/constants.js';
@@ -96,7 +96,7 @@ class TripleStoreService {
             );
         }
 
-        const metadataTriples = await formatAssertion({
+        const metadataTriples = await kcTools.formatDataset({
             '@context': SCHEMA_CONTEXT,
             '@graph': knowledgeAssetsUALs.map((ual, index) => ({
                 '@id': ual,
