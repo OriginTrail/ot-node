@@ -14,12 +14,6 @@ class CommandResolver {
      */
     resolve(name) {
         try {
-            if (
-                name.includes('FinalityRequestCommand') &&
-                !name.includes('HandleFinalityRequestCommand')
-            ) {
-                return this.ctx.v1_0_0FinalityRequestCommand;
-            }
             return this.ctx[`${name}`];
         } catch (e) {
             this.logger.warn(`No handler defined for command '${name}'`);

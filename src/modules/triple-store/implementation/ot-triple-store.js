@@ -163,7 +163,8 @@ class OtTripleStore {
             ASK
             WHERE {
                 GRAPH <${namedGraph}> {
-                    << ?s ?p ?o >> ${UAL_PREDICATE} <${ual}>
+                    << ?s ?p ?o >> ${UAL_PREDICATE} ?ual
+                    FILTER(STRSTARTS(STR(?ual), "${ual}/"))
                 }
             }
         `;

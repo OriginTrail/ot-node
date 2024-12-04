@@ -32,7 +32,7 @@ class FinalityService extends OperationService {
         const { operationId, blockchain, numberOfFoundNodes, leftoverNodes, batchSize } =
             command.data;
 
-        let { minAckResponses } = command.data;
+        let { minimumNumberOfNodeReplications } = command.data;
 
         const responseStatusesFromDB = await this.getResponsesStatuses(
             responseStatus,
@@ -46,7 +46,7 @@ class FinalityService extends OperationService {
         const isAllNodesResponded = numberOfFoundNodes === totalResponses;
         const isBatchCompleted = totalResponses % batchSize === 0;
 
-        minAckResponses = minAckResponses ?? numberOfFoundNodes;
+        minimumNumberOfNodeReplications = minimumNumberOfNodeReplications ?? numberOfFoundNodes;
 
         this.logger.debug(
             `Processing ${
@@ -66,40 +66,38 @@ class FinalityService extends OperationService {
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minAckResponses
+            completedNumber >= minimumNumberOfNodeReplications
         ) {
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,
                 {
                     completedNodes: completedNumber,
-                    leftoverNodes,
                     allNodesReplicatedData: true,
                 },
                 [...this.completedStatuses],
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (completedNumber < minAckResponses && (isAllNodesResponded || isBatchCompleted)) {
+        } else if (
+            completedNumber < minimumNumberOfNodeReplications &&
+            (isAllNodesResponded || isBatchCompleted)
+        ) {
             const potentialCompletedNumber = completedNumber + leftoverNodes.length;
-
-            await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
-                completedNodes: completedNumber,
-                leftoverNodes,
-                allNodesReplicatedData: false,
-            });
 
             await this.operationIdService.cacheOperationIdDataToFile(operationId, {
                 completedNodes: completedNumber,
-                leftoverNodes,
                 allNodesReplicatedData: false,
             });
 
-            // Still possible to meet minAckResponses, schedule leftover nodes
-            if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
+            // Still possible to meet minimumNumberOfNodeReplications, schedule leftover nodes
+            if (
+                leftoverNodes.length > 0 &&
+                potentialCompletedNumber >= minimumNumberOfNodeReplications
+            ) {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             } else {
-                // Not enough potential responses to meet minAckResponses, or no leftover nodes
-                this.markOperationAsFailed(
+                // Not enough potential responses to meet minimumNumberOfNodeReplications, or no leftover nodes
+                await this.markOperationAsFailed(
                     operationId,
                     blockchain,
                     `Unable to replicate data on the network!`,

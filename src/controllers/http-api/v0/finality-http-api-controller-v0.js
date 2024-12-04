@@ -34,7 +34,7 @@ class FinalityController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
 
-        const { ual, blockchain } = req.body;
+        const { ual, blockchain, minimumNumberOfNodeReplications } = req.body;
 
         try {
             this.logger.info(`Finality for ${ual} with operation id ${operationId} initiated.`);
@@ -58,6 +58,7 @@ class FinalityController extends BaseController {
                     operationId,
                     blockchain,
                     datasetRoot,
+                    minimumNumberOfNodeReplications,
                 },
                 transactional: false,
             });

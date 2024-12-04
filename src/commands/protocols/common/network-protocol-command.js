@@ -18,10 +18,6 @@ class NetworkProtocolCommand extends Command {
         const batchSize = await this.operationService.getBatchSize(blockchain);
         const minAckResponses = await this.operationService.getMinAckResponses(blockchain);
 
-        if (this.operationService.getOperationName() === 'finality') {
-            // console.log('here');
-        }
-
         const commandSequence = [
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];

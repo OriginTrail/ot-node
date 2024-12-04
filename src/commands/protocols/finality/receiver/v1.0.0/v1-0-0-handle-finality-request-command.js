@@ -31,14 +31,18 @@ class HandleFinalityRequestCommand extends HandleProtocolMessageCommand {
                 operationId,
                 blockchain,
                 knowledgeCollectionExistsInUnifiedGraph,
-                [OPERATION_ID_STATUS.FINALITY.FINALITY_END, OPERATION_ID_STATUS.COMPLETED],
+                [
+                    OPERATION_ID_STATUS.FINALITY.FINALITY_FETCH_FROM_NODES_END,
+                    OPERATION_ID_STATUS.FINALITY.FINALITY_END,
+                    OPERATION_ID_STATUS.COMPLETED,
+                ],
             );
         }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.GET.FINALITY_REMOTE_END,
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_END,
         );
 
         return knowledgeCollectionExistsInUnifiedGraph

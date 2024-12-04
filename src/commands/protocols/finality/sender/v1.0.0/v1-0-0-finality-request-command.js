@@ -31,13 +31,20 @@ class FinalityRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { ual, operationId, numberOfShardNodes, blockchain } = command.data;
+        const {
+            ual,
+            operationId,
+            numberOfShardNodes,
+            blockchain,
+            minimumNumberOfNodeReplications,
+        } = command.data;
 
         return {
             ual,
             operationId,
             numberOfShardNodes,
             blockchain,
+            minimumNumberOfNodeReplications,
         };
     }
 

@@ -15,6 +15,7 @@ class FinalityScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             ...super.getNextCommandData(command),
             ual: command.data.ual,
             operationId: command.data.operationId,
+            minimumNumberOfNodeReplications: command.data.minimumNumberOfNodeReplications,
         };
     }
 

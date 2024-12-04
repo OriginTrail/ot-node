@@ -9,10 +9,6 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             type: Sequelize.UUID,
             allowNull: false,
         },
-        keyword: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
         status: {
             allowNull: false,
             type: Sequelize.STRING,
