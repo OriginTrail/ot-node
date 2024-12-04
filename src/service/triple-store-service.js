@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
 import { formatAssertion } from 'assertion-tools';
-
 import {
     SCHEMA_CONTEXT,
     UAL_PREDICATE,
@@ -65,12 +64,13 @@ class TripleStoreService {
         );
         const knowledgeAssetsTriples = this.dataService.groupTriplesBySubject(triples);
 
-        const tripleAnnotations = this.dataService.createTripleAnnotations(
-            knowledgeAssetsTriples,
-            UAL_PREDICATE,
-            knowledgeAssetsUALs.map((ual) => `<${ual}>`),
-        );
-        const unifiedGraphTriples = [...triples, ...tripleAnnotations];
+        // TODO: Add with the introduction of RDF-star mode
+        // const tripleAnnotations = this.dataService.createTripleAnnotations(
+        //     knowledgeAssetsTriples,
+        //     UAL_PREDICATE,
+        //     knowledgeAssetsUALs.map((ual) => `<${ual}>`),
+        // );
+        // const unifiedGraphTriples = [...triples, ...tripleAnnotations];
 
         const promises = [];
 
@@ -91,7 +91,7 @@ class TripleStoreService {
                     this.repositoryImplementations[repository],
                     repository,
                     BASE_NAMED_GRAPHS.UNIFIED,
-                    unifiedGraphTriples,
+                    triples,
                 ),
             );
         }
@@ -189,22 +189,23 @@ class TripleStoreService {
                 false,
             );
 
-        const knowledgeCollectionAnnotations = this.dataService.createTripleAnnotations(
-            knowledgeCollection,
-            UAL_PREDICATE,
-            `<${ual}>`,
-        );
-        const knowledgeCollectionWithAnnotations = [
-            ...knowledgeCollection,
-            ...knowledgeCollectionAnnotations,
-        ];
+        // TODO: Add with the introduction of the RDF-star mode
+        // const knowledgeCollectionAnnotations = this.dataService.createTripleAnnotations(
+        //     knowledgeCollection,
+        //     UAL_PREDICATE,
+        //     `<${ual}>`,
+        // );
+        // const knowledgeCollectionWithAnnotations = [
+        //     ...knowledgeCollection,
+        //     ...knowledgeCollectionAnnotations,
+        // ];
 
         await Promise.all([
             this.tripleStoreModuleManager.insertKnowledgeCollectionIntoUnifiedGraph(
                 this.repositoryImplementations[toRepository],
                 toRepository,
                 BASE_NAMED_GRAPHS.HISTORICAL_UNIFIED,
-                knowledgeCollectionWithAnnotations,
+                knowledgeCollection,
             ),
             this.tripleStoreModuleManager.deleteUniqueKnowledgeCollectionTriplesFromUnifiedGraph(
                 this.repositoryImplementations[toRepository],
