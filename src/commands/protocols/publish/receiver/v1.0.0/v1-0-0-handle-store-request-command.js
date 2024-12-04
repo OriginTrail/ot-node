@@ -74,14 +74,14 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
 
         await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
 
+        const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+        const signature = await this.blsService.sign(datasetRoot);
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_END,
         );
-
-        const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-        const signature = await this.blsService.sign(datasetRoot);
 
         return {
             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
