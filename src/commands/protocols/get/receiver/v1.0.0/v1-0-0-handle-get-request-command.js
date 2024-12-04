@@ -17,7 +17,15 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { operationId, blockchain, ual, includeMetadata } = commandData;
+        const {
+            operationId,
+            blockchain,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            ual,
+            includeMetadata,
+        } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -84,31 +92,32 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //     }
         // }
 
-        const promises = [this.tripleStoreService.getAssertion(ual)];
+        const promises = [
+            this.tripleStoreService.getAssertion(
+                blockchain,
+                contract,
+                knowledgeCollectionId,
+                knowledgeAssetId,
+            ),
+        ];
 
         if (includeMetadata) {
-            promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
+            promises.push(
+                this.tripleStoreService.getAssertionMetadata(
+                    blockchain,
+                    contract,
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
+                ),
+            );
         }
 
-        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
+        const [assertion, metadata] = await Promise.all(promises);
 
         const responseData = {
             assertion,
-            ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
+            ...(includeMetadata && metadata && { metadata }),
         };
-
-        if (assertion.length) {
-            await this.operationService.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                responseData,
-                [
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                    OPERATION_ID_STATUS.GET.GET_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
-            );
-        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -117,7 +126,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         );
 
         return assertion.length
-            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: { assertion } }
+            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                   messageData: { errorMessage: `Unable to find assertion ${ual}` },

@@ -146,12 +146,13 @@ class GetController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
         let blockchain;
-        let tokenId;
         let contract;
+        let knowledgeCollectionId;
+        let knowledgeAssetId;
         try {
             const { id, paranetUAL, includeMetadata } = req.body;
-
-            ({ blockchain, tokenId, contract } = this.ualService.resolveUAL(id));
+            ({ blockchain, contract, knowledgeCollectionId, knowledgeAssetId } =
+                this.ualService.resolveUAL(id));
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
@@ -169,11 +170,12 @@ class GetController extends BaseController {
                     ual: id,
                     includeMetadata,
                     blockchain,
+                    contract,
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
                     operationId,
                     hashFunctionId,
                     paranetUAL,
-                    tokenId,
-                    contract,
                 },
                 transactional: false,
             });
