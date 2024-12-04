@@ -7,7 +7,7 @@ class MerkleValidation {
     }
 
     async calculateRoot(assertion) {
-        return kcTools.calculateRoot(assertion);
+        return kcTools.calculateMerkleRoot(assertion);
     }
 }
 
