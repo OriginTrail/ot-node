@@ -42,30 +42,6 @@ class QuestTelemetry {
         } catch (err) {
             this.logger.error(`Error sending telemetry to local QuestDB: ${err.message}`);
         }
-
-        if (this.config.sendToSignalingService) {
-            try {
-                const table = this.signalingServiceSender.table('event');
-
-                table.symbol('operationId', operationId || 'NULL');
-                table.symbol('blockchainId', blockchainId || 'NULL');
-                table.symbol('name', name || 'NULL');
-                if (value1 !== null) table.symbol('value1', value1);
-                if (value2 !== null) table.symbol('value2', value2);
-                if (value3 !== null) table.symbol('value3', value3);
-                table.timestampColumn('timestamp', timestamp * 1000);
-
-                await table.at(Date.now(), 'ms');
-                await this.signalingServiceSender.flush();
-                await this.signalingServiceSender.close();
-
-                this.logger.info('Event telemetry successfully sent to signaling service QuestDB');
-            } catch (err) {
-                this.logger.error(
-                    `Error sending telemetry to signaling service QuestDB: ${err.message}`,
-                );
-            }
-        }
     }
 }
 
