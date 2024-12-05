@@ -17,14 +17,14 @@ class HandlePublishfinalityAckCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, blockchain, operationId } = commandData;
+        const { ual, remotePeerId, blockchain, operationId } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_REMOTE_START,
         );
 
-        const success = true; // TODO: await save ack from peer for the UAL
+        const success = !!remotePeerId; // TODO: await save ack from peer for the UAL
 
         if (success) {
             await this.operationService.markOperationAsCompleted(operationId, blockchain, success, [
