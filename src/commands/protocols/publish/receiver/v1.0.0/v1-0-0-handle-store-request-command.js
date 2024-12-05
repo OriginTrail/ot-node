@@ -26,7 +26,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { blockchain, operationId, datasetRoot } = commandData;
+        const { blockchain, operationId, datasetRoot, remotePeerId } = commandData;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -72,7 +72,12 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_START,
         );
 
-        await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+        await this.pendingStorageService.cacheDataset(
+            operationId,
+            datasetRoot,
+            dataset,
+            remotePeerId,
+        );
 
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
         const signature = await this.blsService.sign(datasetRoot);

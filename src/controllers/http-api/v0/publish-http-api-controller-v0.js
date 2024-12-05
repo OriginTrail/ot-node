@@ -64,7 +64,7 @@ class PublishController extends BaseController {
                 datasetRoot,
             });
 
-            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset, null);
 
             const commandSequence = ['publishFindShardCommand'];
 
