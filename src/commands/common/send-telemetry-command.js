@@ -22,10 +22,7 @@ class SendTelemetryCommand extends Command {
      * @param command
      */
     async execute() {
-        if (
-            !this.config.modules.telemetry.enabled ||
-            !this.telemetryModuleManager.getModuleConfiguration().sendTelemetryData
-        ) {
+        if (!this.config.modules.telemetry.enabled) {
             return Command.empty();
         }
 

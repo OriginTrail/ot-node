@@ -36,7 +36,7 @@ class TelemetryModuleManager extends BaseModuleManager {
     }
 
     async sendTelemetryData(operationId, timestamp, blockchainId, name, value1, value2, value3) {
-        if (this.getImplementation().config.sendTelemetryData && this.initialized) {
+        if (this.config.modules.telemetry.enabled && this.initialized) {
             return this.getImplementation().module.sendTelemetryData(
                 operationId,
                 timestamp,

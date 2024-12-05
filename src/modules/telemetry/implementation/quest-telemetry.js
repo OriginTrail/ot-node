@@ -4,7 +4,10 @@ class QuestTelemetry {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
-        this.sender = Sender.fromConfig(this.config.ip_endpoint);
+        this.localSender = Sender.fromConfig(this.config.localEndpoint);
+        if (this.config.sendToSignalingService) {
+            this.signalingServiceSender = Sender.fromConfig(this.config.signalingServiceEndpoint);
+        }
     }
 
     listenOnEvents(eventEmitter, onEventReceived) {
@@ -21,7 +24,7 @@ class QuestTelemetry {
         value3 = null,
     ) {
         try {
-            const table = this.sender.table('event');
+            const table = this.localSender.table('event');
 
             table.symbol('operationId', operationId || 'NULL');
             table.symbol('blockchainId', blockchainId || 'NULL');
@@ -32,12 +35,36 @@ class QuestTelemetry {
             table.timestampColumn('timestamp', timestamp * 1000);
 
             await table.at(Date.now(), 'ms');
-            await this.sender.flush();
-            await this.sender.close();
+            await this.localSender.flush();
+            await this.localSender.close();
 
-            this.logger.info('Event telemetry successfully sent to QuestDB');
+            this.logger.info('Event telemetry successfully sent to local QuestDB');
         } catch (err) {
-            this.logger.error(`Error sending telemetry to QuestDB: ${err.message}`);
+            this.logger.error(`Error sending telemetry to local QuestDB: ${err.message}`);
+        }
+
+        if (this.config.sendToSignalingService) {
+            try {
+                const table = this.signalingServiceSender.table('event');
+
+                table.symbol('operationId', operationId || 'NULL');
+                table.symbol('blockchainId', blockchainId || 'NULL');
+                table.symbol('name', name || 'NULL');
+                if (value1 !== null) table.symbol('value1', value1);
+                if (value2 !== null) table.symbol('value2', value2);
+                if (value3 !== null) table.symbol('value3', value3);
+                table.timestampColumn('timestamp', timestamp * 1000);
+
+                await table.at(Date.now(), 'ms');
+                await this.signalingServiceSender.flush();
+                await this.signalingServiceSender.close();
+
+                this.logger.info('Event telemetry successfully sent to signaling service QuestDB');
+            } catch (err) {
+                this.logger.error(
+                    `Error sending telemetry to signaling service QuestDB: ${err.message}`,
+                );
+            }
         }
     }
 }

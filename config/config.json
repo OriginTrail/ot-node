@@ -149,14 +149,15 @@
                 }
             },
             "telemetry": {
-                "enabled": true,
+                "enabled": false,
                 "implementation": {
                     "quest-telemetry": {
                         "enabled": true,
                         "package": "./telemetry/implementation/quest-telemetry.js",
                         "config": {
-                            "ip_endpoint": "http::addr=localhost:10000",
-                            "sendTelemetryData": false
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
                         }                      
                     }
                 }
@@ -317,14 +318,15 @@
                 }
             },
             "telemetry": {
-                "enabled": true,
+                "enabled": false,
                 "implementation": {
                     "quest-telemetry": {
                         "enabled": true,
                         "package": "./telemetry/implementation/quest-telemetry.js",
                         "config": {
-                            "ip_endpoint": "http::addr=localhost:10000",
-                            "sendTelemetryData": false
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
                         }                      
                     }
                 }
@@ -485,14 +487,15 @@
                 }
             },
             "telemetry": {
-                "enabled": true,
+                "enabled": false,
                 "implementation": {
                     "quest-telemetry": {
                         "enabled": true,
                         "package": "./telemetry/implementation/quest-telemetry.js",
                         "config": {
-                            "ip_endpoint": "http::addr=localhost:10000",
-                            "sendTelemetryData": false
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
                         }                      
                     }
                 }
@@ -652,14 +655,15 @@
                 }
             },
             "telemetry": {
-                "enabled": true,
+                "enabled": false,
                 "implementation": {
                     "quest-telemetry": {
                         "enabled": true,
                         "package": "./telemetry/implementation/quest-telemetry.js",
                         "config": {
-                            "ip_endpoint": "http::addr=localhost:10000",
-                            "sendTelemetryData": false
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
                         }                      
                     }
                 }
@@ -842,14 +846,16 @@
                 }
             },
             "telemetry": {
-                "enabled": true,
+                "enabled": false,
                 "implementation": {
                     "quest-telemetry": {
                         "enabled": true,
                         "package": "./telemetry/implementation/quest-telemetry.js",
                         "config": {
-                            "ip_endpoint": "http::addr=localhost:10000",
-                            "sendTelemetryData": false
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+
                         }                      
                     }
                 }
