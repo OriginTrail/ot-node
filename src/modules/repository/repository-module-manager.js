@@ -513,6 +513,29 @@ class RepositoryModuleManager extends BaseModuleManager {
             options,
         );
     }
+
+    async createPublishFinalityRecord(ual, blockchainId, options = {}) {
+        return this.getRepository('publish_finality_repository').createFinalityRecord(
+            ual,
+            blockchainId,
+            options,
+        );
+    }
+
+    async getPublishFinality(ual, options = {}) {
+        return this.getRepository('publish_finality_repository').getFinality(ual, options);
+    }
+
+    async savePublishFinalityAck(ual, peerId, options = {}) {
+        return Promise.all([
+            this.getRepository('publish_finality_peers_repository').saveFinalityAck(
+                ual,
+                peerId,
+                options,
+            ),
+            this.getRepository('publish_finality_repository').increaseFinality(ual, options),
+        ]);
+    }
 }
 
 export default RepositoryModuleManager;
