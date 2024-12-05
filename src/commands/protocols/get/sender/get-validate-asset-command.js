@@ -41,7 +41,18 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
             );
             return Command.empty();
         }
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_VALIDATE_UAL_START,
+            operationId,
+            blockchain,
+        );
         const isValidUal = await this.validationService.validateUal(blockchain, contract, tokenId);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_VALIDATE_UAL_END,
+            operationId,
+            blockchain,
+        );
 
         if (!isValidUal) {
             await this.handleError(

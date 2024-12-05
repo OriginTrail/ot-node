@@ -14,6 +14,10 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_END;
+        this.sendMessageResponseStartEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_SEND_MESSAGE_START;
+        this.sendMessageResponseEndEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_SEND_MESSAGE_END;
     }
 
     async prepareMessage(commandData) {
@@ -21,7 +25,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.GET.GET_REMOTE_START,
+            OPERATION_ID_STATUS.GET.GET_REMOTE_PREPARE_MESSAGE_START,
         );
 
         // if (paranetUAL) {
@@ -84,37 +88,58 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //     }
         // }
 
-        const promises = [this.tripleStoreService.getAssertion(ual)];
+        // const promises = [this.tripleStoreService.getAssertion(ual)];
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_START,
+            operationId,
+            blockchain,
+        );
+        const assertion = await this.tripleStoreService.getAssertion(ual);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+            operationId,
+            blockchain,
+        );
 
-        if (includeMetadata) {
-            promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
-        }
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_KA_METADATA_START,
+            operationId,
+            blockchain,
+        );
+        const knowledgeAssetMetadata = includeMetadata
+            ? await this.tripleStoreService.getKnowledgeAssetMetadata(ual)
+            : undefined;
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_KA_METADATA_END,
+            operationId,
+            blockchain,
+        );
 
-        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
+        // if (includeMetadata) {
+        //     promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
+        // }
+
+        // const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
 
         const responseData = {
             assertion,
             ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
         };
 
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.GET.GET_REMOTE_PREPARE_MESSAGE_END,
+        );
+
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
                 responseData,
-                [
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                    OPERATION_ID_STATUS.GET.GET_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
+                [OPERATION_ID_STATUS.GET.GET_END, OPERATION_ID_STATUS.COMPLETED],
             );
         }
-
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.GET.GET_REMOTE_END,
-        );
 
         return assertion.length
             ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: { assertion } }

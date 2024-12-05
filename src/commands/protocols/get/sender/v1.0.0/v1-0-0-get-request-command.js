@@ -4,6 +4,7 @@ import {
     ERROR_TYPE,
     OPERATION_REQUEST_STATUS,
     OPERATION_STATUS,
+    OPERATION_ID_STATUS,
 } from '../../../../../constants/constants.js';
 
 class GetRequestCommand extends ProtocolRequestCommand {
@@ -13,12 +14,26 @@ class GetRequestCommand extends ProtocolRequestCommand {
         this.validationService = ctx.validationService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_END;
+        this.sendMessageStartEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_SEND_MESSAGE_START;
+        this.sendMessageEndEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_SEND_MESSAGE_END;
     }
 
     async shouldSendMessage(command) {
-        const { operationId } = command.data;
+        const { operationId, blockchain } = command.data;
 
+        await this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_REQUEST_SHOULD_SEND_MESSAGE_START,
+            operationId,
+            blockchain,
+        );
         const { status } = await this.operationService.getOperationStatus(operationId);
+        await this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_REQUEST_SHOULD_SEND_MESSAGE_END,
+            operationId,
+            blockchain,
+        );
 
         if (status === OPERATION_STATUS.IN_PROGRESS) {
             return true;
