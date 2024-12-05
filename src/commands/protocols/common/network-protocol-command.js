@@ -13,10 +13,6 @@ class NetworkProtocolCommand extends Command {
         this.operationEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_END;
         this.getBatchSizeStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_BATCH_SIZE_START;
         this.getBatchSizeEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_BATCH_SIZE_END;
-        this.getMinAckResponseStartEvent =
-            OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_MIN_ACK_RESPONSE_START;
-        this.getMinAckResponseEndEvent =
-            OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_MIN_ACK_RESPONSE_END;
     }
 
     /**
@@ -36,17 +32,7 @@ class NetworkProtocolCommand extends Command {
         const batchSize = await this.operationService.getBatchSize(blockchain);
         this.operationIdService.emitChangeEvent(this.getBatchSizeEndEvent, operationId, blockchain);
 
-        this.operationIdService.emitChangeEvent(
-            this.getMinAckResponseStartEvent,
-            operationId,
-            blockchain,
-        );
         const minAckResponses = await this.operationService.getMinAckResponses(blockchain);
-        this.operationIdService.emitChangeEvent(
-            this.getMinAckResponseEndEvent,
-            operationId,
-            blockchain,
-        );
 
         const commandSequence = [
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,

@@ -14,6 +14,10 @@ class HandleProtocolMessageCommand extends Command {
 
         this.operationStartEvent = OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_START;
         this.operationEndEvent = OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_END;
+        this.prepareMessageStartEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_PREPARE_MESSAGE_END;
         this.sendMessageResponseStartEvent =
             OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_SEND_MESSAGE_RESPONSE_START;
         this.sendMessageResponseEndEvent =
@@ -30,7 +34,17 @@ class HandleProtocolMessageCommand extends Command {
         this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
 
         try {
+            this.operationIdService.emitChangeEvent(
+                this.prepareMessageStartEvent,
+                operationId,
+                blockchain,
+            );
             const { messageType, messageData } = await this.prepareMessage(command.data);
+            this.operationIdService.emitChangeEvent(
+                this.prepareMessageEndEvent,
+                operationId,
+                blockchain,
+            );
 
             this.operationIdService.emitChangeEvent(
                 this.sendMessageResponseStartEvent,

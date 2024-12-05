@@ -20,7 +20,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_END;
         this.nodesAccessPolicyCheckStartEvent =
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_START;
-        this.nodesAccessPolicyChEvent =
+        this.nodesAccessPolicyCheckEndEvent =
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_END;
     }
 
@@ -143,7 +143,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     return Command.empty();
                 }
                 this.operationIdService.emitChangeEvent(
-                    this.nodesAccessPolicyCheckEnd,
+                    this.nodesAccessPolicyCheckEndEvent,
                     operationId,
                     blockchain,
                 );

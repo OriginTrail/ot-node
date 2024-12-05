@@ -69,7 +69,7 @@ class QueryCommand extends Command {
 
         try {
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_QUERY_TYPE_START,
+                OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_QUERY_START,
                 operationId,
             );
             switch (queryType) {
@@ -87,7 +87,7 @@ class QueryCommand extends Command {
                     throw new Error(`Unknown query type ${queryType}`);
             }
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_QUERY_TYPE_END,
+                OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_QUERY_END,
                 operationId,
             );
 

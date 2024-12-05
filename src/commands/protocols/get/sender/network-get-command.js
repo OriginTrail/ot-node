@@ -12,10 +12,6 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_NETWORK_END;
         this.getBatchSizeStartEvent = OPERATION_ID_STATUS.GET.GET_NETWORK_GET_BATCH_SIZE_START;
         this.getBatchSizeEndEvent = OPERATION_ID_STATUS.GET.GET_NETWORK_GET_BATCH_SIZE_END;
-        this.getMinAckResponseStartEvent =
-            OPERATION_ID_STATUS.GET.GET_NETWORK_GET_MIN_ACK_RESPONSE_START;
-        this.getMinAckResponseEndEvent =
-            OPERATION_ID_STATUS.GET.GET_NETWORK_GET_MIN_ACK_RESPONSE_END;
     }
 
     /**

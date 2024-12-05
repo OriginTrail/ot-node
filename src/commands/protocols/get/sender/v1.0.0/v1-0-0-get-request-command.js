@@ -21,19 +21,9 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async shouldSendMessage(command) {
-        const { operationId, blockchain } = command.data;
+        const { operationId } = command.data;
 
-        await this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.GET.GET_REQUEST_SHOULD_SEND_MESSAGE_START,
-            operationId,
-            blockchain,
-        );
         const { status } = await this.operationService.getOperationStatus(operationId);
-        await this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.GET.GET_REQUEST_SHOULD_SEND_MESSAGE_END,
-            operationId,
-            blockchain,
-        );
 
         if (status === OPERATION_STATUS.IN_PROGRESS) {
             return true;

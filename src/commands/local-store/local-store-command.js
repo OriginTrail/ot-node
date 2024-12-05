@@ -23,12 +23,6 @@ class LocalStoreCommand extends Command {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
-        this.operationStartEvent = OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START;
-        this.operationEndEvent = OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_END;
-        this.getCachedOperationIdDataStartEvent =
-            OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_GET_CACHED_OPERATION_ID_DATA_START;
-        this.getCachedOperationIdDataEndEvent =
-            OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_GET_CACHED_OPERATION_ID_DATA_END;
     }
 
     async execute(command) {
@@ -43,17 +37,17 @@ class LocalStoreCommand extends Command {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
-                this.operationStartEvent,
+                OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_START,
             );
 
             this.operationIdService.emitChangeEvent(
-                this.getCachedOperationIdDataStartEvent,
+                OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_GET_CACHED_OPERATION_ID_DATA_START,
                 operationId,
                 blockchain,
             );
             const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
             this.operationIdService.emitChangeEvent(
-                this.getCachedOperationIdDataEndEvent,
+                OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_GET_CACHED_OPERATION_ID_DATA_END,
                 operationId,
                 blockchain,
             );
@@ -171,7 +165,7 @@ class LocalStoreCommand extends Command {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
-                this.operationEndEvent,
+                OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_END,
             );
         } catch (e) {
             await this.handleError(operationId, blockchain, e.message, this.errorType, true);

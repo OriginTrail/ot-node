@@ -80,37 +80,43 @@ class LocalGetCommand extends Command {
         // }
 
         // else {
+
+        const promises = [];
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_START,
             operationId,
             blockchain,
         );
-        const assertion = await this.tripleStoreService.getAssertion(ual);
-        // const promises = [this.tripleStoreService.getAssertion(ual)];
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
-            operationId,
-            blockchain,
-        );
+        const assertionPromise = this.tripleStoreService.getAssertion(ual).then((result) => {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
+                operationId,
+                blockchain,
+            );
+            return result;
+        });
+        promises.push(assertionPromise);
 
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.GET.GET_LOCAL_GET_KA_METADATA_START,
-            operationId,
-            blockchain,
-        );
-        const knowledgeAssetMetadata = includeMetadata
-            ? await this.tripleStoreService.getKnowledgeAssetMetadata(ual)
-            : undefined;
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.GET.GET_LOCAL_GET_KA_METADATA_END,
-            operationId,
-            blockchain,
-        );
-        // if (includeMetadata) {
-        //     promises.push(this.tripleStoreService.getKnowledgeAssetMetadata(ual));
-        // }
+        if (includeMetadata) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_KA_METADATA_START,
+                operationId,
+                blockchain,
+            );
+            const knowledgeAssetMetadataPromise = this.tripleStoreService
+                .getKnowledgeAssetMetadata(ual)
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_KA_METADATA_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+            promises.push(knowledgeAssetMetadataPromise);
+        }
 
-        // const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
+        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
 
         const responseData = {
             assertion,
