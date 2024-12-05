@@ -9,7 +9,6 @@ import { MIN_NODE_VERSION, PARANET_ACCESS_POLICY } from './src/constants/constan
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
-import MigrationExecutor from './src/migration/migration-executor.js';
 
 const require = createRequire(import.meta.url);
 const { setTimeout } = require('timers/promises');
@@ -29,12 +28,6 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
-        await MigrationExecutor.executeMultipleOpWalletsUserConfigurationMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
         this.logger.info('██████╗ ██╗  ██╗ ██████╗     ██╗   ██╗ █████╗ ');
         this.logger.info('██╔══██╗██║ ██╔╝██╔════╝     ██║   ██║██╔══██╗');
         this.logger.info('██║  ██║█████╔╝ ██║  ███╗    ██║   ██║╚█████╔╝');
@@ -51,79 +44,18 @@ class OTNode {
         this.initializeEventEmitter();
 
         await this.initializeModules();
+        this.initializeBlockchainEventsService();
+        await this.initializeShardingTableService();
         await this.initializeParanets();
-
-        await MigrationExecutor.executeRemoveServiceAgreementsForChiadoMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeDevnetPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeSetParanetSyncedAssetType(
-            this.container,
-            this.logger,
-            this.config,
-        );
 
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
-        await this.initializeShardingTableService();
-
-        await MigrationExecutor.executeMarkStakingEventsAsProcessedMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await this.initializeBlockchainEventListenerService();
-
-        await MigrationExecutor.executePullShardingTableMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeServiceAgreementPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeDevnetNeuroPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
 
         await this.initializeRouters();
         await this.startNetworkModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
-
-        MigrationExecutor.executeGetOldServiceAgreementsMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        MigrationExecutor.executeServiceAgreementPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        MigrationExecutor.executeRemoveDuplicateServiceAgreementMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
     }
 
     checkNodeVersion() {
@@ -198,20 +130,6 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'eventEmitter', eventEmitter);
 
         this.logger.info('Event emitter initialized');
-    }
-
-    async initializeBlockchainEventListenerService() {
-        try {
-            const eventListenerService = this.container.resolve('blockchainEventListenerService');
-            await eventListenerService.initialize();
-            eventListenerService.startListeningOnEvents();
-            this.logger.info('Event Listener Service initialized successfully');
-        } catch (error) {
-            this.logger.error(
-                `Unable to initialize event listener service. Error message: ${error.message} OT-node shutting down...`,
-            );
-            this.stop(1);
-        }
     }
 
     async initializeRouters() {
@@ -360,6 +278,19 @@ class OTNode {
         }
     }
 
+    initializeBlockchainEventsService() {
+        try {
+            const blockchainEventsService = this.container.resolve('blockchainEventsService');
+            blockchainEventsService.initializeBlockchainEventsServices();
+            this.logger.info('Blockchain Events Service initialized successfully');
+        } catch (error) {
+            this.logger.error(
+                `Unable to initialize Blockchain Events Service. Error message: ${error.message} OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
+    }
+
     async removeUpdateFile() {
         const updateFilePath = this.fileService.getUpdateFilePath();
         await this.fileService.removeFile(updateFilePath).catch((error) => {
@@ -451,6 +382,18 @@ class OTNode {
         }
         this.config.assetSync.syncParanets = validParanets;
         tripleStoreService.initializeRepositories();
+    }
+
+    async initializeBLSService() {
+        try {
+            const blsService = this.container.resolve('blsService');
+            await blsService.initialize();
+        } catch (error) {
+            this.logger.error(
+                `Unable to initialize BLS Service. Error message: ${error.message} OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
     }
 
     stop(code = 0) {

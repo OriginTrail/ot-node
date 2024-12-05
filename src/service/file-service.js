@@ -1,6 +1,7 @@
 import path from 'path';
-import { mkdir, writeFile, readFile, unlink, stat, readdir, rm } from 'fs/promises';
+import { mkdir, writeFile, readFile, unlink, stat, readdir, rm, appendFile } from 'fs/promises';
 import appRootPath from 'app-root-path';
+import { BLS_KEY_DIRECTORY, BLS_KEY_FILENAME, NODE_ENVIRONMENTS } from '../constants/constants.js';
 
 const ARCHIVE_FOLDER_NAME = 'archive';
 const MIGRATION_FOLDER_NAME = 'migrations';
@@ -22,14 +23,26 @@ class FileService {
      * @param data
      * @returns {Promise}
      */
-    async writeContentsToFile(directory, filename, data, log = true) {
+    async writeContentsToFile(directory, filename, data, log = true, flag = 'w') {
         if (log) {
             this.logger.debug(`Saving file with name: ${filename} in the directory: ${directory}`);
         }
         await mkdir(directory, { recursive: true });
         const fullpath = path.join(directory, filename);
-        await writeFile(fullpath, data);
+        await writeFile(fullpath, data, { flag });
         return fullpath;
+    }
+
+    async appendContentsToFile(directory, filename, data, log = true) {
+        if (log) {
+            this.logger.debug(`Saving file with name: ${filename} in the directory: ${directory}`);
+        }
+        await mkdir(directory, { recursive: true });
+        const fullPath = path.join(directory, filename);
+
+        await appendFile(fullPath, data);
+
+        return fullPath;
     }
 
     async readDirectory(dirPath) {
@@ -102,11 +115,31 @@ class FileService {
         }
     }
 
+    getBinariesFolderPath() {
+        return path.join(appRootPath.path, 'bin');
+    }
+
+    getBinaryPath(binary) {
+        let binaryName = binary;
+        if (process.platform === 'win32') {
+            binaryName += '.exe';
+        }
+        return path.join(this.getBinariesFolderPath(), process.platform, process.arch, binaryName);
+    }
+
+    getBLSSecretKeyFolderPath() {
+        return path.join(this.getDataFolderPath(), BLS_KEY_DIRECTORY);
+    }
+
+    getBLSSecretKeyPath() {
+        return path.join(this.getBLSSecretKeyFolderPath(), BLS_KEY_FILENAME);
+    }
+
     getDataFolderPath() {
         if (
-            process.env.NODE_ENV === 'testnet' ||
-            process.env.NODE_ENV === 'mainnet' ||
-            process.env.NODE_ENV === 'devnet'
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVNET ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TESTNET ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
         ) {
             return path.join(appRootPath.path, '..', this.config.appDataPath);
         }
@@ -129,60 +162,20 @@ class FileService {
         return path.join(this.getOperationIdCachePath(), operationId);
     }
 
-    getPendingStorageCachePath(repository) {
-        return path.join(this.getDataFolderPath(), 'pending_storage_cache', repository);
+    getPendingStorageCachePath() {
+        return path.join(this.getDataFolderPath(), 'pending_storage_cache');
     }
 
-    getPendingStorageFolderPath(repository, blockchain, contract, tokenId) {
-        return path.join(
-            this.getPendingStorageCachePath(repository),
-            `${blockchain.toLowerCase()}:${contract.toLowerCase()}:${tokenId}`,
-        );
+    getPendingStorageDocumentPath(operationId) {
+        return path.join(this.getPendingStorageCachePath(), operationId);
     }
 
-    async getPendingStorageLatestDocument(repository, blockchain, contract, tokenId) {
-        const pendingStorageFolder = this.getPendingStorageFolderPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        let latestFile;
-        let latestMtime = 0;
-        try {
-            const files = await readdir(pendingStorageFolder);
-
-            for (const file of files) {
-                const filePath = path.join(pendingStorageFolder, file);
-                // eslint-disable-next-line no-await-in-loop
-                const stats = await stat(filePath);
-
-                if (stats.mtimeMs > latestMtime) {
-                    latestFile = file;
-                    latestMtime = stats.mtimeMs;
-                }
-            }
-        } catch (error) {
-            if (error.code === 'ENOENT') {
-                this.logger.debug(`Folder not found at path: ${pendingStorageFolder}`);
-                return false;
-            }
-            throw error;
-        }
-
-        return latestFile ?? false;
+    getSignatureStorageCachePath() {
+        return path.join(this.getDataFolderPath(), 'signature_storage_cache');
     }
 
-    async getPendingStorageDocumentPath(repository, blockchain, contract, tokenId, assertionId) {
-        const pendingStorageFolder = this.getPendingStorageFolderPath(
-            repository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return path.join(pendingStorageFolder, assertionId);
+    getSignatureStorageDocumentPath(operationId) {
+        return path.join(this.getSignatureStorageCachePath(), operationId);
     }
 
     getArchiveFolderPath(subFolder) {

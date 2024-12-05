@@ -315,27 +315,9 @@ install_node() {
             "enabled": "true",
             "config": {
                 "repositories": {
-                    "privateCurrent": {
+                    "dkg": {
                         "url": $tripleStoreUrl,
-                        "name": "private-current",
-                        "username": "admin",
-                        "password": ""
-                    },
-                    "privateHistory": {
-                        "url": $tripleStoreUrl,
-                        "name": "private-history",
-                        "username": "admin",
-                        "password": ""
-                    },
-                    "publicCurrent": {
-                        "url": $tripleStoreUrl,
-                        "name": "public-current",
-                        "username": "admin",
-                        "password": ""
-                    },
-                    "publicHistory": {
-                        "url": $tripleStoreUrl,
-                        "name": "public-history",
+                        "name": "dkg",
                         "username": "admin",
                         "password": ""
                     }
@@ -423,6 +405,37 @@ EOF
 
     # Configure Base-Sepolia
     configure_blockchain "base" $base_blockchain_id
+
+    # Function to configure blockchain events services
+    configure_blockchain_events_services() {
+        local blockchain=$1
+        local blockchain_id=$2
+
+        print_color $CYAN "🔧 Configuring Blockchain Events Service for Base Sepolia (Testnet)..."
+
+        read -p "$(print_color $YELLOW "Enter your RPC endpoint: ")" RPC_ENDPOINT
+        print_color $GREEN "✅ RPC endpoint: $RPC_ENDPOINT"
+
+        local jq_filter=$(cat <<EOF
+        .modules.blockchainEvents.implementation["ot-ethers"] = {
+            "enabled": true,
+            "config": {
+                "blockchains": ["$blockchain:$blockchain_id"],
+                rpcEndpoints: {
+                    "$blockchain:$blockchain_id": ["$RPC_ENDPOINT"]
+                }
+            }
+        }
+EOF
+        )
+
+        jq "$jq_filter" $CONFIG_DIR/.origintrail_noderc > $CONFIG_DIR/origintrail_noderc_tmp
+        mv $CONFIG_DIR/origintrail_noderc_tmp $CONFIG_DIR/.origintrail_noderc
+        chmod 600 $CONFIG_DIR/.origintrail_noderc
+    }
+
+    # Configure blockchain events service for Base Sepolia
+    configure_blockchain_events_services "base" $base_blockchain_id
 
     # Now execute npm install after configuring wallets
     print_color $CYAN "📦 Installing npm packages..."

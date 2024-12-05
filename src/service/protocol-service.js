@@ -36,7 +36,7 @@ class ProtocolService {
 
         const prefix = `${version}Handle${capitalizedOperation}`;
 
-        return [`${prefix}InitCommand`, `${prefix}RequestCommand`];
+        return [`${prefix}RequestCommand`];
     }
 
     getSenderCommandSequence(protocol) {
@@ -46,7 +46,7 @@ class ProtocolService {
 
         const prefix = `${version}${capitalizedOperation}`;
 
-        return [`${prefix}InitCommand`, `${prefix}RequestCommand`];
+        return [`${prefix}RequestCommand`];
     }
 }
 

@@ -6,20 +6,22 @@ class ShardRepository {
         this.model = models.shard;
     }
 
-    async createManyPeerRecords(peerRecords) {
+    async createManyPeerRecords(peerRecords, options) {
         return this.model.bulkCreate(peerRecords, {
             validate: true,
             updateOnDuplicate: ['ask', 'stake', 'sha256'],
+            ...options,
         });
     }
 
-    async removeShardingTablePeerRecords(blockchainId) {
+    async removeShardingTablePeerRecords(blockchainId, options) {
         return this.model.destroy({
             where: { blockchainId },
+            ...options,
         });
     }
 
-    async createPeerRecord(peerId, blockchainId, ask, stake, lastSeen, sha256) {
+    async createPeerRecord(peerId, blockchainId, ask, stake, lastSeen, sha256, options) {
         return this.model.create(
             {
                 peerId,
@@ -31,11 +33,12 @@ class ShardRepository {
             },
             {
                 ignoreDuplicates: true,
+                ...options,
             },
         );
     }
 
-    async getAllPeerRecords(blockchainId) {
+    async getAllPeerRecords(blockchainId, options) {
         const query = {
             where: {
                 blockchainId,
@@ -50,12 +53,13 @@ class ShardRepository {
                 'sha256',
             ],
             order: [['sha256', 'asc']],
+            ...options,
         };
 
         return this.model.findAll(query);
     }
 
-    async getPeerRecordsByIds(blockchainId, peerIds) {
+    async getPeerRecordsByIds(blockchainId, peerIds, options) {
         return this.model.findAll({
             where: {
                 blockchainId,
@@ -63,27 +67,30 @@ class ShardRepository {
                     [Sequelize.Op.in]: peerIds,
                 },
             },
+            ...options,
         });
     }
 
-    async getPeerRecord(peerId, blockchainId) {
+    async getPeerRecord(peerId, blockchainId, options) {
         return this.model.findOne({
             where: {
                 blockchainId,
                 peerId,
             },
+            ...options,
         });
     }
 
-    async getPeersCount(blockchainId) {
+    async getPeersCount(blockchainId, options) {
         return this.model.count({
             where: {
                 blockchainId,
             },
+            ...options,
         });
     }
 
-    async getPeersToDial(limit, dialFrequencyMillis) {
+    async getPeersToDial(limit, dialFrequencyMillis, options) {
         const result = await this.model.findAll({
             attributes: ['peer_id'],
             where: {
@@ -95,11 +102,12 @@ class ShardRepository {
             group: ['peer_id', 'last_dialed'],
             limit,
             raw: true,
+            ...options,
         });
         return (result ?? []).map((record) => ({ peerId: record.peer_id }));
     }
 
-    async updatePeerAsk(peerId, blockchainId, ask) {
+    async updatePeerAsk(peerId, blockchainId, ask, options) {
         return this.model.update(
             { ask },
             {
@@ -107,11 +115,12 @@ class ShardRepository {
                     peerId,
                     blockchainId,
                 },
+                ...options,
             },
         );
     }
 
-    async updatePeerStake(peerId, blockchainId, stake) {
+    async updatePeerStake(peerId, blockchainId, stake, options) {
         return this.model.update(
             { stake },
             {
@@ -119,22 +128,24 @@ class ShardRepository {
                     peerId,
                     blockchainId,
                 },
+                ...options,
             },
         );
     }
 
-    async updatePeerRecordLastDialed(peerId, timestamp) {
+    async updatePeerRecordLastDialed(peerId, timestamp, options) {
         return this.model.update(
             {
                 lastDialed: timestamp,
             },
             {
                 where: { peerId },
+                ...options,
             },
         );
     }
 
-    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp) {
+    async updatePeerRecordLastSeenAndLastDialed(peerId, timestamp, options) {
         return this.model.update(
             {
                 lastDialed: timestamp,
@@ -142,23 +153,35 @@ class ShardRepository {
             },
             {
                 where: { peerId },
+                ...options,
             },
         );
     }
 
-    async removePeerRecord(blockchainId, peerId) {
+    async removePeerRecord(blockchainId, peerId, options) {
         await this.model.destroy({
             where: {
                 blockchainId,
                 peerId,
             },
+            ...options,
         });
     }
 
-    async cleanShardingTable(blockchainId) {
+    async cleanShardingTable(blockchainId, options) {
         await this.model.destroy({
             where: blockchainId ? { blockchainId } : {},
+            ...options,
         });
+    }
+
+    async isNodePartOfShard(blockchainId, peerId, options) {
+        const nodeIsPartOfShard = await this.model.findOne({
+            where: { blockchainId, peerId },
+            ...options,
+        });
+
+        return !!nodeIsPartOfShard;
     }
 }
 

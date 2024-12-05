@@ -1,5 +1,4 @@
-import { assertionMetadata } from 'assertion-tools';
-import { BYTES_IN_KILOBYTE, ZERO_ADDRESS } from '../constants/constants.js';
+import { ZERO_ADDRESS } from '../constants/constants.js';
 
 class ValidationService {
     constructor(ctx) {
@@ -34,61 +33,15 @@ class ValidationService {
     async validateAssertion(assertionId, blockchain, assertion) {
         this.logger.info(`Validating assertionId: ${assertionId}`);
 
-        this.validateAssertionId(assertion, assertionId);
-        const blockchainAssertionData = await this.blockchainModuleManager.getAssertionData(
-            blockchain,
-            assertionId,
-        );
-        this.validateAssertionSize(blockchainAssertionData.size, assertion);
-        this.validateTriplesNumber(blockchainAssertionData.triplesNumber, assertion);
-        this.validateChunkSize(blockchainAssertionData.chunksNumber, assertion);
+        await this.validateDatasetRoot(assertion, assertionId);
 
         this.logger.info(`Assertion integrity validated! AssertionId: ${assertionId}`);
     }
 
-    validateAssertionSize(blockchainAssertionSize, assertion) {
-        const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
-        if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
-            throw Error(
-                `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
-            );
-        }
-        const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
-        if (blockchainAssertionSize !== assertionSize) {
-            // todo after corrective component is implemented, update this logic
-            this.logger.warn(
-                `Invalid assertion size, value read from blockchain: ${blockchainAssertionSize}, calculated: ${assertionSize}`,
-            );
-        }
-    }
+    async validateDatasetRoot(dataset, datasetRoot) {
+        const calculatedDatasetRoot = await this.validationModuleManager.calculateRoot(dataset);
 
-    validateTriplesNumber(blockchainTriplesNumber, assertion) {
-        const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
-        if (blockchainTriplesNumber !== triplesNumber) {
-            throw Error(
-                `Invalid triples number, value read from blockchain: ${blockchainTriplesNumber}, calculated: ${triplesNumber}`,
-            );
-        }
-    }
-
-    validateChunkSize(blockchainChunksNumber, assertion) {
-        const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
-        if (blockchainChunksNumber !== chunksNumber) {
-            throw Error(
-                `Invalid chunks number, value read from blockchain: ${blockchainChunksNumber}, calculated size: ${chunksNumber}`,
-            );
-        }
-    }
-
-    validateAssertionId(assertion, assertionId) {
-        const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
-
-        if (assertionId !== calculatedAssertionId) {
-            // todo after corrective component is implemented, update this logic
-            this.logger.warn(
-                `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
-            );
-        }
+        return datasetRoot === calculatedDatasetRoot;
     }
 }
 

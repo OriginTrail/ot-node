@@ -1,7 +1,5 @@
 import {
     BYTES_IN_KILOBYTE,
-    CONTRACTS,
-    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS,
     PEER_RECORD_UPDATE_DELAY,
     LOW_BID_SUGGESTION,
     MED_BID_SUGGESTION,
@@ -27,15 +25,7 @@ class ShardingTableService {
     }
 
     async initialize() {
-        const pullBlockchainShardingTables = this.blockchainModuleManager
-            .getImplementationNames()
-            .map((blockchainId) => this.pullBlockchainShardingTable(blockchainId));
-        await Promise.all(pullBlockchainShardingTables);
-
         await this.networkModuleManager.onPeerConnected((connection) => {
-            this.logger.trace(
-                `Node connected to ${connection.remotePeer.toB58String()}, updating sharding table last seen and last dialed.`,
-            );
             this.updatePeerRecordLastSeenAndLastDialed(connection.remotePeer.toB58String()).catch(
                 (error) => {
                     this.logger.warn(`Unable to update connected peer, error: ${error.message}`);
@@ -44,25 +34,13 @@ class ShardingTableService {
         });
     }
 
-    async pullBlockchainShardingTable(blockchainId, force = false) {
-        const lastCheckedBlock = await this.repositoryModuleManager.getLastCheckedBlock(
-            blockchainId,
-            CONTRACTS.SHARDING_TABLE_CONTRACT,
-        );
-
-        if (
-            force ||
-            (lastCheckedBlock?.lastCheckedTimestamp &&
-                Date.now() - lastCheckedBlock.lastCheckedTimestamp <
-                    DEFAULT_BLOCKCHAIN_EVENT_SYNC_PERIOD_IN_MILLS)
-        ) {
-            return;
-        }
+    async pullBlockchainShardingTable(blockchainId, transaction = null) {
+        const options = transaction ? { transaction } : {};
 
         this.logger.debug(
             `Removing nodes from local sharding table for blockchain ${blockchainId}.`,
         );
-        await this.repositoryModuleManager.removeShardingTablePeerRecords(blockchainId);
+        await this.repositoryModuleManager.removeShardingTablePeerRecords(blockchainId, options);
 
         const shardingTableLength = await this.blockchainModuleManager.getShardingTableLength(
             blockchainId,
@@ -94,57 +72,43 @@ class ShardingTableService {
             `Finished pulling ${shardingTable.length} nodes from blockchain sharding table.`,
         );
 
-        await this.repositoryModuleManager.createManyPeerRecords(
-            await Promise.all(
-                shardingTable.map(async (peer) => {
-                    const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                        blockchainId,
-                        peer.nodeId,
-                    );
-                    const sha256 = await this.hashingService.callHashFunction(1, nodeId);
+        const newPeerRecords = await Promise.all(
+            shardingTable.map(async (peer) => {
+                const nodeId = this.blockchainModuleManager.convertHexToAscii(
+                    blockchainId,
+                    peer.nodeId,
+                );
+                const sha256 = await this.hashingService.callHashFunction(1, nodeId);
 
-                    return {
-                        peerId: nodeId,
+                return {
+                    peerId: nodeId,
+                    blockchainId,
+                    ask: this.blockchainModuleManager.convertFromWei(
                         blockchainId,
-                        ask: this.blockchainModuleManager.convertFromWei(
-                            blockchainId,
-                            peer.ask,
-                            'ether',
-                        ),
-                        stake: this.blockchainModuleManager.convertFromWei(
-                            blockchainId,
-                            peer.stake,
-                            'ether',
-                        ),
-                        sha256,
-                    };
-                }),
-            ),
+                        peer.ask,
+                        'ether',
+                    ),
+                    stake: this.blockchainModuleManager.convertFromWei(
+                        blockchainId,
+                        peer.stake,
+                        'ether',
+                    ),
+                    sha256,
+                };
+            }),
         );
+
+        await this.repositoryModuleManager.createManyPeerRecords(newPeerRecords, options);
     }
 
-    async findNeighbourhood(
-        blockchainId,
-        key,
-        r2,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        filterInactive = false,
-    ) {
+    async findShard(blockchainId /* filterInactive = false */) {
         let peers = await this.repositoryModuleManager.getAllPeerRecords(blockchainId);
         peers = peers.map((peer, index) => ({ ...peer.dataValues, index }));
-        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
+        return peers;
+    }
 
-        const sortedPeers = this.sortPeers(
-            blockchainId,
-            keyHash,
-            peers,
-            r2,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-            filterInactive,
-        );
-        return sortedPeers;
+    async isNodePartOfShard(blockchainId, peerId) {
+        return this.repositoryModuleManager.isNodePartOfShard(blockchainId, peerId);
     }
 
     async sortPeers(
@@ -199,17 +163,7 @@ class ShardingTableService {
         bidSuggestionRange = LOW_BID_SUGGESTION,
     ) {
         const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
-        const peerRecords = await this.findNeighbourhood(
-            blockchainId,
-            this.blockchainModuleManager.encodePacked(
-                blockchainId,
-                ['address', 'bytes32'],
-                [contentAssetStorageAddress, firstAssertionId],
-            ),
-            await this.blockchainModuleManager.getR2(blockchainId),
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-        );
+        const peerRecords = await this.findShard(blockchainId);
         const r0 = await this.blockchainModuleManager.getR0(blockchainId);
         // todo remove this line once we implement logic for storing assertion in publish node if it's in neighbourhood
         const myPeerId = this.networkModuleManager.getPeerId().toB58String();

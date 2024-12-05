@@ -11,7 +11,31 @@ class EventRepository {
         this.model = models.event;
     }
 
-    async getUnpublishedEvents() {
+    async createEventRecord(
+        operationId,
+        blockchainId,
+        name,
+        timestamp,
+        value1,
+        value2,
+        value3,
+        options,
+    ) {
+        return this.model.create(
+            {
+                operationId,
+                blockchainId,
+                name,
+                timestamp,
+                value1,
+                value2,
+                value3,
+            },
+            options,
+        );
+    }
+
+    async getUnpublishedEvents(options) {
         // events without COMPLETE/FAILED status which are older than 30min
         // are also considered finished
         const minutes = 5;
@@ -41,6 +65,7 @@ class EventRepository {
             limit:
                 Math.floor(HIGH_TRAFFIC_OPERATIONS_NUMBER_PER_HOUR / 60) *
                 SEND_TELEMETRY_COMMAND_FREQUENCY_MINUTES,
+            ...options,
         });
 
         operationIds = operationIds.map((e) => e.operation_id);
@@ -51,16 +76,18 @@ class EventRepository {
                     [Sequelize.Op.in]: operationIds,
                 },
             },
+            ...options,
         });
     }
 
-    async destroyEvents(ids) {
+    async destroyEvents(ids, options) {
         await this.model.destroy({
             where: {
                 id: {
                     [Sequelize.Op.in]: ids,
                 },
             },
+            ...options,
         });
     }
 }

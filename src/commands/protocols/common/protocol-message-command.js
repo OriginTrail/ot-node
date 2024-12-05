@@ -1,4 +1,3 @@
-import { v5 as uuidv5 } from 'uuid';
 import Command from '../../command.js';
 import { NETWORK_MESSAGE_TYPES, OPERATION_REQUEST_STATUS } from '../../../constants/constants.js';
 
@@ -26,21 +25,18 @@ class ProtocolMessageCommand extends Command {
     }
 
     async sendProtocolMessage(command, message, messageType) {
-        const { node, operationId, keyword } = command.data;
-
-        const keywordUuid = uuidv5(keyword, uuidv5.URL);
+        const { node, operationId } = command.data;
 
         const response = await this.networkModuleManager.sendMessage(
             node.protocol,
             node.id,
             messageType,
             operationId,
-            keywordUuid,
             message,
             this.messageTimeout(),
         );
 
-        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
+        this.networkModuleManager.removeCachedSession(operationId, node.id);
 
         switch (response.header.messageType) {
             case NETWORK_MESSAGE_TYPES.RESPONSES.BUSY:
@@ -79,9 +75,8 @@ class ProtocolMessageCommand extends Command {
     }
 
     async recover(command) {
-        const { node, operationId, keyword } = command.data;
-        const keywordUuid = uuidv5(keyword, uuidv5.URL);
-        this.networkModuleManager.removeCachedSession(operationId, keywordUuid, node.id);
+        const { node, operationId } = command.data;
+        this.networkModuleManager.removeCachedSession(operationId, node.id);
 
         await this.markResponseAsFailed(command, command.message);
         return Command.empty();

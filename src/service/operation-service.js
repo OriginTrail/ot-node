@@ -27,15 +27,14 @@ class OperationService {
         );
     }
 
-    async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
-        const self = this;
+    async getResponsesStatuses(responseStatus, errorMessage, operationId) {
         let responses = 0;
+        const self = this;
         await this.operationMutex.runExclusive(async () => {
             await self.repositoryModuleManager.createOperationResponseRecord(
                 responseStatus,
                 this.operationName,
                 operationId,
-                keyword,
                 errorMessage,
             );
             responses = await self.repositoryModuleManager.getOperationResponsesStatuses(
@@ -44,19 +43,19 @@ class OperationService {
             );
         });
 
-        const keywordsStatuses = {};
-        responses.forEach((response) => {
-            if (!keywordsStatuses[response.keyword])
-                keywordsStatuses[response.keyword] = { failedNumber: 0, completedNumber: 0 };
+        const operationIdStatuses = {};
+        for (const response of responses) {
+            if (!operationIdStatuses[operationId])
+                operationIdStatuses[operationId] = { failedNumber: 0, completedNumber: 0 };
 
             if (response.status === OPERATION_REQUEST_STATUS.FAILED) {
-                keywordsStatuses[response.keyword].failedNumber += 1;
+                operationIdStatuses[operationId].failedNumber += 1;
             } else {
-                keywordsStatuses[response.keyword].completedNumber += 1;
+                operationIdStatuses[operationId].completedNumber += 1;
             }
-        });
+        }
 
-        return keywordsStatuses;
+        return operationIdStatuses;
     }
 
     async markOperationAsCompleted(operationId, blockchain, responseData, endStatuses) {
@@ -69,7 +68,7 @@ class OperationService {
         );
 
         if (responseData != null) {
-            await this.operationIdService.cacheOperationIdData(operationId, responseData);
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, responseData);
         }
 
         for (const status of endStatuses) {
@@ -111,6 +110,14 @@ class OperationService {
                 failedNumber + completedNumber
             }, failed: ${failedNumber}, completed: ${completedNumber}`,
         );
+    }
+
+    async getBatchSize() {
+        throw Error('getBatchSize not implemented');
+    }
+
+    async getMinAckResponses() {
+        throw Error('getMinAckResponses not implemented');
     }
 }
 

@@ -1,8 +1,5 @@
 import BaseController from './base-rpc-controller.js';
-import {
-    NETWORK_MESSAGE_TYPES,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
-} from '../../constants/constants.js';
+import { NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
@@ -13,48 +10,38 @@ class PublishController extends BaseController {
     }
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
-        const { operationId, keywordUuid, messageType } = message.header;
+        const { operationId, messageType } = message.header;
 
         const command = { sequence: [], delay: 0, transactional: false, data: {} };
-        let dataSource;
-        const [handleInitCommand, handleRequestCommand] = this.getCommandSequence(protocol);
-        switch (messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                dataSource = message.data;
-                command.name = handleInitCommand;
-                command.period = 5000;
-                command.retries = 3;
+        const [handleRequestCommand] = this.getCommandSequence(protocol);
+        if (messageType === NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST) {
+            Object.assign(command, {
+                name: handleRequestCommand,
+                period: 5000,
+                retries: 3,
+            });
 
-                break;
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
-                // eslint-disable-next-line no-case-declarations
-                dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
-                await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertionId: dataSource.assertionId,
-                    assertion: message.data.assertion,
-                });
-                command.name = handleRequestCommand;
-                command.data.keyword = message.data.keyword;
-                command.data.agreementId = dataSource.agreementId;
-                command.data.agreementData = dataSource.agreementData;
-                break;
-            default:
-                throw Error('unknown message type');
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
+                dataset: message.data.dataset,
+                datasetRoot: message.data.datasetRoot,
+            });
+
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, {
+                dataset: message.data.dataset,
+                datasetRoot: message.data.datasetRoot,
+            });
+        } else {
+            throw new Error('Unknown message type');
         }
 
         command.data = {
             ...command.data,
             remotePeerId,
             operationId,
-            keywordUuid,
             protocol,
-            assertionId: dataSource.assertionId,
-            blockchain: dataSource.blockchain,
-            contract: dataSource.contract,
-            tokenId: dataSource.tokenId,
-            keyword: dataSource.keyword,
-            hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
-            proximityScoreFunctionsPairId: dataSource.proximityScoreFunctionsPairId ?? 1,
+            dataset: message.data.dataset,
+            datasetRoot: message.data.datasetRoot,
+            blockchain: message.data.blockchain,
         };
 
         await this.commandExecutor.add(command);

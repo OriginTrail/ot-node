@@ -5,22 +5,38 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-
+        this.signatureStorageService = ctx.signatureStorageService;
+        this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
     }
 
     async prepareMessage(command) {
-        const {
-            public: { assertion },
-        } = await this.operationIdService.getCachedOperationIdData(command.data.operationId);
+        const { datasetRoot, operationId } = command.data;
+
+        // TODO: Backwards compatibility, send blockchain without chainId
+        const { blockchain } = command.data;
+
+        const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         return {
-            assertion,
+            dataset,
+            datasetRoot,
+            blockchain,
         };
     }
 
     messageTimeout() {
         return NETWORK_MESSAGE_TIMEOUT_MILLS.PUBLISH.REQUEST;
+    }
+
+    async handleAck(command, responseData) {
+        const { operationId } = command.data;
+        await this.signatureStorageService.addSignatureToStorage(
+            operationId,
+            responseData.identityId,
+            responseData.signature,
+        );
+        return super.handleAck(command, responseData);
     }
 
     /**

@@ -17,14 +17,15 @@ class PublishController extends BaseController {
         this.ualService = ctx.ualService;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.pendingStorageService = ctx.pendingStorageService;
     }
 
     async handleRequest(req, res) {
-        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+        const { dataset, datasetRoot, blockchain } = req.body;
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         this.logger.info(
-            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+            `Received asset with dataset root: ${datasetRoot}, blockchain: ${blockchain}`,
         );
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -53,24 +54,19 @@ class PublishController extends BaseController {
         );
 
         try {
-            await this.operationIdService.cacheOperationIdData(operationId, {
-                public: {
-                    assertion,
-                    assertionId,
-                },
-                blockchain,
-                contract,
-                tokenId,
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
+                dataset,
+                datasetRoot,
             });
 
-            const commandSequence = ['publishValidateAssetCommand'];
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, {
+                dataset,
+                datasetRoot,
+            });
 
-            // Backwards compatibility check - true for older clients
-            if (req.body.localStore) {
-                commandSequence.push('localStoreCommand');
-            }
+            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
 
-            commandSequence.push('networkPublishCommand');
+            const commandSequence = ['publishFindShardCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
@@ -79,10 +75,8 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    assertionId,
+                    datasetRoot,
                     blockchain,
-                    contract,
-                    tokenId,
                     hashFunctionId,
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,

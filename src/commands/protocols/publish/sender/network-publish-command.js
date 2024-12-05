@@ -4,30 +4,11 @@ import { ERROR_TYPE } from '../../../../constants/constants.js';
 class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.ualService = ctx.ualService;
+        this.operationService = ctx.publishService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
-    }
-
-    async getKeywords(command) {
-        const { blockchain, contract, tokenId } = command.data;
-        const locationKeyword = await this.ualService.calculateLocationKeyword(
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return [locationKeyword];
-    }
-
-    async getBatchSize(blockchainId) {
-        return this.blockchainModuleManager.getR2(blockchainId);
-    }
-
-    async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
     }
 
     /**

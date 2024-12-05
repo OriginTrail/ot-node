@@ -7,6 +7,7 @@ class LocalStoreController extends BaseController {
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.dataService = ctx.dataService;
+        this.fileService = ctx.fileService;
     }
 
     async handleRequest(req, res) {
@@ -23,8 +24,13 @@ class LocalStoreController extends BaseController {
             null,
             OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INIT_END,
         );
-
-        const assertions = req.body;
+        let assertions;
+        const { filePath } = req.body;
+        if (filePath) {
+            assertions = JSON.parse(await this.fileService.readFile(filePath));
+        } else {
+            assertions = req.body;
+        }
 
         const cachedAssertions = {
             public: {},
@@ -34,24 +40,6 @@ class LocalStoreController extends BaseController {
             case 1: {
                 const { assertion, assertionId } = assertions[0];
                 cachedAssertions.public = { assertion, assertionId };
-
-                break;
-            }
-            case 2: {
-                const isFirstPublic =
-                    this.dataService.getPrivateAssertionId(assertions[0].assertion) != null;
-
-                const publicAssertionData = isFirstPublic ? assertions[0] : assertions[1];
-                const privateAssertionData = isFirstPublic ? assertions[1] : assertions[0];
-
-                cachedAssertions.public = {
-                    assertion: publicAssertionData.assertion,
-                    assertionId: publicAssertionData.assertionId,
-                };
-                cachedAssertions.private = {
-                    assertion: privateAssertionData.assertion,
-                    assertionId: privateAssertionData.assertionId,
-                };
 
                 break;
             }
@@ -65,7 +53,9 @@ class LocalStoreController extends BaseController {
             )}. Operation id: ${operationId}`,
         );
 
-        await this.operationIdService.cacheOperationIdData(operationId, cachedAssertions);
+        await this.operationIdService.cacheOperationIdDataToMemory(operationId, cachedAssertions);
+
+        await this.operationIdService.cacheOperationIdDataToFile(operationId, cachedAssertions);
 
         const commandSequence = ['validateAssetCommand', 'localStoreCommand'];
 
