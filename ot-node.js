@@ -54,6 +54,7 @@ class OTNode {
 
         await this.initializeRouters();
         await this.startNetworkModule();
+        await this.initializeBLSService();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
     }
