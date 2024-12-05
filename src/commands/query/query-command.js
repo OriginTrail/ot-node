@@ -68,26 +68,54 @@ class QueryCommand extends Command {
         );
 
         try {
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_QUERY_START,
-                operationId,
-            );
             switch (queryType) {
                 case QUERY_TYPES.CONSTRUCT: {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_START,
+                        operationId,
+                    );
                     data = await this.tripleStoreService.construct(repository, query);
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_START,
+                        operationId,
+                    );
                     break;
                 }
                 case QUERY_TYPES.SELECT: {
-                    data = await this.dataService.parseBindings(
-                        await this.tripleStoreService.select(repository, query),
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_START,
+                        operationId,
                     );
+                    const rawData = await this.tripleStoreService.select(repository, query);
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_END,
+                        operationId,
+                    );
+
+                    data = await this.dataService.parseBindings(rawData);
                     break;
                 }
                 default:
                     throw new Error(`Unknown query type ${queryType}`);
             }
+
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_QUERY_END,
+                OPERATION_ID_STATUS.QUERY.QUERY_CACHE_OPERATION_ID_DATA_TO_MEMORY_START,
+                operationId,
+            );
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, data);
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_CACHE_OPERATION_ID_DATA_TO_MEMORY_END,
+                operationId,
+            );
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_CACHE_OPERATION_ID_DATA_TO_FILE_START,
+                operationId,
+            );
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, data);
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_CACHE_OPERATION_ID_DATA_TO_FILE_END,
                 operationId,
             );
 
@@ -96,10 +124,6 @@ class QueryCommand extends Command {
                 null,
                 OPERATION_ID_STATUS.QUERY.QUERY_END,
             );
-
-            await this.operationIdService.cacheOperationIdDataToMemory(operationId, data);
-
-            await this.operationIdService.cacheOperationIdDataToFile(operationId, data);
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
