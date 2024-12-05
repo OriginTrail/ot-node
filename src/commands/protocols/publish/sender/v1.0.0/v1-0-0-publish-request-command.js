@@ -19,7 +19,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
 
         return {
-            dataset,
+            dataset: dataset.public,
             datasetRoot,
             blockchain,
         };

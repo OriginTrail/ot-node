@@ -4,9 +4,9 @@ import { kcTools } from 'assertion-tools';
 
 import {
     SCHEMA_CONTEXT,
-    UAL_PREDICATE,
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
+    TRIPLETS_VISIBILITY,
 } from '../constants/constants.js';
 
 class TripleStoreService {
@@ -38,6 +38,7 @@ class TripleStoreService {
         knowledgeAssetsUALs,
         knowledgeAssetsStates,
         triples,
+        visibility = TRIPLETS_VISIBILITY.PUBLIC,
         retries = 1,
         retryDelay = 0,
     ) {
@@ -61,7 +62,7 @@ class TripleStoreService {
         ]);
 
         const knowledgeAssetsStatesUALs = knowledgeAssetsUALs.map(
-            (ual, index) => `${ual}:${knowledgeAssetsStates[index]}`,
+            (ual, index) => `${ual}:${knowledgeAssetsStates[index]}/${visibility}`,
         );
         const knowledgeAssetsTriples = this.dataService.groupTriplesBySubject(triples);
 

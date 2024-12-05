@@ -42,7 +42,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
 
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         const isValidAssertion = await this.validationService.validateDatasetRoot(
-            cachedData.dataset,
+            cachedData.dataset.public,
             datasetRoot,
         );
 

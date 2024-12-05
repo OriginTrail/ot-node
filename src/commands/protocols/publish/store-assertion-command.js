@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     TRIPLE_STORE_REPOSITORIES,
+    TRIPLETS_VISIBILITY,
 } from '../../../constants/constants.js';
 
 class StoreAssertionCommand extends Command {
@@ -24,24 +25,22 @@ class StoreAssertionCommand extends Command {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_STORE_ASSERTION_START,
         );
-
+        // TODO: Change this logic so it handle public/private if it exists
+        // If this is only public it will be in dataset
+        // If it's both public and private it will be in dataset.public and dataset.private
         try {
-            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(assertion);
-            const knowledgeAssetsUALs = [];
-            const knowledgeAssetStates = [];
-            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-                knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
-                knowledgeAssetStates.push(0);
+            if (Array.isArray(assertion)) {
+                await this._insertAssertion(assertion, ual);
+            } else {
+                const promises = [];
+                promises.push(this._insertAssertion(assertion.public, ual));
+                if (assertion.private) {
+                    promises.push(
+                        this._insertAssertion(assertion.private, ual, TRIPLETS_VISIBILITY.PRIVATE),
+                    );
+                }
+                await Promise.all(promises);
             }
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.tripleStoreService.insertKnowledgeCollection(
-                TRIPLE_STORE_REPOSITORIES.DKG,
-                ual,
-                knowledgeAssetsUALs,
-                knowledgeAssetStates,
-                assertion,
-            );
         } catch (e) {
             await this.handleError(operationId, blockchain, e.message, this.errorType, true);
         }
@@ -59,6 +58,26 @@ class StoreAssertionCommand extends Command {
         );
 
         return Command.empty();
+    }
+
+    async _insertAssertion(assertion, ual, visibility = TRIPLETS_VISIBILITY.PUBLIC) {
+        const knowledgeAssetsCount = this.dataService.countDistinctSubjects(assertion);
+        const knowledgeAssetsUALs = [];
+        const knowledgeAssetStates = [];
+        for (let i = 0; i < knowledgeAssetsCount; i += 1) {
+            knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
+            knowledgeAssetStates.push(0);
+        }
+
+        // eslint-disable-next-line no-await-in-loop
+        await this.tripleStoreService.insertKnowledgeCollection(
+            TRIPLE_STORE_REPOSITORIES.DKG,
+            ual,
+            knowledgeAssetsUALs,
+            knowledgeAssetStates,
+            assertion,
+            visibility,
+        );
     }
 
     /**

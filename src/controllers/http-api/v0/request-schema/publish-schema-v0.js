@@ -8,11 +8,24 @@ export default (argumentsObject) => ({
             maxLength: 66,
         },
         dataset: {
-            type: 'array',
-            items: {
-                type: 'string',
+            type: 'object',
+            properties: {
+                public: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                    },
+                    minItems: 1,
+                },
+                private: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                    },
+                },
             },
-            minItems: 1,
+            required: ['public'],
+            additionalProperties: false,
         },
         blockchain: {
             enum: argumentsObject.blockchainImplementationNames,
