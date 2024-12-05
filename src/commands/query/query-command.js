@@ -29,7 +29,17 @@ class QueryCommand extends Command {
             null,
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.QUERY.QUERY_VALIDATE_REPOSITORY_NAME_START,
+            operationId,
+        );
         repository = this.validateRepositoryName(repository);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.QUERY.QUERY_VALIDATE_REPOSITORY_NAME_END,
+            operationId,
+        );
+
         // check if it's federated query
         const pattern = /SERVICE\s+<([^>]+)>/g;
         const matches = [];
@@ -38,6 +48,11 @@ class QueryCommand extends Command {
         while ((match = pattern.exec(query)) !== null) {
             matches.push(match[1]);
         }
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_FEDERATED_QUERY_REPO_START,
+            operationId,
+        );
         if (matches.length > 0) {
             for (const repositoryInOriginalQuery of matches) {
                 const federatedQueryRepositoryName = `http://localhost:9999/blazegraph/namespace/${this.paranetService.getParanetRepositoryName(
@@ -47,7 +62,16 @@ class QueryCommand extends Command {
                 query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
             }
         }
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_FEDERATED_QUERY_REPO_END,
+            operationId,
+        );
+
         try {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_QUERY_TYPE_START,
+                operationId,
+            );
             switch (queryType) {
                 case QUERY_TYPES.CONSTRUCT: {
                     data = await this.tripleStoreService.construct(repository, query);
@@ -62,6 +86,10 @@ class QueryCommand extends Command {
                 default:
                     throw new Error(`Unknown query type ${queryType}`);
             }
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_PROCESS_QUERY_TYPE_END,
+                operationId,
+            );
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
