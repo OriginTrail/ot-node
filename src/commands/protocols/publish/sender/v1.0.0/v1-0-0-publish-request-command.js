@@ -29,18 +29,18 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         // TODO: Backwards compatibility, send blockchain without chainId
         const { blockchain } = command.data;
 
-        await this.operationIdService.updateOperationIdStatus(
+        await this.operationIdService.emitChangeEvent(
+            this.prepareMessageStartEvent,
             operationId,
             blockchain,
-            this.prepareMessageStartEvent,
         );
 
         const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
 
-        await this.operationIdService.updateOperationIdStatus(
+        await this.operationIdService.emitChangeEvent(
+            this.prepareMessageEndEvent,
             operationId,
             blockchain,
-            this.prepareMessageEndEvent,
         );
 
         return {
