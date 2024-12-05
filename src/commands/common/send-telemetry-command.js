@@ -24,7 +24,7 @@ class SendTelemetryCommand extends Command {
     async execute() {
         if (
             !this.config.modules.telemetry.enabled ||
-            !this.telemetryModuleManager.getModuleConfiguration().sendTelemetryData
+            !this.telemetryModuleManager.getModuleConfiguration().sendToSignalingService
         ) {
             return Command.empty();
         }

@@ -4,7 +4,6 @@ import { kcTools } from 'assertion-tools';
 
 import {
     SCHEMA_CONTEXT,
-    UAL_PREDICATE,
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
 } from '../constants/constants.js';

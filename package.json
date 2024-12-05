@@ -1,6 +1,6 @@
 {
     "name": "origintrail_node",
-    "version": "8.0.0-beta.6",
+    "version": "8.0.0-beta.7",
     "description": "OTNode V8",
     "main": "index.js",
     "type": "module",
@@ -68,6 +68,7 @@
         "@ethersproject/bytes": "^5.7.0",
         "@ethersproject/hash": "^5.7.0",
         "@ethersproject/wallet": "^5.7.0",
+        "@questdb/nodejs-client": "^3.0.0",
         "@polkadot/api": "^9.3.2",
         "@polkadot/keyring": "^10.1.7",
         "@polkadot/util": "^10.1.7",
