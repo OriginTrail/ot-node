@@ -8,6 +8,7 @@ import {
     UAL_PREDICATE,
     BASE_NAMED_GRAPHS,
     TRIPLE_ANNOTATION_LABEL_PREDICATE,
+    TRIPLETS_VISIBILITY,
 } from '../../../constants/constants.js';
 
 class OtTripleStore {
@@ -290,7 +291,19 @@ class OtTripleStore {
         await this.queryVoid(repository, query);
     }
 
-    async getKnowledgeCollectionNamedGraphs(repository, ual, sort) {
+    async getKnowledgeCollectionNamedGraphs(repository, ual, visibility, sort) {
+        let visibilityFilter;
+        switch (visibility) {
+            case TRIPLETS_VISIBILITY.PUBLIC:
+            case TRIPLETS_VISIBILITY.PRIVATE:
+                visibilityFilter = `&& STRENDS(STR(?g), "${visibility}")`;
+                break;
+            case TRIPLETS_VISIBILITY.ALL:
+                visibilityFilter = '';
+                break;
+            default:
+                throw new Error(`Unsupported visibility: ${visibility}`);
+        }
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             CONSTRUCT { ?s ?p ?o . }
@@ -298,26 +311,10 @@ class OtTripleStore {
                 GRAPH ?g {
                     ?s ?p ?o .
                 }
-                FILTER(STRSTARTS(STR(?g), "${ual}/"))
-            }
-            ${sort ? 'ORDER BY ?s' : ''}
-        `;
-
-        return this.construct(repository, query);
-    }
-
-    async getKnowledgeCollectionNamedGraphsPublic(repository, ual, sort) {
-        const query = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT { ?s ?p ?o }
-            WHERE {
-                GRAPH ?g {
-                    ?s ?p ?o .
-                    FILTER NOT EXISTS {
-                        << ?s ?p ?o >> ${TRIPLE_ANNOTATION_LABEL_PREDICATE} "private" .
-                    }
-                }
-                FILTER(STRSTARTS(STR(?g), "${ual}/"))
+                FILTER(
+                    STRSTARTS(STR(?g), "${ual}/")
+                    ${visibilityFilter}
+                )
             }
             ${sort ? 'ORDER BY ?s' : ''}
         `;
@@ -346,32 +343,45 @@ class OtTripleStore {
         await this.queryVoid(repository, query);
     }
 
-    async getKnowledgeAssetNamedGraph(repository, ual) {
-        const query = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT  { ?s ?p ?o } 
-            WHERE {
-                GRAPH <${ual}> {
-                    ?s ?p ?o .
-                }
-            }
-        `;
+    async getKnowledgeAssetNamedGraph(repository, ual, visibility) {
+        let whereClause;
 
-        return this.construct(repository, query);
-    }
-
-    async getKnowledgeAssetNamedGraphPublic(repository, ual) {
-        const query = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT  { ?s ?p ?o } 
-            WHERE {
-                GRAPH <${ual}> {
-                    ?s ?p ?o .
-                    FILTER NOT EXISTS {
-                        << ?s ?p ?o >> ${TRIPLE_ANNOTATION_LABEL_PREDICATE} "private" .
+        switch (visibility) {
+            case TRIPLETS_VISIBILITY.PUBLIC:
+            case TRIPLETS_VISIBILITY.PRIVATE:
+                whereClause = `
+                    WHERE {
+                        GRAPH <${ual}/${visibility}> {
+                            ?s ?p ?o .
+                        }
                     }
-                }
-            }
+                `;
+                break;
+            case TRIPLETS_VISIBILITY.ALL:
+                whereClause = `
+                    WHERE {
+                        {
+                            GRAPH <${ual}/${TRIPLETS_VISIBILITY.PUBLIC}> {
+                              ?s ?p ?o .
+                            }
+                          }
+                          UNION
+                          {
+                            GRAPH <${ual}/${TRIPLETS_VISIBILITY.PRIVATE}> {
+                              ?s ?p ?o .
+                            }
+                          }
+                    }
+                `;
+                break;
+            default:
+                throw new Error(`Unsupported visibility: ${visibility}`);
+        }
+
+        const query = `
+            PREFIX schema: <${SCHEMA_CONTEXT}>
+            CONSTRUCT { ?s ?p ?o }
+            ${whereClause}
         `;
 
         return this.construct(repository, query);

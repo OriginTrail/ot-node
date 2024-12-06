@@ -1,5 +1,9 @@
 import Command from '../../../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    TRIPLETS_VISIBILITY,
+} from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -94,6 +98,7 @@ class LocalGetCommand extends Command {
                 contract,
                 knowledgeCollectionId,
                 knowledgeAssetId,
+                TRIPLETS_VISIBILITY.ALL,
             ),
         ];
 

@@ -919,4 +919,5 @@ export const TRIPLE_STORE_REPOSITORY = {
 export const TRIPLETS_VISIBILITY = {
     PUBLIC: 'public',
     PRIVATE: 'private',
+    ALL: 'all',
 };

@@ -272,8 +272,11 @@ class TripleStoreService {
         contract,
         knowledgeCollectionId,
         knowledgeAssetId,
+        visibility = TRIPLETS_VISIBILITY.PUBLIC,
         repository = TRIPLE_STORE_REPOSITORY.DKG,
     ) {
+        // TODO: Use stateId
+        // TODO: Add private public distinction
         const ual = `did:dkg:${blockchain}/${contract}/${knowledgeCollectionId}${
             knowledgeAssetId ? `/${knowledgeAssetId}` : ''
         }`;
@@ -285,13 +288,16 @@ class TripleStoreService {
             nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
                 this.repositoryImplementations[repository],
                 repository,
-                `${ual}:0`, // TO DO: Add state with implemented update
+                // TODO: Add state with implemented update
+                `${ual}:0`,
+                visibility,
             );
         } else {
             nquads = await this.tripleStoreModuleManager.getKnowledgeCollectionNamedGraphs(
                 this.repositoryImplementations[repository],
                 repository,
                 ual,
+                visibility,
             );
         }
 

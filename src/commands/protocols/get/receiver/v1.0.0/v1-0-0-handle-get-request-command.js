@@ -3,6 +3,7 @@ import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
+    TRIPLETS_VISIBILITY,
 } from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -98,6 +99,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 contract,
                 knowledgeCollectionId,
                 knowledgeAssetId,
+                TRIPLETS_VISIBILITY.PUBLIC,
             ),
         ];
 
