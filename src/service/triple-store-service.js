@@ -74,7 +74,7 @@ class TripleStoreService {
         );
 
         const promises = [];
-        if (triples.private?.length !== 0 && !existsInNamedGraphs) {
+        if (triples.private && triples.private.length !== 0 && !existsInNamedGraphs) {
             const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
                 triples.private,
             );
