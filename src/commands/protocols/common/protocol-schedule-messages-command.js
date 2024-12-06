@@ -1,10 +1,14 @@
 import Command from '../../command.js';
+import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class ProtocolScheduleMessagesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.protocolService = ctx.protocolService;
+
+        this.operationStartEvent = OPERATION_ID_STATUS.PROTOCOL_SCHEDULE_MESSAGE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.PROTOCOL_SCHEDULE_MESSAGE_END;
     }
 
     /**
@@ -28,7 +32,7 @@ class ProtocolScheduleMessagesCommand extends Command {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            this.startEvent,
+            this.operationStartEvent,
         );
 
         this.logger.debug(
@@ -60,6 +64,12 @@ class ProtocolScheduleMessagesCommand extends Command {
         });
 
         await Promise.all(addCommandPromises);
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.operationEndEvent,
+        );
 
         return Command.empty();
     }

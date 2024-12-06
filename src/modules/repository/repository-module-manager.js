@@ -242,32 +242,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').isNodePartOfShard(blockchainId, peerId, options);
     }
 
-    async createEventRecord(
-        operationId,
-        blockchainId,
-        name,
-        timestamp,
-        value1 = null,
-        value2 = null,
-        value3 = null,
-        options = {},
-    ) {
-        return this.getRepository('event').createEventRecord(
-            operationId,
-            blockchainId,
-            name,
-            timestamp,
-            value1,
-            value2,
-            value3,
-            options,
-        );
-    }
-
-    async getUnpublishedEvents(options = {}) {
-        return this.getRepository('event').getUnpublishedEvents(options);
-    }
-
     async destroyEvents(ids, options = {}) {
         return this.getRepository('event').destroyEvents(ids, options);
     }

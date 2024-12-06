@@ -9,7 +9,8 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
-        this.startEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
+        this.operationStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
 
