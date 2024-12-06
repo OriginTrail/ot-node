@@ -18,6 +18,7 @@ class PublishController extends BaseController {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     async handleRequest(req, res) {
@@ -64,7 +65,13 @@ class PublishController extends BaseController {
                 datasetRoot,
             });
 
-            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset, null);
+            const currentPeerId = this.networkModuleManager.getPeerId().toB58String();
+            await this.pendingStorageService.cacheDataset(
+                operationId,
+                datasetRoot,
+                dataset,
+                currentPeerId,
+            );
 
             const commandSequence = ['publishFindShardCommand'];
 

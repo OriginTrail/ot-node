@@ -1,5 +1,10 @@
+import Command from '../../../../command.js';
 import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
-import { NETWORK_MESSAGE_TIMEOUT_MILLS, ERROR_TYPE } from '../../../../../constants/constants.js';
+import {
+    NETWORK_MESSAGE_TIMEOUT_MILLS,
+    ERROR_TYPE,
+    OPERATION_ID_STATUS,
+} from '../../../../../constants/constants.js';
 
 class PublishfinalityAckCommand extends ProtocolRequestCommand {
     constructor(ctx) {
@@ -13,6 +18,28 @@ class PublishfinalityAckCommand extends ProtocolRequestCommand {
         const { ual, publishOperationId, blockchain, operationId } = command.data;
 
         return { ual, publishOperationId, blockchain, operationId };
+    }
+
+    async handleAck(command) {
+        await this.operationIdService.updateOperationIdStatus(
+            command.operationId,
+            command.blockchain,
+            OPERATION_ID_STATUS.COMPLETED,
+        );
+        return this.continueSequence(command.data, command.sequence);
+    }
+
+    async handleNack(command, responseData) {
+        await this.operationIdService.updateOperationIdStatus(
+            command.operationId,
+            command.blockchain,
+            OPERATION_ID_STATUS.COMPLETED,
+        );
+        await this.markResponseAsFailed(
+            command,
+            `Received NACK response from node during ${command.name}. Error message: ${responseData.errorMessage}`,
+        );
+        return Command.empty();
     }
 
     messageTimeout() {

@@ -44,6 +44,7 @@ class StoreAssertionCommand extends Command {
             );
         } catch (e) {
             await this.handleError(operationId, blockchain, e.message, this.errorType, true);
+            return Command.empty(); // TODO: Should it end here or do a retry?
         }
 
         await this.operationIdService.updateOperationIdStatus(
@@ -52,13 +53,7 @@ class StoreAssertionCommand extends Command {
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_STORE_ASSERTION_END,
         );
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.COMPLETED,
-        );
-
-        return Command.empty();
+        return this.continueSequence(command.data, command.sequence);
     }
 
     /**
