@@ -29,13 +29,13 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         // TODO: Backwards compatibility, send blockchain without chainId
         const { blockchain } = command.data;
 
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
             operationId,
             blockchain,
         );
         const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
             blockchain,
@@ -54,17 +54,17 @@ class PublishRequestCommand extends ProtocolRequestCommand {
 
     async handleAck(command, responseData) {
         const { operationId, blockchain } = command.data;
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_ADD_SIGNATURE_TO_STORAGE_START,
             operationId,
             blockchain,
         );
-        await this.signatureStorageService.addSignatureToStorage(
+        this.signatureStorageService.addSignatureToStorage(
             operationId,
             responseData.identityId,
             responseData.signature,
         );
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_ADD_SIGNATURE_TO_STORAGE_END,
             operationId,
             blockchain,
