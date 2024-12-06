@@ -5,7 +5,7 @@ import {
     OPERATION_ID_STATUS,
 } from '../../../../../constants/constants.js';
 
-class HandlePublishfinalityAckCommand extends HandleProtocolMessageCommand {
+class HandlePublishfinalityRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishFinalityService;
@@ -62,13 +62,13 @@ class HandlePublishfinalityAckCommand extends HandleProtocolMessageCommand {
     }
 
     /**
-     * Builds default handlePublishfinalityAckCommand
+     * Builds default handlePublishfinalityRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'v1_0_0HandlePublishfinalityAckCommand',
+            name: 'v1_0_0HandlePublishfinalityRequestCommand',
             delay: 0,
             transactional: false,
             errorType: ERROR_TYPE.PUBLISH_FINALITY.PUBLISH_FINALITY_REQUEST_REMOTE_ERROR,
@@ -78,4 +78,4 @@ class HandlePublishfinalityAckCommand extends HandleProtocolMessageCommand {
     }
 }
 
-export default HandlePublishfinalityAckCommand;
+export default HandlePublishfinalityRequestCommand;

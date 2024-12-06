@@ -6,7 +6,7 @@ import {
     OPERATION_ID_STATUS,
 } from '../../../../../constants/constants.js';
 
-class PublishfinalityAckCommand extends ProtocolRequestCommand {
+class PublishfinalityRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishFinalityService;
@@ -47,13 +47,13 @@ class PublishfinalityAckCommand extends ProtocolRequestCommand {
     }
 
     /**
-     * Builds default publishfinalityAckCommand
+     * Builds default publishfinalityRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'v1_0_0PublishfinalityAckCommand',
+            name: 'v1_0_0PublishfinalityRequestCommand',
             delay: 0,
             retries: 0,
             transactional: false,
@@ -63,4 +63,4 @@ class PublishfinalityAckCommand extends ProtocolRequestCommand {
     }
 }
 
-export default PublishfinalityAckCommand;
+export default PublishfinalityRequestCommand;
