@@ -758,6 +758,11 @@ export const HTTP_API_ROUTES = {
         },
     },
     v1: {
+        'finality-status': {
+            method: 'get',
+            path: '/finality-status',
+            options: {},
+        },
         // get: {
         //     method: 'post',
         //     path: '/get',
