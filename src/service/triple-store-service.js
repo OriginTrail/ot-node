@@ -1,9 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
-import { kcTools } from 'assertion-tools';
 
 import {
-    SCHEMA_CONTEXT,
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
     TRIPLETS_VISIBILITY,
@@ -38,7 +36,6 @@ class TripleStoreService {
         knowledgeAssetsUALs,
         knowledgeAssetsStates,
         triples,
-        visibility = TRIPLETS_VISIBILITY.PUBLIC,
         retries = 1,
         retryDelay = 0,
     ) {
@@ -62,9 +59,8 @@ class TripleStoreService {
         ]);
 
         const knowledgeAssetsStatesUALs = knowledgeAssetsUALs.map(
-            (ual, index) => `${ual}:${knowledgeAssetsStates[index]}/${visibility}`,
+            (ual, index) => `${ual}:${knowledgeAssetsStates[index]}`,
         );
-        const knowledgeAssetsTriples = this.dataService.groupTriplesBySubject(triples);
 
         // TODO: Add with the introduction of RDF-star mode
         // const tripleAnnotations = this.dataService.createTripleAnnotations(
@@ -73,38 +69,76 @@ class TripleStoreService {
         //     knowledgeAssetsUALs.map((ual) => `<${ual}>`),
         // );
         // const unifiedGraphTriples = [...triples, ...tripleAnnotations];
+        const publicKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
+            triples.public ?? triples,
+        );
 
         const promises = [];
+        if (triples.private?.length !== 0 && !existsInNamedGraphs) {
+            const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
+                triples.private,
+            );
+            const privateKnowledgeAssetsStatesUALs = [];
+            let privateSubject;
+            let publicSubject;
+            let publicIndex = 0;
+            let privateIndex = 0;
+            while (
+                privateIndex < privateKnowledgeAssetsTriples.length &&
+                publicIndex < publicKnowledgeAssetsTriples.length
+            ) {
+                [publicSubject] = publicKnowledgeAssetsTriples[publicIndex][0].split(' ');
+                [privateSubject] = privateKnowledgeAssetsTriples[privateIndex][0].split(' ');
+                if (publicSubject === privateSubject) {
+                    privateKnowledgeAssetsStatesUALs.push(knowledgeAssetsStatesUALs[publicIndex]);
+                    privateIndex += 1;
+                }
+                publicIndex += 1;
+            }
 
+            promises.push(
+                this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                    this.repositoryImplementations[repository],
+                    repository,
+                    privateKnowledgeAssetsStatesUALs,
+                    privateKnowledgeAssetsTriples,
+                    TRIPLETS_VISIBILITY.PRIVATE,
+                ),
+            );
+        }
         if (!existsInNamedGraphs) {
             promises.push(
                 this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                     this.repositoryImplementations[repository],
                     repository,
                     knowledgeAssetsStatesUALs,
-                    knowledgeAssetsTriples,
+                    publicKnowledgeAssetsTriples,
+                    TRIPLETS_VISIBILITY.PUBLIC,
                 ),
             );
         }
 
         if (!existsInUnifiedGraph) {
+            const unifiedTriples = triples.public
+                ? [...triples.public, ...(triples.private || [])]
+                : triples;
+
             promises.push(
                 this.tripleStoreModuleManager.insertKnowledgeCollectionIntoUnifiedGraph(
                     this.repositoryImplementations[repository],
                     repository,
                     BASE_NAMED_GRAPHS.UNIFIED,
-                    triples,
+                    unifiedTriples,
                 ),
             );
         }
 
-        const metadataTriples = await kcTools.formatDataset({
-            '@context': SCHEMA_CONTEXT,
-            '@graph': knowledgeAssetsUALs.map((ual, index) => ({
-                '@id': ual,
-                states: [knowledgeAssetsStatesUALs[index]],
-            })),
-        });
+        const metadataTriples = knowledgeAssetsUALs
+            .map(
+                (ual, index) =>
+                    `<${ual}> <http://schema.org/states> "${knowledgeAssetsStatesUALs[index]}" .`,
+            )
+            .join('\n');
 
         promises.push(
             this.tripleStoreModuleManager.insertKnowledgeCollectionMetadata(

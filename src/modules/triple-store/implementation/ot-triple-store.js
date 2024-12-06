@@ -265,14 +265,14 @@ class OtTripleStore {
         return this.ask(repository, query);
     }
 
-    async createKnowledgeCollectionNamedGraphs(repository, uals, assetsNQuads) {
+    async createKnowledgeCollectionNamedGraphs(repository, uals, assetsNQuads, visibility) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
                 ${uals
                     .map(
                         (ual, index) => `
-                    GRAPH <${ual}> {
+                    GRAPH <${ual}/${visibility}> {
                         ${assetsNQuads[index].join('\n')}
                     }
                 `,

@@ -117,11 +117,22 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async createKnowledgeCollectionNamedGraphs(implementationName, repository, uals, assetsNQuads) {
+    async createKnowledgeCollectionNamedGraphs(
+        implementationName,
+        repository,
+        uals,
+        assetsNQuads,
+        visibility,
+    ) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(
                 implementationName,
-            ).module.createKnowledgeCollectionNamedGraphs(repository, uals, assetsNQuads);
+            ).module.createKnowledgeCollectionNamedGraphs(
+                repository,
+                uals,
+                assetsNQuads,
+                visibility,
+            );
         }
     }
 
