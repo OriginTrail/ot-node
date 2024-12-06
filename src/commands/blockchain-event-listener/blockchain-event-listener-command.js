@@ -486,7 +486,7 @@ class BlockchainEventListenerCommand extends Command {
 
         await this.commandExecutor.add({
             name: 'validateAssertionMetadataCommand',
-            sequence: ['storeAssertionCommand'],
+            sequence: ['storeAssertionCommand', 'publishfinalitySendAckCommand'],
             delay: 0,
             data: {
                 operationId,
@@ -497,6 +497,8 @@ class BlockchainEventListenerCommand extends Command {
                 merkleRoot: state,
                 assertion: data.assertion,
                 cachedMerkleRoot: data.merkleRoot,
+                remotePeerId: data.remotePeerId,
+                publishOperationId,
             },
             transactional: false,
         });

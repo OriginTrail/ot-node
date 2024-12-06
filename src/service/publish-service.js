@@ -24,6 +24,7 @@ class PublishService extends OperationService {
         ];
         this.operationMutex = new Mutex();
         this.signatureStorageService = ctx.signatureStorageService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async processResponse(
@@ -88,6 +89,7 @@ class PublishService extends OperationService {
                 signatures,
                 this.completedStatuses,
             );
+            await this.repositoryModuleManager.createPublishFinalityRecord(operationId);
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (completedNumber < minAckResponses && (isAllNodesResponded || isBatchCompleted)) {
             const potentialCompletedNumber = completedNumber + leftoverNodes.length;
