@@ -14,6 +14,16 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_END;
+        this.prepareMessageStartEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_PREPARE_MESSAGE_END;
+        this.sendMessageResponseStartEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_SEND_MESSAGE_START;
+        this.sendMessageResponseEndEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_SEND_MESSAGE_END;
+        this.removeCachedSessionStartEvent =
+            OPERATION_ID_STATUS.GET.GET_REMOTE_REMOVE_CACHED_SESSION_START;
+        this.removeCachedSessionEndEvent =
+            OPERATION_ID_STATUS.GET.GET_REMOTE_REMOVE_CACHED_SESSION_END;
     }
 
     async prepareMessage(commandData) {
@@ -26,11 +36,6 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             ual,
             includeMetadata,
         } = commandData;
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.GET.GET_REMOTE_START,
-        );
 
         // if (paranetUAL) {
         //     const paranetNodeAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
@@ -92,24 +97,41 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //     }
         // }
 
-        const promises = [
-            this.tripleStoreService.getAssertion(
-                blockchain,
-                contract,
-                knowledgeCollectionId,
-                knowledgeAssetId,
-            ),
-        ];
+        const promises = [];
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_START,
+            operationId,
+            blockchain,
+        );
+        const assertionPromise = this.tripleStoreService
+            .getAssertion(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+            .then((result) => {
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                    operationId,
+                    blockchain,
+                );
+                return result;
+            });
+        promises.push(assertionPromise);
 
         if (includeMetadata) {
-            promises.push(
-                this.tripleStoreService.getAssertionMetadata(
-                    blockchain,
-                    contract,
-                    knowledgeCollectionId,
-                    knowledgeAssetId,
-                ),
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_METADATA_START,
+                operationId,
+                blockchain,
             );
+            const metadataPromise = this.tripleStoreService
+                .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_METADATA_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+            promises.push(metadataPromise);
         }
 
         const [assertion, metadata] = await Promise.all(promises);
@@ -119,11 +141,18 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             ...(includeMetadata && metadata && { metadata }),
         };
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.GET.GET_REMOTE_END,
-        );
+        if (assertion.length) {
+            await this.operationService.markOperationAsCompleted(
+                operationId,
+                blockchain,
+                responseData,
+                [
+                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+                    OPERATION_ID_STATUS.GET.GET_END,
+                    OPERATION_ID_STATUS.COMPLETED,
+                ],
+            );
+        }
 
         return assertion.length
             ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }

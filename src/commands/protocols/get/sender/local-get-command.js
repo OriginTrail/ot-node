@@ -88,24 +88,41 @@ class LocalGetCommand extends Command {
 
         // else {
 
-        const promises = [
-            this.tripleStoreService.getAssertion(
-                blockchain,
-                contract,
-                knowledgeCollectionId,
-                knowledgeAssetId,
-            ),
-        ];
+        const promises = [];
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_START,
+            operationId,
+            blockchain,
+        );
+        const assertionPromise = this.tripleStoreService
+            .getAssertion(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+            .then((result) => {
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
+                    operationId,
+                    blockchain,
+                );
+                return result;
+            });
+        promises.push(assertionPromise);
 
         if (includeMetadata) {
-            promises.push(
-                this.tripleStoreService.getAssertionMetadata(
-                    blockchain,
-                    contract,
-                    knowledgeCollectionId,
-                    knowledgeAssetId,
-                ),
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_START,
+                operationId,
+                blockchain,
             );
+            const metadataPromise = this.tripleStoreService
+                .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+            promises.push(metadataPromise);
         }
 
         const [assertion, metadata] = await Promise.all(promises);
