@@ -515,29 +515,22 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async createPublishFinalityRecord(operationId, options = {}) {
-        return this.getRepository('publish_finality_repository').createFinalityRecord(
-            operationId,
-            options,
-        );
+        return this.getRepository('publish_finality').createFinalityRecord(operationId, options);
     }
 
     async getPublishFinality(ual, options = {}) {
-        return this.getRepository('publish_finality_repository').getFinality(ual, options);
+        return this.getRepository('publish_finality').getFinality(ual, options);
     }
 
     async savePublishFinalityAck(operationId, ual, peerId, options = {}) {
         return Promise.all([
-            this.getRepository('publish_finality_peers_repository').saveFinalityAck(
+            this.getRepository('publish_finality_peers').saveFinalityAck(
                 operationId,
                 ual,
                 peerId,
                 options,
             ),
-            this.getRepository('publish_finality_repository').increaseFinality(
-                operationId,
-                ual,
-                options,
-            ),
+            this.getRepository('publish_finality').increaseFinality(operationId, ual, options),
         ]);
     }
 }

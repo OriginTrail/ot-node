@@ -5,7 +5,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             primaryKey: true,
             autoIncrement: true,
         },
-        operationId: {
+        operation_id: {
             allowNull: false,
             type: Sequelize.STRING,
             unique: true,
@@ -36,7 +36,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             primaryKey: true,
             autoIncrement: true,
         },
-        operationId: {
+        operation_id: {
             allowNull: false,
             type: Sequelize.STRING,
             unique: true,
@@ -46,7 +46,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             type: Sequelize.STRING,
             unique: true,
         },
-        peerId: {
+        peer_id: {
             allowNull: false,
             type: Sequelize.STRING,
         },
@@ -61,7 +61,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             defaultValue: Sequelize.literal('NOW()'),
         },
     });
-    await queryInterface.addIndex('publish_finality_peers', ['ual', 'peerId'], {
+    await queryInterface.addIndex('publish_finality_peers', ['ual', 'peer_id'], {
         indicesType: 'UNIQUE',
     });
 }

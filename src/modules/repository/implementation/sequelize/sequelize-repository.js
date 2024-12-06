@@ -17,6 +17,8 @@ import TokenRepository from './repositories/token-repository.js';
 import UserRepository from './repositories/user-repository.js';
 import MissedParanetAssetRepository from './repositories/missed-paranet-asset-repository.js';
 import ParanetSyncedAssetRepository from './repositories/paranet-synced-asset-repository.js';
+import PublishFinalityRepository from './repositories/publish-finality-repository.js';
+import PublishFinalityPeersRepository from './repositories/publish-finality-peers-repository.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -45,6 +47,8 @@ class SequelizeRepository {
             shard: new ShardRepository(this.models),
             token: new TokenRepository(this.models),
             user: new UserRepository(this.models),
+            publish_finality: new PublishFinalityRepository(this.models),
+            publish_finality_peers: new PublishFinalityPeersRepository(this.models),
         };
     }
 
