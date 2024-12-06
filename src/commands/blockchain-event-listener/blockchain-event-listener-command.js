@@ -498,6 +498,7 @@ class BlockchainEventListenerCommand extends Command {
                 assertion: data.assertion,
                 cachedMerkleRoot: data.merkleRoot,
                 remotePeerId: data.remotePeerId,
+                publishOperationId,
             },
             transactional: false,
         });

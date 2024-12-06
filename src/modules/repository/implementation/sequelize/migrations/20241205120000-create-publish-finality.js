@@ -5,12 +5,13 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             primaryKey: true,
             autoIncrement: true,
         },
-        blockchainId: {
+        operationId: {
             allowNull: false,
             type: Sequelize.STRING,
+            unique: true,
         },
         ual: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
             unique: true,
         },
@@ -35,8 +36,13 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             primaryKey: true,
             autoIncrement: true,
         },
-        ual: {
+        operationId: {
             allowNull: false,
+            type: Sequelize.STRING,
+            unique: true,
+        },
+        ual: {
+            allowNull: true,
             type: Sequelize.STRING,
             unique: true,
         },
@@ -54,6 +60,9 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             type: Sequelize.DATE,
             defaultValue: Sequelize.literal('NOW()'),
         },
+    });
+    await queryInterface.addIndex('publish_finality_peers', ['ual', 'peerId'], {
+        indicesType: 'UNIQUE',
     });
 }
 export async function down({ context: { queryInterface } }) {

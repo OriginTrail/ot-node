@@ -10,9 +10,9 @@ class PublishfinalityAckCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { ual, blockchain, operationId } = command.data;
+        const { ual, publishOperationId, blockchain, operationId } = command.data;
 
-        return { ual, blockchain, operationId };
+        return { ual, publishOperationId, blockchain, operationId };
     }
 
     messageTimeout() {

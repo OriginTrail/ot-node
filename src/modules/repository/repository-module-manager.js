@@ -514,10 +514,9 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async createPublishFinalityRecord(ual, blockchainId, options = {}) {
+    async createPublishFinalityRecord(operationId, options = {}) {
         return this.getRepository('publish_finality_repository').createFinalityRecord(
-            ual,
-            blockchainId,
+            operationId,
             options,
         );
     }
@@ -526,14 +525,19 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('publish_finality_repository').getFinality(ual, options);
     }
 
-    async savePublishFinalityAck(ual, peerId, options = {}) {
+    async savePublishFinalityAck(operationId, ual, peerId, options = {}) {
         return Promise.all([
             this.getRepository('publish_finality_peers_repository').saveFinalityAck(
+                operationId,
                 ual,
                 peerId,
                 options,
             ),
-            this.getRepository('publish_finality_repository').increaseFinality(ual, options),
+            this.getRepository('publish_finality_repository').increaseFinality(
+                operationId,
+                ual,
+                options,
+            ),
         ]);
     }
 }

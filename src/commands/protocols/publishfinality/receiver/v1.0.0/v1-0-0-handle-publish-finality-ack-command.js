@@ -18,7 +18,7 @@ class HandlePublishfinalityAckCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { ual, remotePeerId, blockchain, operationId } = commandData;
+        const { ual, publishOperationId, blockchain, operationId, remotePeerId } = commandData;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -28,7 +28,11 @@ class HandlePublishfinalityAckCommand extends HandleProtocolMessageCommand {
         let response;
         let success;
         try {
-            await this.repositoryModuleManager.savePublishFinalityAck(ual, remotePeerId);
+            await this.repositoryModuleManager.savePublishFinalityAck(
+                publishOperationId,
+                ual,
+                remotePeerId,
+            );
 
             success = true;
             response = {

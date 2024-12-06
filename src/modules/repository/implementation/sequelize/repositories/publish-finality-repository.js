@@ -4,8 +4,8 @@ class PublishFinalityRepository {
         this.model = models.publish_finality;
     }
 
-    async createFinalityRecord(ual, blockchainId, options) {
-        return this.model.create({ ual, blockchainId, finality: 1 }, { ...options });
+    async createFinalityRecord(operationId, options) {
+        return this.model.upsert({ operationId, finality: 0 }, { ...options });
     }
 
     async getFinality(ual, options) {
@@ -15,12 +15,18 @@ class PublishFinalityRepository {
         })?.finality;
     }
 
-    async increaseFinality(ual, options) {
-        return this.model.increment('finality', {
-            by: 1,
-            where: { ual },
-            ...options,
-        });
+    async increaseFinality(operationId, ual, options) {
+        return this.model.update(
+            {
+                finality: this.sequelize.literal('finality + 1'),
+                ual,
+                operationId,
+            },
+            {
+                where: { operationId },
+                ...options,
+            },
+        );
     }
 }
 

@@ -7,6 +7,7 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
+            operationId: DataTypes.STRING,
             ual: DataTypes.STRING,
             peerId: DataTypes.STRING,
             createdAt: DataTypes.DATE,

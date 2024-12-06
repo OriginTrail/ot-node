@@ -16,7 +16,7 @@ class FinalityController extends BaseController {
 
         const finality = await this.repositoryModuleManager.getPublishFinality(ual);
 
-        if (!finality)
+        if (typeof finality !== 'number')
             return this.returnResponse(res, 400, {
                 message: 'Asset with provided UAL was not published to this node.',
             });

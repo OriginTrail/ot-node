@@ -13,7 +13,7 @@ class PublishfinalitySendAckCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, remotePeerId, ual } = command.data;
+        const { operationId, blockchain, remotePeerId, publishOperationId, ual } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -38,6 +38,7 @@ class PublishfinalitySendAckCommand extends Command {
                 operationId,
                 node,
                 ual,
+                publishOperationId,
             },
             period: 5000,
             retries: 3,
