@@ -276,7 +276,6 @@ class TripleStoreService {
         repository = TRIPLE_STORE_REPOSITORY.DKG,
     ) {
         // TODO: Use stateId
-        // TODO: Add private public distinction
         const ual = `did:dkg:${blockchain}/${contract}/${knowledgeCollectionId}${
             knowledgeAssetId ? `/${knowledgeAssetId}` : ''
         }`;

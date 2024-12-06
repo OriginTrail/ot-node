@@ -496,7 +496,6 @@ class BlockchainEventListenerCommand extends Command {
                 tokenId,
                 merkleRoot: state,
                 assertion: data.assertion,
-                // From where do we get merkle root when it's publishing node ????
                 cachedMerkleRoot: data.merkleRoot,
             },
             transactional: false,

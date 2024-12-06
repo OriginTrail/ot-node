@@ -24,9 +24,6 @@ class StoreAssertionCommand extends Command {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_STORE_ASSERTION_START,
         );
-        // TODO: Change this logic so it handle public/private if it exists
-        // If this is only public it will be in dataset
-        // If it's both public and private it will be in dataset.public and dataset.private
         try {
             await this._insertAssertion(assertion, ual);
         } catch (e) {
