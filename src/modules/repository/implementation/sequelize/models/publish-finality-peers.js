@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-    const publishFinality = sequelize.define(
+    const publishFinalityPeers = sequelize.define(
         'publish_finality_peers',
         {
             id: {
@@ -15,8 +15,8 @@ export default (sequelize, DataTypes) => {
         },
         { underscored: true },
     );
-    publishFinality.associate = () => {
+    publishFinalityPeers.associate = () => {
         // associations can be defined here
     };
-    return publishFinality;
+    return publishFinalityPeers;
 };
