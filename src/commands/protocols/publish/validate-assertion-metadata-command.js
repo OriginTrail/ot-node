@@ -7,6 +7,10 @@ class ValidateAssertionMetadataCommand extends Command {
         this.operationIdService = ctx.operationIdService;
 
         this.errorType = ERROR_TYPE.VALIDATE_ASSERTION_METADATA_ERROR;
+        this.operationStartEvent =
+            OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_METADATA_VALIDATION_START;
+        this.operationEndEvent =
+            OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_METADATA_VALIDATION_END;
     }
 
     async execute(command) {
@@ -15,7 +19,7 @@ class ValidateAssertionMetadataCommand extends Command {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_METADATA_VALIDATION_START,
+            this.operationStartEvent,
         );
 
         try {
@@ -35,7 +39,7 @@ class ValidateAssertionMetadataCommand extends Command {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             null,
-            OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_METADATA_VALIDATION_END,
+            this.operationEndEvent,
         );
 
         return this.continueSequence(command.data, command.sequence);
