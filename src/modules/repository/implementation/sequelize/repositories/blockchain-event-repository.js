@@ -6,7 +6,7 @@ class BlockchainEventRepository {
         this.model = models.blockchain_event;
     }
 
-    async insertBlockchainEvents(events) {
+    async insertBlockchainEvents(events, options) {
         const chunkSize = 10000;
         let insertedEvents = [];
 
@@ -15,15 +15,19 @@ class BlockchainEventRepository {
             // eslint-disable-next-line no-await-in-loop
             const insertedChunk = await this.model.bulkCreate(
                 chunk.map((event) => ({
+                    blockchain: event.blockchain,
                     contract: event.contract,
+                    contractAddress: event.contractAddress,
                     event: event.event,
                     data: event.data,
-                    block: event.block,
-                    blockchainId: event.blockchainId,
+                    blockNumber: event.blockNumber,
+                    transactionIndex: event.transactionIndex,
+                    logIndex: event.logIndex,
                     processed: false,
                 })),
                 {
                     ignoreDuplicates: true,
+                    ...options,
                 },
             );
 
@@ -33,49 +37,69 @@ class BlockchainEventRepository {
         return insertedEvents;
     }
 
-    async getAllUnprocessedBlockchainEvents(eventNames, blockchainId) {
+    async getAllUnprocessedBlockchainEvents(blockchain, eventNames, options) {
         return this.model.findAll({
             where: {
-                blockchainId,
+                blockchain,
                 processed: false,
                 event: { [Sequelize.Op.in]: eventNames },
             },
-            order: [['block', 'asc']],
+            order: [
+                ['blockNumber', 'asc'],
+                ['transactionIndex', 'asc'],
+                ['logIndex', 'asc'],
+            ],
+            ...options,
         });
     }
 
-    async blockchainEventExists(contract, event, data, block, blockchainId) {
-        const dbEvent = await this.model.findOne({
-            where: {
-                contract,
-                event,
-                data,
-                block,
-                blockchainId,
-            },
-        });
-        return !!dbEvent;
-    }
-
-    async markBlockchainEventsAsProcessed(events) {
-        const idsForUpdate = events.flatMap((event) => event.id);
+    async markAllBlockchainEventsAsProcessed(blockchain, options) {
         return this.model.update(
             { processed: true },
             {
-                where: { id: { [Sequelize.Op.in]: idsForUpdate } },
+                where: { blockchain },
+                ...options,
             },
         );
     }
 
-    async removeEvents(ids) {
+    async removeEvents(ids, options) {
         await this.model.destroy({
             where: {
                 id: { [Sequelize.Op.in]: ids },
             },
+            ...options,
         });
     }
 
-    async findProcessedEvents(timestamp, limit) {
+    async removeContractEventsAfterBlock(
+        blockchain,
+        contract,
+        contractAddress,
+        blockNumber,
+        transactionIndex,
+        options,
+    ) {
+        return this.model.destroy({
+            where: {
+                blockchain,
+                contract,
+                contractAddress,
+                [Sequelize.Op.or]: [
+                    // Events in blocks after the given blockNumber
+                    { blockNumber: { [Sequelize.Op.gt]: blockNumber } },
+                    // Events in the same blockNumber but with a higher transactionIndex
+                    {
+                        blockNumber,
+                        transactionIndex: { [Sequelize.Op.gt]: transactionIndex },
+                    },
+                ],
+            },
+            ...options,
+        });
+    }
+
+    async findProcessedEvents(timestamp, limit, options) {
         return this.model.findAll({
             where: {
                 processed: true,
@@ -84,6 +108,7 @@ class BlockchainEventRepository {
             order: [['createdAt', 'asc']],
             raw: true,
             limit,
+            ...options,
         });
     }
 }

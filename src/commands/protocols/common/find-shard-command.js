@@ -16,6 +16,11 @@ class FindShardCommand extends Command {
         this.processFoundNodesEndEvent = OPERATION_ID_STATUS.FIND_NODES_PROCESS_FOUND_NODES_END;
     }
 
+    // eslint-disable-next-line no-unused-vars
+    getOperationCommandSequence(nodePartOfShard) {
+        return [];
+    }
+
     /**
      * Executes command and produces one or more events
      * @param command
@@ -128,10 +133,6 @@ class FindShardCommand extends Command {
         );
 
         return nodesFound;
-    }
-
-    getOperationCommandSequence() {
-        throw Error('getOperationCommandSequence() is not defined');
     }
 
     /**

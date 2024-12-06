@@ -149,14 +149,35 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }                      
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": false,
-                            "signalingServerUrl": "null"
+                            "blockchains": ["hardhat1:31337", "hardhat2:31337"],
+                            "rpcEndpoints": {
+                                "hardhat1:31337": ["http://localhost:8545"],
+                                "hardhat2:31337": ["http://localhost:9545"]
+                            },
+                            "hubContractAddress": {
+                                "hardhat1:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                                "hardhat2:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+                            }
                         }
                     }
                 }
@@ -317,14 +338,35 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }                      
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": false,
-                            "signalingServerUrl": "null"
+                            "blockchains": ["hardhat1:31337", "hardhat2:31337"],
+                            "rpcEndpoints": {
+                                "hardhat1:31337": ["http://localhost:8545"],
+                                "hardhat2:31337": ["http://localhost:9545"]
+                            },
+                            "hubContractAddress": {
+                                "hardhat1:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                                "hardhat2:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+                            }
                         }
                     }
                 }
@@ -485,14 +527,33 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }                      
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://v8-testnet-signaling.origin-trail.network/signal"
+                            "blockchains": ["base:84532"],
+                            "rpcEndpoints": {
+                                "base:84532": ["https://sepolia.base.org"]
+                            },
+                            "hubContractAddress": {
+                                "base:84532": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692"
+                            }
                         }
                     }
                 }
@@ -652,14 +713,33 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }                      
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://devnet-signaling.origin-trail.network/signal"
+                            "blockchains": ["base:84532"],
+                            "rpcEndpoints": {
+                                "base:84532": ["https://sepolia.base.org"]
+                            },
+                            "hubContractAddress": {
+                                "base:84532": "0xAB4A4794Fc1F415C24807B947280aCa8dC492238"
+                            }
                         }
                     }
                 }
@@ -842,14 +922,38 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+
+                        }                      
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
+                            "blockchains": ["otp:2043"],
+                            "rpcEndpoints": {
+                                "otp:2043": [
+                                    "https://astrosat-parachain-rpc.origin-trail.network",
+                                    "https://astrosat.origintrail.network/",
+                                    "https://astrosat-2.origintrail.network/"
+                                ]
+                            },
+                            "hubContractAddress": {
+                                "otp:2043": "0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA"
+                            }
                         }
                     }
                 }

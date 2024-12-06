@@ -22,7 +22,14 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, ual, includeMetadata } = command.data;
+        const {
+            operationId,
+            blockchain,
+            includeMetadata,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+        } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -87,14 +94,16 @@ class LocalGetCommand extends Command {
             operationId,
             blockchain,
         );
-        const assertionPromise = this.tripleStoreService.getAssertion(ual).then((result) => {
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
-                operationId,
-                blockchain,
-            );
-            return result;
-        });
+        const assertionPromise = this.tripleStoreService
+            .getAssertion(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+            .then((result) => {
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
+                    operationId,
+                    blockchain,
+                );
+                return result;
+            });
         promises.push(assertionPromise);
 
         if (includeMetadata) {
@@ -103,8 +112,8 @@ class LocalGetCommand extends Command {
                 operationId,
                 blockchain,
             );
-            const knowledgeAssetMetadataPromise = this.tripleStoreService
-                .getKnowledgeAssetMetadata(ual)
+            const metadataPromise = this.tripleStoreService
+                .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
                 .then((result) => {
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.GET.GET_LOCAL_GET_KA_METADATA_END,
@@ -113,14 +122,14 @@ class LocalGetCommand extends Command {
                     );
                     return result;
                 });
-            promises.push(knowledgeAssetMetadataPromise);
+            promises.push(metadataPromise);
         }
 
-        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
+        const [assertion, metadata] = await Promise.all(promises);
 
         const responseData = {
             assertion,
-            ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
+            ...(includeMetadata && metadata && { metadata }),
         };
         if (assertion.length) {
             await this.operationService.markOperationAsCompleted(

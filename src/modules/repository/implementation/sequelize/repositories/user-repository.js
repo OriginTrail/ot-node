@@ -4,11 +4,12 @@ class UserRepository {
         this.model = models.user;
     }
 
-    async getUser(username) {
+    async getUser(username, options) {
         return this.model.findOne({
             where: {
                 name: username,
             },
+            ...options,
         });
     }
 }

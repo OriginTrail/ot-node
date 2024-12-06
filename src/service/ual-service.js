@@ -44,7 +44,8 @@ class UALService {
 
     resolveUAL(ual) {
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
-        parts.push(...parts.pop().split(':'));
+        // TODO: Resolve UAL with state
+        // parts.push(...parts.pop().split(':'));
         if (parts.length === 4) {
             const contract = parts[1];
             if (!this.isContract(contract)) {
@@ -62,8 +63,8 @@ class UALService {
             return {
                 blockchain: blockchainName,
                 contract,
-                tokenId: Number(parts[2]),
-                stateId: Number(parts[3]),
+                knowledgeCollectionId: Number(parts[2]),
+                knowledgeAssetId: Number(parts[3]),
             };
         }
         if (parts.length === 3) {
@@ -80,7 +81,11 @@ class UALService {
                     }
                 }
             }
-            return { blockchain: blockchainName, contract, tokenId: Number(parts[2]) };
+            return {
+                blockchain: blockchainName,
+                contract,
+                knowledgeCollectionId: Number(parts[2]),
+            };
         }
         if (parts.length === 2) {
             const parts2 = parts[0].split(':');

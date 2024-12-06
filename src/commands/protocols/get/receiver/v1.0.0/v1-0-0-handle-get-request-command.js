@@ -27,7 +27,15 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { operationId, blockchain, ual, includeMetadata } = commandData;
+        const {
+            operationId,
+            blockchain,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            ual,
+            includeMetadata,
+        } = commandData;
 
         // if (paranetUAL) {
         //     const paranetNodeAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
@@ -95,14 +103,16 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             blockchain,
         );
-        const assertionPromise = this.tripleStoreService.getAssertion(ual).then((result) => {
-            this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
-                operationId,
-                blockchain,
-            );
-            return result;
-        });
+        const assertionPromise = this.tripleStoreService
+            .getAssertion(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+            .then((result) => {
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                    operationId,
+                    blockchain,
+                );
+                return result;
+            });
         promises.push(assertionPromise);
 
         if (includeMetadata) {
@@ -111,8 +121,8 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 operationId,
                 blockchain,
             );
-            const knowledgeAssetMetadataPromise = this.tripleStoreService
-                .getKnowledgeAssetMetadata(ual)
+            const metadataPromise = this.tripleStoreService
+                .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
                 .then((result) => {
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.GET.GET_REMOTE_GET_KA_METADATA_END,
@@ -121,27 +131,18 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                     );
                     return result;
                 });
-            promises.push(knowledgeAssetMetadataPromise);
+            promises.push(metadataPromise);
         }
 
-        const [assertion, knowledgeAssetMetadata] = await Promise.all(promises);
+        const [assertion, metadata] = await Promise.all(promises);
 
         const responseData = {
             assertion,
-            ...(includeMetadata && knowledgeAssetMetadata && { metadata: knowledgeAssetMetadata }),
+            ...(includeMetadata && metadata && { metadata }),
         };
 
-        if (assertion.length) {
-            await this.operationService.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                responseData,
-                [OPERATION_ID_STATUS.GET.GET_END, OPERATION_ID_STATUS.COMPLETED],
-            );
-        }
-
         return assertion.length
-            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: { assertion } }
+            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                   messageData: { errorMessage: `Unable to find assertion ${ual}` },

@@ -38,11 +38,25 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { blockchain, ual, hashFunctionId, paranetUAL, paranetId } = command.data;
+        const {
+            blockchain,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            includeMetadata,
+            ual,
+            hashFunctionId,
+            paranetUAL,
+            paranetId,
+        } = command.data;
         const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 2;
 
         return {
             blockchain,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            includeMetadata,
             ual,
             hashFunctionId,
             proximityScoreFunctionsPairId,
@@ -52,18 +66,18 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command, responseData) {
-        if (responseData?.nquads) {
-            try {
-                await this.validationService.validateAssertion(
-                    command.data.assertionId,
-                    command.data.blockchain,
-                    responseData.nquads,
-                );
-            } catch (e) {
-                return this.handleNack(command, {
-                    errorMessage: e.message,
-                });
-            }
+        if (responseData?.assertion) {
+            // TODO: Add this validation
+            // try {
+            //     await this.validationService.validateAssertion(
+            //         command.data.blockchain,
+            //         responseData.assertion,
+            //     );
+            // } catch (e) {
+            //     return this.handleNack(command, {
+            //         errorMessage: e.message,
+            //     });
+            // }
 
             await this.operationService.processResponse(
                 command,
