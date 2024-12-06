@@ -12,6 +12,7 @@ class HandlePublishfinalityAckCommand extends HandleProtocolMessageCommand {
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.paranetService = ctx.paranetService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.PUBLISH_FINALITY.PUBLISH_FINALITY_REQUEST_REMOTE_ERROR;
     }
@@ -24,31 +25,36 @@ class HandlePublishfinalityAckCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_REMOTE_START,
         );
 
-        const success = !!remotePeerId; // TODO: await save ack from peer for the UAL
+        let response;
+        let success;
+        try {
+            await this.repositoryModuleManager.savePublishFinalityAck(ual, remotePeerId);
 
-        if (success) {
-            await this.operationService.markOperationAsCompleted(operationId, blockchain, success, [
-                OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_FETCH_FROM_NODES_END,
-                OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_END,
-                OPERATION_ID_STATUS.COMPLETED,
-            ]);
+            success = true;
+            response = {
+                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                messageData: { message: `Acknowledged storing of ${ual}.` },
+            };
+        } catch (err) {
+            success = false;
+            response = {
+                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                messageData: { errorMessage: `Failed to acknowledge storing of ${ual}.` },
+            };
         }
 
+        await this.operationService.markOperationAsCompleted(operationId, blockchain, success, [
+            OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_FETCH_FROM_NODES_END,
+            OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_END,
+            OPERATION_ID_STATUS.COMPLETED,
+        ]);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_REMOTE_END,
         );
 
-        return success
-            ? {
-                  messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                  messageData: { message: `Acknowledged storing of ${ual}.` },
-              }
-            : {
-                  messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                  messageData: { errorMessage: `Failed to acknowledge storing of ${ual}.` },
-              };
+        return response;
     }
 
     /**
