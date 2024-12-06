@@ -10,6 +10,7 @@ export default (sequelize, DataTypes) => {
             blockchainId: DataTypes.STRING,
             ual: {
                 type: DataTypes.STRING,
+                allowNull: false,
                 unique: true,
             },
             finality: DataTypes.STRING,

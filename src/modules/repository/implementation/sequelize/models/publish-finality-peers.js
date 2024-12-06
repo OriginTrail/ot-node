@@ -9,6 +9,7 @@ export default (sequelize, DataTypes) => {
             },
             ual: {
                 type: DataTypes.STRING,
+                allowNull: false,
                 unique: true,
             },
             peerId: DataTypes.STRING,
