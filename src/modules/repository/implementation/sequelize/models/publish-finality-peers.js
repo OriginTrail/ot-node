@@ -7,11 +7,7 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            ual: {
-                type: DataTypes.STRING,
-                allowNull: false,
-                unique: true,
-            },
+            ual: DataTypes.STRING,
             peerId: DataTypes.STRING,
             createdAt: DataTypes.DATE,
             updatedAt: DataTypes.DATE,

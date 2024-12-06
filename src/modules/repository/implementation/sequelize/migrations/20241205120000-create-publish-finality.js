@@ -12,6 +12,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
         ual: {
             allowNull: false,
             type: Sequelize.STRING,
+            unique: true,
         },
         finality: {
             allowNull: false,
@@ -37,6 +38,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
         ual: {
             allowNull: false,
             type: Sequelize.STRING,
+            unique: true,
         },
         peerId: {
             allowNull: false,
