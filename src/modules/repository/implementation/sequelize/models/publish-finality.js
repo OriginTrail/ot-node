@@ -8,7 +8,10 @@ export default (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             blockchainId: DataTypes.STRING,
-            ual: DataTypes.STRING,
+            ual: {
+                type: DataTypes.STRING,
+                unique: true,
+            },
             finality: DataTypes.STRING,
             createdAt: DataTypes.DATE,
             updatedAt: DataTypes.DATE,
