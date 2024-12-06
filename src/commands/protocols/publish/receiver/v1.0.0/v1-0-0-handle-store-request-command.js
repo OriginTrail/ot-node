@@ -89,25 +89,25 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_END,
         );
 
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START,
             operationId,
             blockchain,
         );
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_END,
             operationId,
             blockchain,
         );
 
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SIGN_START,
             operationId,
             blockchain,
         );
         const signature = await this.blsService.sign(datasetRoot);
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SIGN_END,
             operationId,
             blockchain,

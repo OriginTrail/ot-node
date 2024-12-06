@@ -15,20 +15,12 @@ class ProtocolRequestCommand extends ProtocolMessageCommand {
 
     async execute(command) {
         const { operationId, blockchain } = command.data;
-        await this.operationIdService.emitChangeEvent(
-            this.operationStartEvent,
-            operationId,
-            blockchain,
-        );
+        this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
         const result = this.executeProtocolMessageCommand(
             command,
             NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST,
         );
-        await this.operationIdService.emitChangeEvent(
-            this.operationEndEvent,
-            operationId,
-            blockchain,
-        );
+        this.operationIdService.emitChangeEvent(this.operationEndEvent, operationId, blockchain);
 
         return result;
     }
