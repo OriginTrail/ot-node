@@ -39,13 +39,15 @@ class QuestTelemetry {
                 if (response?.ddl === 'OK') {
                     this.logger.info('Event table successfully created in QuestDB');
                 } else {
-                    this.logger.error(
-                        `Could not create event table in QuestDB for endpoint: ${endpoint}`,
+                    throw new Error(
+                        `Could not create event table in QuestDB. Response: ${JSON.stringify(
+                            response,
+                        )}`,
                     );
                 }
             }
         } catch (error) {
-            this.logger.error(
+            throw new Error(
                 `Failed to handle event table for endpoint: ${endpoint}. Error: ${error.message}`,
             );
         }
@@ -54,12 +56,9 @@ class QuestTelemetry {
     async getTables(endpoint) {
         try {
             const response = await axios.get(endpoint, { params: { query: 'SHOW TABLES;' } });
-            return response?.dataset?.flat();
+            return response?.dataset?.flat() || [];
         } catch (error) {
-            this.logger.error(
-                `Failed to fetch all tables from QuestDB with endpoint: ${endpoint}. Error: ${error.message}`,
-            );
-            return [];
+            throw new Error(`Failed to fetch all tables from QuestDB. Error: ${error.message}`);
         }
     }
 
