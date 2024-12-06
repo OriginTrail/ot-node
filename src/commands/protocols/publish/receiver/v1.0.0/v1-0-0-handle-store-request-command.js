@@ -33,6 +33,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SEND_RESPONSE_START;
         this.sendMessageResponseEndEvent =
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SEND_RESPONSE_END;
+        this.removeCachedSessionStartEvent =
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_START;
+        this.removeCachedSessionEndEvent =
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_END;
     }
 
     async prepareMessage(commandData) {
@@ -68,17 +72,36 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_START,
         );
-
         await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
-
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_END,
         );
 
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START,
+        );
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_END,
+        );
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SIGN_START,
+        );
         const signature = await this.blsService.sign(datasetRoot);
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SIGN_END,
+        );
 
         return {
             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,

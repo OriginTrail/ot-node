@@ -12,16 +12,6 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         super(ctx);
         this.operationService = ctx.publishService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSET_ERROR;
-        this.operationStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_START;
-        this.operationEndEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END;
-        this.paranetExistsStartEvent =
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_START;
-        this.paranetExistsEndEvent =
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_END;
-        this.nodesAccessPolicyCheckStartEvent =
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_START;
-        this.nodesAccessPolicyCheckEndEvent =
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_END;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -49,13 +39,34 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            this.operationStartEvent,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_START,
         );
 
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            operationId,
+            blockchain,
+        );
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            operationId,
+            blockchain,
+        );
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_START,
+            operationId,
+            blockchain,
+        );
         const isValidAssertion = await this.validationService.validateDatasetRoot(
             cachedData.dataset,
             datasetRoot,
+        );
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_END,
+            operationId,
+            blockchain,
         );
 
         if (!isValidAssertion) {
@@ -84,7 +95,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                 );
 
                 this.operationIdService.emitChangeEvent(
-                    this.paranetExistsStartEvent,
+                    OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_START,
                     operationId,
                     blockchain,
                 );
@@ -93,7 +104,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     paranetId,
                 );
                 this.operationIdService.emitChangeEvent(
-                    this.paranetExistsEndEvent,
+                    OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_END,
                     operationId,
                     blockchain,
                 );
@@ -109,7 +120,8 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                 }
 
                 this.operationIdService.emitChangeEvent(
-                    this.nodesAccessPolicyCheckStartEvent,
+                    OPERATION_ID_STATUS.PUBLISH
+                        .PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_START,
                     operationId,
                     blockchain,
                 );
@@ -143,7 +155,8 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     return Command.empty();
                 }
                 this.operationIdService.emitChangeEvent(
-                    this.nodesAccessPolicyCheckEndEvent,
+                    OPERATION_ID_STATUS.PUBLISH
+                        .PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_END,
                     operationId,
                     blockchain,
                 );
@@ -156,7 +169,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            this.operationEndEvent,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END,
         );
         return this.continueSequence(
             { ...command.data, paranetId, retry: undefined, period: undefined },

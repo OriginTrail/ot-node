@@ -10,15 +10,29 @@ class ProtocolMessageCommand extends Command {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
 
+        this.prepareMessageStartEvent = OPERATION_ID_STATUS.PROTOCOL_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent = OPERATION_ID_STATUS.PROTOCOL_PREPARE_MESSAGE_END;
         this.sendMessageStartEvent = OPERATION_ID_STATUS.PROTOCOL_SEND_MESSAGE_START;
         this.sendMessageEndEvent = OPERATION_ID_STATUS.PROTOCOL_SEND_MESSAGE_END;
     }
 
     async executeProtocolMessageCommand(command, messageType) {
+        const { operationId, blockchain } = command.data;
+
         if (!(await this.shouldSendMessage(command))) {
             return Command.empty();
         }
+        await this.operationIdService.emitChangeEvent(
+            this.prepareMessageStartEvent,
+            operationId,
+            blockchain,
+        );
         const message = await this.prepareMessage(command);
+        await this.operationIdService.emitChangeEvent(
+            this.prepareMessageEndEvent,
+            operationId,
+            blockchain,
+        );
 
         return this.sendProtocolMessage(command, message, messageType);
     }

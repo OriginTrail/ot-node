@@ -22,6 +22,10 @@ class HandleProtocolMessageCommand extends Command {
             OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_SEND_MESSAGE_RESPONSE_START;
         this.sendMessageResponseEndEvent =
             OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_SEND_MESSAGE_RESPONSE_END;
+        this.removeCachedSessionStartEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_REMOVE_CACHED_SESSION_START;
+        this.removeCachedSessionEndEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_REMOVE_CACHED_SESSION_END;
     }
 
     /**
@@ -71,7 +75,17 @@ class HandleProtocolMessageCommand extends Command {
             await this.handleError(error.message, command);
         }
 
+        this.operationIdService.emitChangeEvent(
+            this.removeCachedSessionStartEvent,
+            operationId,
+            blockchain,
+        );
         this.networkModuleManager.removeCachedSession(operationId, remotePeerId);
+        this.operationIdService.emitChangeEvent(
+            this.removeCachedSessionEndEvent,
+            operationId,
+            blockchain,
+        );
 
         this.operationIdService.emitChangeEvent(this.operationEndEvent, operationId, blockchain);
 

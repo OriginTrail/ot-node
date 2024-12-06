@@ -30,15 +30,13 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         const { blockchain } = command.data;
 
         await this.operationIdService.emitChangeEvent(
-            this.prepareMessageStartEvent,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
             operationId,
             blockchain,
         );
-
         const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
-
         await this.operationIdService.emitChangeEvent(
-            this.prepareMessageEndEvent,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
             blockchain,
         );
@@ -55,12 +53,23 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command, responseData) {
-        const { operationId } = command.data;
+        const { operationId, blockchain } = command.data;
+        await this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_ADD_SIGNATURE_TO_STORAGE_START,
+            operationId,
+            blockchain,
+        );
         await this.signatureStorageService.addSignatureToStorage(
             operationId,
             responseData.identityId,
             responseData.signature,
         );
+        await this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_ADD_SIGNATURE_TO_STORAGE_END,
+            operationId,
+            blockchain,
+        );
+
         return super.handleAck(command, responseData);
     }
 
