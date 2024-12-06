@@ -9,7 +9,7 @@ export default (sequelize, DataTypes) => {
             },
             operationId: DataTypes.STRING,
             ual: DataTypes.STRING,
-            finality: DataTypes.INTEGER,
+            peerId: DataTypes.STRING,
             createdAt: DataTypes.DATE,
             updatedAt: DataTypes.DATE,
         },

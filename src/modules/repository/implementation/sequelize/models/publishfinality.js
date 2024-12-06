@@ -1,22 +1,21 @@
 export default (sequelize, DataTypes) => {
-    const publishFinalityPeers = sequelize.define(
-        'publish_finality_peers',
+    const publishfinality = sequelize.define(
+        'publishfinality',
         {
             id: {
                 type: DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
-            operationId: DataTypes.STRING,
-            ual: DataTypes.STRING,
-            peerId: DataTypes.STRING,
+            operationId: DataTypes.UUID,
+            status: DataTypes.STRING,
             createdAt: DataTypes.DATE,
             updatedAt: DataTypes.DATE,
         },
         { underscored: true },
     );
-    publishFinalityPeers.associate = () => {
+    publishfinality.associate = () => {
         // associations can be defined here
     };
-    return publishFinalityPeers;
+    return publishfinality;
 };

@@ -1,21 +1,15 @@
 export async function up({ context: { queryInterface, Sequelize } }) {
-    await queryInterface.createTable('publish_finality', {
+    await queryInterface.createTable('publishfinality', {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         },
         operation_id: {
+            type: Sequelize.UUID,
             allowNull: false,
-            type: Sequelize.STRING,
-            unique: true,
         },
-        ual: {
-            allowNull: true,
-            type: Sequelize.STRING,
-            unique: true,
-        },
-        peer_id: {
+        status: {
             allowNull: false,
             type: Sequelize.STRING,
         },
@@ -30,10 +24,7 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             defaultValue: Sequelize.literal('NOW()'),
         },
     });
-    await queryInterface.addIndex('publish_finality', ['ual', 'peer_id'], {
-        indicesType: 'UNIQUE',
-    });
 }
 export async function down({ context: { queryInterface } }) {
-    await queryInterface.dropTable('publish_finality');
+    await queryInterface.dropTable('publishfinality');
 }

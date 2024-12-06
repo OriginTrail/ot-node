@@ -497,18 +497,12 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async savePublishFinalityAck(publishOperationId, ual, peerId, options = {}) {
-        await this.getRepository('publish_finality_peers').saveFinalityAck(
+        return this.getRepository('publish_finality').saveFinalityAck(
             publishOperationId,
             ual,
             peerId,
             options,
         );
-        await this.getRepository('publish_finality').increaseFinality(
-            publishOperationId,
-            ual,
-            options,
-        );
-        return true;
     }
 }
 
