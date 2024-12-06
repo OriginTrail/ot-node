@@ -4,6 +4,7 @@ import {
     LOCAL_STORE_TYPES,
     OPERATION_REQUEST_STATUS,
     NETWORK_MESSAGE_TYPES,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -33,6 +34,9 @@ class LocalStoreCommand extends Command {
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetId,
             datasetRoot,
+            isOperationV0,
+            contract,
+            tokenId,
         } = command.data;
 
         try {
@@ -47,20 +51,58 @@ class LocalStoreCommand extends Command {
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
 
-                // if (cachedData.dataset && cachedData.datasetRoot) {
-                //     storePromises.push(
-                //         this.pendingStorageService.cacheDataset(
-                //             operationId,
-                //             cachedData.datasetRoot,
-                //             cachedData.dataset,
-                //         ),
-                //     );
-                // }
-                // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
-                //     storePromises.push(
-                //         this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset),
-                //     );
-                // }
+                if (isOperationV0 && cachedData.public.assertion && cachedData.public.assertionId) {
+                    const knowledgeAssetsCount = this.dataService.countDistinctSubjects(
+                        cachedData.public.assertion,
+                    );
+                    const knowledgeAssetsUALs = [];
+                    const knowledgeAssetStates = [];
+
+                    const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                    for (let i = 0; i < knowledgeAssetsCount; i += 1) {
+                        knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
+                        knowledgeAssetStates.push(0);
+                    }
+
+                    storePromises.push(
+                        this.tripleStoreService.insertKnowledgeCollection(
+                            TRIPLE_STORE_REPOSITORIES.DKG,
+                            ual,
+                            knowledgeAssetsUALs,
+                            knowledgeAssetStates,
+                            cachedData.public.assertion,
+                        ),
+                    );
+                }
+                if (
+                    isOperationV0 &&
+                    cachedData.private.assertion &&
+                    cachedData.private.assertionId
+                ) {
+                    const knowledgeAssetsCount = this.dataService.countDistinctSubjects(
+                        cachedData.private.assertion,
+                    );
+                    const knowledgeAssetsUALs = [];
+                    const knowledgeAssetStates = [];
+
+                    const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                    for (let i = 0; i < knowledgeAssetsCount; i += 1) {
+                        knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
+                        knowledgeAssetStates.push(0);
+                    }
+
+                    storePromises.push(
+                        this.tripleStoreService.insertKnowledgeCollection(
+                            TRIPLE_STORE_REPOSITORIES.DKG,
+                            ual,
+                            knowledgeAssetsUALs,
+                            knowledgeAssetStates,
+                            cachedData.private.assertion,
+                        ),
+                    );
+                }
                 await Promise.all(storePromises);
 
                 const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
@@ -91,7 +133,7 @@ class LocalStoreCommand extends Command {
                 await this.tripleStoreModuleManager.initializeParanetRepository(paranetRepository);
                 await this.paranetService.initializeParanetRecord(blockchain, paranetId);
 
-                if (cachedData && cachedData.datasetRoot) {
+                if (isOperationV0 && cachedData && cachedData.datasetRoot) {
                     // await this.tripleStoreService.localStoreAsset(
                     //     paranetRepository,
                     //     cachedData.public.assertionId,
@@ -104,7 +146,7 @@ class LocalStoreCommand extends Command {
                     //     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
                     // );
                 }
-                if (cachedData && cachedData.datasetRoot) {
+                if (isOperationV0 && cachedData && cachedData.datasetRoot) {
                     // await this.tripleStoreService.localStoreAsset(
                     //     paranetRepository,
                     //     cachedData.private.assertionId,

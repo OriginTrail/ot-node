@@ -69,7 +69,7 @@ class HandleProtocolMessageCommand extends Command {
         }
     }
 
-    async validateReceivedData(operationId, datasetRoot, dataset, blockchain) {
+    async validateReceivedData(operationId, datasetRoot, dataset, blockchain, isOperationV0) {
         this.logger.trace(`Validating shard for datasetRoot: ${datasetRoot}`);
         const isShardValid = await this.validateShard(blockchain);
         if (!isShardValid) {
@@ -82,18 +82,20 @@ class HandleProtocolMessageCommand extends Command {
             };
         }
 
-        const isValidAssertion = await this.validationService.validateDatasetRoot(
-            dataset,
-            datasetRoot,
-        );
+        if (!isOperationV0) {
+            const isValidAssertion = await this.validationService.validateDatasetRoot(
+                dataset,
+                datasetRoot,
+            );
 
-        if (!isValidAssertion) {
-            return {
-                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                messageData: {
-                    errorMessage: `Invalid dataset root for asset ???. Received value , received value from request: ${datasetRoot}`,
-                },
-            };
+            if (!isValidAssertion) {
+                return {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                    messageData: {
+                        errorMessage: `Invalid dataset root for asset ???. Received value , received value from request: ${datasetRoot}`,
+                    },
+                };
+            }
         }
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };

@@ -6,7 +6,8 @@ class GetFindShardCommand extends FindShardCommand {
         this.operationService = ctx.getService;
     }
 
-    getOperationCommandSequence(nodePartOfShard) {
+    // eslint-disable-next-line no-unused-vars
+    getOperationCommandSequence(nodePartOfShard, commandData) {
         const sequence = [];
         if (nodePartOfShard) {
             sequence.push('localGetCommand');

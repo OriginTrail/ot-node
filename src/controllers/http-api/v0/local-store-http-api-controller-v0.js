@@ -70,6 +70,7 @@ class LocalStoreController extends BaseController {
                 tokenId: assertions[0].tokenId,
                 storeType: assertions[0].storeType,
                 paranetUAL: assertions[0].paranetUAL,
+                isOperationV0: true,
             },
             transactional: false,
         });

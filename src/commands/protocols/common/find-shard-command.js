@@ -10,7 +10,7 @@ class FindShardCommand extends Command {
     }
 
     // eslint-disable-next-line no-unused-vars
-    getOperationCommandSequence(nodePartOfShard) {
+    getOperationCommandSequence(nodePartOfShard, commandData) {
         return [];
     }
 
@@ -47,7 +47,7 @@ class FindShardCommand extends Command {
             }
         }
 
-        const commandSequence = this.getOperationCommandSequence(nodePartOfShard);
+        const commandSequence = this.getOperationCommandSequence(nodePartOfShard, command.data);
 
         command.sequence.push(...commandSequence);
 

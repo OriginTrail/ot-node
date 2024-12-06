@@ -1,13 +1,13 @@
 export default (argumentsObject) => ({
     type: 'object',
-    required: ['assertionId', 'assertion', 'blockchain', 'contract', 'tokenId'],
+    required: ['datasetRoot', 'dataset', 'blockchain'],
     properties: {
-        assertionId: {
+        datasetRoot: {
             type: 'string',
             minLength: 66,
             maxLength: 66,
         },
-        assertion: {
+        dataset: {
             type: 'array',
             items: {
                 type: 'string',
@@ -16,15 +16,6 @@ export default (argumentsObject) => ({
         },
         blockchain: {
             enum: argumentsObject.blockchainImplementationNames,
-        },
-        contract: {
-            type: 'string',
-            minLength: 42,
-            maxLength: 42,
-        },
-        tokenId: {
-            type: 'number',
-            minimum: 0,
         },
         hashFunctionId: {
             type: 'number',

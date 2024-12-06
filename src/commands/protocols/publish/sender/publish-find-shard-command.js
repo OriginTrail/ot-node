@@ -6,10 +6,12 @@ class PublishFindShardCommand extends FindShardCommand {
         this.operationService = ctx.publishService;
     }
 
-    getOperationCommandSequence(nodePartOfShard) {
+    getOperationCommandSequence(nodePartOfShard, commandData) {
         const sequence = [];
-        sequence.push('publishValidateAssetCommand');
-        if (nodePartOfShard) {
+        sequence.push(
+            commandData.isOperationV0 ? 'validateAssetCommand' : 'publishValidateAssetCommand',
+        );
+        if (nodePartOfShard && !commandData.isOperationV0) {
             sequence.push('localStoreCommand');
         }
         sequence.push('networkPublishCommand');
