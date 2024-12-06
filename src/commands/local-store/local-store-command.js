@@ -70,6 +70,11 @@ class LocalStoreCommand extends Command {
                 //     );
                 // }
                 await Promise.all(storePromises);
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_PROCESS_RESPONSE_START,
+                    operationId,
+                    blockchain,
+                );
                 await this.operationService.processResponse(
                     command,
                     OPERATION_REQUEST_STATUS.COMPLETED,
@@ -82,11 +87,27 @@ class LocalStoreCommand extends Command {
                     null,
                     true,
                 );
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_PROCESS_RESPONSE_END,
+                    operationId,
+                    blockchain,
+                );
             } else if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_GET_PARANET_METADATA_START,
+                    operationId,
+                    blockchain,
+                );
                 const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
                     blockchain,
                     paranetId,
                 );
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_GET_PARANET_METADATA_END,
+                    operationId,
+                    blockchain,
+                );
+
                 const paranetUAL = this.ualService.deriveUAL(
                     blockchain,
                     paranetMetadata.paranetKAStorageContract,
@@ -94,8 +115,29 @@ class LocalStoreCommand extends Command {
                 );
                 const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
 
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INITIALIZE_PARANET_REPOSITORY_START,
+                    operationId,
+                    blockchain,
+                );
                 await this.tripleStoreModuleManager.initializeParanetRepository(paranetRepository);
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INITIALIZE_PARANET_REPOSITORY_END,
+                    operationId,
+                    blockchain,
+                );
+
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INITIALIZE_PARANET_RECORD_START,
+                    operationId,
+                    blockchain,
+                );
                 await this.paranetService.initializeParanetRecord(blockchain, paranetId);
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INITIALIZE_PARANET_RECORD_END,
+                    operationId,
+                    blockchain,
+                );
 
                 if (cachedData && cachedData.datasetRoot) {
                     // await this.tripleStoreService.localStoreAsset(
@@ -124,7 +166,17 @@ class LocalStoreCommand extends Command {
                     // );
                 }
 
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INCREMENT_PARANET_KA_COUNT_START,
+                    operationId,
+                    blockchain,
+                );
                 await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INCREMENT_PARANET_KA_COUNT_END,
+                    operationId,
+                    blockchain,
+                );
                 // await this.repositoryModuleManager.createParanetSyncedAssetRecord(
                 //     blockchain,
                 //     this.ualService.deriveUAL(blockchain, contract, tokenId),
