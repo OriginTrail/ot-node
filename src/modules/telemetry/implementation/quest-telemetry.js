@@ -1,12 +1,65 @@
 import { Sender } from '@questdb/nodejs-client';
+import axios from 'axios';
 
 class QuestTelemetry {
     async initialize(config, logger) {
         this.config = config;
         this.logger = logger;
         this.localSender = Sender.fromConfig(this.config.localEndpoint);
+        await this.handleEventTable(this.config.localEndpoint);
+
         if (this.config.sendToSignalingService) {
             this.signalingServiceSender = Sender.fromConfig(this.config.signalingServiceEndpoint);
+            await this.handleEventTable(this.config.signalingServiceEndpoint);
+        }
+    }
+
+    async handleEventTable(endpoint) {
+        try {
+            const tables = await this.getTables(endpoint);
+
+            // Check if event table already exists
+            if (!tables.includes('event')) {
+                const createTableQuery = `
+                    CREATE TABLE event (
+                        operationId STRING,
+                        blockchainId SYMBOL,
+                        name STRING,
+                        timestamp TIMESTAMP,
+                        value1 STRING,
+                        value2 STRING,
+                        value3 STRING
+                    ) TIMESTAMP(timestamp) PARTITION BY DAY;
+                `;
+
+                const response = await axios.get(endpoint, {
+                    params: { query: createTableQuery.trim() },
+                });
+
+                if (response?.ddl === 'OK') {
+                    this.logger.info('Event table successfully created in QuestDB');
+                } else {
+                    this.logger.error(
+                        `Could not create event table in QuestDB for endpoint: ${endpoint}`,
+                    );
+                }
+            }
+        } catch (error) {
+            this.logger.error(
+                `Failed to handle event table for endpoint: ${endpoint}. Error: ${error.message}`,
+            );
+        }
+    }
+
+    async getTables(endpoint) {
+        try {
+            const response = await axios.get(endpoint, { params: { query: 'SHOW TABLES;' } });
+            return response?.dataset?.flat();
+        } catch (error) {
+            this.logger.error(
+                `Failed to fetch all tables from QuestDB with endpoint: ${endpoint}. Error: ${error.message}`,
+            );
+            return [];
         }
     }
 
