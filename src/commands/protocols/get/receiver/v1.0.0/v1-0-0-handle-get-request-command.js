@@ -117,7 +117,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         if (includeMetadata) {
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.GET.GET_REMOTE_GET_KA_METADATA_START,
+                OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_METADATA_START,
                 operationId,
                 blockchain,
             );
@@ -125,7 +125,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
                 .then((result) => {
                     this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_KA_METADATA_END,
+                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_METADATA_END,
                         operationId,
                         blockchain,
                     );
@@ -140,6 +140,19 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             assertion,
             ...(includeMetadata && metadata && { metadata }),
         };
+
+        if (assertion.length) {
+            await this.operationService.markOperationAsCompleted(
+                operationId,
+                blockchain,
+                responseData,
+                [
+                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+                    OPERATION_ID_STATUS.GET.GET_END,
+                    OPERATION_ID_STATUS.COMPLETED,
+                ],
+            );
+        }
 
         return assertion.length
             ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }

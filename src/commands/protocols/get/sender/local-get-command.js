@@ -108,7 +108,7 @@ class LocalGetCommand extends Command {
 
         if (includeMetadata) {
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_KA_METADATA_START,
+                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_START,
                 operationId,
                 blockchain,
             );
@@ -116,7 +116,7 @@ class LocalGetCommand extends Command {
                 .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
                 .then((result) => {
                     this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_KA_METADATA_END,
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_END,
                         operationId,
                         blockchain,
                     );

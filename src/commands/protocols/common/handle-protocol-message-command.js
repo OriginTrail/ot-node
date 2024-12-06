@@ -35,7 +35,11 @@ class HandleProtocolMessageCommand extends Command {
     async execute(command) {
         const { remotePeerId, operationId, protocol, blockchain } = command.data;
 
-        this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
+        this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.operationStartEvent,
+        );
 
         try {
             this.operationIdService.emitChangeEvent(
@@ -87,7 +91,11 @@ class HandleProtocolMessageCommand extends Command {
             blockchain,
         );
 
-        this.operationIdService.emitChangeEvent(this.operationEndEvent, operationId, blockchain);
+        this.operationIdService.this.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.operationEndEvent,
+        );
 
         return Command.empty();
     }
