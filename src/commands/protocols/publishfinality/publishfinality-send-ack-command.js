@@ -33,7 +33,7 @@ class PublishfinalitySendAckCommand extends Command {
             sequence: commandSequence.slice(1),
             delay: 0,
             data: {
-                ...this.getNextCommandData(command),
+                ...command.data,
                 blockchain,
                 operationId,
                 node,
