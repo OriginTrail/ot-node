@@ -30,6 +30,7 @@ class PublishfinalityController extends BaseController {
                 protocol,
                 ual: message.data.ual,
                 blockchain: message.data.blockchain,
+                publishOperationId: message.data.publishOperationId,
             },
             transactional: false,
         });
