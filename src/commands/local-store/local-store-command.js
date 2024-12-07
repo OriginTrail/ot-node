@@ -51,58 +51,36 @@ class LocalStoreCommand extends Command {
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
 
-                if (isOperationV0 && cachedData.public.assertion && cachedData.public.assertionId) {
-                    const knowledgeAssetsCount = this.dataService.countDistinctSubjects(
-                        cachedData.public.assertion,
-                    );
-                    const knowledgeAssetsUALs = [];
-                    const knowledgeAssetStates = [];
+                if (isOperationV0) {
+                    const assertions = [cachedData.public, cachedData.private];
 
-                    const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+                    for (const data of assertions) {
+                        if (data?.assertion && data?.assertionId) {
+                            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(
+                                data.assertion,
+                            );
+                            const knowledgeAssetsUALs = [];
+                            const knowledgeAssetStates = [];
+                            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-                    for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-                        knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
-                        knowledgeAssetStates.push(0);
+                            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
+                                knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
+                                knowledgeAssetStates.push(0);
+                            }
+
+                            storePromises.push(
+                                this.tripleStoreService.insertKnowledgeCollection(
+                                    TRIPLE_STORE_REPOSITORIES.DKG,
+                                    ual,
+                                    knowledgeAssetsUALs,
+                                    knowledgeAssetStates,
+                                    data.assertion,
+                                ),
+                            );
+                        }
                     }
-
-                    storePromises.push(
-                        this.tripleStoreService.insertKnowledgeCollection(
-                            TRIPLE_STORE_REPOSITORIES.DKG,
-                            ual,
-                            knowledgeAssetsUALs,
-                            knowledgeAssetStates,
-                            cachedData.public.assertion,
-                        ),
-                    );
                 }
-                if (
-                    isOperationV0 &&
-                    cachedData.private.assertion &&
-                    cachedData.private.assertionId
-                ) {
-                    const knowledgeAssetsCount = this.dataService.countDistinctSubjects(
-                        cachedData.private.assertion,
-                    );
-                    const knowledgeAssetsUALs = [];
-                    const knowledgeAssetStates = [];
 
-                    const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-                    for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-                        knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
-                        knowledgeAssetStates.push(0);
-                    }
-
-                    storePromises.push(
-                        this.tripleStoreService.insertKnowledgeCollection(
-                            TRIPLE_STORE_REPOSITORIES.DKG,
-                            ual,
-                            knowledgeAssetsUALs,
-                            knowledgeAssetStates,
-                            cachedData.private.assertion,
-                        ),
-                    );
-                }
                 await Promise.all(storePromises);
 
                 const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
