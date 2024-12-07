@@ -502,6 +502,43 @@ class BlockchainEventListenerCommand extends Command {
         });
     }
 
+    // TODO: Adjust after new contracts are released
+    async handleAssetUpdatedEvent(event) {
+        const eventData = JSON.parse(event.data);
+
+        // TODO: Add correct name for assetStateIndex from event currently it's placeholder
+        const { assetContract, tokenId, state, updateOperationId, assetStateIndex } = eventData;
+        const { blockchain } = event;
+
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.UPDATE_FINALIZATION.UPDATE_FINALIZATION_START,
+        );
+
+        const datasetPath = this.fileService.getPendingStorageDocumentPath(updateOperationId);
+
+        const data = await this.fileService.readFile(datasetPath, true);
+
+        const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
+
+        await this.commandExecutor.add({
+            name: 'validateAssertionMetadataCommand',
+            sequence: ['updateAssertionCommand'],
+            delay: 0,
+            data: {
+                operationId,
+                ual,
+                blockchain,
+                contract: assetContract,
+                tokenId,
+                assetStateIndex,
+                merkleRoot: state,
+                assertion: data.assertion,
+                cachedMerkleRoot: data.merkleRoot,
+            },
+            transactional: false,
+        });
+    }
+
     /**
      * Recover system from failure
      * @param error
