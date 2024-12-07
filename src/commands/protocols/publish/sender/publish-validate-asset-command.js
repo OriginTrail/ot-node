@@ -43,13 +43,13 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         );
 
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_GET_CACHED_OPERATION_ID_DATA_START,
             operationId,
             blockchain,
         );
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
             blockchain,
         );

@@ -43,13 +43,14 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         const { blockchain, operationId, datasetRoot } = commandData;
 
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            OPERATION_ID_STATUS.PUBLISH
+                .PUBLISH_LOCAL_STORE_REMOTE_GET_CACHED_OPERATION_ID_DATA_START,
             operationId,
             blockchain,
         );
         const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_END,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
             blockchain,
         );

@@ -30,13 +30,13 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         const { blockchain } = command.data;
 
         await this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_REQUEST_GET_CACHED_OPERATION_ID_DATA_START,
             operationId,
             blockchain,
         );
         const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
         await this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_END,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_REQUEST_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
             blockchain,
         );
