@@ -117,11 +117,22 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async createKnowledgeCollectionNamedGraphs(implementationName, repository, uals, assetsNQuads) {
+    async createKnowledgeCollectionNamedGraphs(
+        implementationName,
+        repository,
+        uals,
+        assetsNQuads,
+        visibility,
+    ) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(
                 implementationName,
-            ).module.createKnowledgeCollectionNamedGraphs(repository, uals, assetsNQuads);
+            ).module.createKnowledgeCollectionNamedGraphs(
+                repository,
+                uals,
+                assetsNQuads,
+                visibility,
+            );
         }
     }
 
@@ -133,19 +144,11 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async getKnowledgeCollectionNamedGraphs(implementationName, repository, ual, sort) {
+    async getKnowledgeCollectionNamedGraphs(implementationName, repository, ual, visibility, sort) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(
                 implementationName,
-            ).module.getKnowledgeCollectionNamedGraphs(repository, ual, sort);
-        }
-    }
-
-    async getKnowledgeCollectionNamedGraphsPublic(implementationName, repository, ual, sort) {
-        if (this.getImplementation(implementationName)) {
-            return this.getImplementation(
-                implementationName,
-            ).module.getKnowledgeCollectionNamedGraphsPublic(repository, ual, sort);
+            ).module.getKnowledgeCollectionNamedGraphs(repository, ual, visibility, sort);
         }
     }
 
@@ -166,20 +169,13 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async getKnowledgeAssetNamedGraph(implementationName, repository, ual) {
+    async getKnowledgeAssetNamedGraph(implementationName, repository, ual, visibility) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.getKnowledgeAssetNamedGraph(
                 repository,
                 ual,
+                visibility,
             );
-        }
-    }
-
-    async getKnowledgeAssetNamedGraphPublic(implementationName, repository, ual) {
-        if (this.getImplementation(implementationName)) {
-            return this.getImplementation(
-                implementationName,
-            ).module.getKnowledgeAssetNamedGraphPublic(repository, ual);
         }
     }
 

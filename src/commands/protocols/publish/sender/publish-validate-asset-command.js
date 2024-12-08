@@ -60,7 +60,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
         );
         const isValidAssertion = await this.validationService.validateDatasetRoot(
-            cachedData.dataset,
+            cachedData.dataset.public,
             datasetRoot,
         );
         this.operationIdService.emitChangeEvent(

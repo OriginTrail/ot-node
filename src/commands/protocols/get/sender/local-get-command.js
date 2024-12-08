@@ -1,5 +1,9 @@
 import Command from '../../../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    TRIPLES_VISIBILITY,
+} from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -95,7 +99,13 @@ class LocalGetCommand extends Command {
             blockchain,
         );
         const assertionPromise = this.tripleStoreService
-            .getAssertion(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+            .getAssertion(
+                blockchain,
+                contract,
+                knowledgeCollectionId,
+                knowledgeAssetId,
+                TRIPLES_VISIBILITY.ALL,
+            ),
             .then((result) => {
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,

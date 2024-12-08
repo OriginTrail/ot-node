@@ -1073,3 +1073,9 @@ export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
 export const TRIPLE_STORE_REPOSITORY = {
     DKG: 'dkg',
 };
+
+export const TRIPLES_VISIBILITY = {
+    PUBLIC: 'public',
+    PRIVATE: 'private',
+    ALL: 'all',
+};
