@@ -7,6 +7,13 @@ class FindShardCommand extends Command {
         this.networkModuleManager = ctx.networkModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
+        this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.FIND_NODES_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.FIND_NODES_END;
+        this.findShardNodesStartEvent = OPERATION_ID_STATUS.FIND_NODES_FIND_SHARD_NODES_START;
+        this.findShardNodesEndEvent = OPERATION_ID_STATUS.FIND_NODES_FIND_SHARD_NODES_END;
+        this.processFoundNodesStartEvent = OPERATION_ID_STATUS.FIND_NODES_PROCESS_FOUND_NODES_START;
+        this.processFoundNodesEndEvent = OPERATION_ID_STATUS.FIND_NODES_PROCESS_FOUND_NODES_END;
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -20,14 +27,13 @@ class FindShardCommand extends Command {
      */
     async execute(command) {
         const { operationId, blockchain, datasetRoot } = command.data;
-        this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
         this.logger.debug(
             `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
         );
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.FIND_NODES_START,
+            this.operationStartEvent,
         );
 
         this.minAckResponses = await this.operationService.getMinAckResponses(blockchain);
@@ -38,7 +44,23 @@ class FindShardCommand extends Command {
         let nodePartOfShard = false;
         const currentPeerId = this.networkModuleManager.getPeerId().toB58String();
 
+        this.operationIdService.emitChangeEvent(
+            this.findShardNodesStartEvent,
+            operationId,
+            blockchain,
+        );
         const foundNodes = await this.findShardNodes(blockchain);
+        this.operationIdService.emitChangeEvent(
+            this.findShardNodesEndEvent,
+            operationId,
+            blockchain,
+        );
+
+        this.operationIdService.emitChangeEvent(
+            this.processFoundNodesStartEvent,
+            operationId,
+            blockchain,
+        );
         for (const node of foundNodes) {
             if (node.id === currentPeerId) {
                 nodePartOfShard = true;
@@ -46,6 +68,11 @@ class FindShardCommand extends Command {
                 shardNodes.push({ id: node.id, protocol: networkProtocols[0] });
             }
         }
+        this.operationIdService.emitChangeEvent(
+            this.processFoundNodesEndEvent,
+            operationId,
+            blockchain,
+        );
 
         const commandSequence = this.getOperationCommandSequence(nodePartOfShard, command.data);
 
@@ -79,7 +106,7 @@ class FindShardCommand extends Command {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.FIND_NODES_END,
+            this.operationEndEvent,
         );
 
         return this.continueSequence(

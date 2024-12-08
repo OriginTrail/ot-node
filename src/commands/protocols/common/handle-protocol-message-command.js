@@ -1,5 +1,5 @@
 import Command from '../../command.js';
-import { NETWORK_MESSAGE_TYPES } from '../../../constants/constants.js';
+import { NETWORK_MESSAGE_TYPES, OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class HandleProtocolMessageCommand extends Command {
     constructor(ctx) {
@@ -11,6 +11,21 @@ class HandleProtocolMessageCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+
+        this.operationStartEvent = OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_END;
+        this.prepareMessageStartEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_PREPARE_MESSAGE_END;
+        this.sendMessageResponseStartEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_SEND_MESSAGE_RESPONSE_START;
+        this.sendMessageResponseEndEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_SEND_MESSAGE_RESPONSE_END;
+        this.removeCachedSessionStartEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_REMOVE_CACHED_SESSION_START;
+        this.removeCachedSessionEndEvent =
+            OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_REMOVE_CACHED_SESSION_END;
     }
 
     /**
@@ -18,16 +33,43 @@ class HandleProtocolMessageCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { remotePeerId, operationId, protocol } = command.data;
+        const { remotePeerId, operationId, protocol, blockchain } = command.data;
+
+        this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.operationStartEvent,
+        );
 
         try {
+            this.operationIdService.emitChangeEvent(
+                this.prepareMessageStartEvent,
+                operationId,
+                blockchain,
+            );
             const { messageType, messageData } = await this.prepareMessage(command.data);
+            this.operationIdService.emitChangeEvent(
+                this.prepareMessageEndEvent,
+                operationId,
+                blockchain,
+            );
+
+            this.operationIdService.emitChangeEvent(
+                this.sendMessageResponseStartEvent,
+                operationId,
+                blockchain,
+            );
             await this.networkModuleManager.sendMessageResponse(
                 protocol,
                 remotePeerId,
                 messageType,
                 operationId,
                 messageData,
+            );
+            this.operationIdService.emitChangeEvent(
+                this.sendMessageResponseEndEvent,
+                operationId,
+                blockchain,
             );
         } catch (error) {
             if (command.retries) {
@@ -37,7 +79,23 @@ class HandleProtocolMessageCommand extends Command {
             await this.handleError(error.message, command);
         }
 
+        this.operationIdService.emitChangeEvent(
+            this.removeCachedSessionStartEvent,
+            operationId,
+            blockchain,
+        );
         this.networkModuleManager.removeCachedSession(operationId, remotePeerId);
+        this.operationIdService.emitChangeEvent(
+            this.removeCachedSessionEndEvent,
+            operationId,
+            blockchain,
+        );
+
+        this.operationIdService.this.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.operationEndEvent,
+        );
 
         return Command.empty();
     }

@@ -1,17 +1,38 @@
 import Command from '../../command.js';
-import { NETWORK_MESSAGE_TYPES, OPERATION_REQUEST_STATUS } from '../../../constants/constants.js';
+import {
+    NETWORK_MESSAGE_TYPES,
+    OPERATION_REQUEST_STATUS,
+    OPERATION_ID_STATUS,
+} from '../../../constants/constants.js';
 
 class ProtocolMessageCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
+
+        this.prepareMessageStartEvent = OPERATION_ID_STATUS.PROTOCOL_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent = OPERATION_ID_STATUS.PROTOCOL_PREPARE_MESSAGE_END;
+        this.sendMessageStartEvent = OPERATION_ID_STATUS.PROTOCOL_SEND_MESSAGE_START;
+        this.sendMessageEndEvent = OPERATION_ID_STATUS.PROTOCOL_SEND_MESSAGE_END;
     }
 
     async executeProtocolMessageCommand(command, messageType) {
+        const { operationId, blockchain } = command.data;
+
         if (!(await this.shouldSendMessage(command))) {
             return Command.empty();
         }
+        await this.operationIdService.emitChangeEvent(
+            this.prepareMessageStartEvent,
+            operationId,
+            blockchain,
+        );
         const message = await this.prepareMessage(command);
+        await this.operationIdService.emitChangeEvent(
+            this.prepareMessageEndEvent,
+            operationId,
+            blockchain,
+        );
 
         return this.sendProtocolMessage(command, message, messageType);
     }
@@ -25,8 +46,13 @@ class ProtocolMessageCommand extends Command {
     }
 
     async sendProtocolMessage(command, message, messageType) {
-        const { node, operationId } = command.data;
+        const { node, operationId, blockchain } = command.data;
 
+        await this.operationIdService.emitChangeEvent(
+            this.sendMessageStartEvent,
+            operationId,
+            blockchain,
+        );
         const response = await this.networkModuleManager.sendMessage(
             node.protocol,
             node.id,
@@ -34,6 +60,11 @@ class ProtocolMessageCommand extends Command {
             operationId,
             message,
             this.messageTimeout(),
+        );
+        await this.operationIdService.emitChangeEvent(
+            this.sendMessageEndEvent,
+            operationId,
+            blockchain,
         );
 
         this.networkModuleManager.removeCachedSession(operationId, node.id);

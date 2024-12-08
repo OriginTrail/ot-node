@@ -7,7 +7,8 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.operationService = ctx.getService;
 
         this.errorType = ERROR_TYPE.GET.GET_START_ERROR;
-        this.startEvent = OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
+        this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_END;
     }
 
     getNextCommandData(command) {

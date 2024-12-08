@@ -2,6 +2,7 @@ import ValidateAssetCommand from '../../../common/validate-asset-command.js';
 import Command from '../../../command.js';
 import {
     OPERATION_ID_STATUS,
+    ERROR_TYPE,
     LOCAL_STORE_TYPES,
     PARANET_ACCESS_POLICY,
 } from '../../../../constants/constants.js';
@@ -10,6 +11,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_VALIDATE_ASSET_ERROR;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -37,13 +39,34 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.VALIDATE_ASSET_START,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_START,
         );
 
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            operationId,
+            blockchain,
+        );
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            operationId,
+            blockchain,
+        );
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_START,
+            operationId,
+            blockchain,
+        );
         const isValidAssertion = await this.validationService.validateDatasetRoot(
-            cachedData.dataset,
+            cachedData.dataset.public,
             datasetRoot,
+        );
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_END,
+            operationId,
+            blockchain,
         );
 
         if (!isValidAssertion) {
@@ -70,10 +93,22 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     paranetContract,
                     paranetTokenId,
                 );
+
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_START,
+                    operationId,
+                    blockchain,
+                );
                 const paranetExists = await this.blockchainModuleManager.paranetExists(
                     paranetBlockchain,
                     paranetId,
                 );
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_END,
+                    operationId,
+                    blockchain,
+                );
+
                 if (!paranetExists) {
                     await this.handleError(
                         operationId,
@@ -84,6 +119,12 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     return Command.empty();
                 }
 
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.PUBLISH
+                        .PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_START,
+                    operationId,
+                    blockchain,
+                );
                 const nodesAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
                     blockchain,
                     paranetId,
@@ -113,6 +154,12 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     );
                     return Command.empty();
                 }
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.PUBLISH
+                        .PUBLISH_VALIDATE_ASSET_NODES_ACCESS_POLICY_CHECK_END,
+                    operationId,
+                    blockchain,
+                );
             } catch (error) {
                 await this.handleError(operationId, blockchain, error.message, this.errorType);
                 return Command.empty();
@@ -122,7 +169,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.VALIDATE_ASSET_END,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END,
         );
         return this.continueSequence(
             { ...command.data, paranetId, retry: undefined, period: undefined },

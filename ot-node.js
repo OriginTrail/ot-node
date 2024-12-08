@@ -55,7 +55,6 @@ class OTNode {
         await this.initializeRouters();
         await this.startNetworkModule();
         await this.initializeBLSService();
-        this.startTelemetryModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
     }
@@ -265,22 +264,6 @@ class OTNode {
     async startNetworkModule() {
         const networkModuleManager = this.container.resolve('networkModuleManager');
         await networkModuleManager.start();
-    }
-
-    startTelemetryModule() {
-        const telemetryModuleManager = this.container.resolve('telemetryModuleManager');
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        telemetryModuleManager.listenOnEvents((eventData) => {
-            repositoryModuleManager.createEventRecord(
-                eventData.operationId,
-                eventData.blockchainId,
-                eventData.lastEvent,
-                eventData.timestamp,
-                eventData.value1,
-                eventData.value2,
-                eventData.value3,
-            );
-        });
     }
 
     async initializeShardingTableService() {
