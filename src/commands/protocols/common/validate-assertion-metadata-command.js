@@ -1,16 +1,9 @@
 import Command from '../../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../constants/constants.js';
 
 class ValidateAssertionMetadataCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
-
-        this.errorType = ERROR_TYPE.VALIDATE_ASSERTION_METADATA_ERROR;
-        this.operationStartEvent =
-            OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_METADATA_VALIDATION_START;
-        this.operationEndEvent =
-            OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_METADATA_VALIDATION_END;
     }
 
     async execute(command) {
@@ -34,11 +27,12 @@ class ValidateAssertionMetadataCommand extends Command {
             }
         } catch (e) {
             await this.handleError(operationId, blockchain, e.message, this.errorType, true);
+            return Command.empty();
         }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            null,
+            blockchain,
             this.operationEndEvent,
         );
 
