@@ -40,7 +40,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { blockchain, operationId, datasetRoot } = commandData;
+        const { blockchain, operationId, datasetRoot, isOperationV0 } = commandData;
 
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
@@ -65,6 +65,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             datasetRoot,
             dataset,
             blockchain,
+            isOperationV0,
         );
 
         this.operationIdService.updateOperationIdStatus(

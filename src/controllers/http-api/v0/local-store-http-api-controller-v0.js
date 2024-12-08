@@ -43,6 +43,24 @@ class LocalStoreController extends BaseController {
 
                 break;
             }
+            case 2: {
+                const isFirstPublic =
+                    this.dataService.getPrivateAssertionId(assertions[0].assertion) != null;
+
+                const publicAssertionData = isFirstPublic ? assertions[0] : assertions[1];
+                const privateAssertionData = isFirstPublic ? assertions[1] : assertions[0];
+
+                cachedAssertions.public = {
+                    assertion: publicAssertionData.assertion,
+                    assertionId: publicAssertionData.assertionId,
+                };
+                cachedAssertions.private = {
+                    assertion: privateAssertionData.assertion,
+                    assertionId: privateAssertionData.assertionId,
+                };
+
+                break;
+            }
             default:
                 throw Error('Unexpected number of assertions in local store');
         }
@@ -70,6 +88,7 @@ class LocalStoreController extends BaseController {
                 tokenId: assertions[0].tokenId,
                 storeType: assertions[0].storeType,
                 paranetUAL: assertions[0].paranetUAL,
+                isOperationV0: true,
             },
             transactional: false,
         });

@@ -7,7 +7,7 @@ class FinalityFindShardCommand extends FindShardCommand {
     }
 
     // eslint-disable-next-line no-unused-vars
-    getOperationCommandSequence(nodePartOfShard) {
+    getOperationCommandSequence(nodePartOfShard, commandData) {
         return [];
     }
 

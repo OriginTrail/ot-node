@@ -230,6 +230,9 @@ export const TRANSACTION_PRIORITY = {
     LOWEST: 20,
 };
 
+export const PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
+
 const require = createRequire(import.meta.url);
 
 export const ABIs = {
@@ -890,18 +893,43 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
+    },
+    v1: {
+        publish: {
+            method: 'post',
+            path: '/publish',
+            options: { rateLimit: true },
+        },
+        // update: {
+        //     method: 'post',
+        //     path: '/update',
+        //     options: { rateLimit: true },
+        // },
+        query: {
+            method: 'post',
+            path: '/query',
+            options: {},
+        },
+        get: {
+            method: 'post',
+            path: '/get',
+            options: { rateLimit: true },
+        },
+        result: {
+            method: 'get',
+            path: '/:operation/:operationId',
+            options: {},
+        },
+        info: {
+            method: 'get',
+            path: '/info',
+            options: {},
+        },
         finality: {
             method: 'post',
             path: '/finality',
             options: {},
         },
-    },
-    v1: {
-        // get: {
-        //     method: 'post',
-        //     path: '/get',
-        //     options: { rateLimit: true },
-        // },
     },
 };
 
