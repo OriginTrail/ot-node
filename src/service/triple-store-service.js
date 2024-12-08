@@ -61,7 +61,7 @@ class TripleStoreService {
         );
 
         const publicKnowledgeAssetsUALs = [];
-        for (let i = 1; i <= (triples.public ?? triples); i += 1) {
+        for (let i = 1; i <= (triples.public ?? triples).length; i += 1) {
             publicKnowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i}`);
         }
         const promises = [];
