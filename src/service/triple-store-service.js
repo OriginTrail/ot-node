@@ -33,8 +33,6 @@ class TripleStoreService {
     async insertKnowledgeCollection(
         repository,
         knowledgeCollectionUAL,
-        knowledgeAssetsUALs,
-        knowledgeAssetsStates,
         triples,
         retries = 1,
         retryDelay = 0,
@@ -44,27 +42,12 @@ class TripleStoreService {
                 `to the Triple Store's ${repository} repository.`,
         );
 
-        const [existsInUnifiedGraph, existsInNamedGraphs] = await Promise.all([
-            // TODO: This is deprecated -- this should probably be done like in update
-            this.tripleStoreModuleManager.knowledgeCollectionNamedGraphsExist(
+        const existsInNamedGraphs =
+            await this.tripleStoreModuleManager.knowledgeCollectionNamedGraphsExist(
                 this.repositoryImplementations[repository],
                 repository,
                 knowledgeCollectionUAL,
-            ),
-            // TODO: This is deprecated -- this should probably be done like in update
-            this.tripleStoreModuleManager.knowledgeCollectionExistsInUnifiedGraph(
-                this.repositoryImplementations[repository],
-                repository,
-                BASE_NAMED_GRAPHS.UNIFIED,
-                knowledgeCollectionUAL,
-            ),
-        ]);
-
-        // TODO: From where will we get uals
-        const knowledgeAssetsStatesUALs = [];
-        //  = knowledgeAssetsUALs.map(
-        //     (ual, index) => `${ual}:${knowledgeAssetsStates[index]}`,
-        // );
+            );
 
         // TODO: Add with the introduction of RDF-star mode
         // const tripleAnnotations = this.dataService.createTripleAnnotations(
@@ -77,11 +60,16 @@ class TripleStoreService {
             triples.public ?? triples,
         );
 
-        const publicKnowledgeAssetUALs = [];
-        // for (let i = 1; i < publicKnowledgeAssetsTriples.count.length + 1; i += 1) {
-        //     publicKnowledgeAssetUALs.push(`${ual}:${i}`);
-        // }
-
+        const publicKnowledgeAssetsUALs = [];
+        const publicKnowledgeAssetWithStateUALs = [];
+        for (let i = 1; i <= (triples.public ?? triples); i += 1) {
+            publicKnowledgeAssetsUALs.push(
+                `${knowledgeCollectionUAL}/${TRIPLES_VISIBILITY.PUBLIC}`,
+            );
+            publicKnowledgeAssetWithStateUALs.push(
+                `${knowledgeCollectionUAL}:0/${TRIPLES_VISIBILITY.PUBLIC}`,
+            );
+        }
         const promises = [];
         if (triples.private && triples.private.length !== 0 && !existsInNamedGraphs) {
             const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
@@ -99,7 +87,9 @@ class TripleStoreService {
                 [publicSubject] = publicKnowledgeAssetsTriples[publicIndex][0].split(' ');
                 [privateSubject] = privateKnowledgeAssetsTriples[privateIndex][0].split(' ');
                 if (publicSubject === privateSubject) {
-                    privateKnowledgeAssetsStatesUALs.push(publicKnowledgeAssetUALs[publicIndex]);
+                    privateKnowledgeAssetsStatesUALs.push(
+                        publicKnowledgeAssetWithStateUALs[publicIndex],
+                    );
                     privateIndex += 1;
                 }
                 publicIndex += 1;
@@ -120,32 +110,17 @@ class TripleStoreService {
                 this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                     this.repositoryImplementations[repository],
                     repository,
-                    publicKnowledgeAssetUALs,
+                    // publicKnowledgeAssetWithStateUALs,
                     publicKnowledgeAssetsTriples,
                     TRIPLES_VISIBILITY.PUBLIC,
                 ),
             );
         }
-
-        if (!existsInUnifiedGraph) {
-            const unifiedTriples = triples.public
-                ? [...triples.public, ...(triples.private || [])]
-                : triples;
-
-            promises.push(
-                this.tripleStoreModuleManager.insetAssertionInNamedGraph(
-                    this.repositoryImplementations[repository],
-                    repository,
-                    BASE_NAMED_GRAPHS.UNIFIED,
-                    unifiedTriples,
-                ),
-            );
-        }
-
-        const metadataTriples = knowledgeAssetsUALs
+        // TODO: Generate ual with state
+        const metadataTriples = publicKnowledgeAssetWithStateUALs
             .map(
                 (ual, index) =>
-                    `<${ual}> <http://schema.org/states> "${knowledgeAssetsStatesUALs[index]}" .`,
+                    `<${ual}> <http://schema.org/states> "${publicKnowledgeAssetsUALs[index]}" .`,
             )
             .join('\n');
 
@@ -191,18 +166,6 @@ class TripleStoreService {
                             `to the Triple Store's ${repository} repository. Rolling back data.`,
                     );
 
-                    // Rollback insertions if data didn't exist before the operation
-                    if (!existsInUnifiedGraph) {
-                        this.logger.info(
-                            `Rolling back Knowledge Collection with the UAL: ${knowledgeCollectionUAL} ` +
-                                `from the Triple Store's ${repository} repository Unified Graph.`,
-                        );
-                        await this.tripleStoreModuleManager.deleteKnowledgeCollectionFromUnifiedGraph(
-                            this.repositoryImplementations[repository],
-                            repository,
-                            knowledgeCollectionUAL,
-                        );
-                    }
                     if (!existsInNamedGraphs) {
                         this.logger.info(
                             `Rolling back Knowledge Collection with the UAL: ${knowledgeCollectionUAL} ` +
@@ -211,7 +174,7 @@ class TripleStoreService {
                         await this.tripleStoreModuleManager.deleteKnowledgeCollectionNamedGraphs(
                             this.repositoryImplementations[repository],
                             repository,
-                            knowledgeAssetsStatesUALs,
+                            publicKnowledgeAssetsUALs,
                         );
                     }
 

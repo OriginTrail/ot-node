@@ -514,14 +514,23 @@ class BlockchainEventListenerCommand extends Command {
             OPERATION_ID_STATUS.UPDATE_FINALIZATION.UPDATE_FINALIZATION_START,
         );
 
-        const datasetPath = this.fileService.getPendingStorageDocumentPath(updateOperationId);
-
-        const data = await this.fileService.readFile(datasetPath, true);
-
+        let data;
+        let datasetPath;
+        try {
+            datasetPath = this.fileService.getPendingStorageDocumentPath(updateOperationId);
+            data = await this.fileService.readFile(datasetPath, true);
+        } catch (error) {
+            this.operationIdService.markOperationAsFailed(
+                operationId,
+                blockchain,
+                `Unable to read cached data from ${datasetPath}, error: ${error.message}`,
+                ERROR_TYPE.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_NO_CACHED_DATA,
+            );
+        }
         const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
 
         await this.commandExecutor.add({
-            name: 'validateAssertionMetadataCommand',
+            name: 'updateValidateAssertionMetadataCommand',
             sequence: ['updateAssertionCommand'],
             delay: 0,
             data: {

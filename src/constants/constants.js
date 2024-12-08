@@ -458,6 +458,9 @@ export const ERROR_TYPE = {
         FINALITY_REQUEST_ERROR: 'FinalityRequestError',
         FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
     },
+    PUBLISH_FINALIZATION: {
+        PUBLISH_FINALIZATION_NO_CACHED_DATA: 'PublishFinalizationNoCachedData',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',

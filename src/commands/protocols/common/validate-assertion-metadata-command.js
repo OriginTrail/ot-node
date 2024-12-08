@@ -27,11 +27,12 @@ class ValidateAssertionMetadataCommand extends Command {
             }
         } catch (e) {
             await this.handleError(operationId, blockchain, e.message, this.errorType, true);
+            return Command.empty();
         }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            null,
+            blockchain,
             this.operationEndEvent,
         );
 

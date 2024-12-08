@@ -46,21 +46,9 @@ class StoreAssertionCommand extends Command {
     }
 
     async _insertAssertion(assertion, ual) {
-        const knowledgeAssetsCount = this.dataService.countDistinctSubjects(
-            assertion.public ?? assertion,
-        );
-        const knowledgeAssetsUALs = [];
-        const knowledgeAssetStates = [];
-        for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-            knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
-            knowledgeAssetStates.push(0);
-        }
-
         await this.tripleStoreService.insertKnowledgeCollection(
             TRIPLE_STORE_REPOSITORIES.DKG,
             ual,
-            knowledgeAssetsUALs,
-            knowledgeAssetStates,
             assertion,
         );
     }
