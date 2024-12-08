@@ -10,6 +10,22 @@ class TelemetryModuleManager extends BaseModuleManager {
         return 'telemetry';
     }
 
+    async initialize() {
+        await super.initialize();
+
+        this.listenOnEvents((eventData) => {
+            this.sendTelemetryData(
+                eventData.operationId,
+                eventData.timestamp,
+                eventData.blockchainId,
+                eventData.lastEvent,
+                eventData.value1,
+                eventData.value2,
+                eventData.value3,
+            );
+        });
+    }
+
     listenOnEvents(onEventReceived) {
         if (this.config.modules.telemetry.enabled && this.initialized) {
             return this.getImplementation().module.listenOnEvents(
@@ -19,9 +35,17 @@ class TelemetryModuleManager extends BaseModuleManager {
         }
     }
 
-    async sendTelemetryData(nodeData, events) {
-        if (this.initialized) {
-            return this.getImplementation().module.sendTelemetryData(nodeData, events);
+    async sendTelemetryData(operationId, timestamp, blockchainId, name, value1, value2, value3) {
+        if (this.config.modules.telemetry.enabled && this.initialized) {
+            return this.getImplementation().module.sendTelemetryData(
+                operationId,
+                timestamp,
+                blockchainId,
+                name,
+                value1,
+                value2,
+                value3,
+            );
         }
     }
 }
