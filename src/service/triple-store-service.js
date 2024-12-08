@@ -84,7 +84,7 @@ class TripleStoreService {
                 }),
             );
 
-            const privateKnowledgeAssetsStatesUALs = privateKnowledgeAssetsTriples.reduce(
+            const privateKnowledgeAssetsUALs = privateKnowledgeAssetsTriples.reduce(
                 (result, [triple]) => {
                     const [privateSubject] = triple.split(' '); // groupTriplesBySubject guarantees format
                     if (publicSubjectsMap.has(privateSubject)) {
@@ -99,12 +99,12 @@ class TripleStoreService {
                 [],
             );
 
-            if (privateKnowledgeAssetsStatesUALs.length > 0) {
+            if (privateKnowledgeAssetsUALs.length > 0) {
                 promises.push(
                     this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                         this.repositoryImplementations[repository],
                         repository,
-                        privateKnowledgeAssetsStatesUALs,
+                        privateKnowledgeAssetsUALs,
                         privateKnowledgeAssetsTriples,
                         TRIPLES_VISIBILITY.PRIVATE,
                     ),
@@ -116,13 +116,12 @@ class TripleStoreService {
                 this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                     this.repositoryImplementations[repository],
                     repository,
-                    // publicKnowledgeAssetWithStateUALs,
+                    publicKnowledgeAssetsUALs,
                     publicKnowledgeAssetsTriples,
                     TRIPLES_VISIBILITY.PUBLIC,
                 ),
             );
         }
-        // TODO: Generate ual with state
         const metadataTriples = publicKnowledgeAssetWithStateUALs
             .map(
                 (ual, index) =>
