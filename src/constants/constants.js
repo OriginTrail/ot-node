@@ -230,6 +230,9 @@ export const TRANSACTION_PRIORITY = {
     LOWEST: 20,
 };
 
+export const PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
+
 const require = createRequire(import.meta.url);
 
 export const ABIs = {

@@ -78,6 +78,29 @@ class ValidateAssetCommand extends Command {
             return Command.empty();
         }
 
+        // V0 backwards compatibility
+        if (cachedData.private?.assertionId && cachedData.private?.assertion) {
+            this.logger.info(
+                `Validating asset's private assertion with id: ${cachedData.private.assertionId} ual: ${ual}`,
+            );
+
+            try {
+                this.validationService.validateDatasetRoot(
+                    cachedData.private.assertion,
+                    cachedData.private.assertionId,
+                );
+            } catch (error) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    error.message,
+                    this.errorType,
+                    true,
+                );
+                return Command.empty();
+            }
+        }
+
         await this.validationService.validateAssertion(cachedAssertion, blockchain, cachedDataset);
 
         let paranetId;

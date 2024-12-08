@@ -1,5 +1,5 @@
 import { kcTools } from 'assertion-tools';
-import { XML_DATA_TYPES } from '../constants/constants.js';
+import { XML_DATA_TYPES, PRIVATE_ASSERTION_PREDICATE } from '../constants/constants.js';
 
 class DataService {
     constructor(ctx) {
@@ -66,6 +66,15 @@ class DataService {
             default:
                 return value;
         }
+    }
+
+    getPrivateAssertionId(publicAssertion) {
+        const privateAssertionLinkTriple = publicAssertion.filter((triple) =>
+            triple.includes(PRIVATE_ASSERTION_PREDICATE),
+        )[0];
+        if (!privateAssertionLinkTriple) return;
+
+        return privateAssertionLinkTriple.match(/"(.*?)"/)[1];
     }
 }
 
