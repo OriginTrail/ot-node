@@ -4,7 +4,7 @@ import { setTimeout } from 'timers/promises';
 import {
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
-    TRIPLETS_VISIBILITY,
+    TRIPLES_VISIBILITY,
 } from '../constants/constants.js';
 
 class TripleStoreService {
@@ -102,7 +102,7 @@ class TripleStoreService {
                     repository,
                     privateKnowledgeAssetsStatesUALs,
                     privateKnowledgeAssetsTriples,
-                    TRIPLETS_VISIBILITY.PRIVATE,
+                    TRIPLES_VISIBILITY.PRIVATE,
                 ),
             );
         }
@@ -113,7 +113,7 @@ class TripleStoreService {
                     repository,
                     knowledgeAssetsStatesUALs,
                     publicKnowledgeAssetsTriples,
-                    TRIPLETS_VISIBILITY.PUBLIC,
+                    TRIPLES_VISIBILITY.PUBLIC,
                 ),
             );
         }
@@ -272,7 +272,7 @@ class TripleStoreService {
         contract,
         knowledgeCollectionId,
         knowledgeAssetId,
-        visibility = TRIPLETS_VISIBILITY.PUBLIC,
+        visibility = TRIPLES_VISIBILITY.PUBLIC,
         repository = TRIPLE_STORE_REPOSITORY.DKG,
     ) {
         // TODO: Use stateId

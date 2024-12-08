@@ -916,7 +916,7 @@ export const TRIPLE_STORE_REPOSITORY = {
     DKG: 'dkg',
 };
 
-export const TRIPLETS_VISIBILITY = {
+export const TRIPLES_VISIBILITY = {
     PUBLIC: 'public',
     PRIVATE: 'private',
     ALL: 'all',

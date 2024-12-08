@@ -8,7 +8,7 @@ import {
     UAL_PREDICATE,
     BASE_NAMED_GRAPHS,
     TRIPLE_ANNOTATION_LABEL_PREDICATE,
-    TRIPLETS_VISIBILITY,
+    TRIPLES_VISIBILITY,
 } from '../../../constants/constants.js';
 
 class OtTripleStore {
@@ -294,11 +294,11 @@ class OtTripleStore {
     async getKnowledgeCollectionNamedGraphs(repository, ual, visibility, sort) {
         let visibilityFilter;
         switch (visibility) {
-            case TRIPLETS_VISIBILITY.PUBLIC:
-            case TRIPLETS_VISIBILITY.PRIVATE:
+            case TRIPLES_VISIBILITY.PUBLIC:
+            case TRIPLES_VISIBILITY.PRIVATE:
                 visibilityFilter = `&& STRENDS(STR(?g), "${visibility}")`;
                 break;
-            case TRIPLETS_VISIBILITY.ALL:
+            case TRIPLES_VISIBILITY.ALL:
                 visibilityFilter = '';
                 break;
             default:
@@ -347,8 +347,8 @@ class OtTripleStore {
         let whereClause;
 
         switch (visibility) {
-            case TRIPLETS_VISIBILITY.PUBLIC:
-            case TRIPLETS_VISIBILITY.PRIVATE:
+            case TRIPLES_VISIBILITY.PUBLIC:
+            case TRIPLES_VISIBILITY.PRIVATE:
                 whereClause = `
                     WHERE {
                         GRAPH <${ual}/${visibility}> {
@@ -357,17 +357,17 @@ class OtTripleStore {
                     }
                 `;
                 break;
-            case TRIPLETS_VISIBILITY.ALL:
+            case TRIPLES_VISIBILITY.ALL:
                 whereClause = `
                     WHERE {
                         {
-                            GRAPH <${ual}/${TRIPLETS_VISIBILITY.PUBLIC}> {
+                            GRAPH <${ual}/${TRIPLES_VISIBILITY.PUBLIC}> {
                               ?s ?p ?o .
                             }
                           }
                           UNION
                           {
-                            GRAPH <${ual}/${TRIPLETS_VISIBILITY.PRIVATE}> {
+                            GRAPH <${ual}/${TRIPLES_VISIBILITY.PRIVATE}> {
                               ?s ?p ?o .
                             }
                           }

@@ -2,7 +2,7 @@ import Command from '../../../command.js';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    TRIPLETS_VISIBILITY,
+    TRIPLES_VISIBILITY,
 } from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
@@ -98,7 +98,7 @@ class LocalGetCommand extends Command {
                 contract,
                 knowledgeCollectionId,
                 knowledgeAssetId,
-                TRIPLETS_VISIBILITY.ALL,
+                TRIPLES_VISIBILITY.ALL,
             ),
         ];
 
