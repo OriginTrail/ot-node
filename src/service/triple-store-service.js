@@ -71,39 +71,45 @@ class TripleStoreService {
             );
         }
         const promises = [];
-        if (triples.private && triples.private.length !== 0 && !existsInNamedGraphs) {
+
+        if (triples.private?.length && !existsInNamedGraphs) {
             const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
                 triples.private,
             );
-            const privateKnowledgeAssetsStatesUALs = [];
-            let privateSubject;
-            let publicSubject;
-            let publicIndex = 0;
-            let privateIndex = 0;
-            while (
-                privateIndex < privateKnowledgeAssetsTriples.length &&
-                publicIndex < publicKnowledgeAssetsTriples.length
-            ) {
-                [publicSubject] = publicKnowledgeAssetsTriples[publicIndex][0].split(' ');
-                [privateSubject] = privateKnowledgeAssetsTriples[privateIndex][0].split(' ');
-                if (publicSubject === privateSubject) {
-                    privateKnowledgeAssetsStatesUALs.push(
-                        publicKnowledgeAssetWithStateUALs[publicIndex],
-                    );
-                    privateIndex += 1;
-                }
-                publicIndex += 1;
-            }
 
-            promises.push(
-                this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
-                    this.repositoryImplementations[repository],
-                    repository,
-                    privateKnowledgeAssetsStatesUALs,
-                    privateKnowledgeAssetsTriples,
-                    TRIPLES_VISIBILITY.PRIVATE,
-                ),
+            const publicSubjectsMap = new Map(
+                publicKnowledgeAssetsTriples.map(([triple], index) => {
+                    const [subject] = triple.split(' ');
+                    return [subject, index];
+                }),
             );
+
+            const privateKnowledgeAssetsStatesUALs = privateKnowledgeAssetsTriples.reduce(
+                (result, [triple]) => {
+                    const [privateSubject] = triple.split(' '); // groupTriplesBySubject guarantees format
+                    if (publicSubjectsMap.has(privateSubject)) {
+                        result.push(
+                            `${knowledgeCollectionUAL}/${publicSubjectsMap.get(privateSubject)}/${
+                                TRIPLES_VISIBILITY.PRIVATE
+                            }`,
+                        );
+                    }
+                    return result;
+                },
+                [],
+            );
+
+            if (privateKnowledgeAssetsStatesUALs.length > 0) {
+                promises.push(
+                    this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                        this.repositoryImplementations[repository],
+                        repository,
+                        privateKnowledgeAssetsStatesUALs,
+                        privateKnowledgeAssetsTriples,
+                        TRIPLES_VISIBILITY.PRIVATE,
+                    ),
+                );
+            }
         }
         if (!existsInNamedGraphs) {
             promises.push(
