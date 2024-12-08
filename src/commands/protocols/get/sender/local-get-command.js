@@ -105,7 +105,7 @@ class LocalGetCommand extends Command {
                 knowledgeCollectionId,
                 knowledgeAssetId,
                 TRIPLES_VISIBILITY.ALL,
-            ),
+            )
             .then((result) => {
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,

@@ -2,7 +2,6 @@
 import { setTimeout } from 'timers/promises';
 
 import {
-    SCHEMA_CONTEXT,
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
     TRIPLES_VISIBILITY,
