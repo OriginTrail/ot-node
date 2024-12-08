@@ -480,7 +480,7 @@ class BlockchainEventListenerCommand extends Command {
 
         const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
 
-        const data = await this.fileService.readFile(datasetPath, true);
+        const cachedData = await this.fileService.readFile(datasetPath, true);
 
         const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
 
@@ -495,8 +495,8 @@ class BlockchainEventListenerCommand extends Command {
                 contract: assetContract,
                 tokenId,
                 merkleRoot: state,
-                assertion: data.assertion,
-                cachedMerkleRoot: data.merkleRoot,
+                assertion: cachedData.assertion,
+                cachedMerkleRoot: cachedData.merkleRoot,
             },
             transactional: false,
         });
