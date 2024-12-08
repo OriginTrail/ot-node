@@ -42,7 +42,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         );
 
         return {
-            dataset,
+            dataset: dataset.public,
             datasetRoot,
             blockchain,
         };
