@@ -20,12 +20,8 @@ class UpdateAssertionCommand extends Command {
     }
 
     async execute(command) {
-        const {
-            /* operationId, */ ual,
-            /* blockchain, */ assertion,
-            firstNewKAIndex,
-            updateStateIndex,
-        } = command.data;
+        const { operationId, ual, blockchain, assertion, firstNewKAIndex, updateStateIndex } =
+            command.data;
         const validateCurrentData = this.validateCurrentData(ual);
         if (this.validateCurrentData(validateCurrentData)) {
             const preUpdateUalNamedGraphs =
@@ -35,9 +31,23 @@ class UpdateAssertionCommand extends Command {
                     updateStateIndex - 1,
                 );
 
-            // It probably has to be parsed to remove visibility flag
-            this.insertUpdatedAssertion(preUpdateUalNamedGraphs, assertion, firstNewKAIndex, ual);
+            await this.tripleStoreService.insertUpdatedKnowledgeCollection(
+                preUpdateUalNamedGraphs,
+                ual,
+                assertion,
+                firstNewKAIndex,
+            );
+        } else {
+            await this.handleError(
+                operationId,
+                blockchain,
+                `Data in current DKG doesn't match pre update data for ${ual}.`,
+                ERROR_TYPE.UPDATE_FINALIZATION.UPDATE_FINALIZATION_NO_OLD_DATA,
+                true,
+            );
         }
+
+        return Command.empty();
     }
 
     // TODO: Move maybe outside of the command into metadata validation command (but it's not metadata)

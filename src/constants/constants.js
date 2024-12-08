@@ -461,6 +461,10 @@ export const ERROR_TYPE = {
     PUBLISH_FINALIZATION: {
         PUBLISH_FINALIZATION_NO_CACHED_DATA: 'PublishFinalizationNoCachedData',
     },
+    UPDATE_FINALIZATION: {
+        UPDATE_FINALIZATION_NO_CACHED_DATA: 'UpdateFinalizationNoCachedData',
+        UPDATE_FINALIZATION_NO_OLD_DATA: 'UpdateFinalizationNoOldData',
+    },
 };
 export const OPERATION_ID_STATUS = {
     PENDING: 'PENDING',

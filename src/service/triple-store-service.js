@@ -61,14 +61,8 @@ class TripleStoreService {
         );
 
         const publicKnowledgeAssetsUALs = [];
-        const publicKnowledgeAssetWithStateUALs = [];
         for (let i = 1; i <= (triples.public ?? triples); i += 1) {
-            publicKnowledgeAssetsUALs.push(
-                `${knowledgeCollectionUAL}/${TRIPLES_VISIBILITY.PUBLIC}`,
-            );
-            publicKnowledgeAssetWithStateUALs.push(
-                `${knowledgeCollectionUAL}:0/${TRIPLES_VISIBILITY.PUBLIC}`,
-            );
+            publicKnowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i}`);
         }
         const promises = [];
 
@@ -89,9 +83,7 @@ class TripleStoreService {
                     const [privateSubject] = triple.split(' '); // groupTriplesBySubject guarantees format
                     if (publicSubjectsMap.has(privateSubject)) {
                         result.push(
-                            `${knowledgeCollectionUAL}/${publicSubjectsMap.get(privateSubject)}/${
-                                TRIPLES_VISIBILITY.PRIVATE
-                            }`,
+                            publicKnowledgeAssetsUALs[publicSubjectsMap.get(privateSubject)],
                         );
                     }
                     return result;
@@ -122,11 +114,8 @@ class TripleStoreService {
                 ),
             );
         }
-        const metadataTriples = publicKnowledgeAssetWithStateUALs
-            .map(
-                (ual, index) =>
-                    `<${ual}> <http://schema.org/states> "${publicKnowledgeAssetsUALs[index]}" .`,
-            )
+        const metadataTriples = publicKnowledgeAssetsUALs
+            .map((ual) => `<${ual}> <http://schema.org/states> "${ual}:0" .`)
             .join('\n');
 
         promises.push(
@@ -192,7 +181,7 @@ class TripleStoreService {
         }
     }
 
-    async insertUpdatedAssertion(preUpdateUalNamedGraphs, assertion, firstNewKAIndex, ual) {
+    async insertUpdatedKnowledgeCollection(preUpdateUalNamedGraphs, ual, triples, firstNewKAIndex) {
         const preUpdateSubjectUalMap = new Map(
             preUpdateUalNamedGraphs.map((entry) => [
                 entry.subject,
@@ -201,7 +190,7 @@ class TripleStoreService {
         );
 
         const publicKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
-            assertion.public ?? assertion,
+            triples.public ?? triples,
         );
 
         const publicKnowledgeAssetsSubjects = publicKnowledgeAssetsTriples.map(
@@ -230,9 +219,9 @@ class TripleStoreService {
             ),
         );
 
-        if (assertion.private?.length /* && !existsInNamedGraphs */) {
+        if (triples.private?.length) {
             const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
-                assertion.private,
+                triples.private,
             );
 
             const publicSubjectsMap = new Map(
