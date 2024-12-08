@@ -111,7 +111,8 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 contract,
                 knowledgeCollectionId,
                 knowledgeAssetId,
-                TRIPLES_VISIBILITY.PUBLIC,)
+                TRIPLES_VISIBILITY.PUBLIC,
+            )
             .then((result) => {
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
