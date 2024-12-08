@@ -5,19 +5,12 @@ class TripleStoreModuleManager extends BaseModuleManager {
         return this.getImplementation().module.initializeParanetRepository(repository);
     }
 
-    async insertKnowledgeCollectionIntoUnifiedGraph(
-        implementationName,
-        repository,
-        namedGraph,
-        collectionNQuads,
-    ) {
+    async insetAssertionInNamedGraph(implementationName, repository, namedGraph, nquads) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(
-                implementationName,
-            ).module.insertKnowledgeCollectionIntoUnifiedGraph(
+            return this.getImplementation(implementationName).module.insetAssertionInNamedGraph(
                 repository,
                 namedGraph,
-                collectionNQuads,
+                nquads,
             );
         }
     }
@@ -166,28 +159,20 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
-    async getKnowledgeAssetNamedGraph(implementationName, repository, ual) {
+    async getAssertionFromNamedGraph(implementationName, repository, ual) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.getKnowledgeAssetNamedGraph(
+            return this.getImplementation(implementationName).module.getAssertionFromNamedGraph(
                 repository,
                 ual,
             );
         }
     }
 
-    async getKnowledgeAssetNamedGraphPublic(implementationName, repository, ual) {
+    async namedGraphExist(implementationName, repository, name) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(
-                implementationName,
-            ).module.getKnowledgeAssetNamedGraphPublic(repository, ual);
-        }
-    }
-
-    async knowledgeAssetNamedGraphExists(implementationName, repository, ual) {
-        if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.knowledgeAssetNamedGraphExists(
+            return this.getImplementation(implementationName).module.namedGraphExist(
                 repository,
-                ual,
+                name,
             );
         }
     }
@@ -255,6 +240,15 @@ class TripleStoreModuleManager extends BaseModuleManager {
     async deleteRepository(implementationName, repository) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.deleteRepository(repository);
+        }
+    }
+
+    async findAllNamedGraphsByUAL(implementationName, repository, ual) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.findAllNamedGraphsByUAL(
+                repository,
+                ual,
+            );
         }
     }
 

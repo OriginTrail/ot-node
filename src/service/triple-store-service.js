@@ -46,11 +46,13 @@ class TripleStoreService {
         );
 
         const [existsInUnifiedGraph, existsInNamedGraphs] = await Promise.all([
+            // TODO: This is deprecated -- this should probably be done like in update
             this.tripleStoreModuleManager.knowledgeCollectionNamedGraphsExist(
                 this.repositoryImplementations[repository],
                 repository,
                 knowledgeCollectionUAL,
             ),
+            // TODO: This is deprecated -- this should probably be done like in update
             this.tripleStoreModuleManager.knowledgeCollectionExistsInUnifiedGraph(
                 this.repositoryImplementations[repository],
                 repository,
@@ -87,7 +89,7 @@ class TripleStoreService {
 
         if (!existsInUnifiedGraph) {
             promises.push(
-                this.tripleStoreModuleManager.insertKnowledgeCollectionIntoUnifiedGraph(
+                this.tripleStoreModuleManager.insetAssertionInNamedGraph(
                     this.repositoryImplementations[repository],
                     repository,
                     BASE_NAMED_GRAPHS.UNIFIED,
@@ -201,7 +203,7 @@ class TripleStoreService {
         // ];
 
         await Promise.all([
-            this.tripleStoreModuleManager.insertKnowledgeCollectionIntoUnifiedGraph(
+            this.tripleStoreModuleManager.insetAssertionInNamedGraph(
                 this.repositoryImplementations[toRepository],
                 toRepository,
                 BASE_NAMED_GRAPHS.HISTORICAL_UNIFIED,
@@ -246,10 +248,10 @@ class TripleStoreService {
 
         let nquads;
         if (knowledgeAssetId) {
-            nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
+            nquads = await this.tripleStoreModuleManager.getNamedGraph(
                 this.repositoryImplementations[repository],
                 repository,
-                `${ual}:0`, // TO DO: Add state with implemented update
+                `${ual}`, // TO DO: Add state with implemented update
             );
         } else {
             nquads = await this.tripleStoreModuleManager.getKnowledgeCollectionNamedGraphs(
@@ -324,6 +326,62 @@ class TripleStoreService {
             repository,
             query,
         );
+    }
+
+    async moveAssertionToHistoric(repository, ual, stateIndex) {
+        // Find all named graph that exist for given UAL
+        const ualNamedGraphs = this.tripleStoreModuleManager.findAllNamedGraphsByUAL(
+            repository,
+            ual,
+        );
+        let stateNamedGraphExistInHistoric = [];
+        const ulaNamedGraphsWithState = [];
+        const checkPromises = [];
+        // Check if they already exist in historic
+        for (const ulaNamedGraph of ualNamedGraphs) {
+            const parts = ulaNamedGraph.split('/');
+            parts[parts.length - 2] = `${parts[parts.length - 2]}:${stateIndex}`;
+            const ulaNamedGraphWithState = parts.join('/');
+            ulaNamedGraphsWithState.push(ulaNamedGraphWithState);
+            checkPromises.push(
+                this.tripleStoreModuleManager.namedGraphExist(repository, ulaNamedGraphWithState),
+            );
+        }
+        stateNamedGraphExistInHistoric = await Promise.all(checkPromises);
+        // const insertPromises = [];
+        // Alterativly I can get all triples from KC and sort them by subject
+        // Subject determines in which KA it belongs my only concern is that
+        // if we update asset and it gets more subjects it will be out of order so it has to be done like this
+
+        // Insert them in UAL:latestStateIndex - 1 named graph in historic
+        for (const [index, promiseResult] of stateNamedGraphExistInHistoric.entries()) {
+            if (!promiseResult) {
+                // get knowlidge graph
+                const nquads = await this.tripleStoreModuleManager.getAssertionFromNamedGraph(
+                    repository,
+                    ualNamedGraphs[index],
+                );
+                // insert knwoledge grpah
+                await this.tripleStoreModuleManager.insetAssertionInNamedGraph(
+                    repository,
+                    ulaNamedGraphsWithState[index],
+                    nquads,
+                );
+            }
+        }
+
+        await this.tripleStoreModuleManager.deleteKnowledgeCollectionNamedGraphs(
+            repository,
+            ualNamedGraphs,
+        );
+
+        // await this.insertKnowledgeCollection(
+        //     repository,
+        //     knowledgeCollectionUAL,
+        //     knowledgeAssetsUALs,
+        //     knowledgeAssetsStates,
+        //     triples,
+        // );
     }
 
     async select(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {

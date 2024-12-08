@@ -404,6 +404,7 @@ export const ERROR_TYPE = {
         UPDATE_VALIDATE_ASSET_ERROR: 'UpdateValidateAssetError',
         UPDATE_STORE_REQUEST_ERROR: 'UpdateStoreRequestError',
         UPDATE_VALIDATE_ASSERTION_METADATA_ERROR: 'UpadateValidateAssertionMetadataError',
+        UPDATE_ASSERTION_ERROR: 'UpdateAssertionError',
     },
     GET: {
         GET_ROUTE_ERROR: 'GetRouteError',
