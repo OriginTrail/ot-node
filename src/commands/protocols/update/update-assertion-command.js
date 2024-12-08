@@ -1,8 +1,10 @@
+import { kcTools } from 'assertion-tools';
 import Command from '../../command.js';
 import {
-    OPERATION_ID_STATUS,
+    // OPERATION_ID_STATUS,
     ERROR_TYPE,
-    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE_REPOSITORY,
+    TRIPLES_VISIBILITY,
 } from '../../../constants/constants.js';
 
 class UpdateAssertionCommand extends Command {
@@ -18,65 +20,46 @@ class UpdateAssertionCommand extends Command {
     }
 
     async execute(command) {
-        const { operationId, ual, blockchain, assertion } = command.data;
+        const {
+            /* operationId, */ ual,
+            /* blockchain, */ assertion,
+            firstNewKAIndex,
+            updateStateIndex,
+        } = command.data;
+        const validateCurrentData = this.validateCurrentData(ual);
+        if (this.validateCurrentData(validateCurrentData)) {
+            const preUpdateUalNamedGraphs =
+                // Old subjects old ual from select returned here probably {s, g}
+                await this.tripleStoreService.moveToHistoricAndDeleteAssertion(
+                    ual,
+                    updateStateIndex - 1,
+                );
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.UPDATE_FINALIZATION.UPDATE_FINALIZATION_STORE_ASSERTION_START,
-        );
-        // It should insert old data into historic (both private and public)
-        // It should delete old named graph in current (both private and public)
-        // It should inset new data into current (both private and public)
-        try {
-            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(assertion);
-            const knowledgeAssetsUALs = [];
-            const knowledgeAssetStates = [];
-            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-                knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
-                knowledgeAssetStates.push(0);
-            }
-
-            await this.tripleStoreService.moveAssertionToHistoric(ual);
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.tripleStoreService.insertKnowledgeCollection(
-                TRIPLE_STORE_REPOSITORIES.DKG,
-                ual,
-                knowledgeAssetsUALs,
-                knowledgeAssetStates,
-                assertion,
-            );
-        } catch (e) {
-            await this.handleError(operationId, blockchain, e.message, this.errorType, true);
+            // It probably has to be parsed to remove visibility flag
+            this.insertUpdatedAssertion(preUpdateUalNamedGraphs, assertion, firstNewKAIndex, ual);
         }
-
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.UPDATE_FINALIZATION.UPDATE_FINALIZATION_STORE_ASSERTION_END,
-        );
-
-        // TODO: This needs to be changed/fixed when is COMPLETED now with different flow same operation id get's marked completed multiple times
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.COMPLETED,
-        );
-
-        return Command.empty();
     }
 
-    // async validateCurrentData() {
-    //     const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-    //         blockchain,
-    //         contract,
-    //         tokenId,
-    //     );
+    // TODO: Move maybe outside of the command
+    async validateCurrentData(ual) {
+        const { blockchain, contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
+        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+            blockchain,
+            contract,
+            knowledgeCollectionId,
+        );
+        const assertionIdOfCurrent = assertionIds[assertionIds.length() - 2];
 
-    //     const assertionIdOfCurrent = assertionIds[assertionIds.length() - 2];
-    //     const currentMerkleRoot =
-    // }
+        const preUpdateAssertion = await this.tripleStoreService.getKnowledgeAssetNamedGraph(
+            TRIPLE_STORE_REPOSITORY.DKG,
+            ual,
+            TRIPLES_VISIBILITY.PUBLIC,
+        );
+
+        const preUpdateMerkleRoot = kcTools.calculateMerkleRoot(preUpdateAssertion);
+
+        return assertionIdOfCurrent === preUpdateMerkleRoot;
+    }
 
     /**
      * Builds default updateAssertionCommand

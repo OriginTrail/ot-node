@@ -479,6 +479,18 @@ class OtTripleStore {
         this.select(repository, query);
     }
 
+    async findAllSubjectsWithGraphNames(repository, ual) {
+        const query = `
+            SELECT DISTINCT ?s ?g
+            WHERE {
+                GRAPH ?g {
+                    ?s ?p ?o
+                }
+                FILTER(STRSTARTS(STR(?g), "${ual}"))
+            }`;
+        this.select(repository, query);
+    }
+
     async construct(repository, query) {
         return this._executeQuery(repository, query, MEDIA_TYPES.N_QUADS);
     }

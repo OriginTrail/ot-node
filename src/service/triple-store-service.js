@@ -60,9 +60,11 @@ class TripleStoreService {
             ),
         ]);
 
-        const knowledgeAssetsStatesUALs = knowledgeAssetsUALs.map(
-            (ual, index) => `${ual}:${knowledgeAssetsStates[index]}`,
-        );
+        // TODO: From where will we get uals
+        const knowledgeAssetsStatesUALs = [];
+        //  = knowledgeAssetsUALs.map(
+        //     (ual, index) => `${ual}:${knowledgeAssetsStates[index]}`,
+        // );
 
         // TODO: Add with the introduction of RDF-star mode
         // const tripleAnnotations = this.dataService.createTripleAnnotations(
@@ -74,6 +76,11 @@ class TripleStoreService {
         const publicKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
             triples.public ?? triples,
         );
+
+        const publicKnowledgeAssetUALs = [];
+        // for (let i = 1; i < publicKnowledgeAssetsTriples.count.length + 1; i += 1) {
+        //     publicKnowledgeAssetUALs.push(`${ual}:${i}`);
+        // }
 
         const promises = [];
         if (triples.private && triples.private.length !== 0 && !existsInNamedGraphs) {
@@ -92,7 +99,7 @@ class TripleStoreService {
                 [publicSubject] = publicKnowledgeAssetsTriples[publicIndex][0].split(' ');
                 [privateSubject] = privateKnowledgeAssetsTriples[privateIndex][0].split(' ');
                 if (publicSubject === privateSubject) {
-                    privateKnowledgeAssetsStatesUALs.push(knowledgeAssetsStatesUALs[publicIndex]);
+                    privateKnowledgeAssetsStatesUALs.push(publicKnowledgeAssetUALs[publicIndex]);
                     privateIndex += 1;
                 }
                 publicIndex += 1;
@@ -113,7 +120,7 @@ class TripleStoreService {
                 this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                     this.repositoryImplementations[repository],
                     repository,
-                    knowledgeAssetsStatesUALs,
+                    publicKnowledgeAssetUALs,
                     publicKnowledgeAssetsTriples,
                     TRIPLES_VISIBILITY.PUBLIC,
                 ),
@@ -213,6 +220,83 @@ class TripleStoreService {
                             `to the Triple Store's ${repository} repository after maximum retries.`,
                     );
                 }
+            }
+        }
+    }
+
+    async insertUpdatedAssertion(preUpdateUalNamedGraphs, assertion, firstNewKAIndex, ual) {
+        const preUpdateSubjectUalMap = new Map(
+            preUpdateUalNamedGraphs.map((entry) => [
+                entry.subject,
+                entry.g.split('/').slice(0, -1).join('/'),
+            ]),
+        );
+
+        const publicKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
+            assertion.public ?? assertion,
+        );
+
+        const publicKnowledgeAssetsSubjects = publicKnowledgeAssetsTriples.map(
+            ([triple]) => triple.split(' ')[0],
+        );
+        const publicKnowledgeAssetsStatesUALs = [];
+        let newKnowledgeAssetId = firstNewKAIndex;
+        for (const subject of publicKnowledgeAssetsSubjects) {
+            if (preUpdateSubjectUalMap.has(subject)) {
+                publicKnowledgeAssetsStatesUALs.push(preUpdateSubjectUalMap.get(subject));
+            } else {
+                publicKnowledgeAssetsStatesUALs.push(`${ual}/${newKnowledgeAssetId}`);
+                newKnowledgeAssetId += 1;
+            }
+        }
+
+        const promises = [];
+
+        promises.push(
+            this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
+                TRIPLE_STORE_REPOSITORY.DKG,
+                publicKnowledgeAssetsStatesUALs,
+                publicKnowledgeAssetsTriples,
+                TRIPLES_VISIBILITY.PUBLIC,
+            ),
+        );
+
+        if (assertion.private?.length /* && !existsInNamedGraphs */) {
+            const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
+                assertion.private,
+            );
+
+            const publicSubjectsMap = new Map(
+                publicKnowledgeAssetsTriples.map(([triple], index) => {
+                    const [subject] = triple.split(' ');
+                    return [subject, index];
+                }),
+            );
+
+            const privateKnowledgeAssetsStatesUALs = privateKnowledgeAssetsTriples.reduce(
+                (result, [triple]) => {
+                    const [privateSubject] = triple.split(' '); // groupTriplesBySubject guarantees format
+                    if (publicSubjectsMap.has(privateSubject)) {
+                        result.push(
+                            publicKnowledgeAssetsStatesUALs[publicSubjectsMap.get(privateSubject)],
+                        );
+                    }
+                    return result;
+                },
+                [],
+            );
+
+            if (privateKnowledgeAssetsStatesUALs.length > 0) {
+                promises.push(
+                    this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                        this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
+                        TRIPLE_STORE_REPOSITORY.DKG,
+                        privateKnowledgeAssetsStatesUALs,
+                        privateKnowledgeAssetsTriples,
+                        TRIPLES_VISIBILITY.PRIVATE,
+                    ),
+                );
             }
         }
     }
@@ -369,10 +453,10 @@ class TripleStoreService {
         );
     }
 
-    async moveAssertionToHistoric(repository, ual, stateIndex) {
+    async moveToHistoricAndDeleteAssertion(ual, stateIndex) {
         // Find all named graph that exist for given UAL
         const ualNamedGraphs = this.tripleStoreModuleManager.findAllNamedGraphsByUAL(
-            repository,
+            TRIPLE_STORE_REPOSITORY.DKG,
             ual,
         );
         let stateNamedGraphExistInHistoric = [];
@@ -385,26 +469,24 @@ class TripleStoreService {
             const ulaNamedGraphWithState = parts.join('/');
             ulaNamedGraphsWithState.push(ulaNamedGraphWithState);
             checkPromises.push(
-                this.tripleStoreModuleManager.namedGraphExist(repository, ulaNamedGraphWithState),
+                this.tripleStoreModuleManager.namedGraphExist(
+                    TRIPLE_STORE_REPOSITORY.DKG_HISTORIC,
+                    ulaNamedGraphWithState,
+                ),
             );
         }
         stateNamedGraphExistInHistoric = await Promise.all(checkPromises);
         // const insertPromises = [];
-        // Alterativly I can get all triples from KC and sort them by subject
-        // Subject determines in which KA it belongs my only concern is that
-        // if we update asset and it gets more subjects it will be out of order so it has to be done like this
 
         // Insert them in UAL:latestStateIndex - 1 named graph in historic
         for (const [index, promiseResult] of stateNamedGraphExistInHistoric.entries()) {
             if (!promiseResult) {
-                // get knowlidge graph
                 const nquads = await this.tripleStoreModuleManager.getAssertionFromNamedGraph(
-                    repository,
+                    TRIPLE_STORE_REPOSITORY.DKG,
                     ualNamedGraphs[index],
                 );
-                // insert knwoledge grpah
                 await this.tripleStoreModuleManager.insetAssertionInNamedGraph(
-                    repository,
+                    TRIPLE_STORE_REPOSITORY.DKG_HISTORIC,
                     ulaNamedGraphsWithState[index],
                     nquads,
                 );
@@ -412,17 +494,20 @@ class TripleStoreService {
         }
 
         await this.tripleStoreModuleManager.deleteKnowledgeCollectionNamedGraphs(
-            repository,
+            TRIPLE_STORE_REPOSITORY.DKG,
             ualNamedGraphs,
         );
 
-        // await this.insertKnowledgeCollection(
-        //     repository,
-        //     knowledgeCollectionUAL,
-        //     knowledgeAssetsUALs,
-        //     knowledgeAssetsStates,
-        //     triples,
-        // );
+        return ualNamedGraphs;
+    }
+
+    async getKnowledgeAssetNamedGraph(repository, ual, visibility) {
+        return this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+            visibility,
+        );
     }
 
     async select(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
