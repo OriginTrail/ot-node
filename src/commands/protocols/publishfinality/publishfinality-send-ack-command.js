@@ -6,6 +6,8 @@ class PublishfinalitySendAckCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.protocolService = ctx.protocolService;
         this.operationService = ctx.publishFinalityService;
+        this.networkModuleManager = ctx.networkModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     /**
@@ -24,6 +26,16 @@ class PublishfinalitySendAckCommand extends Command {
         this.logger.debug(
             `Trying to ${this.operationService.getOperationName()} to peer ${remotePeerId}`,
         );
+
+        const myPeerId = this.networkModuleManager.getPeerId().toB58String();
+        if (remotePeerId === myPeerId) {
+            await this.repositoryModuleManager.savePublishFinalityAck(
+                publishOperationId,
+                ual,
+                remotePeerId,
+            );
+            return Command.empty();
+        }
 
         const networkProtocols = this.operationService.getNetworkProtocols();
         const node = { id: remotePeerId, protocol: networkProtocols[0] };
