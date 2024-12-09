@@ -487,6 +487,19 @@ class RepositoryModuleManager extends BaseModuleManager {
             options,
         );
     }
+
+    async getPublishFinality(ual, options = {}) {
+        return this.getRepository('publish_finality').getFinality(ual, options);
+    }
+
+    async savePublishFinalityAck(publishOperationId, ual, peerId, options = {}) {
+        return this.getRepository('publish_finality').saveFinalityAck(
+            publishOperationId,
+            ual,
+            peerId,
+            options,
+        );
+    }
 }
 
 export default RepositoryModuleManager;

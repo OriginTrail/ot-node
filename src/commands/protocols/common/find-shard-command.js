@@ -26,7 +26,8 @@ class FindShardCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, datasetRoot } = command.data;
+        const { operationId, blockchain, datasetRoot, minimumNumberOfNodeReplications } =
+            command.data;
         this.logger.debug(
             `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
         );
@@ -36,7 +37,10 @@ class FindShardCommand extends Command {
             this.operationStartEvent,
         );
 
-        this.minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+        this.minAckResponses = await this.operationService.getMinAckResponses(
+            blockchain,
+            minimumNumberOfNodeReplications,
+        );
 
         const networkProtocols = this.operationService.getNetworkProtocols();
 
