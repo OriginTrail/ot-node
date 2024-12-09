@@ -18,5 +18,8 @@ export default () => ({
         paranetUAL: {
             type: ['string', 'null'],
         },
+        subjectUAL: {
+            type: 'boolean',
+        },
     },
 });

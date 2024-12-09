@@ -412,10 +412,7 @@ class TripleStoreService {
 
     async moveToHistoricAndDeleteAssertion(ual, stateIndex) {
         // Find all named graph that exist for given UAL
-        const ualNamedGraphs = this.tripleStoreModuleManager.findAllNamedGraphsByUAL(
-            TRIPLE_STORE_REPOSITORY.DKG,
-            ual,
-        );
+        const ualNamedGraphs = await this.findAllNamedGraphsByUAL(TRIPLE_STORE_REPOSITORY.DKG, ual);
         let stateNamedGraphExistInHistoric = [];
         const ulaNamedGraphsWithState = [];
         const checkPromises = [];
@@ -427,6 +424,7 @@ class TripleStoreService {
             ulaNamedGraphsWithState.push(ulaNamedGraphWithState);
             checkPromises.push(
                 this.tripleStoreModuleManager.namedGraphExist(
+                    this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG_HISTORIC],
                     TRIPLE_STORE_REPOSITORY.DKG_HISTORIC,
                     ulaNamedGraphWithState,
                 ),
@@ -439,10 +437,12 @@ class TripleStoreService {
         for (const [index, promiseResult] of stateNamedGraphExistInHistoric.entries()) {
             if (!promiseResult) {
                 const nquads = await this.tripleStoreModuleManager.getAssertionFromNamedGraph(
+                    this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
                     TRIPLE_STORE_REPOSITORY.DKG,
                     ualNamedGraphs[index],
                 );
                 await this.tripleStoreModuleManager.insetAssertionInNamedGraph(
+                    this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG_HISTORIC],
                     TRIPLE_STORE_REPOSITORY.DKG_HISTORIC,
                     ulaNamedGraphsWithState[index],
                     nquads,
@@ -456,6 +456,22 @@ class TripleStoreService {
         );
 
         return ualNamedGraphs;
+    }
+
+    async findAllNamedGraphsByUAL(repositories, ual) {
+        return this.tripleStoreModuleManager.findAllNamedGraphsByUAL(
+            this.repositoryImplementations[repositories],
+            repositories,
+            ual,
+        );
+    }
+
+    async findAllSubjectsWithGraphNames(repositories, ual) {
+        return this.tripleStoreModuleManager.findAllSubjectsWithGraphNames(
+            this.repositoryImplementations[repositories],
+            repositories,
+            ual,
+        );
     }
 
     async getKnowledgeAssetNamedGraph(repository, ual, visibility) {

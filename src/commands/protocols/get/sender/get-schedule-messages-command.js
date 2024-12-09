@@ -19,6 +19,7 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             knowledgeAssetId: command.data.knowledgeAssetId,
             includeMetadata: command.data.includeMetadata,
             ual: command.data.ual,
+            subjectUAL: command.data.subjectUAL,
             assetSync: command.data.assetSync,
             paranetSync: command.data.paranetSync,
             paranetTokenId: command.data.paranetTokenId,

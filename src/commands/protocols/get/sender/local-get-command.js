@@ -3,6 +3,7 @@ import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
     TRIPLES_VISIBILITY,
+    TRIPLE_STORE_REPOSITORY,
 } from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
@@ -33,6 +34,8 @@ class LocalGetCommand extends Command {
             contract,
             knowledgeCollectionId,
             knowledgeAssetId,
+            subjectUAL,
+            ual,
         } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -40,122 +43,104 @@ class LocalGetCommand extends Command {
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        // const response = {};
-
-        // if (paranetUAL) {
-        //     const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
-
-        //     const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-        //     const syncedAssetRecord =
-        //         await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
-
-        //     const nquads = await this.tripleStoreService.getAssertion(
-        //         paranetRepository,
-        //         syncedAssetRecord.publicAssertionId,
-        //     );
-
-        //     let privateNquads;
-        //     if (syncedAssetRecord.privateAssertionId) {
-        //         privateNquads = await this.tripleStoreService.getAssertion(
-        //             paranetRepository,
-        //             syncedAssetRecord.privateAssertionId,
-        //         );
-        //     }
-
-        //     if (nquads?.length) {
-        //         response.assertion = nquads;
-        //         if (privateNquads?.length) {
-        //             response.privateAssertion = privateNquads;
-        //         }
-        //     } else {
-        //         this.handleError(
-        //             operationId,
-        //             blockchain,
-        //             `Couldn't find locally asset with ${ual} in paranet ${paranetUAL}`,
-        //             this.errorType,
-        //         );
-        //     }
-
-        //     await this.operationService.markOperationAsCompleted(
-        //         operationId,
-        //         blockchain,
-        //         response,
-        //         [
-        //             OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-        //             OPERATION_ID_STATUS.GET.GET_END,
-        //             OPERATION_ID_STATUS.COMPLETED,
-        //         ],
-        //     );
-
-        //     return Command.empty();
-        // }
-
-        // else {
-
-        const promises = [];
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_START,
-            operationId,
-            blockchain,
-        );
-        const assertionPromise = this.tripleStoreService
-            .getAssertion(
-                blockchain,
-                contract,
-                knowledgeCollectionId,
-                knowledgeAssetId,
-                TRIPLES_VISIBILITY.ALL,
-            )
-            .then((result) => {
-                this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
-                    operationId,
-                    blockchain,
-                );
-                return result;
-            });
-        promises.push(assertionPromise);
-
-        if (includeMetadata) {
+        if (subjectUAL) {
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_START,
+                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_SUBJECT_UAL_START,
                 operationId,
                 blockchain,
             );
-            const metadataPromise = this.tripleStoreService
-                .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+            const subjectsUALs = await this.tripleStoreService.findAllSubjectsWithGraphNames(
+                TRIPLE_STORE_REPOSITORY.DKG,
+                ual,
+            );
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_SUBJECT_UAL_START,
+                operationId,
+                blockchain,
+            );
+            if (subjectsUALs?.length) {
+                await this.operationService.markOperationAsCompleted(
+                    operationId,
+                    blockchain,
+                    subjectsUALs,
+                    [
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+                        OPERATION_ID_STATUS.GET.GET_END,
+                        OPERATION_ID_STATUS.COMPLETED,
+                    ],
+                );
+                return Command.empty();
+            }
+        } else {
+            const promises = [];
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_START,
+                operationId,
+                blockchain,
+            );
+            const assertionPromise = this.tripleStoreService
+                .getAssertion(
+                    blockchain,
+                    contract,
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
+                    TRIPLES_VISIBILITY.ALL,
+                )
                 .then((result) => {
                     this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_END,
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
                         operationId,
                         blockchain,
                     );
                     return result;
                 });
-            promises.push(metadataPromise);
+            promises.push(assertionPromise);
+
+            if (includeMetadata) {
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_START,
+                    operationId,
+                    blockchain,
+                );
+                const metadataPromise = this.tripleStoreService
+                    .getAssertionMetadata(
+                        blockchain,
+                        contract,
+                        knowledgeCollectionId,
+                        knowledgeAssetId,
+                    )
+                    .then((result) => {
+                        this.operationIdService.emitChangeEvent(
+                            OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_END,
+                            operationId,
+                            blockchain,
+                        );
+                        return result;
+                    });
+                promises.push(metadataPromise);
+            }
+
+            const [assertion, metadata] = await Promise.all(promises);
+
+            const responseData = {
+                assertion,
+                ...(includeMetadata && metadata && { metadata }),
+            };
+            if (assertion.length) {
+                await this.operationService.markOperationAsCompleted(
+                    operationId,
+                    blockchain,
+                    responseData,
+                    [
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+                        OPERATION_ID_STATUS.GET.GET_END,
+                        OPERATION_ID_STATUS.COMPLETED,
+                    ],
+                );
+
+                return Command.empty();
+            }
         }
-
-        const [assertion, metadata] = await Promise.all(promises);
-
-        const responseData = {
-            assertion,
-            ...(includeMetadata && metadata && { metadata }),
-        };
-        if (assertion.length) {
-            await this.operationService.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                responseData,
-                [
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                    OPERATION_ID_STATUS.GET.GET_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
-            );
-
-            return Command.empty();
-        }
-        // }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
