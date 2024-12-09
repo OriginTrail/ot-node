@@ -71,8 +71,11 @@ class OperationIdService {
             response.data = JSON.stringify({ errorMessage, errorType });
             await this.removeOperationIdCache(operationId);
         }
-
-        this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
+        if (errorType) {
+            this.emitChangeEvent(errorType, operationId, blockchain, errorMessage, errorType);
+        } else {
+            this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
+        }
 
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }

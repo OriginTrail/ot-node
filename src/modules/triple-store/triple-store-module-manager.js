@@ -259,7 +259,6 @@ class TripleStoreModuleManager extends BaseModuleManager {
     async findAllSubjectsWithGraphNames(implementationName, repository, ual) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.findAllSubjectsWithGraphNames(
-                implementationName,
                 repository,
                 ual,
             );

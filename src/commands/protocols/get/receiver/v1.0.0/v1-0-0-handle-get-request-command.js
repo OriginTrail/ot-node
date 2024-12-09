@@ -105,7 +105,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 ual,
             );
 
-            if (subjectUAL?.length) {
+            if (subjectsUALs?.length) {
                 await this.operationService.markOperationAsCompleted(
                     operationId,
                     blockchain,
@@ -118,7 +118,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 );
             }
 
-            return subjectUAL?.length
+            return subjectsUALs?.length
                 ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: subjectsUALs }
                 : {
                       messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
