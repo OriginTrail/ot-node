@@ -488,10 +488,6 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async createPublishFinalityRecord(operationId, options = {}) {
-        return this.getRepository('publish_finality').createFinalityRecord(operationId, options);
-    }
-
     async getPublishFinality(ual, options = {}) {
         return this.getRepository('publish_finality').getFinality(ual, options);
     }

@@ -8,12 +8,10 @@ export async function up({ context: { queryInterface, Sequelize } }) {
         operation_id: {
             allowNull: false,
             type: Sequelize.STRING,
-            unique: true,
         },
         ual: {
             allowNull: true,
             type: Sequelize.STRING,
-            unique: true,
         },
         peer_id: {
             allowNull: false,
@@ -30,8 +28,9 @@ export async function up({ context: { queryInterface, Sequelize } }) {
             defaultValue: Sequelize.literal('NOW()'),
         },
     });
-    await queryInterface.addIndex('publish_finality', ['ual', 'peer_id'], {
-        indicesType: 'UNIQUE',
+    await queryInterface.addConstraint('publish_finality', {
+        fields: ['ual', 'peer_id'],
+        type: 'unique',
     });
 }
 export async function down({ context: { queryInterface } }) {
