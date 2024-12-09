@@ -366,6 +366,10 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
         INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
+    PUBLISH_FINALITY: {
+        INIT: 60 * 1000,
+        REQUEST: 60 * 1000,
+    },
 };
 
 export const MAX_OPEN_SESSIONS = 10;
@@ -451,6 +455,12 @@ export const ERROR_TYPE = {
         FINALITY_NETWORK_ERROR: 'FinalityNetworkError',
         FINALITY_REQUEST_ERROR: 'FinalityRequestError',
         FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
+    },
+    PUBLISH_FINALITY: {
+        PUBLISH_FINALITY_ERROR: 'PublishFinalityError',
+        PUBLISH_FINALITY_NETWORK_ERROR: 'PublishFinalityNetworkError',
+        PUBLISH_FINALITY_REQUEST_ERROR: 'PublishFinalityRequestError',
+        PUBLISH_FINALITY_REQUEST_REMOTE_ERROR: 'PublishFinalityRequestRemoteError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -717,6 +727,14 @@ export const OPERATION_ID_STATUS = {
         FINALITY_FETCH_FROM_NODES_START: 'FINALITY_FETCH_FROM_NODES_START',
         FINALITY_FETCH_FROM_NODES_END: 'FINALITY_FETCH_FROM_NODES_END',
     },
+    PUBLISH_FINALITY: {
+        PUBLISH_FINALITY_START: 'PUBLISH_FINALITY_START',
+        PUBLISH_FINALITY_END: 'PUBLISH_FINALITY_END',
+        PUBLISH_FINALITY_REMOTE_START: 'PUBLISH_FINALITY_REMOTE_START',
+        PUBLISH_FINALITY_REMOTE_END: 'PUBLISH_FINALITY_REMOTE_START',
+        PUBLISH_FINALITY_FETCH_FROM_NODES_START: 'PUBLISH_FINALITY_FETCH_FROM_NODES_START',
+        PUBLISH_FINALITY_FETCH_FROM_NODES_END: 'PUBLISH_FINALITY_FETCH_FROM_NODES_END',
+    },
 };
 
 export const OPERATIONS = {
@@ -724,6 +742,7 @@ export const OPERATIONS = {
     UPDATE: 'update',
     GET: 'get',
     FINALITY: 'finality',
+    PUBLISH_FINALITY: 'publishFinality',
 };
 
 export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
@@ -895,8 +914,18 @@ export const HTTP_API_ROUTES = {
             path: '/finality',
             options: {},
         },
+        'finality-status': {
+            method: 'get',
+            path: '/finality-status',
+            options: {},
+        },
     },
     v1: {
+        'finality-status': {
+            method: 'get',
+            path: '/finality-status',
+            options: {},
+        },
         // get: {
         //     method: 'post',
         //     path: '/get',
@@ -914,6 +943,7 @@ export const NETWORK_PROTOCOLS = {
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
     FINALITY: ['/finality/1.0.0'],
+    PUBLISH_FINALITY: ['/publishfinality/1.0.0'],
 };
 
 export const OPERATION_STATUS = {

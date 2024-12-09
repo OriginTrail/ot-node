@@ -24,6 +24,7 @@ class PublishService extends OperationService {
         ];
         this.operationMutex = new Mutex();
         this.signatureStorageService = ctx.signatureStorageService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
     }
 
     async processResponse(
