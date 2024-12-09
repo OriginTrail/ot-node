@@ -113,8 +113,8 @@ class PublishService extends OperationService {
         return this.blockchainModuleManager.getR2(blockchainId);
     }
 
-    async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
+    async getMinAckResponses(blockchainId, minimumNumberOfNodeReplications = null) {
+        return minimumNumberOfNodeReplications ?? this.blockchainModuleManager.getR1(blockchainId);
     }
 }
 
