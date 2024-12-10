@@ -3,6 +3,7 @@ import {
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
     ERROR_TYPE,
+    TRIPLES_VISIBILITY,
 } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
 
@@ -68,7 +69,7 @@ class GetController extends BaseController {
                     operationId,
                     hashFunctionId,
                     paranetUAL,
-                    contentType,
+                    contentType: contentType ?? TRIPLES_VISIBILITY.ALL,
                 },
                 transactional: false,
             });
