@@ -15,6 +15,7 @@ class BaseModuleManager {
             this.moduleConfigValidation.validateModule(this.getName(), moduleConfig);
 
             this.handlers = {};
+            this.initialized = true;
             for (const implementationName in moduleConfig.implementation) {
                 if (!moduleConfig.implementation[implementationName].enabled) {
                     // eslint-disable-next-line no-continue
@@ -39,7 +40,23 @@ class BaseModuleManager {
                 const ModuleClass = (await import(implementationConfig.package)).default;
                 const module = new ModuleClass();
                 // eslint-disable-next-line no-await-in-loop
-                await module.initialize(implementationConfig.config, this.logger);
+                if (this.getName() === 'telemetry') {
+                    try {
+                        // eslint-disable-next-line no-await-in-loop
+                        await module.initialize(implementationConfig.config, this.logger);
+                    } catch (error) {
+                        this.logger.error(
+                            `Could not initialize the ${this.getName()} module. Error: ${
+                                error.message
+                            }`,
+                        );
+                        this.initialized = false;
+                        break;
+                    }
+                } else {
+                    // eslint-disable-next-line no-await-in-loop
+                    await module.initialize(implementationConfig.config, this.logger);
+                }
                 module.getImplementationName = () => implementationName;
 
                 this.logger.info(
@@ -50,7 +67,6 @@ class BaseModuleManager {
                     config: implementationConfig.config,
                 };
             }
-            this.initialized = true;
 
             return true;
         } catch (error) {
