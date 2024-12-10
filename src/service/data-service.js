@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import { kcTools } from 'assertion-tools';
 import { XML_DATA_TYPES } from '../constants/constants.js';
 
@@ -66,6 +67,44 @@ class DataService {
             default:
                 return value;
         }
+    }
+
+    generateHashFromString(string) {
+        return ethers.utils.sha256(ethers.util.solidityPack(['string'], [string]));
+    }
+
+    splitConnectedArrays(publicTriples) {
+        const groupedPublic = [];
+        let currentSubject = publicTriples[0].split(' ')[0];
+        let currentSubjectHash = currentSubject.startsWith('<private-hash:0x')
+            ? currentSubject
+            : `<private-hash:${this.generateHashFromString(currentSubject.slice(1, -1))}>`;
+        let currentKA = [publicTriples[0]];
+
+        for (let i = 1; i < publicTriples.length; i += 1) {
+            const subject = publicTriples[i].split(' ')[0];
+            const subjectHash = subject.startsWith('<private-hash:0x')
+                ? subject
+                : `<private-hash:${this.generateHashFromString(subject.slice(1, -1))}>`;
+
+            if (
+                currentSubject === subject ||
+                currentSubjectHash === subject ||
+                subjectHash === currentSubject
+            ) {
+                currentKA.push(publicTriples[i]);
+            } else {
+                groupedPublic.push(currentKA);
+                currentSubject = subject;
+                currentSubjectHash = subjectHash;
+                currentKA = [publicTriples[i]];
+            }
+        }
+
+        // Push the last group
+        groupedPublic.push(currentKA);
+
+        return groupedPublic;
     }
 }
 
