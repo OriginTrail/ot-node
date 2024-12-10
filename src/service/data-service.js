@@ -91,6 +91,8 @@ class DataService {
 
         for (let i = 1; i < publicTriples.length; i += 1) {
             const [subject] = publicTriples[i].split(' ');
+            const subject = publicTriples[i].split(' ')[0];
+
             const subjectHash = subject.startsWith('<private-hash:0x')
                 ? subject
                 : `<private-hash:${this.generateHashFromString(subject.slice(1, -1))}>`;

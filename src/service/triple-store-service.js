@@ -61,6 +61,7 @@ class TripleStoreService {
         );
 
         const publicKnowledgeAssetsUALs = [];
+
         for (let i = 1; i <= publicKnowledgeAssetsTriples.length; i += 1) {
             publicKnowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i}`);
         }
@@ -89,6 +90,7 @@ class TripleStoreService {
                 }
                 publicIndex += 1;
             }
+
             if (privateKnowledgeAssetsUALs.length > 0) {
                 promises.push(
                     this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
