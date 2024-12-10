@@ -38,6 +38,18 @@ class ValidationService {
         this.logger.info(`Assertion integrity validated! AssertionId: ${assertionId}`);
     }
 
+    async validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain) {
+        // call contract TO DO, dont return anything or return true
+        return { knowledgeCollectionId, assertionId, blockchain };
+    }
+
+    async validateDatasetOnBlockchain(knowledgeCollectionId, assertion, blockchain) {
+        const assertionId = await this.validationModuleManager.calculateRoot(assertion);
+
+        // call contract TO DO, dont return anything or return true
+        return { knowledgeCollectionId, assertionId, blockchain };
+    }
+
     async validateDatasetRoot(dataset, datasetRoot) {
         const calculatedDatasetRoot = await this.validationModuleManager.calculateRoot(dataset);
 
