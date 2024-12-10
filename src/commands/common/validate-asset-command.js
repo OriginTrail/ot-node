@@ -101,7 +101,7 @@ class ValidateAssetCommand extends Command {
             }
         }
 
-        await this.validationService.validateAssertion(cachedAssertion, blockchain, cachedDataset);
+        await this.validationService.validateDatasetRoot(cachedDataset, cachedAssertion);
 
         let paranetId;
         if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
