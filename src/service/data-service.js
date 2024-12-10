@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { kcTools } from 'assertion-tools';
-import { XML_DATA_TYPES } from '../constants/constants.js';
+import { XML_DATA_TYPES, PRIVATE_HASH_SUBJECT_PREFIX } from '../constants/constants.js';
 
 class DataService {
     constructor(ctx) {
@@ -69,8 +69,16 @@ class DataService {
         }
     }
 
+    // Asumes nobody is using PRIVATE_HASH_SUBJECT_PREFIX subject in assertion
+    quadsContainsPrivateRepresentations(quads) {
+        return (
+            quads[0].split(' ')[0].startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`) ||
+            quads[quads.length - 1].split(' ')[0].startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`)
+        );
+    }
+
     generateHashFromString(string) {
-        return ethers.utils.sha256(ethers.util.solidityPack(['string'], [string]));
+        return ethers.utils.sha256(ethers.utils.solidityPack(['string'], [string]));
     }
 
     splitConnectedArrays(publicTriples) {
@@ -82,7 +90,8 @@ class DataService {
         let currentKA = [publicTriples[0]];
 
         for (let i = 1; i < publicTriples.length; i += 1) {
-            const subject = publicTriples[i].split(' ')[0];
+            const [subject] = publicTriples[i].split(' ');
+
             const subjectHash = subject.startsWith('<private-hash:0x')
                 ? subject
                 : `<private-hash:${this.generateHashFromString(subject.slice(1, -1))}>`;

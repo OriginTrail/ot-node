@@ -56,12 +56,13 @@ class TripleStoreService {
         //     knowledgeAssetsUALs.map((ual) => `<${ual}>`),
         // );
         // const unifiedGraphTriples = [...triples, ...tripleAnnotations];
-        const publicKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
+        const publicKnowledgeAssetsTriples = this.dataService.splitConnectedArrays(
             triples.public ?? triples,
         );
 
         const publicKnowledgeAssetsUALs = [];
-        for (let i = 1; i <= (triples.public ?? triples).length; i += 1) {
+
+        for (let i = 1; i <= publicKnowledgeAssetsTriples.length; i += 1) {
             publicKnowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i}`);
         }
         const promises = [];
@@ -70,26 +71,25 @@ class TripleStoreService {
             const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
                 triples.private,
             );
-
-            const publicSubjectsMap = new Map(
-                publicKnowledgeAssetsTriples.map(([triple], index) => {
-                    const [subject] = triple.split(' ');
-                    return [subject, index];
-                }),
-            );
-
-            const privateKnowledgeAssetsUALs = privateKnowledgeAssetsTriples.reduce(
-                (result, [triple]) => {
-                    const [privateSubject] = triple.split(' '); // groupTriplesBySubject guarantees format
-                    if (publicSubjectsMap.has(privateSubject)) {
-                        result.push(
-                            publicKnowledgeAssetsUALs[publicSubjectsMap.get(privateSubject)],
-                        );
-                    }
-                    return result;
-                },
-                [],
-            );
+            const privateKnowledgeAssetsUALs = [];
+            let publicIndex = 0;
+            let privateIndex = 0;
+            while (
+                publicIndex < publicKnowledgeAssetsTriples.length &&
+                privateIndex < privateKnowledgeAssetsTriples.length
+            ) {
+                // const [privateSubject] = privateKnowledgeAssetsTriples[privateIndex][0].split(' ');
+                // Check if first triple is content or private existence identifier
+                if (
+                    this.dataService.quadsContainsPrivateRepresentations(
+                        publicKnowledgeAssetsTriples[publicIndex],
+                    )
+                ) {
+                    privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[publicIndex]);
+                    privateIndex += 1;
+                }
+                publicIndex += 1;
+            }
 
             if (privateKnowledgeAssetsUALs.length > 0) {
                 promises.push(
