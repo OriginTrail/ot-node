@@ -58,6 +58,7 @@ class ValidateAssetCommand extends Command {
         if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }
+        // TODO: Validate number of triplets and other stuff we did before so it matches like we did it in v6
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.info(

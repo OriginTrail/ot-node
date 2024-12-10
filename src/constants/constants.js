@@ -33,7 +33,16 @@ export const ZERO_ADDRESS = ethers.constants.AddressZero;
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
+export const PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateMerkleRoot';
+
 export const TRIPLE_ANNOTATION_LABEL_PREDICATE = 'https://ontology.origintrail.io/dkg/1.0#label';
+
+export const PRIVATE_RESOURCE_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#representsPrivateResource';
+
+export const PRIVATE_HASH_SUBJECT_PREFIX = 'https://ontology.origintrail.io/dkg/1.0#metadata-hash:';
+
 export const UAL_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#UAL>';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
@@ -385,9 +394,10 @@ export const ERROR_TYPE = {
         PUBLISH_LOCAL_STORE_REMOTE_ERROR: 'PublishLocalStoreRemoteError',
         PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
+        PUBLISH_VALIDATE_ASSERTION_METADATA_ERROR: 'PublishValidateAssertionMetadataError',
+
         PUBLISH_ERROR: 'PublishError',
     },
-    VALIDATE_ASSERTION_METADATA_ERROR: 'ValidateAssertionMetadataError',
     STORE_ASSERTION_ERROR: 'StoreAssertionError',
     UPDATE: {
         UPDATE_INIT_ERROR: 'UpdateInitError',
@@ -402,6 +412,8 @@ export const ERROR_TYPE = {
         UPDATE_DELETE_PENDING_STATE_ERROR: 'UpdateDeletePendingStateError',
         UPDATE_VALIDATE_ASSET_ERROR: 'UpdateValidateAssetError',
         UPDATE_STORE_REQUEST_ERROR: 'UpdateStoreRequestError',
+        UPDATE_VALIDATE_ASSERTION_METADATA_ERROR: 'UpadateValidateAssertionMetadataError',
+        UPDATE_ASSERTION_ERROR: 'UpdateAssertionError',
     },
     GET: {
         GET_ROUTE_ERROR: 'GetRouteError',
@@ -454,6 +466,13 @@ export const ERROR_TYPE = {
         FINALITY_NETWORK_ERROR: 'FinalityNetworkError',
         FINALITY_REQUEST_ERROR: 'FinalityRequestError',
         FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
+    },
+    PUBLISH_FINALIZATION: {
+        PUBLISH_FINALIZATION_NO_CACHED_DATA: 'PublishFinalizationNoCachedData',
+    },
+    UPDATE_FINALIZATION: {
+        UPDATE_FINALIZATION_NO_CACHED_DATA: 'UpdateFinalizationNoCachedData',
+        UPDATE_FINALIZATION_NO_OLD_DATA: 'UpdateFinalizationNoOldData',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -587,6 +606,15 @@ export const OPERATION_ID_STATUS = {
         PUBLISH_FINALIZATION_STORE_ASSERTION_START: 'PUBLISH_FINALIZATION_STORE_ASSERTION_START',
         PUBLISH_FINALIZATION_STORE_ASSERTION_END: 'PUBLISH_FINALIZATION_STORE_ASSERTION_END',
         PUBLISH_FINALIZATION_END: 'PUBLISH_FINALIZATION_END',
+    },
+    UPDATE_FINALIZATION: {
+        UPDATE_FINALIZATION_START: 'UPDATE_FINALIZATION_START',
+        UPDATE_FINALIZATION_METADATA_VALIDATION_START:
+            'UPDATE_FINALIZATION_METADATA_VALIDATION_START',
+        UPDATE_FINALIZATION_METADATA_VALIDATION_END: 'UPDATE_FINALIZATION_METADATA_VALIDATION_END',
+        UPDATE_FINALIZATION_STORE_ASSERTION_START: 'UPDATE_FINALIZATION_STORE_ASSERTION_START',
+        UPDATE_FINALIZATION_STORE_ASSERTION_END: 'UPDATE_FINALIZATION_STORE_ASSERTION_END',
+        UPDATE_FINALIZATION_END: 'UPDATE_FINALIZATION_END',
     },
     UPDATE: {
         UPDATE_START: 'UPDATE_START',
@@ -1124,4 +1152,11 @@ export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
 
 export const TRIPLE_STORE_REPOSITORY = {
     DKG: 'dkg',
+    DKG_HISTORIC: 'dkg-historic',
+};
+
+export const TRIPLES_VISIBILITY = {
+    PUBLIC: 'public',
+    PRIVATE: 'private',
+    ALL: 'all',
 };

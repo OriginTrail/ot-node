@@ -3,6 +3,7 @@ import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
+    TRIPLES_VISIBILITY,
 } from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -103,8 +104,15 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             blockchain,
         );
+
         const assertionPromise = this.tripleStoreService
-            .getAssertion(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+            .getAssertion(
+                blockchain,
+                contract,
+                knowledgeCollectionId,
+                knowledgeAssetId,
+                TRIPLES_VISIBILITY.PUBLIC,
+            )
             .then((result) => {
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
