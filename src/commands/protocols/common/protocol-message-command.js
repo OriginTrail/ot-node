@@ -22,13 +22,13 @@ class ProtocolMessageCommand extends Command {
         if (!(await this.shouldSendMessage(command))) {
             return Command.empty();
         }
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             this.prepareMessageStartEvent,
             operationId,
             blockchain,
         );
         const message = await this.prepareMessage(command);
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             this.prepareMessageEndEvent,
             operationId,
             blockchain,
@@ -48,7 +48,7 @@ class ProtocolMessageCommand extends Command {
     async sendProtocolMessage(command, message, messageType) {
         const { node, operationId, blockchain } = command.data;
 
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             this.sendMessageStartEvent,
             operationId,
             blockchain,
@@ -61,11 +61,7 @@ class ProtocolMessageCommand extends Command {
             message,
             this.messageTimeout(),
         );
-        await this.operationIdService.emitChangeEvent(
-            this.sendMessageEndEvent,
-            operationId,
-            blockchain,
-        );
+        this.operationIdService.emitChangeEvent(this.sendMessageEndEvent, operationId, blockchain);
 
         this.networkModuleManager.removeCachedSession(operationId, node.id);
 
