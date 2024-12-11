@@ -1,9 +1,5 @@
 import Command from '../../../command.js';
-import {
-    OPERATION_ID_STATUS,
-    ERROR_TYPE,
-    TRIPLES_VISIBILITY,
-} from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
@@ -33,6 +29,7 @@ class LocalGetCommand extends Command {
             contract,
             knowledgeCollectionId,
             knowledgeAssetId,
+            contentType,
         } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -104,7 +101,7 @@ class LocalGetCommand extends Command {
                 contract,
                 knowledgeCollectionId,
                 knowledgeAssetId,
-                TRIPLES_VISIBILITY.ALL,
+                contentType,
             )
             .then((result) => {
                 this.operationIdService.emitChangeEvent(
