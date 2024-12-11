@@ -6,7 +6,7 @@ class ResultController extends BaseController {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
 
-        this.availableOperations = ['publish', 'get', 'query', 'update', 'finality'];
+        this.availableOperations = ['publish', 'get', 'query', 'update', 'ask', 'finality'];
     }
 
     async handleRequest(req, res) {
@@ -41,13 +41,14 @@ class ResultController extends BaseController {
                     case 'publish':
                     case 'query':
                     case 'update':
+                    case 'finality':
                         if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
                             response.data = await this.operationIdService.getCachedOperationIdData(
                                 operationId,
                             );
                         }
                         break;
-                    case 'finality':
+                    case 'ask':
                         response.data = await this.operationIdService.getCachedOperationIdData(
                             operationId,
                         );

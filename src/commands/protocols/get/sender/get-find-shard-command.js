@@ -5,6 +5,7 @@ class GetFindShardCommand extends FindShardCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
+
         this.errorType = ERROR_TYPE.FIND_SHARD.GET_FIND_SHARD_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_FIND_NODES_START;
         this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_FIND_NODES_END;

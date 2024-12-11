@@ -20,6 +20,7 @@ class BlockchainEventListenerCommand extends Command {
         this.blockchainEventsService = ctx.blockchainEventsService;
         this.fileService = ctx.fileService;
         this.operationIdService = ctx.operationIdService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.commandExecutor = ctx.commandExecutor;
 
         this.invalidatedContracts = new Set();
@@ -484,9 +485,22 @@ class BlockchainEventListenerCommand extends Command {
 
         const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
 
+        const sequence = ['storeAssertionCommand'];
+
+        const myPeerId = this.networkModuleManager.getPeerId().toB58String();
+        if (cachedData.remotePeerId === myPeerId) {
+            await this.repositoryModuleManager.saveFinalityAck(
+                publishOperationId,
+                ual,
+                cachedData.remotePeerId,
+            );
+        } else {
+            sequence.push('findPublisherNodeCommand', 'networkFinalityCommand');
+        }
+
         await this.commandExecutor.add({
             name: 'validateAssertionMetadataCommand',
-            sequence: ['storeAssertionCommand', 'publishfinalitySendAckCommand'],
+            sequence,
             delay: 0,
             data: {
                 operationId,

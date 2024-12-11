@@ -10,8 +10,5 @@ export default () => ({
         query: {
             type: 'string',
         },
-        // repository: {
-        //     type: 'string',
-        // },
     },
 });

@@ -1,10 +1,10 @@
-class PublishFinalityRepository {
+class FinalityStatusRepository {
     constructor(models) {
         this.sequelize = models.sequelize;
-        this.model = models.publish_finality;
+        this.model = models.finality_status;
     }
 
-    async getFinality(ual, options) {
+    async getFinalityAcksCount(ual, options) {
         return this.model.count({
             where: { ual },
             ...options,
@@ -16,4 +16,4 @@ class PublishFinalityRepository {
     }
 }
 
-export default PublishFinalityRepository;
+export default FinalityStatusRepository;

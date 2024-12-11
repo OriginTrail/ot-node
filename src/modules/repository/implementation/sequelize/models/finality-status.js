@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
-    const publishFinality = sequelize.define(
-        'publish_finality',
+    const finalityStatus = sequelize.define(
+        'finality_status',
         {
             id: {
                 type: DataTypes.INTEGER,
@@ -15,8 +15,8 @@ export default (sequelize, DataTypes) => {
         },
         { underscored: true },
     );
-    publishFinality.associate = () => {
+    finalityStatus.associate = () => {
         // associations can be defined here
     };
-    return publishFinality;
+    return finalityStatus;
 };

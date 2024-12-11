@@ -3,7 +3,6 @@ import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
     LOCAL_STORE_TYPES,
 } from '../../../constants/constants.js';
 
@@ -18,11 +17,11 @@ class PublishController extends BaseController {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     async handleRequest(req, res) {
         const { dataset, datasetRoot, blockchain, minimumNumberOfNodeReplications } = req.body;
-        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         this.logger.info(
             `Received asset with dataset root: ${datasetRoot}, blockchain: ${blockchain}`,
@@ -64,7 +63,13 @@ class PublishController extends BaseController {
                 datasetRoot,
             });
 
-            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+            const publisherNodePeerId = this.networkModuleManager.getPeerId().toB58String();
+            await this.pendingStorageService.cacheDataset(
+                operationId,
+                datasetRoot,
+                dataset,
+                publisherNodePeerId,
+            );
 
             const commandSequence = ['publishFindShardCommand'];
 
@@ -77,7 +82,6 @@ class PublishController extends BaseController {
                 data: {
                     datasetRoot,
                     blockchain,
-                    hashFunctionId,
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
                     minimumNumberOfNodeReplications,

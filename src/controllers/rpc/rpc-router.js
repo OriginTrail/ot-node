@@ -9,8 +9,8 @@ class RpcRouter {
         this.publishRpcController = ctx.publishRpcController;
         this.getRpcController = ctx.getRpcController;
         this.updateRpcController = ctx.updateRpcController;
+        this.askRpcController = ctx.askRpcController;
         this.finalityRpcController = ctx.finalityRpcController;
-        this.publishfinalityRpcController = ctx.publishfinalityRpcController;
     }
 
     initialize() {

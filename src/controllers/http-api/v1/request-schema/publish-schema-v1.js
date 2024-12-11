@@ -30,9 +30,5 @@ export default (argumentsObject) => ({
         blockchain: {
             enum: argumentsObject.blockchainImplementationNames,
         },
-        hashFunctionId: {
-            type: 'number',
-            minimum: 1,
-        },
     },
 });

@@ -1,5 +1,9 @@
 import NetworkProtocolCommand from '../../common/network-protocol-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    COMMAND_PRIORITY,
+    ERROR_TYPE,
+    OPERATION_ID_STATUS,
+} from '../../../../constants/constants.js';
 
 class NetworkFinalityCommand extends NetworkProtocolCommand {
     constructor(ctx) {
@@ -8,10 +12,16 @@ class NetworkFinalityCommand extends NetworkProtocolCommand {
         this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.FINALITY.FINALITY_NETWORK_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_NETWORK_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_NETWORK_END;
+        this.getBatchSizeStartEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_NETWORK_GET_BATCH_SIZE_START;
+        this.getBatchSizeEndEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_NETWORK_GET_BATCH_SIZE_END;
     }
 
     /**
-     * Builds default networkGetCommand
+     * Builds default networkFinalityCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
@@ -20,6 +30,7 @@ class NetworkFinalityCommand extends NetworkProtocolCommand {
             name: 'networkFinalityCommand',
             delay: 0,
             transactional: false,
+            priority: COMMAND_PRIORITY.HIGHEST,
         };
         Object.assign(command, map);
         return command;

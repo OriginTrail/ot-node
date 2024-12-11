@@ -1,11 +1,11 @@
 import { NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
 import BaseController from './base-rpc-controller.js';
 
-class PublishfinalityController extends BaseController {
+class AskController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
-        this.operationService = ctx.publishFinalityService;
+        this.operationService = ctx.askService;
     }
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
@@ -29,12 +29,12 @@ class PublishfinalityController extends BaseController {
                 operationId,
                 protocol,
                 ual: message.data.ual,
+                numberOfShardNodes: message.data.numberOfShardNodes,
                 blockchain: message.data.blockchain,
-                publishOperationId: message.data.publishOperationId,
             },
             transactional: false,
         });
     }
 }
 
-export default PublishfinalityController;
+export default AskController;

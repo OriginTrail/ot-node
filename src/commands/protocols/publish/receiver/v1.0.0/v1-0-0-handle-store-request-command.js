@@ -4,7 +4,6 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    // TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
@@ -83,7 +82,13 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_START,
         );
-        await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+        await this.pendingStorageService.cacheDataset(
+            operationId,
+            datasetRoot,
+            dataset,
+            remotePeerId,
+        );
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -94,13 +99,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START,
             operationId,
             blockchain,
-        );
-
-        await this.pendingStorageService.cacheDataset(
-            operationId,
-            datasetRoot,
-            dataset,
-            remotePeerId,
         );
 
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);

@@ -1,34 +1,36 @@
-import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
 import {
-    ERROR_TYPE,
+    COMMAND_PRIORITY,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
-} from '../../../../../constants/constants.js';
+} from '../../../../constants/constants.js';
+import Command from '../../../command.js';
 
-class HandlePublishfinalityRequestCommand extends HandleProtocolMessageCommand {
+class PublishFinalitySaveAckCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishFinalityService;
-        this.tripleStoreService = ctx.tripleStoreService;
-        this.pendingStorageService = ctx.pendingStorageService;
-        this.paranetService = ctx.paranetService;
+        this.commandExecutor = ctx.commandExecutor;
+        this.protocolService = ctx.protocolService;
+        this.operationService = ctx.finalityService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-
-        this.errorType = ERROR_TYPE.PUBLISH_FINALITY.PUBLISH_FINALITY_REQUEST_REMOTE_ERROR;
     }
 
-    async prepareMessage(commandData) {
-        const { ual, publishOperationId, blockchain, operationId, remotePeerId } = commandData;
+    /**
+     * Executes command and produces one or more events
+     * @param command
+     */
+    async execute(command) {
+        const { ual, publishOperationId, blockchain, operationId, remotePeerId } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_REMOTE_START,
+            OPERATION_ID_STATUS.FINALITY.PUBLISH_FINALITY_REMOTE_START,
         );
 
         let response;
         let success;
         try {
-            await this.repositoryModuleManager.savePublishFinalityAck(
+            await this.repositoryModuleManager.saveFinalityAck(
                 publishOperationId,
                 ual,
                 remotePeerId,
@@ -48,34 +50,34 @@ class HandlePublishfinalityRequestCommand extends HandleProtocolMessageCommand {
         }
 
         await this.operationService.markOperationAsCompleted(operationId, blockchain, success, [
-            OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_FETCH_FROM_NODES_END,
-            OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_END,
+            OPERATION_ID_STATUS.FINALITY.PUBLISH_FINALITY_FETCH_FROM_NODES_END,
+            OPERATION_ID_STATUS.FINALITY.PUBLISH_FINALITY_END,
             OPERATION_ID_STATUS.COMPLETED,
         ]);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.PUBLISH_FINALITY.PUBLISH_FINALITY_REMOTE_END,
+            OPERATION_ID_STATUS.FINALITY.PUBLISH_FINALITY_REMOTE_END,
         );
 
-        return response;
+        return this.continueSequence({ ...command.data, response }, command.sequence);
     }
 
     /**
-     * Builds default handlePublishfinalityRequestCommand
+     * Builds default publishFinalitySaveAckCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'v1_0_0HandlePublishfinalityRequestCommand',
+            name: 'publishFinalitySaveAckCommand',
             delay: 0,
             transactional: false,
-            errorType: ERROR_TYPE.PUBLISH_FINALITY.PUBLISH_FINALITY_REQUEST_REMOTE_ERROR,
+            priority: COMMAND_PRIORITY.HIGHEST,
         };
         Object.assign(command, map);
         return command;
     }
 }
 
-export default HandlePublishfinalityRequestCommand;
+export default PublishFinalitySaveAckCommand;
