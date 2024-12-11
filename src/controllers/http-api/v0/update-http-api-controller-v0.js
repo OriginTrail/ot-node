@@ -76,7 +76,7 @@ class UpdateController extends BaseController {
                     assertionId,
                     hashFunctionId,
                     operationId,
-                    storeType: LOCAL_STORE_TYPES.PENDING,
+                    storeType: LOCAL_STORE_TYPES.TRIPLE,
                 },
                 transactional: false,
             });

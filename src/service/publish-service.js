@@ -96,12 +96,12 @@ class PublishService extends OperationService {
         }
     }
 
-    async getBatchSize(blockchainId) {
-        return this.blockchainModuleManager.getR2(blockchainId);
+    async getBatchSize() {
+        return 20;
     }
 
-    async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
+    async getMinAckResponses() {
+        return 10;
     }
 }
 

@@ -36,7 +36,7 @@ class FindShardCommand extends Command {
             this.operationStartEvent,
         );
 
-        this.minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+        this.minAckResponses = await this.operationService.getMinAckResponses();
 
         const networkProtocols = this.operationService.getNetworkProtocols();
 

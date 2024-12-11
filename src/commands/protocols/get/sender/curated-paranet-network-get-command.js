@@ -16,11 +16,9 @@ class CuratedParanetNetworkGetCommand extends NetworkProtocolCommand {
      * @param command
      */
     async execute(command) {
-        const { blockchain } = command.data;
-
         const keywords = await this.getKeywords(command);
-        const batchSize = await this.getBatchSize(blockchain);
-        const minAckResponses = await this.getMinAckResponses(blockchain);
+        const batchSize = await this.getBatchSize();
+        const minAckResponses = await this.getMinAckResponses();
 
         const commandSequence = [
             'findCuratedParanetNodesCommand',

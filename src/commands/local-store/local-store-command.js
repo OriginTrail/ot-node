@@ -186,31 +186,6 @@ class LocalStoreCommand extends Command {
                 //     cachedData.txHash,
                 //     PARANET_SYNC_SOURCES.LOCAL_STORE,
                 // );
-            } else {
-                //     await this.pendingStorageService.cacheAssertion(
-                //         PENDING_STORAGE_REPOSITORIES.PRIVATE,
-                //         blockchain,
-                //         contract,
-                //         tokenId,
-                //         cachedData.public.datasetRoot,
-                //         {
-                //             ...cachedData,
-                //             keyword,
-                //         },
-                //         operationId,
-                //     );
-                //     const updateCommitWindowDuration =
-                //         await this.blockchainModuleManager.getUpdateCommitWindowDuration(blockchain);
-                //     await this.commandExecutor.add({
-                //         name: 'deletePendingStateCommand',
-                //         sequence: [],
-                //         delay: (updateCommitWindowDuration + 60) * 1000,
-                //         data: {
-                //             ...command.data,
-                //             datasetRoot: cachedData.public.assertionId,
-                //         },
-                //         transactional: false,
-                //     });
             }
 
             await this.operationIdService.updateOperationIdStatus(

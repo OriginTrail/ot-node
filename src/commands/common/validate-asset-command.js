@@ -39,22 +39,11 @@ class ValidateAssetCommand extends Command {
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
-        let blockchainAssertionId;
-        if (
-            storeType === LOCAL_STORE_TYPES.TRIPLE ||
-            storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET
-        ) {
-            blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
-                blockchain,
-                contract,
-                tokenId,
-            );
-        } else {
-            blockchainAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
-                blockchain,
-                tokenId,
-            );
-        }
+        const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
+            blockchain,
+            contract,
+            tokenId,
+        );
         if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }

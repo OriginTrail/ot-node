@@ -29,10 +29,10 @@ class NetworkProtocolCommand extends Command {
             operationId,
             blockchain,
         );
-        const batchSize = await this.operationService.getBatchSize(blockchain);
+        const batchSize = await this.operationService.getBatchSize();
         this.operationIdService.emitChangeEvent(this.getBatchSizeEndEvent, operationId, blockchain);
 
-        const minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+        const minAckResponses = await this.operationService.getMinAckResponses();
 
         const commandSequence = [
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,

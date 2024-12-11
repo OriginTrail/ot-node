@@ -26,11 +26,6 @@ import {
 } from '../../../constants/constants.js';
 import Web3ServiceValidator from './web3-service-validator.js';
 
-const SCORING_FUNCTIONS = {
-    1: 'Log2PLDSF',
-    2: 'LinearSum',
-};
-
 class Web3Service {
     async initialize(config, logger) {
         this.config = config;
@@ -230,16 +225,6 @@ class Web3Service {
             this.initializeContract(contractName, contractAddress);
         });
 
-        this.scoringFunctionsContracts = {};
-        const scoringFunctionsArray = await this.callContractFunction(
-            this.contracts.ScoringProxy,
-            'getAllScoreFunctions',
-            [],
-        );
-        scoringFunctionsArray.forEach(([id, scoringContractAddress]) => {
-            this.initializeScoringContract(id, scoringContractAddress);
-        });
-
         this.assetStorageContracts = {};
         const assetStoragesArray = await this.callContractFunction(
             this.contracts.Hub,
@@ -327,19 +312,6 @@ class Web3Service {
         );
         this.contractAddresses[assetStorageAddress] =
             this.assetStorageContracts[assetStorageAddress.toLowerCase()];
-    }
-
-    initializeScoringContract(id, contractAddress) {
-        const contractName = SCORING_FUNCTIONS[id];
-
-        if (ABIs[contractName] != null) {
-            this.scoringFunctionsContracts[id] = new ethers.Contract(
-                contractAddress,
-                ABIs[contractName],
-                this.operationalWallets[0],
-            );
-            this.contractAddresses[contractAddress] = this.scoringFunctionsContracts[id];
-        }
     }
 
     setContractCallCache(contractName, functionName, value) {
@@ -887,207 +859,93 @@ class Web3Service {
         ]);
     }
 
-    async getMinProofWindowOffsetPerc() {
-        return this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'minProofWindowOffsetPerc',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-    }
+    // async getCollectionMerkleRootByIndex(assetContractAddress, tokenId, index) {
+    //     const assetStorageContractInstance =
+    //         this.assetStorageContracts[assetContractAddress.toLowerCase()];
+    //     if (!assetStorageContractInstance)
+    //         throw new Error('Unknown asset storage contract address');
 
-    async getMaxProofWindowOffsetPerc() {
-        return this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'maxProofWindowOffsetPerc',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-    }
+    //     return this.callContractFunction(assetStorageContractInstance, 'getMerkleRootByIndex', [
+    //         tokenId,
+    //         index,
+    //     ]);
+    // }
 
-    async generatePseudorandomUint8(assetCreator, blockNumber, blockTimestamp, limit) {
-        const encodedData = ethers.utils.encodePacked(
-            ['uint256', 'address', 'uint256'],
-            [blockTimestamp, assetCreator, blockNumber],
-        );
-        const hash = ethers.utils.keccak256(encodedData);
-        const hashBigNumber = BigNumber.from(hash);
-        const hashModulo = hashBigNumber.mod(limit);
+    // async getLatestAssertionId(assetContractAddress, tokenId) {
+    //     const assetStorageContractInstance =
+    //         this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+    //     if (!assetStorageContractInstance)
+    //         throw new Error('Unknown asset storage contract address');
 
-        return hashModulo.mod(256);
-    }
+    //     return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
+    //         tokenId,
+    //     ]);
+    // }
 
-    async getAssertionIdByIndex(assetContractAddress, tokenId, index) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
+    // async getLatestTokenId(assetContractAddress) {
+    //     const assetStorageContractInstance =
+    //         this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+    //     if (!assetStorageContractInstance)
+    //         throw new Error('Unknown asset storage contract address');
 
-        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIdByIndex', [
-            tokenId,
-            index,
-        ]);
-    }
-
-    async getLatestAssertionId(assetContractAddress, tokenId) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
-
-        return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
-            tokenId,
-        ]);
-    }
-
-    async getLatestTokenId(assetContractAddress) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
-
-        const lastTokenId = await this.callContractFunction(
-            assetStorageContractInstance,
-            'lastTokenId',
-            [],
-        );
-        return lastTokenId;
-    }
+    //     const lastTokenId = await this.callContractFunction(
+    //         assetStorageContractInstance,
+    //         'lastTokenId',
+    //         [],
+    //     );
+    //     return lastTokenId;
+    // }
 
     getAssetStorageContractAddresses() {
         return Object.keys(this.assetStorageContracts);
     }
 
-    async getAssertionIds(assetContractAddress, tokenId) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
+    // async getAssertionIds(assetContractAddress, tokenId) {
+    //     const assetStorageContractInstance =
+    //         this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+    //     if (!assetStorageContractInstance)
+    //         throw new Error('Unknown asset storage contract address');
 
-        return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
-            tokenId,
-        ]);
-    }
+    //     return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
+    //         tokenId,
+    //     ]);
+    // }
 
-    async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
+    // async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
+    //     const assetStorageContractInstance =
+    //         this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+    //     if (!assetStorageContractInstance)
+    //         throw new Error('Unknown asset storage contract address');
 
-        return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
-    }
+    //     return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
+    // }
 
-    async getUnfinalizedState(tokenId) {
-        return this.callContractFunction(
-            this.contracts.UnfinalizedStateStorage,
-            'getUnfinalizedState',
-            [tokenId],
-        );
-    }
+    // async getAssertionSize(assertionId) {
+    //     const assertionSize = await this.callContractFunction(
+    //         this.contracts.AssertionStorage,
+    //         'getAssertionSize',
+    //         [assertionId],
+    //     );
+    //     return Number(assertionSize);
+    // }
 
-    async getAgreementData(agreementId) {
-        const result = await this.callContractFunction(
-            this.contracts.ServiceAgreementStorageProxy,
-            'getAgreementData',
-            [agreementId],
-        );
-        if (!result) {
-            return null;
-        }
-        return {
-            startTime: result['0'].toNumber(),
-            epochsNumber: result['1'],
-            epochLength: result['2'].toNumber(),
-            tokenAmount: result['3'][0],
-            updateTokenAmount: result['3'][1],
-            scoreFunctionId: result['4'][0],
-            proofWindowOffsetPerc: result['4'][1],
-        };
-    }
+    // async getAssertionTriplesNumber(assertionId) {
+    //     const assertionTriplesNumber = await this.callContractFunction(
+    //         this.contracts.AssertionStorage,
+    //         'getAssertionTriplesNumber',
+    //         [assertionId],
+    //     );
+    //     return Number(assertionTriplesNumber);
+    // }
 
-    async getAssertionSize(assertionId) {
-        const assertionSize = await this.callContractFunction(
-            this.contracts.AssertionStorage,
-            'getAssertionSize',
-            [assertionId],
-        );
-        return Number(assertionSize);
-    }
-
-    async getAssertionTriplesNumber(assertionId) {
-        const assertionTriplesNumber = await this.callContractFunction(
-            this.contracts.AssertionStorage,
-            'getAssertionTriplesNumber',
-            [assertionId],
-        );
-        return Number(assertionTriplesNumber);
-    }
-
-    async getAssertionChunksNumber(assertionId) {
-        const assertionChunksNumber = await this.callContractFunction(
-            this.contracts.AssertionStorage,
-            'getAssertionChunksNumber',
-            [assertionId],
-        );
-        return Number(assertionChunksNumber);
-    }
-
-    async getAssertionData(assertionId) {
-        const assertionData = await this.callContractFunction(
-            this.contracts.AssertionStorage,
-            'getAssertion',
-            [assertionId],
-        );
-        return {
-            timestamp: Number(assertionData.timestamp),
-            size: Number(assertionData.size),
-            triplesNumber: Number(assertionData.triplesNumber),
-            chunksNumber: Number(assertionData.chunksNumber),
-        };
-    }
-
-    selectCommitManagerContract(latestStateIndex) {
-        return latestStateIndex === 0
-            ? this.contracts.CommitManagerV1
-            : this.contracts.CommitManagerV1U1;
-    }
-
-    async isCommitWindowOpen(agreementId, epoch, latestStateIndex) {
-        return this.callContractFunction(
-            this.selectCommitManagerContract(latestStateIndex),
-            'isCommitWindowOpen',
-            [agreementId, epoch],
-        );
-    }
-
-    async isUpdateCommitWindowOpen(agreementId, epoch, stateIndex) {
-        return this.callContractFunction(
-            this.contracts.CommitManagerV1U1,
-            'isUpdateCommitWindowOpen',
-            [agreementId, epoch, stateIndex],
-        );
-    }
-
-    async getTopCommitSubmissions(agreementId, epoch, latestStateIndex) {
-        const args =
-            latestStateIndex === 0 ? [agreementId, epoch] : [agreementId, epoch, latestStateIndex];
-
-        const commits = await this.callContractFunction(
-            this.selectCommitManagerContract(latestStateIndex),
-            'getTopCommitSubmissions',
-            args,
-        );
-
-        return commits
-            .filter((commit) => commit.identityId !== '0')
-            .map((commit) => ({
-                prevIdentityId: commit.prevIdentityId,
-                identityId: commit.identityId,
-                nextIdentityId: commit.nextIdentityId,
-                score: commit.score,
-            }));
-    }
+    // async getAssertionChunksNumber(assertionId) {
+    //     const assertionChunksNumber = await this.callContractFunction(
+    //         this.contracts.AssertionStorage,
+    //         'getAssertionChunksNumber',
+    //         [assertionId],
+    //     );
+    //     return Number(assertionChunksNumber);
+    // }
 
     async getMinimumStake() {
         const minimumStake = await this.callContractFunction(
@@ -1109,161 +967,6 @@ class Web3Service {
         );
 
         return Number(ethers.utils.formatEther(maximumStake));
-    }
-
-    async getR2() {
-        const r2 = await this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'r2',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-        return r2;
-    }
-
-    async getR1() {
-        const r1 = await this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'r1',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-        return r1;
-    }
-
-    async getR0() {
-        const r0 = await this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'r0',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-        return r0;
-    }
-
-    async getFinalizationCommitsNumber() {
-        const finalizationCommitsNumber = await this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'finalizationCommitsNumber',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-        return finalizationCommitsNumber;
-    }
-
-    submitCommit(
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        closestNode,
-        leftNeighborhoodEdge,
-        rightNeighborhoodEdge,
-        epoch,
-        latestStateIndex,
-        callback,
-        gasPrice,
-    ) {
-        const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
-        let functionName = 'submitCommit((address,uint256,bytes,uint8,uint16))';
-        if (
-            closestNode !== undefined &&
-            leftNeighborhoodEdge !== undefined &&
-            rightNeighborhoodEdge !== undefined
-        ) {
-            submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
-            functionName =
-                'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))';
-        }
-        return this.queueTransaction(
-            this.selectCommitManagerContract(latestStateIndex),
-            functionName,
-            [submitCommitArgs],
-            callback,
-            gasPrice,
-        );
-    }
-
-    submitUpdateCommit(
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        closestNode,
-        leftNeighborhoodEdge,
-        rightNeighborhoodEdge,
-        epoch,
-        callback,
-        gasPrice,
-    ) {
-        const submitCommitArgs = [assetContractAddress, tokenId, keyword, hashFunctionId, epoch];
-        let functionName = 'submitUpdateCommit((address,uint256,bytes,uint8,uint16))';
-        if (
-            closestNode !== undefined &&
-            leftNeighborhoodEdge !== undefined &&
-            rightNeighborhoodEdge !== undefined
-        ) {
-            submitCommitArgs.push(closestNode, leftNeighborhoodEdge, rightNeighborhoodEdge);
-            functionName =
-                'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))';
-        }
-        return this.queueTransaction(
-            this.contracts.CommitManagerV1U1,
-            functionName,
-            [submitCommitArgs],
-            callback,
-            gasPrice,
-        );
-    }
-
-    selectProofManagerContract(latestStateIndex) {
-        return latestStateIndex === 0
-            ? this.contracts.ProofManagerV1
-            : this.contracts.ProofManagerV1U1;
-    }
-
-    async isProofWindowOpen(agreementId, epoch, latestStateIndex) {
-        return this.callContractFunction(
-            this.selectProofManagerContract(latestStateIndex),
-            'isProofWindowOpen',
-            [agreementId, epoch],
-        );
-    }
-
-    async getChallenge(assetContractAddress, tokenId, epoch, latestStateIndex) {
-        const args =
-            latestStateIndex === 0
-                ? [this.getPublicKeys()[0], assetContractAddress, tokenId, epoch]
-                : [assetContractAddress, tokenId, epoch];
-
-        const result = await this.callContractFunction(
-            this.selectProofManagerContract(latestStateIndex),
-            'getChallenge',
-            args,
-        );
-
-        return { assertionId: result['0'], challenge: result['1'] };
-    }
-
-    sendProof(
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        epoch,
-        proof,
-        chunkHash,
-        latestStateIndex,
-        callback,
-        gasPrice,
-    ) {
-        return this.queueTransaction(
-            this.selectProofManagerContract(latestStateIndex),
-            'sendProof',
-            [[assetContractAddress, tokenId, keyword, hashFunctionId, epoch, proof, chunkHash]],
-            callback,
-            gasPrice,
-        );
     }
 
     async getShardingTableHead() {
@@ -1291,60 +994,6 @@ class Web3Service {
         return this.getImplementationName();
     }
 
-    toBigNumber(value) {
-        return ethers.BigNumber.from(value);
-    }
-
-    keccak256(bytesLikeData) {
-        return ethers.utils.keccak256(bytesLikeData);
-    }
-
-    sha256(bytesLikeData) {
-        return ethers.utils.sha256(bytesLikeData);
-    }
-
-    encodePacked(types, values) {
-        return ethers.utils.solidityPack(types, values);
-    }
-
-    convertUint8ArrayToHex(uint8Array) {
-        return ethers.utils.hexlify(uint8Array);
-    }
-
-    convertAsciiToHex(string) {
-        return this.convertUint8ArrayToHex(ethers.utils.toUtf8Bytes(string));
-    }
-
-    convertHexToAscii(hexString) {
-        return ethers.utils.toUtf8String(hexString);
-    }
-
-    convertBytesToUint8Array(bytesLikeData) {
-        return ethers.utils.arrayify(bytesLikeData);
-    }
-
-    convertToWei(value, fromUnit = 'ether') {
-        return ethers.utils.parseUnits(value.toString(), fromUnit);
-    }
-
-    convertFromWei(value, toUnit = 'ether') {
-        return ethers.utils.formatUnits(value, toUnit);
-    }
-
-    hashMessage(message) {
-        return ethers.utils.hashMessage(message);
-    }
-
-    async signMessage(messageHash) {
-        const wallet = this.getRandomOperationalWallet();
-        const signature = await wallet.signMessage(ethers.utils.arrayify(messageHash));
-        return { signer: wallet.address, signature };
-    }
-
-    splitSignature(flatSignature) {
-        return ethers.utils.splitSignature(flatSignature);
-    }
-
     async healthCheck() {
         try {
             const gasPrice = await this.operationalWallets[0].getGasPrice();
@@ -1361,84 +1010,6 @@ class Web3Service {
         await this.initializeContracts();
     }
 
-    async getUpdateCommitWindowDuration() {
-        const commitWindowDurationPerc = await this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'updateCommitWindowDuration',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-        return Number(commitWindowDurationPerc);
-    }
-
-    async getCommitWindowDurationPerc() {
-        const commitWindowDurationPerc = await this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'commitWindowDurationPerc',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-        return Number(commitWindowDurationPerc);
-    }
-
-    async getProofWindowDurationPerc() {
-        return this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'proofWindowDurationPerc',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-    }
-
-    async getEpochLength() {
-        const epochLength = await this.callContractFunction(
-            this.contracts.ParametersStorage,
-            'epochLength',
-            [],
-            CONTRACTS.PARAMETERS_STORAGE,
-        );
-        return Number(epochLength);
-    }
-
-    async isHashFunction(hashFunctionId) {
-        return this.callContractFunction(this.contracts.HashingProxy, 'isHashFunction(uint8)', [
-            hashFunctionId,
-        ]);
-    }
-
-    getScoreFunctionIds() {
-        return Object.keys(this.scoringFunctionsContracts);
-    }
-
-    async getLog2PLDSFParams() {
-        const log2pldsfParams = await this.callContractFunction(
-            this.scoringFunctionsContracts[1],
-            'getParameters',
-            [],
-            CONTRACTS.LOG2PLDSF,
-        );
-
-        const params = {};
-        params.distanceMappingCoefficient = log2pldsfParams['0'];
-        params.stakeMappingCoefficient = log2pldsfParams['1'];
-
-        const paramNames = [
-            'multiplier',
-            'logArgumentConstant',
-            'a',
-            'stakeExponent',
-            'b',
-            'c',
-            'distanceExponent',
-            'd',
-        ];
-        log2pldsfParams['2'].forEach((val, index) => {
-            params[paramNames[index]] = val;
-        });
-
-        return params;
-    }
-
     async getBlockchainTimestamp() {
         return Math.floor(Date.now() / 1000);
     }
@@ -1447,37 +1018,6 @@ class Web3Service {
         const currentBlock = await this.provider.getBlockNumber();
         const blockTimestamp = await this.provider.getBlock(currentBlock);
         return blockTimestamp;
-    }
-
-    async hasPendingUpdate(tokenId) {
-        return this.callContractFunction(
-            this.contracts.UnfinalizedStateStorage,
-            'hasPendingUpdate',
-            [tokenId],
-        );
-    }
-
-    async getAgreementScoreFunctionId(agreementId) {
-        return this.callContractFunction(
-            this.contracts.ServiceAgreementStorageProxy,
-            'getAgreementScoreFunctionId',
-            [agreementId],
-        );
-    }
-
-    async getLinearSumParams() {
-        const linearSumParams = await this.callContractFunction(
-            this.scoringFunctionsContracts[2],
-            'getParameters',
-            [],
-            CONTRACTS.LINEAR_SUM,
-        );
-        return {
-            distanceScaleFactor: BigNumber.from(linearSumParams[0]),
-            stakeScaleFactor: BigNumber.from(linearSumParams[1]),
-            w1: Number(linearSumParams[2]),
-            w2: Number(linearSumParams[3]),
-        };
     }
 
     async getParanetKnowledgeAssetsCount(paranetId) {
@@ -1507,7 +1047,7 @@ class Web3Service {
         );
     }
 
-    async getName(paranetId) {
+    async getParanetName(paranetId) {
         return this.callContractFunction(
             this.contracts.ParanetsRegistry,
             'getName',
@@ -1536,39 +1076,12 @@ class Web3Service {
         return knowledgeAssetLocator;
     }
 
-    async getKnowledgeAssetLocatorFromParanetId(paranetId) {
-        const [paranetKAStorageContract, paranetKATokenId] = await this.callContractFunction(
-            this.contracts.ParanetsRegistry,
-            'getParanetKnowledgeAssetLocator',
-            [paranetId],
-        );
-        const tokenId = paranetKATokenId.toNumber();
-        const knowledgeAssetLocator = { paranetKAStorageContract, tokenId };
-        return knowledgeAssetLocator;
-    }
-
     async paranetExists(paranetId) {
         return this.callContractFunction(
             this.contracts.ParanetsRegistry,
             'paranetExists',
             [paranetId],
             CONTRACTS.PARANETS_REGISTRY,
-        );
-    }
-
-    async getParanetId(knowledgeAssetId) {
-        return this.callContractFunction(
-            this.contracts.ParanetKnowledgeAssetsRegistry,
-            'getParanetId',
-            [knowledgeAssetId],
-        );
-    }
-
-    async isParanetKnowledgeAsset(knowledgeAssetId) {
-        return this.callContractFunction(
-            this.contracts.ParanetKnowledgeAssetsRegistry,
-            'isParanetKnowledgeAsset',
-            [knowledgeAssetId],
         );
     }
 
@@ -1596,15 +1109,6 @@ class Web3Service {
 
     async getNodeId(identityId) {
         return this.callContractFunction(this.contracts.ProfileStorage, 'getNodeId', [identityId]);
-    }
-
-    async isKnowledgeAssetRegistered(paranetId, knowledgeAssetId) {
-        return this.callContractFunction(
-            this.contracts.ParanetsRegistry,
-            'isKnowledgeAssetRegistered',
-            [paranetId, knowledgeAssetId],
-            CONTRACTS.PARANETS_REGISTRY,
-        );
     }
 }
 
