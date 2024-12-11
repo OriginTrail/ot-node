@@ -99,17 +99,18 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //         };
         //     }
         // }
+        // TODO: Add telemetry events and fix old wrong ones in here
         if (subjectUAL) {
-            const subjectsUALs = await this.tripleStoreService.findAllSubjectsWithGraphNames(
+            const subjectUALPairs = await this.tripleStoreService.findAllSubjectsWithGraphNames(
                 TRIPLE_STORE_REPOSITORY.DKG,
                 ual,
             );
 
-            if (subjectsUALs?.length) {
+            if (subjectUALPairs.subjectUALPairs?.length) {
                 await this.operationService.markOperationAsCompleted(
                     operationId,
                     blockchain,
-                    subjectsUALs,
+                    subjectUALPairs,
                     [
                         OPERATION_ID_STATUS.GET.GET_LOCAL_END,
                         OPERATION_ID_STATUS.GET.GET_END,
@@ -118,8 +119,8 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 );
             }
 
-            return subjectsUALs?.length
-                ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: subjectsUALs }
+            return subjectUALPairs.subjectUALPairs?.length
+                ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: subjectUALPairs }
                 : {
                       messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                       messageData: { errorMessage: `Unable to find assertion ${ual}` },
