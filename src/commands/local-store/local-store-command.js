@@ -23,6 +23,7 @@ class LocalStoreCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blsService = ctx.blsService;
+        this.signatureStorageService = ctx.signatureStorageService;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -93,14 +94,21 @@ class LocalStoreCommand extends Command {
 
                 await Promise.all(storePromises);
 
-                const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-                const signature = await this.blsService.sign(datasetRoot);
-
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_PROCESS_RESPONSE_START,
                     operationId,
                     blockchain,
                 );
+
+                const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+                const signature = await this.blsService.sign(datasetRoot);
+
+                await this.signatureStorageService.addSignatureToStorage(
+                    operationId,
+                    identityId,
+                    signature,
+                );
+
                 await this.operationService.processResponse(
                     command,
                     OPERATION_REQUEST_STATUS.COMPLETED,
