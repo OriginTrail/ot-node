@@ -182,38 +182,69 @@ class TripleStoreService {
     }
 
     async insertUpdatedKnowledgeCollection(preUpdateUalNamedGraphs, ual, triples, firstNewKAIndex) {
-        const preUpdateSubjectUalMap = new Map(
-            preUpdateUalNamedGraphs.map((entry) => [
-                entry.subject,
-                entry.g.split('/').slice(0, -1).join('/'),
-            ]),
-        );
-
         const publicKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
             triples.public ?? triples,
         );
-
-        const publicKnowledgeAssetsSubjects = publicKnowledgeAssetsTriples.map(
+        // subject or hashedSubject
+        const publicKnowledgeAssetTriplesSubjects = publicKnowledgeAssetsTriples.map(
             ([triple]) => triple.split(' ')[0],
         );
-        const publicKnowledgeAssetsStatesUALs = [];
-        let newKnowledgeAssetId = firstNewKAIndex;
-        for (const subject of publicKnowledgeAssetsSubjects) {
-            if (preUpdateSubjectUalMap.has(subject)) {
-                publicKnowledgeAssetsStatesUALs.push(preUpdateSubjectUalMap.get(subject));
-            } else {
-                publicKnowledgeAssetsStatesUALs.push(`${ual}/${newKnowledgeAssetId}`);
-                newKnowledgeAssetId += 1;
+
+        const { subjectUALPairs } = preUpdateUalNamedGraphs;
+
+        const preUpdateSubjectUALMap = new Map();
+        const preUpdateSubjectHashUALMap = new Map();
+
+        subjectUALPairs.forEach((pair) => {
+            if (pair.subject) {
+                preUpdateSubjectUALMap.set(pair.subject, pair.UAL);
+            }
+            if (pair.privateSubjectHash) {
+                preUpdateSubjectHashUALMap.set(pair.privateSubjectHash, pair.UAL);
+            }
+        });
+        for (const { publicPreUpdateSubject, ual: preUpdateUal } of preUpdateSubjectUALMap) {
+            if (!preUpdateSubjectHashUALMap.has(publicPreUpdateSubject)) {
+                preUpdateSubjectHashUALMap.set(
+                    `<${PRIVATE_HASH_SUBJECT_PREFIX}${this.dataService.generateHashFromString(
+                        publicPreUpdateSubject.slice(1, -1),
+                    )}>`,
+                    preUpdateUal,
+                );
             }
         }
 
+        const publicKnowledgeAssetsUALs = [];
+        // From event we get firstNewKAIndex
+        let newKnowledgeAssetId = firstNewKAIndex;
+        for (const subject of publicKnowledgeAssetTriplesSubjects) {
+            // Rewrite code so its node done every time
+            const hashedSubject = `<${PRIVATE_HASH_SUBJECT_PREFIX}${this.dataService.generateHashFromString(
+                subject,
+            )}>`;
+            if (
+                subject.startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`) &&
+                preUpdateSubjectHashUALMap.has(subject)
+            ) {
+                publicKnowledgeAssetsUALs.push(preUpdateSubjectHashUALMap.get(subject));
+            } else if (preUpdateSubjectUALMap.has(subject)) {
+                publicKnowledgeAssetsUALs.push(preUpdateSubjectUALMap.get(subject));
+            } else if (preUpdateSubjectHashUALMap.has(hashedSubject)) {
+                publicKnowledgeAssetsUALs.push(
+                    preUpdateSubjectHashUALMap.get(preUpdateSubjectHashUALMap),
+                );
+            } else {
+                publicKnowledgeAssetsUALs.push(`${ual}/${newKnowledgeAssetId}`);
+                newKnowledgeAssetId += 1;
+            }
+        }
         const promises = [];
 
         promises.push(
             this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                 this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
                 TRIPLE_STORE_REPOSITORY.DKG,
-                publicKnowledgeAssetsStatesUALs,
+                publicKnowledgeAssetsUALs,
                 publicKnowledgeAssetsTriples,
                 TRIPLES_VISIBILITY.PUBLIC,
             ),
@@ -224,32 +255,38 @@ class TripleStoreService {
                 triples.private,
             );
 
+            const privateKnowledgeAssetsUALs = [];
+
             const publicSubjectsMap = new Map(
-                publicKnowledgeAssetsTriples.map(([triple], index) => {
+                publicKnowledgeAssetsTriples.reduce((map, [triple], index) => {
                     const [subject] = triple.split(' ');
-                    return [subject, index];
-                }),
+                    map.set(subject, index);
+                    return map;
+                }, new Map()),
             );
 
-            const privateKnowledgeAssetsStatesUALs = privateKnowledgeAssetsTriples.reduce(
-                (result, [triple]) => {
-                    const [privateSubject] = triple.split(' '); // groupTriplesBySubject guarantees format
-                    if (publicSubjectsMap.has(privateSubject)) {
-                        result.push(
-                            publicKnowledgeAssetsStatesUALs[publicSubjectsMap.get(privateSubject)],
-                        );
-                    }
-                    return result;
-                },
-                [],
-            );
-
-            if (privateKnowledgeAssetsStatesUALs.length > 0) {
+            // Public has to have this or hash of this subject as every private subject is represented in public part
+            for (const [triple] of privateKnowledgeAssetsTriples) {
+                const subject = triple.split(' ');
+                if (publicSubjectsMap.has(subject)) {
+                    privateKnowledgeAssetsUALs.push(
+                        publicKnowledgeAssetsUALs[publicSubjectsMap.get(subject)],
+                    );
+                } else {
+                    const hashedSubject = `<${PRIVATE_HASH_SUBJECT_PREFIX}${this.dataService.generateHashFromString(
+                        subject,
+                    )}>`;
+                    privateKnowledgeAssetsUALs.push(
+                        publicKnowledgeAssetsUALs[publicSubjectsMap.get(hashedSubject)],
+                    );
+                }
+            }
+            if (privateKnowledgeAssetsUALs.length > 0) {
                 promises.push(
                     this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                         this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
                         TRIPLE_STORE_REPOSITORY.DKG,
-                        privateKnowledgeAssetsStatesUALs,
+                        privateKnowledgeAssetsUALs,
                         privateKnowledgeAssetsTriples,
                         TRIPLES_VISIBILITY.PRIVATE,
                     ),
