@@ -327,11 +327,11 @@ class TripleStoreService {
 
         let nquads;
         if (knowledgeAssetId) {
-            nquads = await this.tripleStoreModuleManager.getNamedGraph(
+            nquads = await this.tripleStoreModuleManager.getKnowledgeAssetNamedGraph(
                 this.repositoryImplementations[repository],
                 repository,
                 // TODO: Add state with implemented update
-                `${ual}:0`,
+                `${ual}`,
                 visibility,
             );
         } else {
