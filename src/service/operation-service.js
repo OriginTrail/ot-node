@@ -68,6 +68,7 @@ class OperationService {
         );
 
         if (responseData != null) {
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, responseData);
             await this.operationIdService.cacheOperationIdDataToFile(operationId, responseData);
         }
 

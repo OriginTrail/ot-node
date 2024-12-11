@@ -22,8 +22,7 @@ class LocalStoreCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.blsService = ctx.blsService;
-        this.signatureStorageService = ctx.signatureStorageService;
+        this.signatureService = ctx.signatureService;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -101,12 +100,19 @@ class LocalStoreCommand extends Command {
                 );
 
                 const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-                const signature = await this.blsService.sign(datasetRoot);
+                const { signer, v, r, s, vs } = await this.signatureService.signMessage(
+                    blockchain,
+                    datasetRoot,
+                );
 
-                await this.signatureStorageService.addSignatureToStorage(
+                await this.signatureService.addSignatureToStorage(
                     operationId,
                     identityId,
-                    signature,
+                    signer,
+                    v,
+                    r,
+                    s,
+                    vs,
                 );
 
                 await this.operationService.processResponse(
@@ -114,10 +120,9 @@ class LocalStoreCommand extends Command {
                     OPERATION_REQUEST_STATUS.COMPLETED,
                     {
                         messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                        messageData: { identityId, signature },
+                        messageData: { identityId, signer, v, r, s, vs },
                     },
                     null,
-                    true,
                 );
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_PROCESS_RESPONSE_END,

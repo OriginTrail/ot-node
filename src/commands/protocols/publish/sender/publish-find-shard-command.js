@@ -25,8 +25,9 @@ class PublishFindShardCommand extends FindShardCommand {
         );
         if (nodePartOfShard && !commandData.isOperationV0) {
             sequence.push('localStoreCommand');
+        } else {
+            sequence.push('networkPublishCommand');
         }
-        sequence.push('networkPublishCommand');
 
         return sequence;
     }

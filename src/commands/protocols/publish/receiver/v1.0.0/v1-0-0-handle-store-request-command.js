@@ -17,9 +17,9 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         this.tripleStoreService = ctx.tripleStoreService;
         this.ualService = ctx.ualService;
         this.pendingStorageService = ctx.pendingStorageService;
-        this.blsService = ctx.blsService;
         this.operationIdService = ctx.operationIdService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.signatureService = ctx.signatureService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_START;
@@ -113,7 +113,10 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             blockchain,
         );
-        const signature = await this.blsService.sign(datasetRoot);
+        const { signer, v, r, s, vs } = await this.signatureService.signMessage(
+            blockchain,
+            datasetRoot,
+        );
         await this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SIGN_END,
             operationId,
@@ -122,7 +125,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
 
         return {
             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-            messageData: { identityId, signature },
+            messageData: { identityId, signer, v, r, s, vs },
         };
     }
 

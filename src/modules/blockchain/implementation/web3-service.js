@@ -132,6 +132,11 @@ class Web3Service {
         return wallets;
     }
 
+    getRandomOperationalWallet() {
+        const randomIndex = Math.floor(Math.random() * this.operationalWallets.length);
+        return this.operationalWallets[randomIndex];
+    }
+
     async initializeWeb3() {
         const providers = [];
         for (const rpcEndpoint of this.config.rpcEndpoints) {
@@ -1324,6 +1329,20 @@ class Web3Service {
 
     convertFromWei(value, toUnit = 'ether') {
         return ethers.utils.formatUnits(value, toUnit);
+    }
+
+    hashMessage(message) {
+        return ethers.utils.hashMessage(message);
+    }
+
+    async signMessage(messageHash) {
+        const wallet = this.getRandomOperationalWallet();
+        const signature = await wallet.signMessage(ethers.utils.arrayify(messageHash));
+        return { signer: wallet.address, signature };
+    }
+
+    splitSignature(flatSignature) {
+        return ethers.utils.splitSignature(flatSignature);
     }
 
     async healthCheck() {
