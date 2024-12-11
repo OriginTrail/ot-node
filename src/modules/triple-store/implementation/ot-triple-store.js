@@ -101,12 +101,12 @@ class OtTripleStore {
         await Promise.all(ensureConnectionPromises);
     }
 
-    async insertKnowledgeCollectionIntoUnifiedGraph(repository, namedGraph, collectionNQuads) {
+    async insetAssertionInNamedGraph(repository, namedGraph, nquads) {
         const query = `
             PREFIX schema: <${SCHEMA_CONTEXT}>
             INSERT DATA {
                 GRAPH <${namedGraph}> { 
-                    ${collectionNQuads.join('\n')}
+                    ${nquads.join('\n')}
                 } 
             }
         `;
@@ -387,10 +387,10 @@ class OtTripleStore {
         return this.construct(repository, query);
     }
 
-    async knowledgeAssetNamedGraphExists(repository, ual) {
+    async knowledgeAssetNamedGraphExists(repository, name) {
         const query = `
             ASK {
-                GRAPH <${ual}> {
+                GRAPH <${name}> {
                     ?s ?p ?o
                 }
             }
@@ -464,6 +464,31 @@ class OtTripleStore {
         `;
 
         return this.ask(repository, query);
+    }
+
+    async findAllNamedGraphsByUAL(repository, ual) {
+        const query = `
+            SELECT DISTINCT ?g
+            WHERE {
+                GRAPH ?g {
+                    ?s ?p ?o
+                }
+                FILTER(STRSTARTS(STR(?g), "${ual}"))
+            }`;
+
+        this.select(repository, query);
+    }
+
+    async findAllSubjectsWithGraphNames(repository, ual) {
+        const query = `
+            SELECT DISTINCT ?s ?g
+            WHERE {
+                GRAPH ?g {
+                    ?s ?p ?o
+                }
+                FILTER(STRSTARTS(STR(?g), "${ual}"))
+            }`;
+        this.select(repository, query);
     }
 
     async construct(repository, query) {

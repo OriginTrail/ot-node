@@ -4,6 +4,7 @@ import {
     LOCAL_STORE_TYPES,
     OPERATION_REQUEST_STATUS,
     NETWORK_MESSAGE_TYPES,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -22,6 +23,7 @@ class LocalStoreCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blsService = ctx.blsService;
+        this.signatureStorageService = ctx.signatureStorageService;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -33,6 +35,9 @@ class LocalStoreCommand extends Command {
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetId,
             datasetRoot,
+            isOperationV0,
+            contract,
+            tokenId,
         } = command.data;
 
         try {
@@ -57,30 +62,53 @@ class LocalStoreCommand extends Command {
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
                 const storePromises = [];
 
-                // if (cachedData.dataset && cachedData.datasetRoot) {
-                //     storePromises.push(
-                //         this.pendingStorageService.cacheDataset(
-                //             operationId,
-                //             cachedData.datasetRoot,
-                //             cachedData.dataset,
-                //         ),
-                //     );
-                // }
-                // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
-                //     storePromises.push(
-                //         this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset),
-                //     );
-                // }
-                await Promise.all(storePromises);
+                if (isOperationV0) {
+                    const assertions = [cachedData.public, cachedData.private];
 
-                const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-                const signature = await this.blsService.sign(datasetRoot);
+                    for (const data of assertions) {
+                        if (data?.assertion && data?.assertionId) {
+                            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(
+                                data.assertion,
+                            );
+                            const knowledgeAssetsUALs = [];
+                            const knowledgeAssetStates = [];
+                            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+                            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
+                                knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
+                                knowledgeAssetStates.push(0);
+                            }
+
+                            storePromises.push(
+                                this.tripleStoreService.insertKnowledgeCollection(
+                                    TRIPLE_STORE_REPOSITORIES.DKG,
+                                    ual,
+                                    knowledgeAssetsUALs,
+                                    knowledgeAssetStates,
+                                    data.assertion,
+                                ),
+                            );
+                        }
+                    }
+                }
+
+                await Promise.all(storePromises);
 
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_PROCESS_RESPONSE_START,
                     operationId,
                     blockchain,
                 );
+
+                const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+                const signature = await this.blsService.sign(datasetRoot);
+
+                await this.signatureStorageService.addSignatureToStorage(
+                    operationId,
+                    identityId,
+                    signature,
+                );
+
                 await this.operationService.processResponse(
                     command,
                     OPERATION_REQUEST_STATUS.COMPLETED,
@@ -143,7 +171,7 @@ class LocalStoreCommand extends Command {
                     blockchain,
                 );
 
-                if (cachedData && cachedData.datasetRoot) {
+                if (isOperationV0 && cachedData && cachedData.datasetRoot) {
                     // await this.tripleStoreService.localStoreAsset(
                     //     paranetRepository,
                     //     cachedData.public.assertionId,
@@ -156,7 +184,7 @@ class LocalStoreCommand extends Command {
                     //     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
                     // );
                 }
-                if (cachedData && cachedData.datasetRoot) {
+                if (isOperationV0 && cachedData && cachedData.datasetRoot) {
                     // await this.tripleStoreService.localStoreAsset(
                     //     paranetRepository,
                     //     cachedData.private.assertionId,

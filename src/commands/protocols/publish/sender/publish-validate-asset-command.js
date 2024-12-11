@@ -59,25 +59,45 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             operationId,
             blockchain,
         );
-        const isValidAssertion = await this.validationService.validateDatasetRoot(
+        const isValidPublicAssertion = await this.validationService.validateDatasetRoot(
             cachedData.dataset.public,
             datasetRoot,
         );
+
+        // TODO
+        // const isValidPrivateAssertion = await this.validationService.validateDatasetRoot(
+        //     cachedData.dataset.private,
+        //     cachedData.dataset.public.find(() => true), // logic for
+        // );
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_END,
             operationId,
             blockchain,
         );
 
-        if (!isValidAssertion) {
+        if (!isValidPublicAssertion) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid dataset root for assertion. Received value received value from request: ${cachedData.datasetRoot}`,
+                `Invalid dataset root for public assertion. Received value received value from request: ${cachedData.datasetRoot}`,
                 this.errorType,
             );
             return Command.empty();
         }
+
+        // TODO
+        // if (!isValidPrivateAssertion) {
+        //     await this.handleError(
+        //         operationId,
+        //         blockchain,
+        //         `Invalid dataset root for private assertion. Received value received value from request: ${cachedData.dataset.public.find(
+        //             () => true,
+        //         )}`,
+        //         this.errorType,
+        //     );
+        //     return Command.empty();
+        // }
 
         let paranetId;
         if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {

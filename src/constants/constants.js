@@ -33,7 +33,16 @@ export const ZERO_ADDRESS = ethers.constants.AddressZero;
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
+export const PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateMerkleRoot';
+
 export const TRIPLE_ANNOTATION_LABEL_PREDICATE = 'https://ontology.origintrail.io/dkg/1.0#label';
+
+export const PRIVATE_RESOURCE_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#representsPrivateResource';
+
+export const PRIVATE_HASH_SUBJECT_PREFIX = 'https://ontology.origintrail.io/dkg/1.0#metadata-hash:';
+
 export const UAL_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#UAL>';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
@@ -230,6 +239,9 @@ export const TRANSACTION_PRIORITY = {
     LOWEST: 20,
 };
 
+export const V0_PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
+
 const require = createRequire(import.meta.url);
 
 export const ABIs = {
@@ -389,9 +401,10 @@ export const ERROR_TYPE = {
         PUBLISH_LOCAL_STORE_REMOTE_ERROR: 'PublishLocalStoreRemoteError',
         PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
+        PUBLISH_VALIDATE_ASSERTION_METADATA_ERROR: 'PublishValidateAssertionMetadataError',
+
         PUBLISH_ERROR: 'PublishError',
     },
-    VALIDATE_ASSERTION_METADATA_ERROR: 'ValidateAssertionMetadataError',
     STORE_ASSERTION_ERROR: 'StoreAssertionError',
     UPDATE: {
         UPDATE_INIT_ERROR: 'UpdateInitError',
@@ -404,6 +417,10 @@ export const ERROR_TYPE = {
         UPDATE_STORE_INIT_ERROR: 'UpdateStoreInitError',
         UPDATE_REMOTE_ERROR: 'UpdateRemoteError',
         UPDATE_DELETE_PENDING_STATE_ERROR: 'UpdateDeletePendingStateError',
+        UPDATE_VALIDATE_ASSET_ERROR: 'UpdateValidateAssetError',
+        UPDATE_STORE_REQUEST_ERROR: 'UpdateStoreRequestError',
+        UPDATE_VALIDATE_ASSERTION_METADATA_ERROR: 'UpadateValidateAssertionMetadataError',
+        UPDATE_ASSERTION_ERROR: 'UpdateAssertionError',
     },
     GET: {
         GET_ROUTE_ERROR: 'GetRouteError',
@@ -448,6 +465,7 @@ export const ERROR_TYPE = {
     FIND_SHARD: {
         FIND_SHARD_ERROR: 'FindShardError',
         PUBLISH_FIND_SHARD_ERROR: 'PublishFindShardError',
+        UPDATE_FIND_SHARD_ERROR: 'UpdateFindShardError',
         GET_FIND_SHARD_ERROR: 'GetFindShardError',
     },
     FINALITY: {
@@ -455,6 +473,13 @@ export const ERROR_TYPE = {
         FINALITY_NETWORK_ERROR: 'FinalityNetworkError',
         FINALITY_REQUEST_ERROR: 'FinalityRequestError',
         FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
+    },
+    PUBLISH_FINALIZATION: {
+        PUBLISH_FINALIZATION_NO_CACHED_DATA: 'PublishFinalizationNoCachedData',
+    },
+    UPDATE_FINALIZATION: {
+        UPDATE_FINALIZATION_NO_CACHED_DATA: 'UpdateFinalizationNoCachedData',
+        UPDATE_FINALIZATION_NO_OLD_DATA: 'UpdateFinalizationNoOldData',
     },
     PUBLISH_FINALITY: {
         PUBLISH_FINALITY_ERROR: 'PublishFinalityError',
@@ -595,15 +620,73 @@ export const OPERATION_ID_STATUS = {
         PUBLISH_FINALIZATION_STORE_ASSERTION_END: 'PUBLISH_FINALIZATION_STORE_ASSERTION_END',
         PUBLISH_FINALIZATION_END: 'PUBLISH_FINALIZATION_END',
     },
+    UPDATE_FINALIZATION: {
+        UPDATE_FINALIZATION_START: 'UPDATE_FINALIZATION_START',
+        UPDATE_FINALIZATION_METADATA_VALIDATION_START:
+            'UPDATE_FINALIZATION_METADATA_VALIDATION_START',
+        UPDATE_FINALIZATION_METADATA_VALIDATION_END: 'UPDATE_FINALIZATION_METADATA_VALIDATION_END',
+        UPDATE_FINALIZATION_STORE_ASSERTION_START: 'UPDATE_FINALIZATION_STORE_ASSERTION_START',
+        UPDATE_FINALIZATION_STORE_ASSERTION_END: 'UPDATE_FINALIZATION_STORE_ASSERTION_END',
+        UPDATE_FINALIZATION_END: 'UPDATE_FINALIZATION_END',
+    },
     UPDATE: {
         UPDATE_START: 'UPDATE_START',
         UPDATE_INIT_START: 'UPDATE_INIT_START',
         UPDATE_INIT_END: 'UPDATE_INIT_END',
         UPDATE_REPLICATE_START: 'UPDATE_REPLICATE_START',
         UPDATE_REPLICATE_END: 'UPDATE_REPLICATE_END',
+        UPDATE_FIND_NODES_START: 'UPDATE_FIND_NODES_START',
+        UPDATE_FIND_NODES_END: 'UPDATE_FIND_NODES_END',
+        UPDATE_FIND_NODES_FIND_SHARD_NODES_START: 'UPDATE_FIND_NODES_FIND_SHARD_NODES_START',
+        UPDATE_FIND_NODES_FIND_SHARD_NODES_END: 'UPDATE_FIND_NODES_FIND_SHARD_NODES_END',
+        UPDATE_FIND_NODES_PROCESS_FOUND_NODES_START: 'UPDATE_FIND_NODES_PROCESS_FOUND_NODES_START',
+        UPDATE_FIND_NODES_PROCESS_FOUND_NODES_END: 'UPDATE_FIND_NODES_PROCESS_FOUND_NODES_END',
         VALIDATING_UPDATE_ASSERTION_REMOTE_START: 'VALIDATING_UPDATE_ASSERTION_REMOTE_START',
         VALIDATING_UPDATE_ASSERTION_REMOTE_END: 'VALIDATING_UPDATE_ASSERTION_REMOTE_END',
         UPDATE_END: 'UPDATE_END',
+        UPDATE_VALIDATE_ASSET_START: 'UPDATE_VALIDATE_ASSET_START',
+        UPDATE_VALIDATE_ASSET_END: 'UPDATE_VALIDATE_ASSET_END',
+        UPDATE_GET_CACHED_OPERATION_ID_DATA_START: 'UPDATE_GET_CACHED_OPERATION_ID_DATA_START',
+        UPDATE_GET_CACHED_OPERATION_ID_DATA_END: 'UPDATE_GET_CACHED_OPERATION_ID_DATA_END',
+        UPDATE_VALIDATE_DATASET_ROOT_START: 'UPDATE_VALIDATE_DATASET_ROOT_START',
+        UPDATE_VALIDATE_DATASET_ROOT_END: 'UPDATE_VALIDATE_DATASET_ROOT_END',
+        UPDATE_NETWORK_START_ERROR: 'UPDATE_NETWORK_START_ERROR',
+        UPDATE_NETWORK_START: 'UPDATE_NETWORK_START',
+        UPDATE_NETWORK_END: 'UPDATE_NETWORK_END',
+        UPDATE_NETWORK_GET_BATCH_SIZE_START: 'UPDATE_NETWORK_GET_BATCH_SIZE_START',
+        UPDATE_NETWORK_GET_BATCH_SIZE_END: 'UPDATE_NETWORK_GET_BATCH_SIZE_END',
+        UPDATE_REQUEST_START: 'UPDATE_REQUEST_START',
+        UPDATE_REQUEST_END: 'UPDATE_REQUEST_END',
+        UPDATE_REQUEST_PREPARE_MESSAGE_START: 'UPDATE_REQUEST_PREPARE_MESSAGE_START',
+        UPDATE_REQUEST_PREPARE_MESSAGE_END: 'UPDATE_REQUEST_PREPARE_MESSAGE_END',
+        UPDATE_SEND_MESSAGE_START: 'UPDATE_SEND_MESSAGE_START',
+        UPDATE_SEND_MESSAGE_END: 'UPDATE_SEND_MESSAGE_END',
+        UPDATE_ADD_SIGNATURE_TO_STORAGE_START: 'UPDATE_ADD_SIGNATURE_TO_STORAGE_START',
+        UPDATE_ADD_SIGNATURE_TO_STORAGE_END: 'UPDATE_ADD_SIGNATURE_TO_STORAGE_END',
+        UPDATE_LOCAL_STORE_REMOTE_START: 'UPDATE_LOCAL_STORE_REMOTE_START',
+        UPDATE_LOCAL_STORE_REMOTE_END: 'UPDATE_LOCAL_STORE_REMOTE_END',
+        UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_START:
+            'UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_START',
+        UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_END:
+            'UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_END',
+        UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_START:
+            'UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_START',
+        UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_END: 'UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_END',
+        UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_START:
+            'UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_START',
+        UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_END:
+            'UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_END',
+        UPDATE_VALIDATE_ASSET_REMOTE_START: 'UPDATE_VALIDATE_ASSET_REMOTE_START',
+        UPDATE_VALIDATE_ASSET_REMOTE_END: 'UPDATE_VALIDATE_ASSET_REMOTE_END',
+        UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_START:
+            'UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_START',
+        UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_END: 'UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_END',
+        UPDATE_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START:
+            'UPDATE_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START',
+        UPDATE_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_END:
+            'UPDATE_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_END',
+        UPDATE_LOCAL_STORE_REMOTE_SIGN_START: 'UPDATE_LOCAL_STORE_REMOTE_SIGN_START',
+        UPDATE_LOCAL_STORE_REMOTE_SIGN_END: 'UPDATE_LOCAL_STORE_REMOTE_SIGN_END',
     },
     GET: {
         ASSERTION_EXISTS_LOCAL_START: 'ASSERTION_EXISTS_LOCAL_START',
@@ -909,28 +992,48 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
+    },
+    v1: {
+        publish: {
+            method: 'post',
+            path: '/publish',
+            options: { rateLimit: true },
+        },
+        'finality-status': {
+            method: 'get',
+            path: '/finality-status',
+            options: {},
+        },
+        // update: {
+        //     method: 'post',
+        //     path: '/update',
+        //     options: { rateLimit: true },
+        // },
+        query: {
+            method: 'post',
+            path: '/query',
+            options: {},
+        },
+        get: {
+            method: 'post',
+            path: '/get',
+            options: { rateLimit: true },
+        },
+        result: {
+            method: 'get',
+            path: '/:operation/:operationId',
+            options: {},
+        },
+        info: {
+            method: 'get',
+            path: '/info',
+            options: {},
+        },
         finality: {
             method: 'post',
             path: '/finality',
             options: {},
         },
-        'finality-status': {
-            method: 'get',
-            path: '/finality-status',
-            options: {},
-        },
-    },
-    v1: {
-        'finality-status': {
-            method: 'get',
-            path: '/finality-status',
-            options: {},
-        },
-        // get: {
-        //     method: 'post',
-        //     path: '/get',
-        //     options: { rateLimit: true },
-        // },
     },
 };
 
@@ -1102,6 +1205,7 @@ export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
 
 export const TRIPLE_STORE_REPOSITORY = {
     DKG: 'dkg',
+    DKG_HISTORIC: 'dkg-historic',
 };
 
 export const TRIPLES_VISIBILITY = {

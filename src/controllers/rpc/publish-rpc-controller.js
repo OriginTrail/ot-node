@@ -42,6 +42,7 @@ class PublishController extends BaseController {
             dataset: message.data.dataset,
             datasetRoot: message.data.datasetRoot,
             blockchain: message.data.blockchain,
+            isOperationV0: message.data.isOperationV0,
         };
 
         await this.commandExecutor.add(command);

@@ -10,6 +10,7 @@ class FinalityController extends BaseController {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.ualService = ctx.ualService;
         this.validationService = ctx.validationService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     async handleRequest(req, res) {
@@ -17,11 +18,9 @@ class FinalityController extends BaseController {
             OPERATION_ID_STATUS.FINALITY.FINALITY_START,
         );
 
-        const { ual, blockchain } = req.body;
-
         await this.operationIdService.updateOperationIdStatus(
             operationId,
-            blockchain,
+            null,
             OPERATION_ID_STATUS.FINALITY.FINALITY_START,
         );
 
@@ -35,10 +34,20 @@ class FinalityController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
 
+        const { ual, blockchain, minimumNumberOfNodeReplications } = req.body;
+
         try {
             this.logger.info(`Finality for ${ual} with operation id ${operationId} initiated.`);
 
             const commandSequence = ['finalityFindShardCommand', 'networkFinalityCommand'];
+
+            const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
+
+            const datasetRoot = await this.blockchainModuleManager.getLatestAssertionId(
+                blockchain,
+                contract,
+                knowledgeCollectionId,
+            );
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
@@ -47,6 +56,9 @@ class FinalityController extends BaseController {
                 data: {
                     ual,
                     operationId,
+                    blockchain,
+                    datasetRoot,
+                    minimumNumberOfNodeReplications,
                 },
                 transactional: false,
             });

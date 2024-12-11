@@ -97,14 +97,14 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //         };
         //     }
         // }
-      
+
         const promises = [];
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_START,
             operationId,
             blockchain,
         );
-      
+
         const assertionPromise = this.tripleStoreService
             .getAssertion(
                 blockchain,

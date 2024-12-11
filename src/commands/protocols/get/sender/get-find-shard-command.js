@@ -17,7 +17,8 @@ class GetFindShardCommand extends FindShardCommand {
             OPERATION_ID_STATUS.GET.GET_FIND_NODES_PROCESS_FOUND_NODES_END;
     }
 
-    getOperationCommandSequence(nodePartOfShard) {
+    // eslint-disable-next-line no-unused-vars
+    getOperationCommandSequence(nodePartOfShard, commandData) {
         const sequence = [];
         if (nodePartOfShard) {
             sequence.push('localGetCommand');
