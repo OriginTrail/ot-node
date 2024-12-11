@@ -55,7 +55,7 @@ class LocalStoreCommand extends Command {
             );
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
-                const storePromises = [];
+                // const storePromises = [];
 
                 // if (cachedData.dataset && cachedData.datasetRoot) {
                 //     storePromises.push(
@@ -71,7 +71,7 @@ class LocalStoreCommand extends Command {
                 //         this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset),
                 //     );
                 // }
-                await Promise.all(storePromises);
+                // await Promise.all(storePromises);
 
                 const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
                 const signature = await this.blsService.sign(datasetRoot);
@@ -81,6 +81,7 @@ class LocalStoreCommand extends Command {
                     operationId,
                     blockchain,
                 );
+
                 await this.operationService.processResponse(
                     command,
                     OPERATION_REQUEST_STATUS.COMPLETED,
