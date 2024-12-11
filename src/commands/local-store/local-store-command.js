@@ -22,6 +22,7 @@ class LocalStoreCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blsService = ctx.blsService;
+        this.signatureStorageService = ctx.signatureStorageService;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -55,32 +56,21 @@ class LocalStoreCommand extends Command {
             );
 
             if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
-                const storePromises = [];
-
-                // if (cachedData.dataset && cachedData.datasetRoot) {
-                //     storePromises.push(
-                //         this.pendingStorageService.cacheDataset(
-                //             operationId,
-                //             cachedData.datasetRoot,
-                //             cachedData.dataset,
-                //         ),
-                //     );
-                // }
-                // if (cachedData.private?.assertion && cachedData.private?.assertionId) {
-                //     storePromises.push(
-                //         this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset),
-                //     );
-                // }
-                await Promise.all(storePromises);
-
-                const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-                const signature = await this.blsService.sign(datasetRoot);
-
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_PROCESS_RESPONSE_START,
                     operationId,
                     blockchain,
                 );
+
+                const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+                const signature = await this.blsService.sign(datasetRoot);
+
+                await this.signatureStorageService.addSignatureToStorage(
+                    operationId,
+                    identityId,
+                    signature,
+                );
+
                 await this.operationService.processResponse(
                     command,
                     OPERATION_REQUEST_STATUS.COMPLETED,
