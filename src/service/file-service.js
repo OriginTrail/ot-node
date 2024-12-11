@@ -1,5 +1,16 @@
+import os from 'os';
 import path from 'path';
-import { mkdir, writeFile, readFile, unlink, stat, readdir, rm, appendFile } from 'fs/promises';
+import {
+    mkdir,
+    writeFile,
+    readFile,
+    unlink,
+    stat,
+    readdir,
+    rm,
+    appendFile,
+    chmod,
+} from 'fs/promises';
 import appRootPath from 'app-root-path';
 import { BLS_KEY_DIRECTORY, BLS_KEY_FILENAME, NODE_ENVIRONMENTS } from '../constants/constants.js';
 
@@ -125,6 +136,18 @@ class FileService {
             binaryName += '.exe';
         }
         return path.join(this.getBinariesFolderPath(), process.platform, process.arch, binaryName);
+    }
+
+    async makeBinaryExecutable(binary) {
+        const binaryPath = this.getBinaryPath(binary);
+        if (os.platform() !== 'win32') {
+            await chmod(binaryPath, '755', (err) => {
+                if (err) {
+                    throw err;
+                }
+                this.logger.debug(`Permissions for binary ${binaryPath} have been set to 755.`);
+            });
+        }
     }
 
     getBLSSecretKeyFolderPath() {

@@ -23,16 +23,10 @@ class PublishService extends OperationService {
             OPERATION_ID_STATUS.COMPLETED,
         ];
         this.operationMutex = new Mutex();
-        this.signatureStorageService = ctx.signatureStorageService;
+        this.signatureService = ctx.signatureService;
     }
 
-    async processResponse(
-        command,
-        responseStatus,
-        responseData,
-        errorMessage = null,
-        localStore = false,
-    ) {
+    async processResponse(command, responseStatus, responseData, errorMessage = null) {
         const {
             operationId,
             blockchain,
@@ -48,10 +42,6 @@ class PublishService extends OperationService {
             errorMessage,
             operationId,
         );
-
-        if (localStore) {
-            return;
-        }
 
         const { completedNumber, failedNumber } = datasetRootStatus[operationId];
 
@@ -79,9 +69,7 @@ class PublishService extends OperationService {
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
             completedNumber === minAckResponses
         ) {
-            const signatures = await this.signatureStorageService.getSignaturesFromStorage(
-                operationId,
-            );
+            const signatures = await this.signatureService.getSignaturesFromStorage(operationId);
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,

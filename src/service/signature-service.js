@@ -1,16 +1,30 @@
-class SignatureStorageService {
+class SignatureService {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
 
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.fileService = ctx.fileService;
     }
 
-    async addSignatureToStorage(operationId, identityId, signature) {
+    async signMessage(blockchain, message) {
+        const messageHash = this.blockchainModuleManager.hashMessage(blockchain, message);
+        const { signer, signature: flatSignature } = await this.blockchainModuleManager.signMessage(
+            blockchain,
+            messageHash,
+        );
+        const { v, r, s, _vs } = this.blockchainModuleManager.splitSignature(
+            blockchain,
+            flatSignature,
+        );
+        return { signer, v, r, s, vs: _vs };
+    }
+
+    async addSignatureToStorage(operationId, identityId, signer, v, r, s, vs) {
         await this.fileService.appendContentsToFile(
             this.fileService.getSignatureStorageCachePath(),
             operationId,
-            `${JSON.stringify({ identityId, signature })}\n`,
+            `${JSON.stringify({ identityId, signer, v, r, s, vs })}\n`,
         );
     }
 
@@ -30,4 +44,4 @@ class SignatureStorageService {
     }
 }
 
-export default SignatureStorageService;
+export default SignatureService;

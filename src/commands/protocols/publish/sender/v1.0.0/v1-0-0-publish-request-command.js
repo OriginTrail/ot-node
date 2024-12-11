@@ -9,7 +9,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.signatureStorageService = ctx.signatureStorageService;
+        this.signatureService = ctx.signatureService;
         this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
 
@@ -59,10 +59,14 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             operationId,
             blockchain,
         );
-        await this.signatureStorageService.addSignatureToStorage(
+        await this.signatureService.addSignatureToStorage(
             operationId,
             responseData.identityId,
-            responseData.signature,
+            responseData.signer,
+            responseData.v,
+            responseData.r,
+            responseData.s,
+            responseData.vs,
         );
         await this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_ADD_SIGNATURE_TO_STORAGE_END,

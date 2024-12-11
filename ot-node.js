@@ -54,7 +54,6 @@ class OTNode {
 
         await this.initializeRouters();
         await this.startNetworkModule();
-        await this.initializeBLSService();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
     }
@@ -383,18 +382,6 @@ class OTNode {
         }
         this.config.assetSync.syncParanets = validParanets;
         tripleStoreService.initializeRepositories();
-    }
-
-    async initializeBLSService() {
-        try {
-            const blsService = this.container.resolve('blsService');
-            await blsService.initialize();
-        } catch (error) {
-            this.logger.error(
-                `Unable to initialize BLS Service. Error message: ${error.message} OT-node shutting down...`,
-            );
-            this.stop(1);
-        }
     }
 
     stop(code = 0) {
