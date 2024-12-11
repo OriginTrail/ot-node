@@ -492,6 +492,17 @@ class OtTripleStore {
         return this.select(repository, query);
     }
 
+    async getKCPrivateAssertionIdentifierTriple(repository, ual) {
+        const query = `
+        CONSTRUCT {?s ?p ?o .}
+        WHERE {
+            GRAPH <${ual}/public> {
+                ?s ?p ?o
+            }
+        }`;
+        return this.construct(repository, query);
+    }
+
     async construct(repository, query) {
         return this._executeQuery(repository, query, MEDIA_TYPES.N_QUADS);
     }

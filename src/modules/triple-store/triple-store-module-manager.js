@@ -265,6 +265,14 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async getKCPrivateAssertionIdentifierTriple(implementationName, repository, ual) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(
+                implementationName,
+            ).module.getKCPrivateAssertionIdentifierTriple(repository, ual);
+        }
+    }
+
     getName() {
         return 'tripleStore';
     }

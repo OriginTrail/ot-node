@@ -458,20 +458,21 @@ class TripleStoreService {
         return ualNamedGraphs;
     }
 
-    async findAllNamedGraphsByUAL(repositories, ual) {
+    async findAllNamedGraphsByUAL(repository, ual) {
         return this.tripleStoreModuleManager.findAllNamedGraphsByUAL(
-            this.repositoryImplementations[repositories],
-            repositories,
+            this.repositoryImplementations[repository],
+            repository,
             ual,
         );
     }
 
-    async findAllSubjectsWithGraphNames(repositories, ual) {
-        const unparsedSubjectUALPairs = this.tripleStoreModuleManager.findAllSubjectsWithGraphNames(
-            this.repositoryImplementations[repositories],
-            repositories,
-            ual,
-        );
+    async findAllSubjectsWithGraphNames(repository, ual) {
+        const unparsedSubjectUALPairs =
+            await this.tripleStoreModuleManager.findAllSubjectsWithGraphNames(
+                this.repositoryImplementations[repository],
+                repository,
+                ual,
+            );
 
         const subjectUALPairs = Array.from(
             unparsedSubjectUALPairs.reduce((map, { s, g }) => {
@@ -491,7 +492,10 @@ class TripleStoreService {
             }, new Map()),
         ).values();
 
-        return subjectUALPairs;
+        const privateMerkleRootTriple =
+            await this.tripleStoreService.getKCPrivateAssertionIdentifierTriple(repository, ual);
+
+        return { subjectUALPairs, privateMerkleRootTriple };
     }
 
     async getKnowledgeAssetNamedGraph(repository, ual, visibility) {
