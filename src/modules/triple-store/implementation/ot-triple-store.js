@@ -487,7 +487,8 @@ class OtTripleStore {
                 ?s ?p ?o
             }
             FILTER(STRSTARTS(STR(?g), "${ual}") && STRENDS(STR(?g), "${TRIPLES_VISIBILITY.PUBLIC}"))
-        }`;
+        }
+        ORDER BY ?g`;
         return this.select(repository, query);
     }
 

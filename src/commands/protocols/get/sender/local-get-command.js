@@ -49,7 +49,7 @@ class LocalGetCommand extends Command {
                 operationId,
                 blockchain,
             );
-            const subjectsUALs = await this.tripleStoreService.findAllSubjectsWithGraphNames(
+            const subjectUALPairs = await this.tripleStoreService.findAllSubjectsWithGraphNames(
                 TRIPLE_STORE_REPOSITORY.DKG,
                 ual,
             );
@@ -58,11 +58,11 @@ class LocalGetCommand extends Command {
                 operationId,
                 blockchain,
             );
-            if (subjectsUALs?.length) {
+            if (subjectUALPairs?.length) {
                 await this.operationService.markOperationAsCompleted(
                     operationId,
                     blockchain,
-                    subjectsUALs,
+                    subjectUALPairs,
                     [
                         OPERATION_ID_STATUS.GET.GET_LOCAL_END,
                         OPERATION_ID_STATUS.GET.GET_END,

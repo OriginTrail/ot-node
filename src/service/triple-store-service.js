@@ -5,6 +5,7 @@ import {
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
     TRIPLES_VISIBILITY,
+    PRIVATE_HASH_SUBJECT_PREFIX,
 } from '../constants/constants.js';
 
 class TripleStoreService {
@@ -466,11 +467,31 @@ class TripleStoreService {
     }
 
     async findAllSubjectsWithGraphNames(repositories, ual) {
-        return this.tripleStoreModuleManager.findAllSubjectsWithGraphNames(
+        const unparsedSubjectUALPairs = this.tripleStoreModuleManager.findAllSubjectsWithGraphNames(
             this.repositoryImplementations[repositories],
             repositories,
             ual,
         );
+
+        const subjectUALPairs = Array.from(
+            unparsedSubjectUALPairs.reduce((map, { s, g }) => {
+                let pair = { subject: null, subjectHash: null, ual: g };
+                if (map.has(g)) {
+                    pair = map.get(g);
+                }
+                if (s) {
+                    if (s.startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`)) {
+                        pair.subjectHash = s;
+                    } else {
+                        pair.subject = s;
+                    }
+                }
+                map.set(g, pair);
+                return map;
+            }, new Map()),
+        ).values();
+
+        return subjectUALPairs;
     }
 
     async getKnowledgeAssetNamedGraph(repository, ual, visibility) {
