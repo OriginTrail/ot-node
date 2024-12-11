@@ -46,8 +46,7 @@ class ValidationService {
     async validateDatasetOnBlockchain(knowledgeCollectionId, assertion, blockchain) {
         const assertionId = await this.validationModuleManager.calculateRoot(assertion);
 
-        // call contract TO DO, dont return anything or return true
-        return { knowledgeCollectionId, assertionId, blockchain };
+        await this.validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain);
     }
 
     async validateDatasetRoot(dataset, datasetRoot) {
