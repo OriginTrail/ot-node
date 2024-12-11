@@ -80,7 +80,7 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             return Command.empty();
         }
 
-        await this.validationService.validateAssertion(datasetRoot, blockchain, cachedData);
+        await this.validationService.validateDatasetRoot(cachedData, datasetRoot);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

@@ -111,6 +111,7 @@ import {
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
     ERROR_TYPE,
+    TRIPLES_VISIBILITY,
 } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
 
@@ -150,7 +151,7 @@ class GetController extends BaseController {
         let knowledgeCollectionId;
         let knowledgeAssetId;
         try {
-            const { id, paranetUAL, includeMetadata } = req.body;
+            const { id, paranetUAL, includeMetadata, contentType } = req.body;
             ({ blockchain, contract, knowledgeCollectionId, knowledgeAssetId } =
                 this.ualService.resolveUAL(id));
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
@@ -176,6 +177,7 @@ class GetController extends BaseController {
                     operationId,
                     hashFunctionId,
                     paranetUAL,
+                    contentType: contentType ?? TRIPLES_VISIBILITY.ALL,
                 },
                 transactional: false,
             });
