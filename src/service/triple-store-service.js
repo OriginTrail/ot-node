@@ -182,10 +182,10 @@ class TripleStoreService {
     }
 
     async insertUpdatedKnowledgeCollection(preUpdateUalNamedGraphs, ual, triples, firstNewKAIndex) {
-        const publicKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
+        const publicKnowledgeAssetsTriples = this.dataService.splitConnectedArrays(
             triples.public ?? triples,
         );
-        // subject or hashedSubject
+        // subject or hashedPrivateSubject
         const publicKnowledgeAssetTriplesSubjects = publicKnowledgeAssetsTriples.map(
             ([triple]) => triple.split(' ')[0],
         );
@@ -203,14 +203,14 @@ class TripleStoreService {
                 preUpdateSubjectHashUALMap.set(pair.privateSubjectHash, pair.UAL);
             }
         });
+
+        // Some preUpdate KAs might not have private part, generate private subjects for them
         for (const { publicPreUpdateSubject, ual: preUpdateUal } of preUpdateSubjectUALMap) {
             if (!preUpdateSubjectHashUALMap.has(publicPreUpdateSubject)) {
-                preUpdateSubjectHashUALMap.set(
-                    `<${PRIVATE_HASH_SUBJECT_PREFIX}${this.dataService.generateHashFromString(
-                        publicPreUpdateSubject.slice(1, -1),
-                    )}>`,
-                    preUpdateUal,
-                );
+                const hashedPreUpdateSubject = `<${PRIVATE_HASH_SUBJECT_PREFIX}${this.dataService.generateHashFromString(
+                    publicPreUpdateSubject.slice(1, -1),
+                )}>`;
+                preUpdateSubjectHashUALMap.set(hashedPreUpdateSubject, preUpdateUal);
             }
         }
 
@@ -222,6 +222,7 @@ class TripleStoreService {
             const hashedSubject = `<${PRIVATE_HASH_SUBJECT_PREFIX}${this.dataService.generateHashFromString(
                 subject,
             )}>`;
+            // Rewrite this that if subject is private representation don't check preUpdateSubjectHashUALMap
             if (
                 subject.startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`) &&
                 preUpdateSubjectHashUALMap.has(subject)
@@ -267,7 +268,7 @@ class TripleStoreService {
 
             // Public has to have this or hash of this subject as every private subject is represented in public part
             for (const [triple] of privateKnowledgeAssetsTriples) {
-                const subject = triple.split(' ');
+                const [subject] = triple.split(' ');
                 if (publicSubjectsMap.has(subject)) {
                     privateKnowledgeAssetsUALs.push(
                         publicKnowledgeAssetsUALs[publicSubjectsMap.get(subject)],
