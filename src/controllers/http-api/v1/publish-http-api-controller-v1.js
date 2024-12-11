@@ -21,7 +21,7 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { dataset, datasetRoot, blockchain } = req.body;
+        const { dataset, datasetRoot, blockchain, minimumNumberOfNodeReplications } = req.body;
         const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         this.logger.info(
@@ -80,6 +80,7 @@ class PublishController extends BaseController {
                     hashFunctionId,
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
+                    minimumNumberOfNodeReplications,
                 },
                 transactional: false,
             });

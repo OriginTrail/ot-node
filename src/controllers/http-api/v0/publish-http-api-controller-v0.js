@@ -18,6 +18,7 @@ class PublishController extends BaseController {
         this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.networkModuleManager = ctx.networkModuleManager;
     }
 
     async handleRequest(req, res) {
@@ -90,12 +91,18 @@ class PublishController extends BaseController {
                 blockchain,
             );
 
+            const currentPeerId = this.networkModuleManager.getPeerId().toB58String();
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_DATASET_START,
                 operationId,
                 blockchain,
             );
-            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+            await this.pendingStorageService.cacheDataset(
+                operationId,
+                datasetRoot,
+                dataset,
+                currentPeerId,
+            );
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_DATASET_END,
                 operationId,
