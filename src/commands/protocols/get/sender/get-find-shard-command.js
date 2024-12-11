@@ -20,7 +20,7 @@ class GetFindShardCommand extends FindShardCommand {
     getOperationCommandSequence(nodePartOfShard) {
         const sequence = [];
         if (nodePartOfShard) {
-            // sequence.push('localGetCommand');
+            sequence.push('localGetCommand');
         }
         sequence.push('networkGetCommand');
 
