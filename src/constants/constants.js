@@ -144,6 +144,7 @@ export const REQUIRED_MODULES = [
     'validation',
     'blockchain',
     'tripleStore',
+    'blockchainEventsService',
 ];
 
 /**
@@ -238,6 +239,9 @@ export const TRANSACTION_PRIORITY = {
     LOW: 10,
     LOWEST: 20,
 };
+
+export const V0_PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
 
 const require = createRequire(import.meta.url);
 
@@ -347,7 +351,6 @@ export const TRIPLE_STORE_IMPLEMENTATION = {
 
 export const NETWORK_MESSAGE_TYPES = {
     REQUESTS: {
-        PROTOCOL_INIT: 'PROTOCOL_INIT',
         PROTOCOL_REQUEST: 'PROTOCOL_REQUEST',
     },
     RESPONSES: {
@@ -364,15 +367,15 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
         REQUEST: 60 * 1000,
     },
     UPDATE: {
-        INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
     GET: {
-        INIT: 60 * 1000,
         REQUEST: 5 * 60 * 1000,
     },
+    ASK: {
+        REQUEST: 60 * 1000,
+    },
     FINALITY: {
-        INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
 };
@@ -395,7 +398,6 @@ export const ERROR_TYPE = {
         PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
         PUBLISH_VALIDATE_ASSERTION_METADATA_ERROR: 'PublishValidateAssertionMetadataError',
-
         PUBLISH_ERROR: 'PublishError',
     },
     STORE_ASSERTION_ERROR: 'StoreAssertionError',
@@ -461,11 +463,12 @@ export const ERROR_TYPE = {
         UPDATE_FIND_SHARD_ERROR: 'UpdateFindShardError',
         GET_FIND_SHARD_ERROR: 'GetFindShardError',
     },
-    FINALITY: {
-        FINALITY_ERROR: 'FinalityError',
-        FINALITY_NETWORK_ERROR: 'FinalityNetworkError',
-        FINALITY_REQUEST_ERROR: 'FinalityRequestError',
-        FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
+    ASK: {
+        ASK_ERROR: 'AskError',
+        ASK_NETWORK_ERROR: 'AskNetworkError',
+        ASK_REQUEST_ERROR: 'AskRequestError',
+        ASK_REQUEST_REMOTE_ERROR: 'AskRequestRemoteError',
+        ASK_FIND_SHARD_ERROR: 'AskFindShardError',
     },
     PUBLISH_FINALIZATION: {
         PUBLISH_FINALIZATION_NO_CACHED_DATA: 'PublishFinalizationNoCachedData',
@@ -473,6 +476,13 @@ export const ERROR_TYPE = {
     UPDATE_FINALIZATION: {
         UPDATE_FINALIZATION_NO_CACHED_DATA: 'UpdateFinalizationNoCachedData',
         UPDATE_FINALIZATION_NO_OLD_DATA: 'UpdateFinalizationNoOldData',
+    },
+    FINALITY: {
+        FINALITY_ERROR: 'FinalityError',
+        FINALITY_NETWORK_ERROR: 'FinalityNetworkError',
+        FINALITY_REQUEST_ERROR: 'FinalityRequestError',
+        FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
+        FINALITY_START_ERROR: 'FinalityStartError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -789,21 +799,72 @@ export const OPERATION_ID_STATUS = {
         PARANET_SYNC_NEW_KAS_SYNC_START: 'PARANET_SYNC_NEW_KAS_SYNC_START',
         PARANET_SYNC_NEW_KAS_SYNC_END: 'PARANET_SYNC_NEW_KAS_SYNC_END',
     },
+    ASK: {
+        ASK_START: 'ASK_START',
+        ASK_END: 'ASK_END',
+        ASK_REMOTE_START: 'ASK_REMOTE_START',
+        ASK_REMOTE_END: 'ASK_REMOTE_START',
+        ASK_REMOTE_PREPARE_MESSAGE_START: 'ASK_REMOTE_PREPARE_MESSAGE_START',
+        ASK_REMOTE_PREPARE_MESSAGE_END: 'ASK_REMOTE_PREPARE_MESSAGE_END',
+        ASK_REMOTE_SEND_MESSAGE_START: 'ASK_REMOTE_SEND_MESSAGE_START',
+        ASK_REMOTE_SEND_MESSAGE_END: 'ASK_REMOTE_SEND_MESSAGE_END',
+        ASK_REMOTE_REMOVE_CACHED_SESSION_START: 'ASK_REMOTE_REMOVE_CACHED_SESSION_START',
+        ASK_REMOTE_REMOVE_CACHED_SESSION_END: 'ASK_REMOTE_REMOVE_CACHED_SESSION_END',
+        ASK_FIND_NODES_START: 'ASK_FIND_NODES_START',
+        ASK_FIND_NODES_END: 'ASK_FIND_NODES_END',
+        ASK_FIND_NODES_FIND_SHARD_NODES_START: 'ASK_FIND_NODES_FIND_SHARD_NODES_START',
+        ASK_FIND_NODES_FIND_SHARD_NODES_END: 'ASK_FIND_NODES_FIND_SHARD_NODES_END',
+        ASK_FIND_NODES_PROCESS_FOUND_NODES_START: 'ASK_FIND_NODES_PROCESS_FOUND_NODES_START',
+        ASK_FIND_NODES_PROCESS_FOUND_NODES_END: 'ASK_FIND_NODES_PROCESS_FOUND_NODES_END',
+        ASK_FETCH_FROM_NODES_START: 'ASK_FETCH_FROM_NODES_START',
+        ASK_FETCH_FROM_NODES_END: 'ASK_FETCH_FROM_NODES_END',
+        ASK_NETWORK_START: 'ASK_NETWORK_START',
+        ASK_NETWORK_END: 'ASK_NETWORK_END',
+        ASK_NETWORK_GET_BATCH_SIZE_START: 'ASK_NETWORK_GET_BATCH_SIZE_START',
+        ASK_NETWORK_GET_BATCH_SIZE_END: 'ASK_NETWORK_GET_BATCH_SIZE_END',
+        ASK_REQUEST_START: 'ASK_REQUEST_START',
+        ASK_REQUEST_END: 'ASK_REQUEST_END',
+        ASK_REQUEST_PREPARE_MESSAGE_START: 'ASK_REQUEST_PREPARE_MESSAGE_START',
+        ASK_REQUEST_PREPARE_MESSAGE_END: 'ASK_REQUEST_PREPARE_MESSAGE_END',
+        ASK_REQUEST_SEND_MESSAGE_START: 'ASK_REQUEST_SEND_MESSAGE_START',
+        ASK_REQUEST_SEND_MESSAGE_END: 'ASK_REQUEST_SEND_MESSAGE_END',
+    },
     FINALITY: {
         FINALITY_START: 'FINALITY_START',
         FINALITY_END: 'FINALITY_END',
         FINALITY_REMOTE_START: 'FINALITY_REMOTE_START',
         FINALITY_REMOTE_END: 'FINALITY_REMOTE_START',
+        FINALITY_REMOTE_PREPARE_MESSAGE_START: 'FINALITY_REMOTE_PREPARE_MESSAGE_START',
+        FINALITY_REMOTE_PREPARE_MESSAGE_END: 'FINALITY_REMOTE_PREPARE_MESSAGE_END',
+        FINALITY_REMOTE_SEND_MESSAGE_START: 'FINALITY_REMOTE_SEND_MESSAGE_START',
+        FINALITY_REMOTE_SEND_MESSAGE_END: 'FINALITY_REMOTE_SEND_MESSAGE_END',
+        FINALITY_REMOTE_REMOVE_CACHED_SESSION_START: 'FINALITY_REMOTE_REMOVE_CACHED_SESSION_START',
+        FINALITY_REMOTE_REMOVE_CACHED_SESSION_END: 'FINALITY_REMOTE_REMOVE_CACHED_SESSION_END',
+        FINALITY_REPLICATE_START: 'FINALITY_REPLICATE_START',
+        FINALITY_REPLICATE_END: 'FINALITY_REPLICATE_END',
+        FINALITY_NETWORK_GET_BATCH_SIZE_START: 'FINALITY_NETWORK_GET_BATCH_SIZE_START',
+        FINALITY_NETWORK_GET_BATCH_SIZE_END: 'FINALITY_NETWORK_GET_BATCH_SIZE_END',
         FINALITY_FETCH_FROM_NODES_START: 'FINALITY_FETCH_FROM_NODES_START',
         FINALITY_FETCH_FROM_NODES_END: 'FINALITY_FETCH_FROM_NODES_END',
+        FINALITY_REQUEST_START: 'FINALITY_REQUEST_START',
+        FINALITY_REQUEST_END: 'FINALITY_REQUEST_END',
+        FINALITY_REQUEST_PREPARE_MESSAGE_START: 'FINALITY_REQUEST_PREPARE_MESSAGE_START',
+        FINALITY_REQUEST_PREPARE_MESSAGE_END: 'FINALITY_REQUEST_PREPARE_MESSAGE_END',
+        FINALITY_REQUEST_SEND_MESSAGE_START: 'FINALITY_REQUEST_SEND_MESSAGE_START',
+        FINALITY_REQUEST_SEND_MESSAGE_END: 'FINALITY_REQUEST_SEND_MESSAGE_END',
+        PUBLISH_FINALITY_REMOTE_START: 'PUBLISH_FINALITY_REMOTE_START',
+        PUBLISH_FINALITY_REMOTE_END: 'PUBLISH_FINALITY_REMOTE_END',
+        PUBLISH_FINALITY_END: 'PUBLISH_FINALITY_END',
+        PUBLISH_FINALITY_FETCH_FROM_NODES_END: 'PUBLISH_FINALITY_FETCH_FROM_NODES_END',
     },
 };
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
+    FINALITY: 'finality',
     UPDATE: 'update',
     GET: 'get',
-    FINALITY: 'finality',
+    ASK: 'ask',
 };
 
 export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
@@ -842,38 +903,38 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 
 export const PUBLISH_STORAGE_MEMORY_CLEANUP_COMMAND_CLEANUP_TIME_MILLS = 4 * 60 * 60 * 1000;
-
 export const PUBLISH_STORAGE_FILE_CLEANUP_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const GET_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const GET_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
-
 export const GET_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const GET_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
 export const PUBLISH_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const PUBLISH_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
-
 export const PUBLISH_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const PUBLISH_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
 export const UPDATE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const UPDATE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
-
 export const UPDATE_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const UPDATE_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
-export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const ASK_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const ASK_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+export const ASK_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const ASK_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
+export const FINALITY_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const FINALITY_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+export const FINALITY_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const FINALITY_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
 /**
  * @constant {number} COMMAND_STATUS -
  * Status for commands
@@ -899,16 +960,19 @@ export const ARCHIVE_COMMANDS_FOLDER = 'commands';
 export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
 
 export const ARCHIVE_GET_FOLDER = 'get';
-
 export const ARCHIVE_GET_RESPONSES_FOLDER = 'get_responses';
 
 export const ARCHIVE_PUBLISH_FOLDER = 'publish';
-
 export const ARCHIVE_PUBLISH_RESPONSES_FOLDER = 'publish_responses';
 
 export const ARCHIVE_UPDATE_FOLDER = 'update';
-
 export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
+
+export const ARCHIVE_ASK_FOLDER = 'ask';
+export const ARCHIVE_ASK_RESPONSES_FOLDER = 'ask_responses';
+
+export const ARCHIVE_FINALITY_FOLDER = 'finality';
+export const ARCHIVE_FINALITY_RESPONSES_FOLDER = 'finality_responses';
 
 /**
  * How many commands will run in parallel
@@ -970,18 +1034,48 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
-        finality: {
+    },
+    v1: {
+        publish: {
             method: 'post',
+            path: '/publish',
+            options: { rateLimit: true },
+        },
+        finality: {
+            method: 'get',
             path: '/finality',
             options: {},
         },
-    },
-    v1: {
-        // get: {
+        // update: {
         //     method: 'post',
-        //     path: '/get',
+        //     path: '/update',
         //     options: { rateLimit: true },
         // },
+        query: {
+            method: 'post',
+            path: '/query',
+            options: {},
+        },
+        get: {
+            method: 'post',
+            path: '/get',
+            options: { rateLimit: true },
+        },
+        result: {
+            method: 'get',
+            path: '/:operation/:operationId',
+            options: {},
+        },
+        info: {
+            method: 'get',
+            path: '/info',
+            options: {},
+        },
+        ask: {
+            method: 'post',
+            path: '/ask',
+            options: {},
+        },
     },
 };
 
@@ -993,6 +1087,7 @@ export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
+    ASK: ['/ask/1.0.0'],
     FINALITY: ['/finality/1.0.0'],
 };
 

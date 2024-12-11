@@ -20,7 +20,7 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain, operationId } = command.data;
+        const { blockchain, operationId, minimumNumberOfNodeReplications } = command.data;
 
         this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
 
@@ -32,7 +32,10 @@ class NetworkProtocolCommand extends Command {
         const batchSize = await this.operationService.getBatchSize(blockchain);
         this.operationIdService.emitChangeEvent(this.getBatchSizeEndEvent, operationId, blockchain);
 
-        const minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+        const minAckResponses = await this.operationService.getMinAckResponses(
+            blockchain,
+            minimumNumberOfNodeReplications,
+        );
 
         const commandSequence = [
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,

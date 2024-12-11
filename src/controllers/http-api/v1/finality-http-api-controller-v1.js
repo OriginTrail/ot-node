@@ -1,4 +1,3 @@
-import { OPERATION_ID_STATUS, OPERATION_STATUS, ERROR_TYPE } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
 
 class FinalityController extends BaseController {
@@ -13,59 +12,16 @@ class FinalityController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.FINALITY.FINALITY_START,
-        );
+        const { ual } = req.query;
 
-        const { ual, blockchain } = req.body;
+        const finality = await this.repositoryModuleManager.getFinalityAcksCount(ual || '');
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.FINALITY.FINALITY_START,
-        );
-
-        this.returnResponse(res, 202, {
-            operationId,
-        });
-
-        await this.repositoryModuleManager.createOperationRecord(
-            this.operationService.getOperationName(),
-            operationId,
-            OPERATION_STATUS.IN_PROGRESS,
-        );
-
-        try {
-            this.logger.info(`Finality for ${ual} with operation id ${operationId} initiated.`);
-
-            const commandSequence = ['finalityFindShardCommand', 'networkFinalityCommand'];
-
-            await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
-                delay: 0,
-                data: {
-                    ual,
-                    operationId,
-                },
-                transactional: false,
+        if (typeof finality !== 'number')
+            return this.returnResponse(res, 400, {
+                message: 'Asset with provided UAL was not published to this node.',
             });
 
-            await this.operationIdService.updateOperationIdStatus(
-                operationId,
-                blockchain,
-                OPERATION_ID_STATUS.FINALITY.FINALITY_END,
-            );
-        } catch (error) {
-            this.logger.error(`Error while initializing finality: ${error.message}.`);
-
-            await this.operationService.markOperationAsFailed(
-                operationId,
-                blockchain,
-                'Unable to check finality, Failed to process input data!',
-                ERROR_TYPE.FINALITY.FINALITY_ERROR,
-            );
-        }
+        this.returnResponse(res, 200, { finality });
     }
 }
 

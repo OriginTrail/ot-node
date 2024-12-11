@@ -26,6 +26,7 @@ class JsonSchemaService {
 
         switch (version) {
             case 'v0':
+            case 'v1':
                 schemaArgs.blockchainImplementationNames =
                     this.blockchainModuleManager.getImplementationNames();
                 break;
@@ -41,6 +42,7 @@ class JsonSchemaService {
 
         switch (version) {
             case 'v0':
+            case 'v1':
                 schemaArgs.blockchainImplementationNames =
                     this.blockchainModuleManager.getImplementationNames();
                 break;
@@ -56,6 +58,7 @@ class JsonSchemaService {
 
         switch (version) {
             case 'v0':
+            case 'v1':
                 schemaArgs.blockchainImplementationNames =
                     this.blockchainModuleManager.getImplementationNames();
                 break;
@@ -71,7 +74,7 @@ class JsonSchemaService {
 
         switch (version) {
             case 'v0':
-                // case 'v1':
+            case 'v1':
                 break;
             default:
                 throw Error(`HTTP API version: ${version} isn't supported.`);
@@ -85,6 +88,7 @@ class JsonSchemaService {
 
         switch (version) {
             case 'v0':
+            case 'v1':
                 break;
             default:
                 throw Error(`HTTP API version: ${version} isn't supported.`);
@@ -98,6 +102,7 @@ class JsonSchemaService {
 
         switch (version) {
             case 'v0':
+            case 'v1':
                 schemaArgs.blockchainImplementationNames =
                     this.blockchainModuleManager.getImplementationNames();
                 break;

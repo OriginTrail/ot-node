@@ -66,7 +66,7 @@ class QueryCommand extends Command {
                         OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_START,
                         operationId,
                     );
-                    await this.tripleStoreService.select(query);
+                    data = await this.tripleStoreService.select(query);
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_END,
                         operationId,

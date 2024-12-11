@@ -14,6 +14,9 @@ class PublishService extends OperationService {
         super(ctx);
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.signatureService = ctx.signatureService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+ 
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocols = NETWORK_PROTOCOLS.STORE;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
@@ -23,7 +26,6 @@ class PublishService extends OperationService {
             OPERATION_ID_STATUS.COMPLETED,
         ];
         this.operationMutex = new Mutex();
-        this.signatureService = ctx.signatureService;
     }
 
     async processResponse(command, responseStatus, responseData, errorMessage = null) {
@@ -100,8 +102,8 @@ class PublishService extends OperationService {
         return this.blockchainModuleManager.getR2(blockchainId);
     }
 
-    async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
+    async getMinAckResponses(blockchainId, minimumNumberOfNodeReplications = null) {
+        return minimumNumberOfNodeReplications ?? this.blockchainModuleManager.getR1(blockchainId);
     }
 }
 

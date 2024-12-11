@@ -10,7 +10,7 @@ class QueryController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { query, queryType } = req.body;
+        const { query, type: queryType } = req.body;
 
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.QUERY.QUERY_INIT_START,
