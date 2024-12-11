@@ -37,7 +37,7 @@ class FinalityRequestCommand extends ProtocolRequestCommand {
             command.blockchain,
             OPERATION_ID_STATUS.COMPLETED,
         );
-        return this.continueSequence(command.data, command.sequence);
+        return ProtocolRequestCommand.empty();
     }
 
     async handleNack(command, responseData) {
