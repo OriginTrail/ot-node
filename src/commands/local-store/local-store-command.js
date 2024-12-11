@@ -22,6 +22,7 @@ class LocalStoreCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blsService = ctx.blsService;
+        this.signatureStorageService = ctx.signatureStorageService;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
