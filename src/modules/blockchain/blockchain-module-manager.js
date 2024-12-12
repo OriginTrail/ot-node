@@ -171,16 +171,16 @@ class BlockchainModuleManager extends BaseModuleManager {
     }
 
     async getKnowledgeCollectionTriplesNumber(blockchain, knowledgeCollectionId) {
-        return this.callImplementationFunction(blockchain, 'getAssertionTriplesNumber', [
+        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionTriplesNumber', [
             knowledgeCollectionId,
         ]);
     }
 
-    // async getAssertionChunksNumber(blockchain, assertionid) {
-    //     return this.callImplementationFunction(blockchain, 'getAssertionChunksNumber', [
-    //         assertionid,
-    //     ]);
-    // }
+    async getKnowledgeCollectionChunksAmount(blockchain, knowledgeCollectionId) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionChunksAmount', [
+            knowledgeCollectionId,
+        ]);
+    }
 
     async getParanetKnowledgeAssetsCount(blockchain, paranetId) {
         return this.callImplementationFunction(blockchain, 'getParanetKnowledgeAssetsCount', [

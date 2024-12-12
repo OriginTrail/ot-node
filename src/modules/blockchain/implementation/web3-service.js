@@ -935,22 +935,22 @@ class Web3Service {
     }
 
     async getKnowledgeCollectionTriplesNumber(knowledgeCollectionId) {
-        const assertionTriplesNumber = await this.callContractFunction(
+        const knowledgeCollectionTriplesNumber = await this.callContractFunction(
             this.contracts.AssertionStorage,
             'getTriplesAmount',
             [knowledgeCollectionId],
         );
-        return Number(assertionTriplesNumber);
+        return Number(knowledgeCollectionTriplesNumber);
     }
 
-    // async getAssertionChunksNumber(assertionId) {
-    //     const assertionChunksNumber = await this.callContractFunction(
-    //         this.contracts.AssertionStorage,
-    //         'getAssertionChunksNumber',
-    //         [assertionId],
-    //     );
-    //     return Number(assertionChunksNumber);
-    // }
+    async getKnowledgeCollectionChunksAmount(knowledgeCollectionId) {
+        const knowledgeCollectionChunksNumber = await this.callContractFunction(
+            this.contracts.AssertionStorage,
+            'getChunksAmount',
+            [knowledgeCollectionId],
+        );
+        return Number(knowledgeCollectionChunksNumber);
+    }
 
     async getMinimumStake() {
         const minimumStake = await this.callContractFunction(
