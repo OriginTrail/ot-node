@@ -77,12 +77,11 @@ class ProtocolScheduleMessagesCommand extends Command {
 
     getNextCommandData(command) {
         const { datasetRoot, blockchain, hashFunctionId } = command.data;
-        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
         return {
             blockchain,
             datasetRoot,
+            // TODO: Remove hashFunctionId
             hashFunctionId,
-            proximityScoreFunctionsPairId,
         };
     }
 

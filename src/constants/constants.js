@@ -808,7 +808,6 @@ export const EXPECTED_TRANSACTION_ERRORS = {
     TOO_LOW_PRIORITY: 'TooLowPriority',
     NODE_ALREADY_REWARDED: 'NodeAlreadyRewarded',
     SERVICE_AGREEMENT_DOESNT_EXIST: 'ServiceAgreementDoesntExist',
-    INVALID_PROXIMITY_SCORE_FUNCTIONS_PAIR_ID: 'InvalidProximityScoreFunctionsPairId',
     INVALID_SCORE_FUNCTION_ID: 'InvalidScoreFunctionId',
     COMMIT_WINDOW_CLOSED: 'CommitWindowClosed',
     NODE_NOT_IN_SHARDING_TABLE: 'NodeNotInShardingTable',
