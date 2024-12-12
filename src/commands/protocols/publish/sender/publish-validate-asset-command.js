@@ -120,11 +120,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                     tokenId: paranetTokenId,
                 } = this.ualService.resolveUAL(paranetUAL);
 
-                paranetId = this.paranetService.constructParanetId(
-                    paranetBlockchain,
-                    paranetContract,
-                    paranetTokenId,
-                );
+                paranetId = this.paranetService.constructParanetId(paranetContract, paranetTokenId);
 
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_PARANET_EXISTS_START,

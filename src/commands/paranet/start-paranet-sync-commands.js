@@ -27,7 +27,7 @@ class StartParanetSyncCommands extends Command {
             );
 
             const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
-            const paranetId = this.paranetService.constructParanetId(blockchain, contract, tokenId);
+            const paranetId = this.paranetService.constructParanetId(contract, tokenId);
 
             const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
                 blockchain,

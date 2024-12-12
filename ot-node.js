@@ -338,7 +338,7 @@ class OTNode {
                 continue;
             }
 
-            const paranetId = paranetService.constructParanetId(blockchain, contract, tokenId);
+            const paranetId = paranetService.constructParanetId(contract, tokenId);
             // eslint-disable-next-line no-await-in-loop
             const paranetExists = await blockchainModuleManager.paranetExists(
                 blockchain,

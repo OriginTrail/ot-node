@@ -103,11 +103,7 @@ class ValidateAssetCommand extends Command {
                     tokenId: paranetTokenId,
                 } = this.ualService.resolveUAL(paranetUAL);
 
-                paranetId = this.paranetService.constructParanetId(
-                    paranetBlockchain,
-                    paranetContract,
-                    paranetTokenId,
-                );
+                paranetId = this.paranetService.constructParanetId(paranetContract, paranetTokenId);
                 const paranetExists = await this.blockchainModuleManager.paranetExists(
                     paranetBlockchain,
                     paranetId,

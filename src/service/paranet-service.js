@@ -25,7 +25,6 @@ class ParanetService {
         }
     }
 
-    // TODO: Changed signature of function change everywhere
     constructParanetId(contract, tokenId) {
         return this.cryptoService.keccak256(
             this.cryptoService.encodePacked(['address', 'uint256'], [contract, tokenId]),
