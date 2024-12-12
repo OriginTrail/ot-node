@@ -69,12 +69,26 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             triple.includes(PRIVATE_ASSERTION_PREDICATE),
         );
 
-        const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
+        if (privateAssertionTriple) {
+            const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
 
-        const isValidPrivateAssertion = await this.validationService.validateDatasetRoot(
-            cachedData.dataset.private,
-            privateAssertionRoot,
-        );
+            const isValidPrivateAssertion = await this.validationService.validateDatasetRoot(
+                cachedData.dataset.private,
+                privateAssertionRoot,
+            );
+
+            if (!isValidPrivateAssertion) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    `Invalid dataset root for private assertion. Received value from request: ${cachedData.dataset.public.find(
+                        () => true,
+                    )}`,
+                    this.errorType,
+                );
+                return Command.empty();
+            }
+        }
 
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_END,
@@ -87,18 +101,6 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
                 operationId,
                 blockchain,
                 `Invalid dataset root for public assertion. Received value received value from request: ${cachedData.datasetRoot}`,
-                this.errorType,
-            );
-            return Command.empty();
-        }
-
-        if (!isValidPrivateAssertion) {
-            await this.handleError(
-                operationId,
-                blockchain,
-                `Invalid dataset root for private assertion. Received value received value from request: ${cachedData.dataset.public.find(
-                    () => true,
-                )}`,
                 this.errorType,
             );
             return Command.empty();
