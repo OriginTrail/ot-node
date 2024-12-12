@@ -3,6 +3,7 @@ import {
     NETWORK_MESSAGE_TIMEOUT_MILLS,
     ERROR_TYPE,
     OPERATION_ID_STATUS,
+    NETWORK_SIGNATURES_FOLDER,
 } from '../../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
@@ -59,6 +60,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             blockchain,
         );
         await this.signatureService.addSignatureToStorage(
+            NETWORK_SIGNATURES_FOLDER,
             operationId,
             responseData.identityId,
             responseData.signer,
