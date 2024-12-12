@@ -30,5 +30,9 @@ export default (argumentsObject) => ({
         blockchain: {
             enum: argumentsObject.blockchainImplementationNames,
         },
+        batchSize: {
+            type: 'number',
+            minimum: 1,
+        },
     },
 });

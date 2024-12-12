@@ -21,7 +21,13 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { dataset, datasetRoot, blockchain, minimumNumberOfNodeReplications } = req.body;
+        const {
+            dataset,
+            datasetRoot,
+            blockchain,
+            minimumNumberOfNodeReplications,
+            batchSize: userDefinedBatchSize,
+        } = req.body;
 
         this.logger.info(
             `Received asset with dataset root: ${datasetRoot}, blockchain: ${blockchain}`,
@@ -85,6 +91,7 @@ class PublishController extends BaseController {
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
                     minimumNumberOfNodeReplications,
+                    batchSize: userDefinedBatchSize,
                 },
                 transactional: false,
             });

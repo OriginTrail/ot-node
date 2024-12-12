@@ -14,5 +14,9 @@ export default () => ({
         paranetUAL: {
             type: ['string', 'null'],
         },
+        batchSize: {
+            type: 'number',
+            minimum: 1,
+        },
     },
 });

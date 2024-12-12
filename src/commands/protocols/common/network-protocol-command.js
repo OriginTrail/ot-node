@@ -18,11 +18,15 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain, operationId, minimumNumberOfNodeReplications } = command.data;
+        const { blockchain, operationId, minimumNumberOfNodeReplications, userDefinedBatchSize } =
+            command.data;
 
         this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
 
-        const batchSize = await this.operationService.getBatchSize(blockchain);
+        const batchSize = await this.operationService.getBatchSize(
+            blockchain,
+            userDefinedBatchSize,
+        );
 
         const minAckResponses = await this.operationService.getMinAckResponses(
             blockchain,

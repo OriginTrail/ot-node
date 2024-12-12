@@ -107,8 +107,8 @@ class AskService extends OperationService {
         }
     }
 
-    async getBatchSize() {
-        return 20;
+    async getBatchSize(blockchain, userDefinedBatchSize) {
+        return userDefinedBatchSize ?? 20;
     }
 }
 

@@ -16,10 +16,10 @@ class CuratedParanetNetworkGetCommand extends NetworkProtocolCommand {
      * @param command
      */
     async execute(command) {
-        const { blockchain } = command.data;
+        const { blockchain, userDefinedBatchSize } = command.data;
 
         const keywords = await this.getKeywords(command);
-        const batchSize = await this.getBatchSize(blockchain);
+        const batchSize = await this.getBatchSize(blockchain, userDefinedBatchSize);
         const minAckResponses = await this.getMinAckResponses(blockchain);
 
         const commandSequence = [
@@ -60,8 +60,8 @@ class CuratedParanetNetworkGetCommand extends NetworkProtocolCommand {
         return [locationKeyword];
     }
 
-    async getBatchSize() {
-        return 2;
+    async getBatchSize(blockchain, userDefinedBatchSize) {
+        return userDefinedBatchSize ?? 2;
     }
 
     async getMinAckResponses() {

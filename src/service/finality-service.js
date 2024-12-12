@@ -71,8 +71,8 @@ class FinalityService extends OperationService {
         }
     }
 
-    getBatchSize() {
-        return 1;
+    getBatchSize(blockchain, userDefinedBatchSize) {
+        return userDefinedBatchSize ?? 1;
     }
 
     getMinAckResponses() {

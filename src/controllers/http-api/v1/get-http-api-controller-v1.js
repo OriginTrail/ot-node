@@ -43,7 +43,13 @@ class GetController extends BaseController {
         let knowledgeCollectionId;
         let knowledgeAssetId;
         try {
-            const { id, paranetUAL, includeMetadata, contentType } = req.body;
+            const {
+                id,
+                paranetUAL,
+                includeMetadata,
+                contentType,
+                batchSize: userDefinedBatchSize,
+            } = req.body;
             ({ blockchain, contract, knowledgeCollectionId, knowledgeAssetId } =
                 this.ualService.resolveUAL(id));
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
@@ -70,6 +76,7 @@ class GetController extends BaseController {
                     hashFunctionId,
                     paranetUAL,
                     contentType: contentType ?? TRIPLES_VISIBILITY.ALL,
+                    userDefinedBatchSize,
                 },
                 transactional: false,
             });

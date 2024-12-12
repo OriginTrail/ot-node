@@ -38,6 +38,7 @@ class LocalStoreCommand extends Command {
             contract,
             tokenId,
             minimumNumberOfNodeReplications,
+            userDefinedBatchSize,
         } = command.data;
 
         try {
@@ -235,7 +236,10 @@ class LocalStoreCommand extends Command {
                 vs,
             );
 
-            const batchSize = await this.operationService.getBatchSize(blockchain);
+            const batchSize = await this.operationService.getBatchSize(
+                blockchain,
+                userDefinedBatchSize,
+            );
             const minAckResponses = await this.operationService.getMinAckResponses(
                 blockchain,
                 minimumNumberOfNodeReplications,

@@ -94,8 +94,8 @@ class GetService extends OperationService {
         }
     }
 
-    async getBatchSize() {
-        return 2;
+    async getBatchSize(blockchain, userDefinedBatchSize) {
+        return userDefinedBatchSize ?? 2;
     }
 
     async getMinAckResponses() {
