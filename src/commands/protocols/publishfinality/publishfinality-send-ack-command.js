@@ -15,8 +15,13 @@ class PublishfinalitySendAckCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, remotePeerId, publishOperationId, ual } = command.data;
+        const { operationId, blockchain, remotePeerId, publishOperationId, ual, state } =
+            command.data;
 
+        let ualWithState = ual;
+        if (state) {
+            ualWithState = `${ual}:${state}`;
+        }
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -31,7 +36,7 @@ class PublishfinalitySendAckCommand extends Command {
         if (remotePeerId === myPeerId) {
             await this.repositoryModuleManager.savePublishFinalityAck(
                 publishOperationId,
-                ual,
+                ualWithState,
                 remotePeerId,
             );
             return Command.empty();
@@ -49,7 +54,7 @@ class PublishfinalitySendAckCommand extends Command {
                 blockchain,
                 operationId,
                 node,
-                ual,
+                ual: ualWithState,
                 publishOperationId,
             },
             period: 5000,
