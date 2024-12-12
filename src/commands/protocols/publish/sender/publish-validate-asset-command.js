@@ -85,6 +85,11 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             );
             return Command.empty();
         }
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END,
+        );
 
         // TODO
         // if (!isValidPrivateAssertion) {
