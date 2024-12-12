@@ -3,20 +3,16 @@ class SignatureService {
         this.config = ctx.config;
         this.logger = ctx.logger;
 
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.cryptoService = ctx.cryptoService;
         this.fileService = ctx.fileService;
     }
 
     async signMessage(blockchain, message) {
-        const messageHash = this.blockchainModuleManager.hashMessage(blockchain, message);
-        const { signer, signature: flatSignature } = await this.blockchainModuleManager.signMessage(
-            blockchain,
+        const messageHash = this.cryptoService.hashMessage(message);
+        const { signer, signature: flatSignature } = await this.cryptoService.signMessage(
             messageHash,
         );
-        const { v, r, s, _vs } = this.blockchainModuleManager.splitSignature(
-            blockchain,
-            flatSignature,
-        );
+        const { v, r, s, _vs } = this.cryptoService.splitSignature(flatSignature);
         return { signer, v, r, s, vs: _vs };
     }
 

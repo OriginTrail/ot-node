@@ -31,27 +31,25 @@ class UpdateService extends OperationService {
             blockchain,
             numberOfFoundNodes,
             leftoverNodes,
-            keyword,
             batchSize,
             minAckResponses,
             datasetRoot,
         } = command.data;
 
-        const keywordsStatuses = await this.getResponsesStatuses(
+        const datasetRootStatus = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
             operationId,
-            keyword,
         );
 
-        const { completedNumber, failedNumber } = keywordsStatuses[keyword];
+        const { completedNumber, failedNumber } = datasetRootStatus[operationId];
 
         const totalResponses = completedNumber + failedNumber;
 
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response with status: ${responseStatus} for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+            } response with status: ${responseStatus} for operationId: ${operationId}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
                 numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
@@ -60,7 +58,7 @@ class UpdateService extends OperationService {
         );
         if (responseData.errorMessage) {
             this.logger.trace(
-                `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
+                `Error message for operation id: ${operationId} : ${responseData.errorMessage}`,
             );
         }
 

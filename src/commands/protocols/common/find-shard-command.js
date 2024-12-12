@@ -5,7 +5,6 @@ class FindShardCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
         this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.FIND_NODES_START;
@@ -38,7 +37,6 @@ class FindShardCommand extends Command {
         );
 
         this.minAckResponses = await this.operationService.getMinAckResponses(
-            blockchain,
             minimumNumberOfNodeReplications,
         );
 

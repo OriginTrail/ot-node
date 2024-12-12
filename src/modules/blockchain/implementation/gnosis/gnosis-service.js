@@ -57,10 +57,6 @@ class GnosisService extends Web3Service {
         }
         return false;
     }
-
-    async getAgreementScoreFunctionId() {
-        return 2;
-    }
 }
 
 export default GnosisService;

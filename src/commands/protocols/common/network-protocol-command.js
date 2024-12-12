@@ -6,7 +6,6 @@ class NetworkProtocolCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
 
         this.errorType = ERROR_TYPE.NETWORK_PROTOCOL_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_START;
@@ -25,7 +24,6 @@ class NetworkProtocolCommand extends Command {
         const batchSize = await this.operationService.getBatchSize(blockchain);
 
         const minAckResponses = await this.operationService.getMinAckResponses(
-            blockchain,
             minimumNumberOfNodeReplications,
         );
 
@@ -49,10 +47,6 @@ class NetworkProtocolCommand extends Command {
         this.operationIdService.emitChangeEvent(this.operationEndEvent, operationId, blockchain);
 
         return Command.empty();
-    }
-
-    async getKeywords() {
-        throw Error('getKeywords not implemented');
     }
 
     async getBatchSize() {

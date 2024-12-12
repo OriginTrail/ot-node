@@ -20,11 +20,6 @@ class AskService extends OperationService {
             OPERATION_ID_STATUS.ASK.ASK_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
-        this.ualService = ctx.ualService;
-        this.tripleStoreService = ctx.tripleStoreService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.paranetService = ctx.paranetService;
         this.operationMutex = new Mutex();
     }
 

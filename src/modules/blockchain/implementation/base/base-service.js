@@ -11,10 +11,6 @@ class BaseService extends Web3Service {
     async getGasPrice() {
         return this.provider.getGasPrice();
     }
-
-    async getAgreementScoreFunctionId() {
-        return 2;
-    }
 }
 
 export default BaseService;

@@ -53,7 +53,7 @@ class UpdateAssertionCommand extends Command {
     // TODO: Move maybe outside of the command into metadata validation command (but it's not metadata)
     async validateCurrentData(ual) {
         const { blockchain, contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
-        const assertionIds = await this.blockchainModuleManager.getAssertionIds(
+        const assertionIds = await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
             blockchain,
             contract,
             knowledgeCollectionId,

@@ -4,6 +4,7 @@ class UALService {
         this.logger = ctx.logger;
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.cryptoService = ctx.cryptoService;
     }
 
     deriveUAL(blockchain, contract, tokenId) {
@@ -120,17 +121,22 @@ class UALService {
         return contractRegex.test(contract);
     }
 
-    async calculateLocationKeyword(blockchain, contract, tokenId, assertionId = null) {
+    // TODO: Do we need still need this
+    async calculateLocationKeyword(
+        blockchain,
+        contract,
+        knowledgeCollectionId,
+        assertionId = null,
+    ) {
         const firstAssertionId =
             assertionId ??
-            (await this.blockchainModuleManager.getAssertionIdByIndex(
+            (await this.blockchainModuleManager.getKnowledgeCollectionMerkleRootByIndex(
                 blockchain,
                 contract,
-                tokenId,
+                knowledgeCollectionId,
                 0,
             ));
-        return this.blockchainModuleManager.encodePacked(
-            blockchain,
+        return this.cryptoService.encodePacked(
             ['address', 'bytes32'],
             [contract, firstAssertionId],
         );

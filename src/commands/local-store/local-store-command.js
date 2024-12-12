@@ -20,11 +20,11 @@ class LocalStoreCommand extends Command {
         this.operationService = ctx.publishService;
         this.dataService = ctx.dataService;
         this.ualService = ctx.ualService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.signatureService = ctx.signatureService;
+        this.cryptoService = ctx.cryptoService;
 
         this.errorType = ERROR_TYPE.LOCAL_STORE.LOCAL_STORE_ERROR;
     }
@@ -178,31 +178,6 @@ class LocalStoreCommand extends Command {
                 //     cachedData.txHash,
                 //     PARANET_SYNC_SOURCES.LOCAL_STORE,
                 // );
-            } else {
-                //     await this.pendingStorageService.cacheAssertion(
-                //         PENDING_STORAGE_REPOSITORIES.PRIVATE,
-                //         blockchain,
-                //         contract,
-                //         tokenId,
-                //         cachedData.public.datasetRoot,
-                //         {
-                //             ...cachedData,
-                //             keyword,
-                //         },
-                //         operationId,
-                //     );
-                //     const updateCommitWindowDuration =
-                //         await this.blockchainModuleManager.getUpdateCommitWindowDuration(blockchain);
-                //     await this.commandExecutor.add({
-                //         name: 'deletePendingStateCommand',
-                //         sequence: [],
-                //         delay: (updateCommitWindowDuration + 60) * 1000,
-                //         data: {
-                //             ...command.data,
-                //             datasetRoot: cachedData.public.assertionId,
-                //         },
-                //         transactional: false,
-                //     });
             }
 
             await this.operationIdService.updateOperationIdStatus(
@@ -222,7 +197,6 @@ class LocalStoreCommand extends Command {
             }
 
             const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-
             const { signer, v, r, s, vs } = await this.signatureService.signMessage(
                 blockchain,
                 datasetRoot,
@@ -246,11 +220,7 @@ class LocalStoreCommand extends Command {
                 vs: publisherNodeVS,
             } = await this.signatureService.signMessage(
                 blockchain,
-                this.blockchainModuleManager.encodePacked(
-                    blockchain,
-                    ['uint72', 'bytes32'],
-                    [identityId, datasetRoot],
-                ),
+                this.cryptoService.encodePacked(['uint72', 'bytes32'], [identityId, datasetRoot]),
             );
             await this.signatureService.addSignatureToStorage(
                 PUBLISHER_NODE_SIGNATURES_FOLDER,

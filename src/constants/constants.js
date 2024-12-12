@@ -274,22 +274,9 @@ export const ABIs = {
     ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
 };
 
-export const CONTRACT_FUNCTION_PRIORITY = {
-    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.MEDIUM,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.MEDIUM,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.HIGH,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
-    sendProof: TRANSACTION_PRIORITY.MEDIUM,
-};
+export const CONTRACT_FUNCTION_PRIORITY = {};
 
-export const COMMAND_RETRIES = {
-    SIMPLE_ASSET_SYNC: 1,
-    SUBMIT_COMMIT: 5,
-    SUBMIT_UPDATE_COMMIT: 5,
-    SUBMIT_PROOFS: 5,
-};
+export const COMMAND_RETRIES = {};
 
 export const SIMPLE_ASSET_SYNC_PARAMETERS = {
     GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
@@ -307,13 +294,7 @@ export const COMMAND_TX_GAS_INCREASE_FACTORS = {
     SUBMIT_PROOFS: 1.2,
 };
 
-export const CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS = {
-    sendProof: 2,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': 2,
-    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 2,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 2,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': 2,
-};
+export const CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS = {};
 
 export const GNOSIS_DEFAULT_GAS_PRICE = {
     TESTNET: 25,
@@ -325,11 +306,7 @@ export const NEURO_DEFAULT_GAS_PRICE = {
     MAINNET: 8,
 };
 
-export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
-    'otp:2043': {
-        SUBMIT_UPDATE_COMMIT: 30,
-    },
-};
+export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {};
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
@@ -416,6 +393,7 @@ export const ERROR_TYPE = {
         UPDATE_STORE_REQUEST_ERROR: 'UpdateStoreRequestError',
         UPDATE_VALIDATE_ASSERTION_METADATA_ERROR: 'UpadateValidateAssertionMetadataError',
         UPDATE_ASSERTION_ERROR: 'UpdateAssertionError',
+        UPDATE_NETWORK_START_ERROR: 'UpdateNetworkStartError',
     },
     GET: {
         GET_ROUTE_ERROR: 'GetRouteError',
@@ -437,18 +415,6 @@ export const ERROR_TYPE = {
     },
     QUERY: {
         LOCAL_QUERY_ERROR: 'LocalQueryError',
-    },
-    COMMIT_PROOF: {
-        CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
-        EPOCH_CHECK_ERROR: 'EpochCheckError',
-        BLOCKCHAIN_EPOCH_CHECK_ERROR: 'BlockchainEpochCheckError',
-        SIMPLE_ASSET_SYNC_ERROR: 'SimpleAssetSyncError',
-        SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
-        SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
-        SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
-        SUBMIT_PROOFS_SEND_TX_ERROR: 'SubmitProofsSendTxError',
-        SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR: 'SubmitUpdateCommitSendTxError',
     },
     GET_BID_SUGGESTION: {
         UNSUPPORTED_BID_SUGGESTION_RANGE_ERROR: 'UnsupportedBidSuggestionRangeError',
@@ -717,26 +683,6 @@ export const OPERATION_ID_STATUS = {
         GET_FIND_NODES_PROCESS_FOUND_NODES_END: 'GET_FIND_NODES_PROCESS_FOUND_NODES_END',
         GET_END: 'GET_END',
     },
-    COMMIT_PROOF: {
-        EPOCH_CHECK_START: 'EPOCH_CHECK_START',
-        EPOCH_CHECK_END: 'EPOCH_CHECK_END',
-        SIMPLE_ASSET_SYNC_START: 'SIMPLE_ASSET_SYNC_START',
-        SIMPLE_ASSET_SYNC_END: 'SIMPLE_ASSET_SYNC_END',
-        SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
-        SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
-        SUBMIT_COMMIT_SEND_TX_START: 'SUBMIT_COMMIT_SEND_TX_START',
-        SUBMIT_COMMIT_SEND_TX_END: 'SUBMIT_COMMIT_SEND_TX_END',
-        CALCULATE_PROOFS_START: 'CALCULATE_PROOFS_START',
-        CALCULATE_PROOFS_END: 'CALCULATE_PROOFS_END',
-        SUBMIT_PROOFS_START: 'SUBMIT_PROOFS_START',
-        SUBMIT_PROOFS_END: 'SUBMIT_PROOFS_END',
-        SUBMIT_PROOFS_SEND_TX_START: 'SUBMIT_PROOFS_START',
-        SUBMIT_PROOFS_SEND_TX_END: 'SUBMIT_PROOFS_END',
-        SUBMIT_UPDATE_COMMIT_START: 'SUBMIT_UPDATE_COMMIT_START',
-        SUBMIT_UPDATE_COMMIT_END: 'SUBMIT_UPDATE_COMMIT_END',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_START: 'SUBMIT_UPDATE_COMMIT_START',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_END: 'SUBMIT_UPDATE_COMMIT_END',
-    },
     QUERY: {
         QUERY_INIT_START: 'QUERY_INIT_START',
         QUERY_INIT_END: 'QUERY_INIT_END',
@@ -862,7 +808,6 @@ export const EXPECTED_TRANSACTION_ERRORS = {
     TOO_LOW_PRIORITY: 'TooLowPriority',
     NODE_ALREADY_REWARDED: 'NodeAlreadyRewarded',
     SERVICE_AGREEMENT_DOESNT_EXIST: 'ServiceAgreementDoesntExist',
-    INVALID_PROXIMITY_SCORE_FUNCTIONS_PAIR_ID: 'InvalidProximityScoreFunctionsPairId',
     INVALID_SCORE_FUNCTION_ID: 'InvalidScoreFunctionId',
     COMMIT_WINDOW_CLOSED: 'CommitWindowClosed',
     NODE_NOT_IN_SHARDING_TABLE: 'NodeNotInShardingTable',
@@ -1111,7 +1056,6 @@ export const QUERY_TYPES = {
 export const LOCAL_STORE_TYPES = {
     TRIPLE: 'TRIPLE',
     TRIPLE_PARANET: 'TRIPLE_PARANET',
-    PENDING: 'PENDING',
 };
 
 /**
@@ -1123,8 +1067,6 @@ export const CONTRACTS = {
     STAKING: 'Staking',
     PROFILE: 'Profile',
     HUB: 'Hub',
-    CONTENT_ASSET: 'ContentAsset',
-    COMMIT_MANAGER_V1_U1: 'CommitManagerV1U1',
     PARAMETERS_STORAGE: 'ParametersStorage',
     IDENTITY_STORAGE: 'IdentityStorage',
     LOG2PLDSF: 'Log2PLDSF',
@@ -1204,12 +1146,6 @@ export const CACHED_FUNCTIONS = {
     },
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
-    },
-    Log2PLDSFContract: {
-        getParameters: CACHE_DATA_TYPES.ANY,
-    },
-    LinearSumContract: {
-        getParameters: CACHE_DATA_TYPES.ANY,
     },
 };
 

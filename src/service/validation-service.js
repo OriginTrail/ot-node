@@ -15,7 +15,7 @@ class ValidationService {
 
         let isValid = true;
         try {
-            const result = await this.blockchainModuleManager.getKnowledgeAssetOwner(
+            const result = await this.blockchainModuleManager.getKnowledgeCollectionPublisher(
                 blockchain,
                 contract,
                 tokenId,

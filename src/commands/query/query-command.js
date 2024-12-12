@@ -136,7 +136,7 @@ class QueryCommand extends Command {
     }
 
     /**
-     * Builds default getInitCommand
+     * Builds default queryCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

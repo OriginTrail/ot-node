@@ -1,10 +1,6 @@
 import ValidateAssetCommand from '../../../common/validate-asset-command.js';
 import Command from '../../../command.js';
-import {
-    OPERATION_ID_STATUS,
-    LOCAL_STORE_TYPES,
-    ZERO_BYTES32,
-} from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS, ZERO_BYTES32 } from '../../../../constants/constants.js';
 
 class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
     constructor(ctx) {
@@ -26,14 +22,7 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
      * @param command
      */
     async execute(command) {
-        const {
-            operationId,
-            blockchain,
-            contract,
-            tokenId,
-            datasetRoot,
-            storeType = LOCAL_STORE_TYPES.TRIPLE,
-        } = command.data;
+        const { operationId, blockchain, contract, tokenId, datasetRoot } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -41,22 +30,12 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_BLOCKCHAIN_START,
         );
 
-        let blockchainAssertionId;
-        if (
-            storeType === LOCAL_STORE_TYPES.TRIPLE ||
-            storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET
-        ) {
-            blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
+        const blockchainAssertionId =
+            await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
                 blockchain,
                 contract,
                 tokenId,
             );
-        } else {
-            blockchainAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
-                blockchain,
-                tokenId,
-            );
-        }
         if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }

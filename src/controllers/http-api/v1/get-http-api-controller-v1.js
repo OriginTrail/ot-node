@@ -1,7 +1,6 @@
 import {
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
     ERROR_TYPE,
     TRIPLES_VISIBILITY,
 } from '../../../constants/constants.js';
@@ -46,7 +45,6 @@ class GetController extends BaseController {
             const { id, paranetUAL, includeMetadata, contentType } = req.body;
             ({ blockchain, contract, knowledgeCollectionId, knowledgeAssetId } =
                 this.ualService.resolveUAL(id));
-            const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
@@ -67,7 +65,6 @@ class GetController extends BaseController {
                     knowledgeCollectionId,
                     knowledgeAssetId,
                     operationId,
-                    hashFunctionId,
                     paranetUAL,
                     contentType: contentType ?? TRIPLES_VISIBILITY.ALL,
                 },

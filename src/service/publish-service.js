@@ -11,8 +11,6 @@ import {
 class PublishService extends OperationService {
     constructor(ctx) {
         super(ctx);
-
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.operationName = OPERATIONS.PUBLISH;
@@ -102,12 +100,12 @@ class PublishService extends OperationService {
         }
     }
 
-    async getBatchSize(blockchainId) {
-        return this.blockchainModuleManager.getR2(blockchainId);
+    async getBatchSize() {
+        return 20;
     }
 
-    async getMinAckResponses(blockchainId, minimumNumberOfNodeReplications = null) {
-        return minimumNumberOfNodeReplications ?? this.blockchainModuleManager.getR1(blockchainId);
+    async getMinAckResponses(minimumNumberOfNodeReplications = null) {
+        return minimumNumberOfNodeReplications ?? 10;
     }
 }
 

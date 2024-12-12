@@ -39,22 +39,12 @@ class ValidateAssetCommand extends Command {
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
-        let blockchainAssertionId;
-        if (
-            storeType === LOCAL_STORE_TYPES.TRIPLE ||
-            storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET
-        ) {
-            blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
+        const blockchainAssertionId =
+            await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkelRoot(
                 blockchain,
                 contract,
                 tokenId,
             );
-        } else {
-            blockchainAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
-                blockchain,
-                tokenId,
-            );
-        }
         if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }
@@ -113,11 +103,7 @@ class ValidateAssetCommand extends Command {
                     tokenId: paranetTokenId,
                 } = this.ualService.resolveUAL(paranetUAL);
 
-                paranetId = this.paranetService.constructParanetId(
-                    paranetBlockchain,
-                    paranetContract,
-                    paranetTokenId,
-                );
+                paranetId = this.paranetService.constructParanetId(paranetContract, paranetTokenId);
                 const paranetExists = await this.blockchainModuleManager.paranetExists(
                     paranetBlockchain,
                     paranetId,

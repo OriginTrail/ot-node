@@ -13,8 +13,6 @@ class SendTransactionCommand extends Command {
             rightNeighborhoodEdge,
             contract,
             tokenId,
-            keyword,
-            hashFunctionId,
             stateIndex,
             txGasPrice,
         } = data;
@@ -35,7 +33,7 @@ class SendTransactionCommand extends Command {
             this.logger.warn(
                 `Failed to execute ${command.name}, Error Message: ${error.message} for the Service Agreement ` +
                     `with the ID: ${agreementId}, Blockchain: ${blockchain}, Contract: ${contract}, ` +
-                    `Token ID: ${tokenId}, Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, ` +
+                    `Token ID: ${tokenId},` +
                     `Epoch: ${epoch}, State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                     `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                     `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +
@@ -127,7 +125,7 @@ class SendTransactionCommand extends Command {
         this.logger.trace(
             `${msgBase} ${command.name} for the Service Agreement with the ID: ${agreementId}, ` +
                 `Blockchain: ${blockchain}, Contract: ${contract}, Token ID: ${tokenId}, ` +
-                `Keyword: ${keyword}, Hash function ID: ${hashFunctionId}, Epoch: ${epoch}, ` +
+                `Epoch: ${epoch}, ` +
                 `State Index: ${stateIndex}, Operation ID: ${operationId}, ` +
                 `Closest Node: ${closestNode}, Left neighborhood edge: ${leftNeighborhoodEdge}, ` +
                 `Right neighborhood edge: ${rightNeighborhoodEdge}, ` +

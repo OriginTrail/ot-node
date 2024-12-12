@@ -15,7 +15,6 @@ class BlockchainEventListenerCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.ualService = ctx.ualService;
-        this.hashingService = ctx.hashingService;
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainEventsService = ctx.blockchainEventsService;
         this.fileService = ctx.fileService;

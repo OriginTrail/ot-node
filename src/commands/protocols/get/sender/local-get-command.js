@@ -4,7 +4,6 @@ import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants
 class LocalGetCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.config = ctx.config;
         this.operationService = ctx.getService;
         this.operationIdService = ctx.operationIdService;

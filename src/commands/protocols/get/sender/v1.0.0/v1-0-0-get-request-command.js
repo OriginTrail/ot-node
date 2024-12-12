@@ -45,11 +45,9 @@ class GetRequestCommand extends ProtocolRequestCommand {
             knowledgeAssetId,
             includeMetadata,
             ual,
-            hashFunctionId,
             paranetUAL,
             paranetId,
         } = command.data;
-        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 2;
 
         return {
             blockchain,
@@ -58,8 +56,6 @@ class GetRequestCommand extends ProtocolRequestCommand {
             knowledgeAssetId,
             includeMetadata,
             ual,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
             paranetUAL,
             paranetId,
         };

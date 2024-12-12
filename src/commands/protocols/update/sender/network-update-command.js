@@ -4,9 +4,8 @@ import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants
 class NetworkUpdateCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.ualService = ctx.ualService;
-        this.operationService = ctx.updateService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // can we remove this
+        this.ualService = ctx.ualService; // can we remove this
 
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_NETWORK_START_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_NETWORK_START;
