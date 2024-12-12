@@ -479,11 +479,21 @@ class BlockchainEventListenerCommand extends Command {
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
             publishOperationId,
         );
+        let datasetPath;
+        let cachedData;
+        try {
+            datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
 
-        const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
-
-        const cachedData = await this.fileService.readFile(datasetPath, true);
-
+            cachedData = await this.fileService.readFile(datasetPath, true);
+        } catch (error) {
+            this.operationIdService.updateOperationIdStatus(
+                operationId,
+                blockchain,
+                OPERATION_ID_STATUS.FAILED,
+                error.message,
+                ERROR_TYPE.FINALITY.FINALITY_ERROR,
+            );
+        }
         const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
 
         const sequence = ['storeAssertionCommand'];
