@@ -67,24 +67,12 @@ class LocalStoreCommand extends Command {
 
                     for (const data of assertions) {
                         if (data?.assertion && data?.assertionId) {
-                            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(
-                                data.assertion,
-                            );
-                            const knowledgeAssetsUALs = [];
-                            const knowledgeAssetStates = [];
                             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-                            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-                                knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
-                                knowledgeAssetStates.push(0);
-                            }
 
                             storePromises.push(
                                 this.tripleStoreService.insertKnowledgeCollection(
                                     TRIPLE_STORE_REPOSITORIES.DKG,
                                     ual,
-                                    knowledgeAssetsUALs,
-                                    knowledgeAssetStates,
                                     data.assertion,
                                 ),
                             );
@@ -220,6 +208,16 @@ class LocalStoreCommand extends Command {
                 blockchain,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_END,
             );
+
+            if (isOperationV0) {
+                await this.operationIdService.updateOperationIdStatus(
+                    operationId,
+                    blockchain,
+                    OPERATION_ID_STATUS.COMPLETED,
+                );
+
+                return Command.empty();
+            }
 
             const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
             const { signer, v, r, s, vs } = await this.signatureService.signMessage(
