@@ -925,14 +925,14 @@ class Web3Service {
     //     return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
     // }
 
-    // async getAssertionSize(assertionId) {
-    //     const assertionSize = await this.callContractFunction(
-    //         this.contracts.AssertionStorage,
-    //         'getAssertionSize',
-    //         [assertionId],
-    //     );
-    //     return Number(assertionSize);
-    // }
+    async getKnowledgeCollectionSize(knowledgeCollectionId) {
+        const knowledgeCollectionSize = await this.callContractFunction(
+            this.contracts.AssertionStorage,
+            'getByteSize',
+            [knowledgeCollectionId],
+        );
+        return Number(knowledgeCollectionSize);
+    }
 
     // async getAssertionTriplesNumber(assertionId) {
     //     const assertionTriplesNumber = await this.callContractFunction(
