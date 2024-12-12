@@ -1,8 +1,4 @@
-import {
-    CONTENT_ASSET_HASH_FUNCTION_ID,
-    DEFAULT_GET_STATE,
-    NETWORK_MESSAGE_TYPES,
-} from '../../constants/constants.js';
+import { DEFAULT_GET_STATE, NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
 import BaseController from './base-rpc-controller.js';
 
 class GetController extends BaseController {
@@ -38,7 +34,6 @@ class GetController extends BaseController {
                 knowledgeCollectionId: message.data.knowledgeCollectionId,
                 knowledgeAssetId: message.data.knowledgeAssetId,
                 includeMetadata: message.data.includeMetadata,
-                hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
                 state: message.data.state ?? DEFAULT_GET_STATE,
                 paranetUAL: message.data.paranetUAL,
                 paranetId: message.data.paranetId,

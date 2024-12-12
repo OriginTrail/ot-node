@@ -1,8 +1,5 @@
 import BaseController from './base-rpc-controller.js';
-import {
-    CONTENT_ASSET_HASH_FUNCTION_ID,
-    NETWORK_MESSAGE_TYPES,
-} from '../../constants/constants.js';
+import { NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
 
 class UpdateController extends BaseController {
     constructor(ctx) {
@@ -47,8 +44,8 @@ class UpdateController extends BaseController {
             blockchain: dataSource.blockchain,
             contract: dataSource.contract,
             tokenId: dataSource.tokenId,
+            // TODO: Don't use keyword
             keyword: dataSource.keyword,
-            hashFunctionId: dataSource.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
         };
 
         await this.commandExecutor.add(command);
