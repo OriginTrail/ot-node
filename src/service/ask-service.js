@@ -27,6 +27,7 @@ class AskService extends OperationService {
         const { operationId, blockchain, numberOfFoundNodes, leftoverNodes, batchSize } =
             command.data;
 
+        // TODO: handle response data for multiple uals
         const responseStatusesFromDB = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,

@@ -34,13 +34,14 @@ class HandleAskRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.ASK.ASK_REMOTE_START,
         );
 
-        const knowledgeCollectionExistsInUnifiedGraph =
-            await this.tripleStoreService.checkIfKnowledgeCollectionExistsInUnifiedGraph(ual);
-        if (knowledgeCollectionExistsInUnifiedGraph) {
+        const knowledgeCollectionsExistArray =
+            await this.tripleStoreService.checkIfKnowledgeCollectionsExistInUnifiedGraph(ual);
+        const success = !!knowledgeCollectionsExistArray?.length;
+        if (success) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                knowledgeCollectionExistsInUnifiedGraph,
+                knowledgeCollectionsExistArray,
                 [
                     OPERATION_ID_STATUS.ASK.ASK_FETCH_FROM_NODES_END,
                     OPERATION_ID_STATUS.ASK.ASK_END,
@@ -55,14 +56,16 @@ class HandleAskRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.ASK.ASK_REMOTE_END,
         );
 
-        return knowledgeCollectionExistsInUnifiedGraph
+        return success
             ? {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                  messageData: { knowledgeCollectionExistsInUnifiedGraph },
+                  messageData: { knowledgeCollectionsExistArray },
               }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                  messageData: { errorMessage: `Unable to find knowledge collection ${ual}` },
+                  messageData: {
+                      errorMessage: `Unable to find knowledge collections ${ual.join(', ')}`,
+                  },
               };
     }
 

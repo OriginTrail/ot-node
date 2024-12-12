@@ -34,31 +34,42 @@ class AskController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
 
-        const { ual, blockchain, minimumNumberOfNodeReplications } = req.body;
+        const { ual: ualParam, blockchain, minimumNumberOfNodeReplications } = req.body;
+        const uals = Array.isArray(ualParam) ? ualParam : [ualParam];
 
         try {
-            this.logger.info(`Ask for ${ual} with operation id ${operationId} initiated.`);
+            this.logger.info(
+                `Ask for ${uals.join(', ')} with operation id ${operationId} initiated.`,
+            );
 
             const commandSequence = ['askFindShardCommand', 'networkAskCommand'];
 
-            const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
+            const datasetRoots = await Promise.all(
+                uals
+                    .map((ual) => async () => {
+                        const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
 
-            const datasetRoot =
-                await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkleRoot(
-                    blockchain,
-                    contract,
-                    knowledgeCollectionId,
-                );
+                        const datasetRoot =
+                            await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkleRoot(
+                                blockchain,
+                                contract,
+                                knowledgeCollectionId,
+                            );
+
+                        return datasetRoot;
+                    })
+                    .map((f) => f()),
+            );
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
                 sequence: commandSequence.slice(1),
                 delay: 0,
                 data: {
-                    ual,
+                    ual: uals,
                     operationId,
                     blockchain,
-                    datasetRoot,
+                    datasetRoot: datasetRoots,
                     minimumNumberOfNodeReplications,
                 },
                 transactional: false,

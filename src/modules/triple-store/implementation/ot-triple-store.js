@@ -193,6 +193,15 @@ class OtTripleStore {
         return this.ask(repository, query);
     }
 
+    async knowledgeCollectionsExistInUnifiedGraph(repository, namedGraph, uals) {
+        const query = `
+            TODO: create query returning array of bools for array of uals
+             ${namedGraph} ${uals}
+        `;
+
+        return this.ask(repository, query);
+    }
+
     async deleteUniqueKnowledgeAssetTriplesFromUnifiedGraph(repository, namedGraph, ual) {
         const query = `
             DELETE {

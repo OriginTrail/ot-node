@@ -295,19 +295,31 @@ class TripleStoreService {
         ]);
     }
 
-    async checkIfKnowledgeCollectionExistsInUnifiedGraph(
-        ual,
+    async checkIfKnowledgeCollectionsExistInUnifiedGraph(
+        uals,
         repository = TRIPLE_STORE_REPOSITORY.DKG,
     ) {
-        const knowledgeCollectionExists =
-            await this.tripleStoreModuleManager.knowledgeCollectionExistsInUnifiedGraph(
+        if (uals.length === 1) {
+            const knowledgeCollectionExists =
+                await this.tripleStoreModuleManager.knowledgeCollectionExistsInUnifiedGraph(
+                    this.repositoryImplementations[repository],
+                    repository,
+                    BASE_NAMED_GRAPHS.UNIFIED,
+                    uals[0],
+                );
+
+            return [knowledgeCollectionExists];
+        }
+
+        const knowledgeCollectionsExistArray =
+            await this.tripleStoreModuleManager.knowledgeCollectionsExistInUnifiedGraph(
                 this.repositoryImplementations[repository],
                 repository,
                 BASE_NAMED_GRAPHS.UNIFIED,
-                ual,
+                uals,
             );
 
-        return knowledgeCollectionExists;
+        return knowledgeCollectionsExistArray;
     }
 
     async getAssertion(

@@ -27,9 +27,14 @@ class FindShardCommand extends Command {
     async execute(command) {
         const { operationId, blockchain, datasetRoot, minimumNumberOfNodeReplications } =
             command.data;
+        // NOTE: datasetRoot is an array!
+        // TODO: Handle multiple datasetRoots
         this.logger.debug(
-            `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
+            `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot.join(
+                ', ',
+            )}`,
         );
+
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,

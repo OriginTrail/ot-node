@@ -53,7 +53,7 @@ class AskRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command, responseData) {
-        if (responseData?.knowledgeCollectionExistsInUnifiedGraph) {
+        if (responseData?.knowledgeCollectionsExistArray) {
             await this.operationService.processResponse(
                 command,
                 OPERATION_REQUEST_STATUS.COMPLETED,

@@ -73,6 +73,19 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async knowledgeCollectionsExistInUnifiedGraph(
+        implementationName,
+        repository,
+        namedGraph,
+        uals,
+    ) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(
+                implementationName,
+            ).module.knowledgeCollectionsExistInUnifiedGraph(repository, namedGraph, uals);
+        }
+    }
+
     async deleteUniqueKnowledgeAssetTriplesFromUnifiedGraph(
         implementationName,
         repository,
