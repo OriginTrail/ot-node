@@ -49,8 +49,8 @@ class ParanetService {
     }
 
     getParanetIdFromUAL(paranetUAL) {
-        const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
-        return this.constructParanetId(blockchain, contract, tokenId);
+        const { contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
+        return this.constructParanetId(contract, tokenId);
     }
 }
 
