@@ -925,27 +925,52 @@ class Web3Service {
     //     return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
     // }
 
-    async getKnowledgeCollectionSize(knowledgeCollectionId) {
+    async getKnowledgeCollectionPublisher(assetStorageContractAddress, knowledgeCollectionId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
+        const knowledgeCollectionPublisher = await this.callContractFunction(
+            assetStorageContractInstance,
+            'getPublisher',
+            [knowledgeCollectionId],
+        );
+        return knowledgeCollectionPublisher;
+    }
+
+    async getKnowledgeCollectionSize(assetStorageContractAddress, knowledgeCollectionId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
         const knowledgeCollectionSize = await this.callContractFunction(
-            this.contracts.AssertionStorage,
+            assetStorageContractInstance,
             'getByteSize',
             [knowledgeCollectionId],
         );
         return Number(knowledgeCollectionSize);
     }
 
-    async getKnowledgeCollectionTriplesNumber(knowledgeCollectionId) {
+    async getKnowledgeCollectionTriplesNumber(assetStorageContractAddress, knowledgeCollectionId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
         const knowledgeCollectionTriplesNumber = await this.callContractFunction(
-            this.contracts.AssertionStorage,
+            assetStorageContractInstance,
             'getTriplesAmount',
             [knowledgeCollectionId],
         );
         return Number(knowledgeCollectionTriplesNumber);
     }
 
-    async getKnowledgeCollectionChunksAmount(knowledgeCollectionId) {
+    async getKnowledgeCollectionChunksAmount(assetStorageContractAddress, knowledgeCollectionId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
         const knowledgeCollectionChunksNumber = await this.callContractFunction(
-            this.contracts.AssertionStorage,
+            assetStorageContractInstance,
             'getChunksAmount',
             [knowledgeCollectionId],
         );

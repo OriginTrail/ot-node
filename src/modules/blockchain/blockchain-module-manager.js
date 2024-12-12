@@ -149,6 +149,17 @@ class BlockchainModuleManager extends BaseModuleManager {
     //     ]);
     // }
 
+    async getKnowledgeCollectionPublisher(
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionPublisher', [
+            assetStorageContractAddress,
+            knowledgeCollectionId,
+        ]);
+    }
+
     async getShardingTableHead(blockchain) {
         return this.callImplementationFunction(blockchain, 'getShardingTableHead');
     }
