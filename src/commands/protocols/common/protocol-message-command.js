@@ -61,11 +61,7 @@ class ProtocolMessageCommand extends Command {
             message,
             this.messageTimeout(),
         );
-        await this.operationIdService.emitChangeEvent(
-            this.sendMessageEndEvent,
-            operationId,
-            blockchain,
-        );
+        this.operationIdService.emitChangeEvent(this.sendMessageEndEvent, operationId, blockchain);
 
         this.networkModuleManager.removeCachedSession(operationId, node.id);
 

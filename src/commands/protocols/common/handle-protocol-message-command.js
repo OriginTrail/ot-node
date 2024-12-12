@@ -66,7 +66,7 @@ class HandleProtocolMessageCommand extends Command {
                 operationId,
                 messageData,
             );
-            this.operationIdService.updateOperationIdStatus(
+            await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
                 this.operationEndEvent,
@@ -91,7 +91,7 @@ class HandleProtocolMessageCommand extends Command {
             blockchain,
         );
 
-        this.operationIdService.this.updateOperationIdStatus(
+        await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             this.operationEndEvent,

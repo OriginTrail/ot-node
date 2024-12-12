@@ -112,6 +112,36 @@ class JsonSchemaService {
 
         return this.loadSchema(version, 'local-store', schemaArgs);
     }
+
+    async finalitySchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v1':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'finality', schemaArgs);
+    }
+
+    async askSchema(version) {
+        const schemaArgs = {};
+
+        switch (version) {
+            case 'v1':
+                schemaArgs.blockchainImplementationNames =
+                    this.blockchainModuleManager.getImplementationNames();
+                break;
+            default:
+                throw Error(`HTTP API version: ${version} isn't supported.`);
+        }
+
+        return this.loadSchema(version, 'ask', schemaArgs);
+    }
 }
 
 export default JsonSchemaService;
