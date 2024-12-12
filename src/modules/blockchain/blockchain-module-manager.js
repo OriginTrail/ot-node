@@ -121,22 +121,26 @@ class BlockchainModuleManager extends BaseModuleManager {
         );
     }
 
-    // async getLatestKnowledgeCollectionId(blockchain, assetContractAddress) {
-    //     return this.callImplementationFunction(blockchain, 'getLatestKnowledgeCollectionId', [
-    //         assetContractAddress,
-    //     ]);
-    // }
+    async getLatestKnowledgeCollectionId(blockchain, assetStorageContractAddress) {
+        return this.callImplementationFunction(blockchain, 'getLatestKnowledgeCollectionId', [
+            assetStorageContractAddress,
+        ]);
+    }
 
     getAssetStorageContractAddresses(blockchain) {
         return this.callImplementationFunction(blockchain, 'getAssetStorageContractAddresses');
     }
 
-    // async getCollectionMerkleRoots(blockchain, assetContractAddress, knowledgeCollectionId) {
-    //     return this.callImplementationFunction(blockchain, 'getCollectionMerkleRoots', [
-    //         assetContractAddress,
-    //         knowledgeCollectionId,
-    //     ]);
-    // }
+    async getKnowledgeCollectionMerkleRoots(
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionMerkleRoots', [
+            assetStorageContractAddress,
+            knowledgeCollectionId,
+        ]);
+    }
 
     // async getKnowledgeAssetOwner(blockchain, assetContractAddress, tokenId) {
     //     return this.callImplementationFunction(blockchain, 'getKnowledgeAssetOwner', [

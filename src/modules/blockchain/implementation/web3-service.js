@@ -884,39 +884,37 @@ class Web3Service {
         if (!assetStorageContractInstance)
             throw new Error('Unknown asset storage contract address');
 
-        return this.callContractFunction(assetStorageContractInstance, 'getMerkleRoot', [
+        return this.callContractFunction(assetStorageContractInstance, 'getLatestMerkleRoot', [
             knowledgeCollectionId,
         ]);
     }
 
-    // async getLatestTokenId(assetContractAddress) {
-    //     const assetStorageContractInstance =
-    //         this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-    //     if (!assetStorageContractInstance)
-    //         throw new Error('Unknown asset storage contract address');
+    async getLatestKnowledgeCollectionId(assetStorageContractAddress) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
-    //     const lastTokenId = await this.callContractFunction(
-    //         assetStorageContractInstance,
-    //         'lastTokenId',
-    //         [],
-    //     );
-    //     return lastTokenId;
-    // }
+        const lastKnowledgeCollectionId = await this.callContractFunction(
+            assetStorageContractInstance,
+            'getLatestKnowledgeCollectionId',
+            [],
+        );
+        return lastKnowledgeCollectionId;
+    }
 
     getAssetStorageContractAddresses() {
         return Object.keys(this.assetStorageContracts);
     }
 
-    // async getAssertionIds(assetContractAddress, tokenId) {
-    //     const assetStorageContractInstance =
-    //         this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-    //     if (!assetStorageContractInstance)
-    //         throw new Error('Unknown asset storage contract address');
+    async getKnowledgeCollectionMerkleRoots(assetStorageContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
-    //     return this.callContractFunction(assetStorageContractInstance, 'getAssertionIds', [
-    //         tokenId,
-    //     ]);
-    // }
+        return this.callContractFunction(assetStorageContractInstance, 'getMerkleRoots', [tokenId]);
+    }
 
     // async getKnowledgeAssetOwner(assetContractAddress, tokenId) {
     //     const assetStorageContractInstance =
