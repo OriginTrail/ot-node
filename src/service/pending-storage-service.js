@@ -1,4 +1,8 @@
 import path from 'path';
+import {
+    NETWORK_SIGNATURES_FOLDER,
+    PUBLISHER_NODE_SIGNATURES_FOLDER,
+} from '../constants/constants.js';
 
 class PendingStorageService {
     constructor(ctx) {
@@ -54,7 +58,8 @@ class PendingStorageService {
             // Define the paths to the directories we want to clean
             const storagePaths = [
                 this.fileService.getPendingStorageCachePath(),
-                this.fileService.getSignatureStorageCachePath(),
+                this.fileService.getSignatureStorageFolderPath(NETWORK_SIGNATURES_FOLDER),
+                this.fileService.getSignatureStorageFolderPath(PUBLISHER_NODE_SIGNATURES_FOLDER),
             ];
 
             const filesToDelete = [];
