@@ -5,6 +5,7 @@ class ResultController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
+        this.signatureService = ctx.signatureService;
 
         this.availableOperations = ['publish', 'get', 'query', 'update', 'ask', 'finality'];
     }
@@ -38,9 +39,7 @@ class ResultController extends BaseController {
 
                 switch (operation) {
                     case 'get':
-                    case 'publish':
                     case 'query':
-                    case 'update':
                     case 'finality':
                         if (handlerRecord.status === OPERATION_ID_STATUS.COMPLETED) {
                             response.data = await this.operationIdService.getCachedOperationIdData(
@@ -48,6 +47,18 @@ class ResultController extends BaseController {
                             );
                         }
                         break;
+                    case 'publish':
+                    case 'update': {
+                        const minAcksReached = handlerRecord.minAcksReached || false;
+                        response.data = { ...response.data, minAcksReached };
+                        if (minAcksReached) {
+                            const signatures = await this.signatureService.getSignaturesFromStorage(
+                                operationId,
+                            );
+                            response.data = { ...response.data, signatures };
+                        }
+                        break;
+                    }
                     case 'ask':
                         response.data = await this.operationIdService.getCachedOperationIdData(
                             operationId,
