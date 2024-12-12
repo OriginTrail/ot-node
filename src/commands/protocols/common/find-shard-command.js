@@ -84,7 +84,7 @@ class FindShardCommand extends Command {
 
         this.logger.debug(
             `Found ${
-                shardNodes.length + nodePartOfShard ? 1 : 0
+                shardNodes.length + (nodePartOfShard ? 1 : 0)
             } node(s) for operationId: ${operationId}`,
         );
         // TODO: Log local node
@@ -117,7 +117,7 @@ class FindShardCommand extends Command {
             {
                 ...command.data,
                 leftoverNodes: shardNodes,
-                numberOfShardNodes: shardNodes.length + nodePartOfShard ? 1 : 0,
+                numberOfShardNodes: shardNodes.length + (nodePartOfShard ? 1 : 0),
             },
             command.sequence,
         );

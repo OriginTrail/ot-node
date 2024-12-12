@@ -20,7 +20,7 @@ class ProtocolScheduleMessagesCommand extends Command {
             operationId,
             batchSize,
             leftoverNodes,
-            numberOfFoundNodes,
+            numberOfShardNodes,
             blockchain,
             minAckResponses,
         } = command.data;
@@ -52,7 +52,7 @@ class ProtocolScheduleMessagesCommand extends Command {
                     blockchain,
                     operationId,
                     node,
-                    numberOfFoundNodes,
+                    numberOfShardNodes,
                     batchSize,
                     minAckResponses,
                     leftoverNodes: currentBatchLeftoverNodes,
