@@ -20,7 +20,13 @@ class PublishFinalitySaveAckCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { ual, publishOperationId, blockchain, operationId, remotePeerId } = command.data;
+        const { ual, publishOperationId, blockchain, operationId, remotePeerId, state } =
+            command.data;
+
+        let ualWithState = ual;
+        if (state) {
+            ualWithState = `${ual}:${state}`;
+        }
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -32,20 +38,20 @@ class PublishFinalitySaveAckCommand extends Command {
         try {
             await this.repositoryModuleManager.saveFinalityAck(
                 publishOperationId,
-                ual,
+                ualWithState,
                 remotePeerId,
             );
 
             success = true;
             response = {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                messageData: { message: `Acknowledged storing of ${ual}.` },
+                messageData: { message: `Acknowledged storing of ${ualWithState}.` },
             };
         } catch (err) {
             success = false;
             response = {
                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                messageData: { errorMessage: `Failed to acknowledge storing of ${ual}.` },
+                messageData: { errorMessage: `Failed to acknowledge storing of ${ualWithState}.` },
             };
         }
 
