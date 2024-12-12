@@ -11,8 +11,6 @@ class NetworkProtocolCommand extends Command {
         this.errorType = ERROR_TYPE.NETWORK_PROTOCOL_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_START;
         this.operationEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_END;
-        this.getBatchSizeStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_BATCH_SIZE_START;
-        this.getBatchSizeEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_BATCH_SIZE_END;
     }
 
     /**
@@ -24,13 +22,7 @@ class NetworkProtocolCommand extends Command {
 
         this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
 
-        this.operationIdService.emitChangeEvent(
-            this.getBatchSizeStartEvent,
-            operationId,
-            blockchain,
-        );
         const batchSize = await this.operationService.getBatchSize(blockchain);
-        this.operationIdService.emitChangeEvent(this.getBatchSizeEndEvent, operationId, blockchain);
 
         const minAckResponses = await this.operationService.getMinAckResponses(
             blockchain,

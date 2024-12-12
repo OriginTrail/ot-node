@@ -49,7 +49,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         );
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
             blockchain,
         );
@@ -85,6 +85,11 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             );
             return Command.empty();
         }
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END,
+        );
 
         // TODO
         // if (!isValidPrivateAssertion) {
