@@ -934,14 +934,14 @@ class Web3Service {
         return Number(knowledgeCollectionSize);
     }
 
-    // async getAssertionTriplesNumber(assertionId) {
-    //     const assertionTriplesNumber = await this.callContractFunction(
-    //         this.contracts.AssertionStorage,
-    //         'getAssertionTriplesNumber',
-    //         [assertionId],
-    //     );
-    //     return Number(assertionTriplesNumber);
-    // }
+    async getKnowledgeCollectionTriplesNumber(knowledgeCollectionId) {
+        const assertionTriplesNumber = await this.callContractFunction(
+            this.contracts.AssertionStorage,
+            'getTriplesAmount',
+            [knowledgeCollectionId],
+        );
+        return Number(assertionTriplesNumber);
+    }
 
     // async getAssertionChunksNumber(assertionId) {
     //     const assertionChunksNumber = await this.callContractFunction(
