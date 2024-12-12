@@ -16,7 +16,7 @@ class PublishService extends OperationService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.signatureService = ctx.signatureService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
- 
+
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocols = NETWORK_PROTOCOLS.STORE;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
@@ -66,6 +66,8 @@ class PublishService extends OperationService {
                 `Error message for operation id: ${operationId}, dataset root: ${datasetRoot} : ${responseData.errorMessage}`,
             );
         }
+
+        console.log(`MIN ACKS: ${minAckResponses}`);
 
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
