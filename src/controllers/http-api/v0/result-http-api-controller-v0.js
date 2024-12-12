@@ -6,7 +6,7 @@ class ResultController extends BaseController {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
 
-        this.availableOperations = ['publish', 'get', 'query', 'local-store', 'update', 'finality'];
+        this.availableOperations = ['publish', 'get', 'query', 'local-store', 'update'];
     }
 
     async handleRequest(req, res) {
@@ -47,11 +47,6 @@ class ResultController extends BaseController {
                                 operationId,
                             );
                         }
-                        break;
-                    case 'finality':
-                        response.data = await this.operationIdService.getCachedOperationIdData(
-                            operationId,
-                        );
                         break;
                     default:
                         break;

@@ -164,7 +164,7 @@ class TripleStoreModuleManager extends BaseModuleManager {
 
     async getKnowledgeAssetNamedGraph(implementationName, repository, ual, visibility) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.getAssertionFromNamedGraph(
+            return this.getImplementation(implementationName).module.getKnowledgeAssetNamedGraph(
                 repository,
                 ual,
                 visibility,

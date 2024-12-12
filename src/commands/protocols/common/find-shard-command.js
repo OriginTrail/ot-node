@@ -17,7 +17,7 @@ class FindShardCommand extends Command {
     }
 
     // eslint-disable-next-line no-unused-vars
-    getOperationCommandSequence(nodePartOfShard) {
+    getOperationCommandSequence(nodePartOfShard, commandData) {
         return [];
     }
 
@@ -26,7 +26,8 @@ class FindShardCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, datasetRoot } = command.data;
+        const { operationId, blockchain, datasetRoot, minimumNumberOfNodeReplications } =
+            command.data;
         this.logger.debug(
             `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
         );
@@ -36,7 +37,9 @@ class FindShardCommand extends Command {
             this.operationStartEvent,
         );
 
-        this.minAckResponses = await this.operationService.getMinAckResponses();
+        this.minAckResponses = await this.operationService.getMinAckResponses(
+            minimumNumberOfNodeReplications,
+        );
 
         const networkProtocols = this.operationService.getNetworkProtocols();
 
@@ -74,7 +77,7 @@ class FindShardCommand extends Command {
             blockchain,
         );
 
-        const commandSequence = this.getOperationCommandSequence(nodePartOfShard);
+        const commandSequence = this.getOperationCommandSequence(nodePartOfShard, command.data);
 
         command.sequence.push(...commandSequence);
 

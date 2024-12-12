@@ -21,28 +21,6 @@ class BidSuggestionController extends BaseController {
             return;
         }
 
-        // Uncomment when switch to ethers.js
-        // if (
-        //     !(await this.blockchainModuleManager.isAssetStorageContract(
-        //         req.query.blockchain,
-        //         req.query.contentAssetStorageAddress,
-        //     ))
-        // )
-        //     this.returnResponse(res, 400, {
-        //         code: 400,
-        //         message: `Invalid Content Asset Storage Contract Address`,
-        //     });
-        // if (
-        //     !(await this.blockchainModuleManager.isHashFunction(
-        //         req.query.blockchain,
-        //         req.query.hashFunctionId,
-        //     ))
-        // )
-        //     this.returnResponse(res, 400, {
-        //         code: 400,
-        //         message: `Invalid Hash Function ID`,
-        //     });
-
         const {
             blockchain,
             epochsNumber,
