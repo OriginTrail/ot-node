@@ -96,13 +96,18 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'restartService');
     }
 
-    // async getCollectionMerkleRootByIndex(blockchain, assetContractAddress, knowledgeCollectionId, index) {
-    //     return this.callImplementationFunction(blockchain, 'getCollectionMerkleRootByIndex', [
-    //         assetContractAddress,
-    //         knowledgeCollectionId,
-    //         index,
-    //     ]);
-    // }
+    async getKnowledgeCollectionMerkleRootByIndex(
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+        index,
+    ) {
+        return this.callImplementationFunction(blockchain, 'getCollectionMerkleRootByIndex', [
+            assetStorageContractAddress,
+            knowledgeCollectionId,
+            index,
+        ]);
+    }
 
     // async getCollectionLatestMerkleRoot(blockchain, assetContractAddress, knowledgeCollectionId) {
     //     return this.callImplementationFunction(blockchain, 'getCollectionLatestMerkleRoot', [

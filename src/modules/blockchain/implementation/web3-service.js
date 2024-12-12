@@ -859,17 +859,21 @@ class Web3Service {
         ]);
     }
 
-    // async getCollectionMerkleRootByIndex(assetContractAddress, tokenId, index) {
-    //     const assetStorageContractInstance =
-    //         this.assetStorageContracts[assetContractAddress.toLowerCase()];
-    //     if (!assetStorageContractInstance)
-    //         throw new Error('Unknown asset storage contract address');
+    async getKnowledgeCollectionMerkleRootByIndex(
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+        index,
+    ) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetStorageContractAddress.toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
-    //     return this.callContractFunction(assetStorageContractInstance, 'getMerkleRootByIndex', [
-    //         tokenId,
-    //         index,
-    //     ]);
-    // }
+        return this.callContractFunction(assetStorageContractInstance, 'getMerkleRootByIndex', [
+            knowledgeCollectionId,
+            index,
+        ]);
+    }
 
     // async getLatestAssertionId(assetContractAddress, tokenId) {
     //     const assetStorageContractInstance =

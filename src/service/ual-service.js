@@ -121,6 +121,7 @@ class UALService {
         return contractRegex.test(contract);
     }
 
+    // TODO: Do we need still need this
     async calculateLocationKeyword(
         blockchain,
         contract,
@@ -129,7 +130,7 @@ class UALService {
     ) {
         const firstAssertionId =
             assertionId ??
-            (await this.blockchainModuleManager.getKnowledgeCollectionMerkleRootdByIndex(
+            (await this.blockchainModuleManager.getKnowledgeCollectionMerkleRootByIndex(
                 blockchain,
                 contract,
                 knowledgeCollectionId,
