@@ -91,7 +91,7 @@ class PublishController extends BaseController {
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
                     minimumNumberOfNodeReplications,
-                    batchSize: userDefinedBatchSize,
+                    userDefinedBatchSize,
                 },
                 transactional: false,
             });
