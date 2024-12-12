@@ -1,4 +1,4 @@
-export default () => ({
+export default (argumentsObject) => ({
     type: 'object',
     required: ['ual', 'blockchain', 'minimumNumberOfNodeReplications'],
     properties: {
