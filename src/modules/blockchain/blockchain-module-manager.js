@@ -109,12 +109,17 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    // async getCollectionLatestMerkleRoot(blockchain, assetContractAddress, knowledgeCollectionId) {
-    //     return this.callImplementationFunction(blockchain, 'getCollectionLatestMerkleRoot', [
-    //         assetContractAddress,
-    //         knowledgeCollectionId,
-    //     ]);
-    // }
+    async getKnowledgeCollectionLatestMerkleRoot(
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        return this.callImplementationFunction(
+            blockchain,
+            'getKnowledgeCollectionLatestMerkleRoot',
+            [assetStorageContractAddress, knowledgeCollectionId],
+        );
+    }
 
     // async getLatestKnowledgeCollectionId(blockchain, assetContractAddress) {
     //     return this.callImplementationFunction(blockchain, 'getLatestKnowledgeCollectionId', [

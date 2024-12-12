@@ -875,16 +875,19 @@ class Web3Service {
         ]);
     }
 
-    // async getLatestAssertionId(assetContractAddress, tokenId) {
-    //     const assetStorageContractInstance =
-    //         this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
-    //     if (!assetStorageContractInstance)
-    //         throw new Error('Unknown asset storage contract address');
+    async getKnowledgeCollectionLatestMerkleRoot(
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
 
-    //     return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
-    //         tokenId,
-    //     ]);
-    // }
+        return this.callContractFunction(assetStorageContractInstance, 'getMerkleRoot', [
+            knowledgeCollectionId,
+        ]);
+    }
 
     // async getLatestTokenId(assetContractAddress) {
     //     const assetStorageContractInstance =
