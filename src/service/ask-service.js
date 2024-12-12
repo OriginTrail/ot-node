@@ -27,7 +27,6 @@ class AskService extends OperationService {
         const { operationId, blockchain, numberOfFoundNodes, leftoverNodes, batchSize } =
             command.data;
 
-        // TODO: handle response data for multiple uals
         const responseStatusesFromDB = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,
@@ -59,30 +58,50 @@ class AskService extends OperationService {
             );
         }
 
+        let cumulatedResponsesData;
+        await this.operationMutex.runExclusive(async () => {
+            cumulatedResponsesData = (await this.operationIdService.getCachedOperationIdData(
+                operationId,
+            )) ?? {
+                responses: [],
+                completedNodes: 0,
+                allNodesReplicatedData: false,
+            };
+
+            if (responseData.knowledgeCollectionsExistArray)
+                cumulatedResponsesData.responses.push(responseData.knowledgeCollectionsExistArray);
+
+            cumulatedResponsesData.completedNodes = cumulatedResponsesData.responses.filter(
+                (arr) => !arr.includes(false),
+            ).length;
+
+            cumulatedResponsesData.allNodesReplicatedData =
+                cumulatedResponsesData.completedNodes >= minimumNumberOfNodeReplications;
+
+            await this.operationIdService.cacheOperationIdDataToFile(
+                operationId,
+                cumulatedResponsesData,
+            );
+        });
+
         if (
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minimumNumberOfNodeReplications
+            cumulatedResponsesData.completedNodes === minimumNumberOfNodeReplications
         ) {
-            await this.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                {
-                    completedNodes: completedNumber,
-                    allNodesReplicatedData: true,
-                },
-                [...this.completedStatuses],
-            );
+            await this.markOperationAsCompleted(operationId, blockchain, cumulatedResponsesData, [
+                ...this.completedStatuses,
+            ]);
             this.logResponsesSummary(completedNumber, failedNumber);
         } else if (
-            completedNumber < minimumNumberOfNodeReplications &&
+            cumulatedResponsesData.completedNodes < minimumNumberOfNodeReplications &&
             (isAllNodesResponded || isBatchCompleted)
         ) {
             const potentialCompletedNumber = completedNumber + leftoverNodes.length;
 
-            await this.operationIdService.cacheOperationIdDataToFile(operationId, {
-                completedNodes: completedNumber,
-                allNodesReplicatedData: false,
-            });
+            await this.operationIdService.cacheOperationIdDataToFile(
+                operationId,
+                cumulatedResponsesData,
+            );
 
             // Still possible to meet minimumNumberOfNodeReplications, schedule leftover nodes
             if (
