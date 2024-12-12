@@ -30,11 +30,12 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_BLOCKCHAIN_START,
         );
 
-        const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
-            blockchain,
-            contract,
-            tokenId,
-        );
+        const blockchainAssertionId =
+            await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
+                blockchain,
+                contract,
+                tokenId,
+            );
         if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }

@@ -1,3 +1,4 @@
+// TODO: Delete whole file
 class ServiceAgreementService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -8,13 +9,14 @@ class ServiceAgreementService {
         this.networkModuleManager = ctx.networkModuleManager;
         this.hashingService = ctx.hashingService;
         this.proximityScoringService = ctx.proximityScoringService;
+        this.cryptoService = ctx.cryptoService;
     }
 
-    generateId(blockchain, assetTypeContract, tokenId, keyword, hashFunctionId) {
+    // TODO: Changed function signature change everywhere
+    generateId(assetTypeContract, tokenId, keyword, hashFunctionId) {
         return this.hashingService.callHashFunction(
             hashFunctionId,
-            this.blockchainModuleManager.encodePacked(
-                blockchain,
+            this.cryptoService.encodePacked(
                 ['address', 'uint256', 'bytes'],
                 [assetTypeContract, tokenId, keyword],
             ),
@@ -35,8 +37,8 @@ class ServiceAgreementService {
         // todo: consider optimizing to take into account cases where some proofs have already been submitted
         const epochsLeft = Number(agreementData.epochsNumber) - currentEpoch;
 
-        const divisor = this.blockchainModuleManager
-            .toBigNumber(blockchain, r0)
+        const divisor = this.cryptoService
+            .toBigNumber(r0)
             .mul(epochsLeft)
             .mul(blockchainAssertionSize);
 

@@ -44,7 +44,10 @@ class ParanetSyncCommand extends Command {
 
         // Fetch counts from blockchain and database
         const contractKaCount = (
-            await this.blockchainModuleManager.getParanetKnowledgeAssetsCount(blockchain, paranetId)
+            await this.blockchainModuleManager.getParanetKnowledgeCollectionCount(
+                blockchain,
+                paranetId,
+            )
         ).toNumber();
 
         const syncedAssetsCount =
@@ -365,11 +368,12 @@ class ParanetSyncCommand extends Command {
                 `Paranet sync: Syncing asset: ${ual} for paranet: ${paranetId}, operation ID: ${operationId}`,
             );
 
-            const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-                blockchain,
-                contract,
-                tokenId,
-            );
+            const assertionIds =
+                await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoots(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
 
             const keyword = await this.ualService.calculateLocationKeyword(
                 blockchain,
@@ -487,7 +491,7 @@ class ParanetSyncCommand extends Command {
         const results = [];
         while (i <= contractKaCount) {
             const nextKaArray =
-                await this.blockchainModuleManager.getParanetKnowledgeAssetsWithPagination(
+                await this.blockchainModuleManager.getParanetKnowledgeCollectionsWithPagination(
                     blockchain,
                     paranetId,
                     i,
@@ -504,7 +508,7 @@ class ParanetSyncCommand extends Command {
             // NOTE: This could also be processed in parallel if needed
             for (const knowledgeAssetId of nextKaArray) {
                 const { knowledgeAssetStorageContract, tokenId: knowledgeAssetTokenId } =
-                    await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
+                    await this.blockchainModuleManager.getParanetKnowledgeCollectionLocator(
                         blockchain,
                         knowledgeAssetId,
                     );

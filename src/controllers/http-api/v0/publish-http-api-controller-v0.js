@@ -10,13 +10,10 @@ import {
 class PublishController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.ualService = ctx.ualService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // this is not used
         this.pendingStorageService = ctx.pendingStorageService;
     }
 

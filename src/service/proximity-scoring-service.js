@@ -6,6 +6,7 @@ import {
     UINT256_MAX_BN,
 } from '../constants/constants.js';
 
+// Todo: remove this file
 class ProximityScoringService {
     constructor(ctx) {
         this.config = ctx.config;

@@ -14,6 +14,7 @@ class ValidationService {
         );
 
         let isValid = true;
+        // We should get something else here as we can't get owner atm (get publisher perhaps)
         try {
             const result = await this.blockchainModuleManager.getKnowledgeAssetOwner(
                 blockchain,

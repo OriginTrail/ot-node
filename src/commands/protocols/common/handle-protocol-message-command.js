@@ -115,11 +115,12 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
-        const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
-            blockchain,
-            contract,
-            tokenId,
-        );
+        const blockchainAssertionId =
+            await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
+                blockchain,
+                contract,
+                tokenId,
+            );
         if (blockchainAssertionId !== assertionId) {
             throw Error(
                 `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,

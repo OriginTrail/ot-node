@@ -5,7 +5,7 @@ class BidSuggestionController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // i think this is not used anywhere
         this.shardingTableService = ctx.shardingTableService;
         this.serviceAgreementService = ctx.serviceAgreementService;
     }

@@ -11,8 +11,6 @@ import {
 class PublishService extends OperationService {
     constructor(ctx) {
         super(ctx);
-
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.operationName = OPERATIONS.PUBLISH;

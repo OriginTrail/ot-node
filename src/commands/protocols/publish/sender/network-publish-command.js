@@ -4,8 +4,8 @@ import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants
 class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.ualService = ctx.ualService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // this should be removed (???)
+        this.ualService = ctx.ualService; // this should be removed (???)
         this.operationService = ctx.publishService;
 
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_NETWORK_START_ERROR;

@@ -393,6 +393,7 @@ export const ERROR_TYPE = {
         UPDATE_STORE_REQUEST_ERROR: 'UpdateStoreRequestError',
         UPDATE_VALIDATE_ASSERTION_METADATA_ERROR: 'UpadateValidateAssertionMetadataError',
         UPDATE_ASSERTION_ERROR: 'UpdateAssertionError',
+        UPDATE_NETWORK_START_ERROR: 'UpdateNetworkStartError',
     },
     GET: {
         GET_ROUTE_ERROR: 'GetRouteError',

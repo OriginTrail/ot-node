@@ -8,10 +8,8 @@ class PendingStorageService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.tripleStoreService = ctx.tripleStoreService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager; // this is not used
+        this.tripleStoreService = ctx.tripleStoreService; // this is not used
     }
 
     async cacheDataset(operationId, datasetRoot, dataset, remotePeerId) {

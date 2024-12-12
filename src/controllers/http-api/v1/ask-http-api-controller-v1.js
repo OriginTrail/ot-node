@@ -43,11 +43,12 @@ class AskController extends BaseController {
 
             const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
 
-            const datasetRoot = await this.blockchainModuleManager.getLatestAssertionId(
-                blockchain,
-                contract,
-                knowledgeCollectionId,
-            );
+            const datasetRoot =
+                await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkleRoot(
+                    blockchain,
+                    contract,
+                    knowledgeCollectionId,
+                );
 
             await this.commandExecutor.add({
                 name: commandSequence[0],

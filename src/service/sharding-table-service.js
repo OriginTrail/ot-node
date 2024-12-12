@@ -20,6 +20,7 @@ class ShardingTableService {
         this.networkModuleManager = ctx.networkModuleManager;
         this.hashingService = ctx.hashingService;
         this.proximityScoringService = ctx.proximityScoringService;
+        this.cryptoService = ctx.cryptoService;
 
         this.memoryCachedPeerIds = {};
     }
@@ -74,25 +75,14 @@ class ShardingTableService {
 
         const newPeerRecords = await Promise.all(
             shardingTable.map(async (peer) => {
-                const nodeId = this.blockchainModuleManager.convertHexToAscii(
-                    blockchainId,
-                    peer.nodeId,
-                );
+                const nodeId = this.cryptoService.convertHexToAscii(peer.nodeId);
                 const sha256 = await this.hashingService.callHashFunction(1, nodeId);
 
                 return {
                     peerId: nodeId,
                     blockchainId,
-                    ask: this.blockchainModuleManager.convertFromWei(
-                        blockchainId,
-                        peer.ask,
-                        'ether',
-                    ),
-                    stake: this.blockchainModuleManager.convertFromWei(
-                        blockchainId,
-                        peer.stake,
-                        'ether',
-                    ),
+                    ask: this.cryptoService.convertFromWei(peer.ask, 'ether'),
+                    stake: this.cryptoService.convertFromWei(peer.stake, 'ether'),
                     sha256,
                 };
             }),
@@ -152,6 +142,7 @@ class ShardingTableService {
         return peersWithDistance.slice(0, count);
     }
 
+    // TODO: Can we remove this
     async getBidSuggestion(
         blockchainId,
         epochsNumber,
@@ -231,8 +222,8 @@ class ShardingTableService {
         const effectiveAskOffset = Math.min(askOffset, sorted.length - 1);
         const { ask } = sorted[effectiveAskOffset];
 
-        const bidSuggestion = this.blockchainModuleManager
-            .convertToWei(blockchainId, ask)
+        const bidSuggestion = this.cryptoService
+            .convertToWei(ask)
             .mul(kbSize)
             .mul(epochsNumber)
             .mul(r0)
@@ -328,56 +319,6 @@ class ShardingTableService {
             id: peerId,
             addresses: peerInfo?.addresses ?? [],
             protocols: peerInfo?.protocols ?? [],
-        };
-    }
-
-    async getNeighboorhoodEdgeNodes(
-        neighbourhood,
-        blockchainId,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        key,
-    ) {
-        const keyHash = await this.hashingService.callHashFunction(hashFunctionId, key);
-
-        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-        const assetPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
-            blockchainId,
-            keyHash,
-        );
-        const hashRing = [];
-
-        const maxDistance = await this.proximityScoringService.callProximityFunction(
-            blockchainId,
-            proximityScoreFunctionsPairId,
-            neighbourhood[neighbourhood.length - 1][hashFunctionName],
-            keyHash,
-        );
-
-        for (const neighbour of neighbourhood) {
-            // eslint-disable-next-line no-await-in-loop
-            const neighbourPositionOnHashRing = await this.blockchainModuleManager.toBigNumber(
-                blockchainId,
-                neighbour[hashFunctionName],
-            );
-            if (assetPositionOnHashRing.lte(neighbourPositionOnHashRing)) {
-                if (neighbourPositionOnHashRing.sub(assetPositionOnHashRing).lte(maxDistance)) {
-                    hashRing.push(neighbour);
-                } else {
-                    hashRing.unshift(neighbour);
-                }
-            } else if (assetPositionOnHashRing.gt(neighbourPositionOnHashRing)) {
-                if (assetPositionOnHashRing.sub(neighbourPositionOnHashRing).lte(maxDistance)) {
-                    hashRing.unshift(neighbour);
-                } else {
-                    hashRing.push(neighbour);
-                }
-            }
-        }
-
-        return {
-            leftEdge: hashRing[0],
-            rightEdge: hashRing[hashRing.length - 1],
         };
     }
 }

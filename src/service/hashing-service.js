@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-
+// TODO: Remove whole file
 class HashingService {
     constructor(ctx) {
         this.config = ctx.config;

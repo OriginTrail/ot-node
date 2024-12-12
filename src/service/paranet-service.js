@@ -3,6 +3,7 @@ class ParanetService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.ualService = ctx.ualService;
+        this.cryptoService = ctx.cryptoService;
     }
 
     async initializeParanetRecord(blockchain, paranetId) {
@@ -24,24 +25,18 @@ class ParanetService {
         }
     }
 
-    constructParanetId(blockchain, contract, tokenId) {
-        const keyword = this.blockchainModuleManager.encodePacked(
-            blockchain,
-            ['address', 'uint256'],
-            [contract, tokenId],
+    // TODO: Changed signature of function change everywhere
+    constructParanetId(contract, tokenId) {
+        return this.cryptoService.keccak256(
+            this.cryptoService.encodePacked(['address', 'uint256'], [contract, tokenId]),
         );
-
-        return this.blockchainModuleManager.keccak256(blockchain, keyword);
     }
 
-    constructKnowledgeAssetId(blockchain, contract, tokenId) {
-        const keyword = this.blockchainModuleManager.encodePacked(
-            blockchain,
-            ['address', 'uint256'],
-            [contract, tokenId],
+    // TODO: Changed signature of function change everywhere
+    constructKnowledgeAssetId(contract, tokenId) {
+        return this.cryptoService.keccak256(
+            this.cryptoService.encodePacked(['address', 'uint256'], [contract, tokenId]),
         );
-
-        return this.blockchainModuleManager.keccak256(blockchain, keyword);
     }
 
     getParanetRepositoryName(paranetUAL) {
