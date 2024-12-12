@@ -37,6 +37,7 @@ class LocalStoreCommand extends Command {
             isOperationV0,
             contract,
             tokenId,
+            minimumNumberOfNodeReplications,
         } = command.data;
 
         try {
@@ -92,43 +93,6 @@ class LocalStoreCommand extends Command {
                 }
 
                 await Promise.all(storePromises);
-
-                this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_PROCESS_RESPONSE_START,
-                    operationId,
-                    blockchain,
-                );
-
-                const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-                const { signer, v, r, s, vs } = await this.signatureService.signMessage(
-                    blockchain,
-                    datasetRoot,
-                );
-
-                await this.signatureService.addSignatureToStorage(
-                    operationId,
-                    identityId,
-                    signer,
-                    v,
-                    r,
-                    s,
-                    vs,
-                );
-
-                await this.operationService.processResponse(
-                    command,
-                    OPERATION_REQUEST_STATUS.COMPLETED,
-                    {
-                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                        messageData: { identityId, signer, v, r, s, vs },
-                    },
-                    null,
-                );
-                this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_PROCESS_RESPONSE_END,
-                    operationId,
-                    blockchain,
-                );
             } else if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_GET_PARANET_METADATA_START,
@@ -256,12 +220,50 @@ class LocalStoreCommand extends Command {
                 blockchain,
                 OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_END,
             );
+
+            const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+            const { signer, v, r, s, vs } = await this.signatureService.signMessage(
+                blockchain,
+                datasetRoot,
+            );
+
+            await this.signatureService.addSignatureToStorage(
+                operationId,
+                identityId,
+                signer,
+                v,
+                r,
+                s,
+                vs,
+            );
+
+            const batchSize = await this.operationService.getBatchSize(blockchain);
+            const minAckResponses = await this.operationService.getMinAckResponses(
+                blockchain,
+                minimumNumberOfNodeReplications,
+            );
+
+            const updatedData = {
+                ...command.data,
+                batchSize,
+                minAckResponses,
+            };
+
+            await this.operationService.processResponse(
+                { ...command, data: updatedData },
+                OPERATION_REQUEST_STATUS.COMPLETED,
+                {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+                    messageData: { identityId, signer, v, r, s, vs },
+                },
+                null,
+            );
         } catch (e) {
             await this.handleError(operationId, blockchain, e.message, this.errorType, true);
             return Command.empty();
         }
 
-        return this.continueSequence(command.data, command.sequence);
+        return Command.empty();
     }
 
     /**
