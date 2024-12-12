@@ -1,6 +1,8 @@
 import path from 'path';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
+    NETWORK_SIGNATURES_FOLDER,
+    PUBLISHER_NODE_SIGNATURES_FOLDER,
     SERVICE_AGREEMENT_SOURCES,
 } from '../constants/constants.js';
 
@@ -14,7 +16,7 @@ class PendingStorageService {
         this.tripleStoreService = ctx.tripleStoreService;
     }
 
-    async cacheDataset(operationId, datasetRoot, dataset) {
+    async cacheDataset(operationId, datasetRoot, dataset, remotePeerId) {
         this.logger.debug(
             `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage`,
         );
@@ -25,6 +27,7 @@ class PendingStorageService {
             JSON.stringify({
                 merkleRoot: datasetRoot,
                 assertion: dataset,
+                remotePeerId,
             }),
         );
     }
@@ -57,7 +60,8 @@ class PendingStorageService {
             // Define the paths to the directories we want to clean
             const storagePaths = [
                 this.fileService.getPendingStorageCachePath(),
-                this.fileService.getSignatureStorageCachePath(),
+                this.fileService.getSignatureStorageFolderPath(NETWORK_SIGNATURES_FOLDER),
+                this.fileService.getSignatureStorageFolderPath(PUBLISHER_NODE_SIGNATURES_FOLDER),
             ];
 
             const filesToDelete = [];

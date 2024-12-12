@@ -3,13 +3,14 @@ import {
     NETWORK_MESSAGE_TIMEOUT_MILLS,
     ERROR_TYPE,
     OPERATION_ID_STATUS,
+    NETWORK_SIGNATURES_FOLDER,
 } from '../../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.signatureStorageService = ctx.signatureStorageService;
+        this.signatureService = ctx.signatureService;
         this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
 
@@ -24,7 +25,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { datasetRoot, operationId } = command.data;
+        const { datasetRoot, operationId, isOperationV0 } = command.data;
 
         // TODO: Backwards compatibility, send blockchain without chainId
         const { blockchain } = command.data;
@@ -42,9 +43,10 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         );
 
         return {
-            dataset,
+            dataset: dataset.public,
             datasetRoot,
             blockchain,
+            isOperationV0,
         };
     }
 
@@ -59,10 +61,16 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             operationId,
             blockchain,
         );
-        this.signatureStorageService.addSignatureToStorage(
+
+        await this.signatureService.addSignatureToStorage(
+            NETWORK_SIGNATURES_FOLDER,
             operationId,
             responseData.identityId,
-            responseData.signature,
+            responseData.signer,
+            responseData.v,
+            responseData.r,
+            responseData.s,
+            responseData.vs,
         );
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_ADD_SIGNATURE_TO_STORAGE_END,

@@ -1,5 +1,10 @@
+import { ethers } from 'ethers';
 import { kcTools } from 'assertion-tools';
-import { XML_DATA_TYPES } from '../constants/constants.js';
+import {
+    XML_DATA_TYPES,
+    PRIVATE_HASH_SUBJECT_PREFIX,
+    V0_PRIVATE_ASSERTION_PREDICATE,
+} from '../constants/constants.js';
 
 class DataService {
     constructor(ctx) {
@@ -66,6 +71,62 @@ class DataService {
             default:
                 return value;
         }
+    }
+
+    getPrivateAssertionId(publicAssertion) {
+        const privateAssertionLinkTriple = publicAssertion.filter((triple) =>
+            triple.includes(V0_PRIVATE_ASSERTION_PREDICATE),
+        )[0];
+        if (!privateAssertionLinkTriple) return;
+
+        return privateAssertionLinkTriple.match(/"(.*?)"/)[1];
+    }
+
+    // Asumes nobody is using PRIVATE_HASH_SUBJECT_PREFIX subject in assertion
+    quadsContainsPrivateRepresentations(quads) {
+        return (
+            quads[0].split(' ')[0].startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`) ||
+            quads[quads.length - 1].split(' ')[0].startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`)
+        );
+    }
+
+    generateHashFromString(string) {
+        return ethers.utils.sha256(ethers.utils.solidityPack(['string'], [string]));
+    }
+
+    splitConnectedArrays(publicTriples) {
+        const groupedPublic = [];
+        let currentSubject = publicTriples[0].split(' ')[0];
+        let currentSubjectHash = currentSubject.startsWith('<private-hash:0x')
+            ? currentSubject
+            : `<private-hash:${this.generateHashFromString(currentSubject.slice(1, -1))}>`;
+        let currentKA = [publicTriples[0]];
+
+        for (let i = 1; i < publicTriples.length; i += 1) {
+            const [subject] = publicTriples[i].split(' ');
+
+            const subjectHash = subject.startsWith('<private-hash:0x')
+                ? subject
+                : `<private-hash:${this.generateHashFromString(subject.slice(1, -1))}>`;
+
+            if (
+                currentSubject === subject ||
+                currentSubjectHash === subject ||
+                subjectHash === currentSubject
+            ) {
+                currentKA.push(publicTriples[i]);
+            } else {
+                groupedPublic.push(currentKA);
+                currentSubject = subject;
+                currentSubjectHash = subjectHash;
+                currentKA = [publicTriples[i]];
+            }
+        }
+
+        // Push the last group
+        groupedPublic.push(currentKA);
+
+        return groupedPublic;
     }
 }
 

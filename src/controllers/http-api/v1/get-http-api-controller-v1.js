@@ -3,6 +3,7 @@ import {
     OPERATION_STATUS,
     CONTENT_ASSET_HASH_FUNCTION_ID,
     ERROR_TYPE,
+    TRIPLES_VISIBILITY,
 } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
 
@@ -38,12 +39,13 @@ class GetController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
         let blockchain;
-        let tokenId;
         let contract;
+        let knowledgeCollectionId;
+        let knowledgeAssetId;
         try {
-            const { id, paranetUAL } = req.body;
-
-            ({ blockchain, tokenId, contract } = this.ualService.resolveUAL(id));
+            const { id, paranetUAL, includeMetadata, contentType } = req.body;
+            ({ blockchain, contract, knowledgeCollectionId, knowledgeAssetId } =
+                this.ualService.resolveUAL(id));
             const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
@@ -59,12 +61,15 @@ class GetController extends BaseController {
                 delay: 0,
                 data: {
                     ual: id,
+                    includeMetadata,
                     blockchain,
+                    contract,
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
                     operationId,
                     hashFunctionId,
                     paranetUAL,
-                    tokenId,
-                    contract,
+                    contentType: contentType ?? TRIPLES_VISIBILITY.ALL,
                 },
                 transactional: false,
             });

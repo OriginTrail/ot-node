@@ -15,12 +15,12 @@ class OperationIdService {
         return uuidv4();
     }
 
-    async generateOperationId(status) {
+    async generateOperationId(status, previousOperationId = null) {
         const operationIdObject = await this.repositoryModuleManager.createOperationIdRecord({
             status,
         });
         const { operationId } = operationIdObject;
-        this.emitChangeEvent(status, operationId);
+        this.emitChangeEvent(status, operationId, null, previousOperationId);
         this.logger.debug(`Generated operation id for request ${operationId}`);
         return operationId;
     }
@@ -72,8 +72,11 @@ class OperationIdService {
             await this.removeOperationIdCache(operationId);
         }
 
-        this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
-
+        if (errorType) {
+            this.emitChangeEvent(errorType, operationId, blockchain, errorMessage, errorType);
+        } else {
+            this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
+        }
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
 

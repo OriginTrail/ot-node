@@ -1,21 +1,28 @@
 import ProtocolScheduleMessagesCommand from '../../common/protocol-schedule-messages-command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    COMMAND_PRIORITY,
+} from '../../../../constants/constants.js';
 
 class FinalityScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.finalityService;
+        this.serviceAgreementService = ctx.serviceAgreementService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
-        this.errorType = ERROR_TYPE.FINALITY.FINALITY_ERROR;
-        this.startEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_FETCH_FROM_NODES_START;
+        this.operationStartEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_REPLICATE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_REPLICATE_END;
+        this.errorType = ERROR_TYPE.FINALITY.FINALITY_START_ERROR;
     }
 
     getNextCommandData(command) {
         return {
             ...super.getNextCommandData(command),
             ual: command.data.ual,
-            operationId: command.data.operationId,
-            minimumNumberOfNodeReplications: command.data.minimumNumberOfNodeReplications,
+            publishOperationId: command.data.publishOperationId,
         };
     }
 
@@ -29,6 +36,7 @@ class FinalityScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             name: 'finalityScheduleMessagesCommand',
             delay: 0,
             transactional: false,
+            priority: COMMAND_PRIORITY.HIGHEST,
         };
         Object.assign(command, map);
         return command;

@@ -6,7 +6,6 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
-    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class PublishService extends OperationService {
@@ -14,6 +13,8 @@ class PublishService extends OperationService {
         super(ctx);
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
+
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocols = NETWORK_PROTOCOLS.STORE;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_ERROR;
@@ -23,16 +24,9 @@ class PublishService extends OperationService {
             OPERATION_ID_STATUS.COMPLETED,
         ];
         this.operationMutex = new Mutex();
-        this.signatureStorageService = ctx.signatureStorageService;
     }
 
-    async processResponse(
-        command,
-        responseStatus,
-        responseData,
-        errorMessage = null,
-        localStore = false,
-    ) {
+    async processResponse(command, responseStatus, responseData, errorMessage = null) {
         const {
             operationId,
             blockchain,
@@ -49,15 +43,9 @@ class PublishService extends OperationService {
             operationId,
         );
 
-        if (localStore) {
-            return;
-        }
-
         const { completedNumber, failedNumber } = datasetRootStatus[operationId];
 
         const totalResponses = completedNumber + failedNumber;
-        const isAllNodesResponded = numberOfShardNodes === totalResponses;
-        const isBatchCompleted = totalResponses % batchSize === 0;
 
         this.logger.debug(
             `Processing ${
@@ -75,36 +63,42 @@ class PublishService extends OperationService {
             );
         }
 
-        if (
-            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minAckResponses
-        ) {
-            const signatures = await this.signatureStorageService.getSignaturesFromStorage(
-                operationId,
+        // Minimum replication reached, mark in the operational DB
+        if (completedNumber === minAckResponses) {
+            this.logger.debug(
+                `Minimum replication ${minAckResponses} reached for operationId: ${operationId}, dataset root: ${datasetRoot}`,
             );
+
+            await this.repositoryModuleManager.updateMinAcksReached(operationId, true);
+        }
+
+        // All requests sent, minimum replication reached, mark as completed
+        if (leftoverNodes.length === 0 && completedNumber >= minAckResponses) {
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                signatures,
+                null,
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (completedNumber < minAckResponses && (isAllNodesResponded || isBatchCompleted)) {
-            const potentialCompletedNumber = completedNumber + leftoverNodes.length;
+        }
 
-            // Still possible to meet minAckResponses, schedule leftover nodes
-            if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
-                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
-            } else {
-                // Not enough potential responses to meet minAckResponses, or no leftover nodes
-                this.markOperationAsFailed(
-                    operationId,
-                    blockchain,
-                    'Not replicated to enough nodes!',
-                    this.errorType,
-                );
-                this.logResponsesSummary(completedNumber, failedNumber);
-            }
+        // All requests sent, minimum replication not reached, mark as failed
+        if (leftoverNodes.length === 0 && completedNumber < minAckResponses) {
+            this.markOperationAsFailed(
+                operationId,
+                blockchain,
+                'Not replicated to enough nodes!',
+                this.errorType,
+            );
+            this.logResponsesSummary(completedNumber, failedNumber);
+        }
+
+        // Not all requests sent, still possible to reach minimum replication,
+        // schedule requests for leftover nodes
+        const potentialCompletedNumber = completedNumber + leftoverNodes.length;
+        if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
+            await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
         }
     }
 
@@ -112,8 +106,8 @@ class PublishService extends OperationService {
         return this.blockchainModuleManager.getR2(blockchainId);
     }
 
-    async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
+    async getMinAckResponses(blockchainId, minimumNumberOfNodeReplications = null) {
+        return minimumNumberOfNodeReplications ?? this.blockchainModuleManager.getR1(blockchainId);
     }
 }
 

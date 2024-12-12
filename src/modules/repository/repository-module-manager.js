@@ -96,6 +96,14 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
+    async updateMinAcksReached(operationId, minAcksReached, options = {}) {
+        return this.getRepository('operation_id').updateMinAcksReached(
+            operationId,
+            minAcksReached,
+            options,
+        );
+    }
+
     async createOperationRecord(operation, operationId, status, options = {}) {
         return this.getRepository('operation').createOperationRecord(
             operation,
@@ -484,6 +492,19 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('paranet').incrementParanetKaCount(
             paranetId,
             blockchainId,
+            options,
+        );
+    }
+
+    async getFinalityAcksCount(ual, options = {}) {
+        return this.getRepository('finality_status').getFinalityAcksCount(ual, options);
+    }
+
+    async saveFinalityAck(publishOperationId, ual, peerId, options = {}) {
+        return this.getRepository('finality_status').saveFinalityAck(
+            publishOperationId,
+            ual,
+            peerId,
             options,
         );
     }

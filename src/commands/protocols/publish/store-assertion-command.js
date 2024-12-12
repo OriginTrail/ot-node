@@ -24,26 +24,11 @@ class StoreAssertionCommand extends Command {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_STORE_ASSERTION_START,
         );
-
         try {
-            const knowledgeAssetsCount = this.dataService.countDistinctSubjects(assertion);
-            const knowledgeAssetsUALs = [];
-            const knowledgeAssetStates = [];
-            for (let i = 0; i < knowledgeAssetsCount; i += 1) {
-                knowledgeAssetsUALs.push(`${ual}/${i + 1}`);
-                knowledgeAssetStates.push(0);
-            }
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.tripleStoreService.insertKnowledgeCollection(
-                TRIPLE_STORE_REPOSITORIES.DKG,
-                ual,
-                knowledgeAssetsUALs,
-                knowledgeAssetStates,
-                assertion,
-            );
+            await this._insertAssertion(assertion, ual);
         } catch (e) {
             await this.handleError(operationId, blockchain, e.message, this.errorType, true);
+            return Command.empty(); // TODO: Should it end here or do a retry?
         }
 
         await this.operationIdService.updateOperationIdStatus(
@@ -52,13 +37,15 @@ class StoreAssertionCommand extends Command {
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_STORE_ASSERTION_END,
         );
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.COMPLETED,
-        );
+        return this.continueSequence(command.data, command.sequence);
+    }
 
-        return Command.empty();
+    async _insertAssertion(assertion, ual) {
+        await this.tripleStoreService.insertKnowledgeCollection(
+            TRIPLE_STORE_REPOSITORIES.DKG,
+            ual,
+            assertion,
+        );
     }
 
     /**

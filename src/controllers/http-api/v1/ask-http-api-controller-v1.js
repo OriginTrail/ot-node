@@ -1,12 +1,12 @@
 import { OPERATION_ID_STATUS, OPERATION_STATUS, ERROR_TYPE } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
 
-class FinalityController extends BaseController {
+class AskController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
-        this.operationService = ctx.finalityService;
+        this.operationService = ctx.askService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.ualService = ctx.ualService;
         this.validationService = ctx.validationService;
@@ -15,13 +15,13 @@ class FinalityController extends BaseController {
 
     async handleRequest(req, res) {
         const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.FINALITY.FINALITY_START,
+            OPERATION_ID_STATUS.ASK.ASK_START,
         );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             null,
-            OPERATION_ID_STATUS.FINALITY.FINALITY_START,
+            OPERATION_ID_STATUS.ASK.ASK_START,
         );
 
         this.returnResponse(res, 202, {
@@ -37,9 +37,9 @@ class FinalityController extends BaseController {
         const { ual, blockchain, minimumNumberOfNodeReplications } = req.body;
 
         try {
-            this.logger.info(`Finality for ${ual} with operation id ${operationId} initiated.`);
+            this.logger.info(`Ask for ${ual} with operation id ${operationId} initiated.`);
 
-            const commandSequence = ['finalityFindShardCommand', 'networkFinalityCommand'];
+            const commandSequence = ['askFindShardCommand', 'networkAskCommand'];
 
             const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
 
@@ -66,19 +66,19 @@ class FinalityController extends BaseController {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
-                OPERATION_ID_STATUS.FINALITY.FINALITY_END,
+                OPERATION_ID_STATUS.ASK.ASK_END,
             );
         } catch (error) {
-            this.logger.error(`Error while initializing finality: ${error.message}.`);
+            this.logger.error(`Error while initializing ask: ${error.message}.`);
 
             await this.operationService.markOperationAsFailed(
                 operationId,
                 blockchain,
-                'Unable to check finality, Failed to process input data!',
-                ERROR_TYPE.FINALITY.FINALITY_ERROR,
+                'Unable to check ask, Failed to process input data!',
+                ERROR_TYPE.ASK.ASK_ERROR,
             );
         }
     }
 }
 
-export default FinalityController;
+export default AskController;

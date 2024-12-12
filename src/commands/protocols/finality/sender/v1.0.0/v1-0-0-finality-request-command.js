@@ -1,9 +1,10 @@
+import Command from '../../../../command.js';
 import ProtocolRequestCommand from '../../../common/protocol-request-command.js';
 import {
     NETWORK_MESSAGE_TIMEOUT_MILLS,
     ERROR_TYPE,
-    OPERATION_REQUEST_STATUS,
-    OPERATION_STATUS,
+    OPERATION_ID_STATUS,
+    COMMAND_PRIORITY,
 } from '../../../../../constants/constants.js';
 
 class FinalityRequestCommand extends ProtocolRequestCommand {
@@ -11,51 +12,49 @@ class FinalityRequestCommand extends ProtocolRequestCommand {
         super(ctx);
         this.operationService = ctx.finalityService;
         this.operationIdService = ctx.operationIdService;
+
         this.errorType = ERROR_TYPE.FINALITY.FINALITY_REQUEST_ERROR;
-    }
-
-    async shouldSendMessage(command) {
-        const { operationId } = command.data;
-
-        const { status } = await this.operationService.getOperationStatus(operationId);
-
-        if (status === OPERATION_STATUS.IN_PROGRESS) {
-            return true;
-        }
-        this.logger.trace(
-            `${command.name} skipped for operationId: ${operationId} with status ${status}`,
-        );
-
-        return false;
+        this.operationStartEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_REQUEST_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_REQUEST_END;
+        this.prepareMessageStartEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REQUEST_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REQUEST_PREPARE_MESSAGE_END;
+        this.sendMessageStartEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REQUEST_SEND_MESSAGE_START;
+        this.sendMessageEndEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_REQUEST_SEND_MESSAGE_END;
     }
 
     async prepareMessage(command) {
-        const { ual, operationId, numberOfShardNodes, blockchain } = command.data;
+        const { ual, publishOperationId, blockchain, operationId } = command.data;
 
-        return {
-            ual,
-            operationId,
-            numberOfShardNodes,
-            blockchain,
-        };
+        return { ual, publishOperationId, blockchain, operationId };
+    }
+
+    async handleAck(command) {
+        await this.operationIdService.updateOperationIdStatus(
+            command.operationId,
+            command.blockchain,
+            OPERATION_ID_STATUS.COMPLETED,
+        );
+        return ProtocolRequestCommand.empty();
+    }
+
+    async handleNack(command, responseData) {
+        await this.operationIdService.updateOperationIdStatus(
+            command.operationId,
+            command.blockchain,
+            OPERATION_ID_STATUS.COMPLETED,
+        );
+        await this.markResponseAsFailed(
+            command,
+            `Received NACK response from node during ${command.name}. Error message: ${responseData.errorMessage}`,
+        );
+        return Command.empty();
     }
 
     messageTimeout() {
         return NETWORK_MESSAGE_TIMEOUT_MILLS.FINALITY.REQUEST;
-    }
-
-    async handleAck(command, responseData) {
-        if (responseData?.knowledgeCollectionExistsInUnifiedGraph) {
-            await this.operationService.processResponse(
-                command,
-                OPERATION_REQUEST_STATUS.COMPLETED,
-                responseData,
-            );
-
-            return ProtocolRequestCommand.empty();
-        }
-
-        return this.handleNack(command, responseData);
     }
 
     /**
@@ -69,6 +68,7 @@ class FinalityRequestCommand extends ProtocolRequestCommand {
             delay: 0,
             retries: 0,
             transactional: false,
+            priority: COMMAND_PRIORITY.HIGHEST,
         };
         Object.assign(command, map);
         return command;

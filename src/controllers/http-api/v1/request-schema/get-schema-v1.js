@@ -11,12 +11,8 @@ export default () => ({
         includeMetadata: {
             type: 'boolean',
         },
-        hashFunctionId: {
-            type: 'number',
-            minimum: 1,
-        },
         paranetUAL: {
-            type: 'string',
+            type: ['string', 'null'],
         },
     },
 });

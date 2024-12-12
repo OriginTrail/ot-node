@@ -5,6 +5,7 @@ import {
     ERROR_TYPE,
     LOCAL_STORE_TYPES,
     PARANET_ACCESS_POLICY,
+    PRIVATE_ASSERTION_PREDICATE,
 } from '../../../../constants/constants.js';
 
 class PublishValidateAssetCommand extends ValidateAssetCommand {
@@ -49,7 +50,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         );
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
             blockchain,
         );
@@ -59,25 +60,56 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             operationId,
             blockchain,
         );
-        const isValidAssertion = await this.validationService.validateDatasetRoot(
-            cachedData.dataset,
+        const isValidPublicAssertion = await this.validationService.validateDatasetRoot(
+            cachedData.dataset.public,
             datasetRoot,
         );
+
+        const privateAssertionTriple = cachedData.dataset.public.find((triple) =>
+            triple.includes(PRIVATE_ASSERTION_PREDICATE),
+        );
+
+        if (privateAssertionTriple) {
+            const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
+
+            const isValidPrivateAssertion = await this.validationService.validateDatasetRoot(
+                cachedData.dataset.private,
+                privateAssertionRoot,
+            );
+
+            if (!isValidPrivateAssertion) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    `Invalid dataset root for private assertion. Received value from request: ${cachedData.dataset.public.find(
+                        () => true,
+                    )}`,
+                    this.errorType,
+                );
+                return Command.empty();
+            }
+        }
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_END,
             operationId,
             blockchain,
         );
 
-        if (!isValidAssertion) {
+        if (!isValidPublicAssertion) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid dataset root for assertion. Received value received value from request: ${cachedData.datasetRoot}`,
+                `Invalid dataset root for public assertion. Received value received value from request: ${cachedData.datasetRoot}`,
                 this.errorType,
             );
             return Command.empty();
         }
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_END,
+        );
 
         let paranetId;
         if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {

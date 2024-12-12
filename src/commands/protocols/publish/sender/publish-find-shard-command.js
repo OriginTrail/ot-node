@@ -18,13 +18,16 @@ class PublishFindShardCommand extends FindShardCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_FIND_NODES_PROCESS_FOUND_NODES_END;
     }
 
-    getOperationCommandSequence(nodePartOfShard) {
+    getOperationCommandSequence(nodePartOfShard, commandData) {
         const sequence = [];
-        sequence.push('publishValidateAssetCommand');
-        if (nodePartOfShard) {
+        sequence.push(
+            commandData.isOperationV0 ? 'validateAssetCommand' : 'publishValidateAssetCommand',
+        );
+        if (nodePartOfShard && !commandData.isOperationV0) {
             sequence.push('localStoreCommand');
+        } else {
+            sequence.push('networkPublishCommand');
         }
-        sequence.push('networkPublishCommand');
 
         return sequence;
     }

@@ -5,6 +5,16 @@ class BlockchainModuleManager extends BaseModuleManager {
         return 'blockchain';
     }
 
+    callImplementationFunction(blockchain, functionName, args = []) {
+        if (blockchain) {
+            if (this.getImplementation(blockchain)) {
+                return this.getImplementation(blockchain).module[functionName](...args);
+            }
+        } else {
+            return this.getImplementation().module[functionName](...args);
+        }
+    }
+
     initializeTransactionQueues(blockchain, concurrency) {
         return this.callImplementationFunction(blockchain, 'getTotalTransactionQueueLength', [
             concurrency,
@@ -197,6 +207,18 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     convertFromWei(blockchain, value, toUnit) {
         return this.callImplementationFunction(blockchain, 'convertFromWei', [value, toUnit]);
+    }
+
+    hashMessage(blockchain, message) {
+        return this.callImplementationFunction(blockchain, 'hashMessage', [message]);
+    }
+
+    async signMessage(blockchain, messageHash) {
+        return this.callImplementationFunction(blockchain, 'signMessage', [messageHash]);
+    }
+
+    splitSignature(blockchain, flatSignature) {
+        return this.callImplementationFunction(blockchain, 'splitSignature', [flatSignature]);
     }
 
     async isCommitWindowOpen(blockchain, agreementId, epoch, stateIndex) {
@@ -411,16 +433,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async getLog2PLDSFParams(blockchain) {
         return this.callImplementationFunction(blockchain, 'getLog2PLDSFParams');
-    }
-
-    callImplementationFunction(blockchain, functionName, args = []) {
-        if (blockchain) {
-            if (this.getImplementation(blockchain)) {
-                return this.getImplementation(blockchain).module[functionName](...args);
-            }
-        } else {
-            return this.getImplementation().module[functionName](...args);
-        }
     }
 
     async getLatestBlock(blockchain) {

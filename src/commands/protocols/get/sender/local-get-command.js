@@ -29,6 +29,7 @@ class LocalGetCommand extends Command {
             contract,
             knowledgeCollectionId,
             knowledgeAssetId,
+            contentType,
         } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -95,7 +96,13 @@ class LocalGetCommand extends Command {
             blockchain,
         );
         const assertionPromise = this.tripleStoreService
-            .getAssertion(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+            .getAssertion(
+                blockchain,
+                contract,
+                knowledgeCollectionId,
+                knowledgeAssetId,
+                contentType,
+            )
             .then((result) => {
                 this.operationIdService.emitChangeEvent(
                     OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,

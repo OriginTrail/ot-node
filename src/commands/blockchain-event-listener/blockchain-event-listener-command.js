@@ -20,6 +20,7 @@ class BlockchainEventListenerCommand extends Command {
         this.blockchainEventsService = ctx.blockchainEventsService;
         this.fileService = ctx.fileService;
         this.operationIdService = ctx.operationIdService;
+        this.networkModuleManager = ctx.networkModuleManager;
         this.commandExecutor = ctx.commandExecutor;
 
         this.invalidatedContracts = new Set();
@@ -476,17 +477,41 @@ class BlockchainEventListenerCommand extends Command {
 
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
+            publishOperationId,
         );
+        let datasetPath;
+        let cachedData;
+        try {
+            datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
 
-        const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
-
-        const data = await this.fileService.readFile(datasetPath, true);
-
+            cachedData = await this.fileService.readFile(datasetPath, true);
+        } catch (error) {
+            this.operationIdService.updateOperationIdStatus(
+                operationId,
+                blockchain,
+                OPERATION_ID_STATUS.FAILED,
+                error.message,
+                ERROR_TYPE.FINALITY.FINALITY_ERROR,
+            );
+        }
         const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
+
+        const sequence = ['storeAssertionCommand'];
+
+        const myPeerId = this.networkModuleManager.getPeerId().toB58String();
+        if (cachedData.remotePeerId === myPeerId) {
+            await this.repositoryModuleManager.saveFinalityAck(
+                publishOperationId,
+                ual,
+                cachedData.remotePeerId,
+            );
+        } else {
+            sequence.push('findPublisherNodeCommand', 'networkFinalityCommand');
+        }
 
         await this.commandExecutor.add({
             name: 'validateAssertionMetadataCommand',
-            sequence: ['storeAssertionCommand'],
+            sequence,
             delay: 0,
             data: {
                 operationId,
@@ -494,6 +519,54 @@ class BlockchainEventListenerCommand extends Command {
                 blockchain,
                 contract: assetContract,
                 tokenId,
+                merkleRoot: state,
+                remotePeerId: cachedData.remotePeerId,
+                publishOperationId,
+                assertion: cachedData.assertion,
+                cachedMerkleRoot: cachedData.merkleRoot,
+            },
+            transactional: false,
+        });
+    }
+
+    // TODO: Adjust after new contracts are released
+    async handleAssetUpdatedEvent(event) {
+        const eventData = JSON.parse(event.data);
+
+        // TODO: Add correct name for assetStateIndex from event currently it's placeholder
+        const { assetContract, tokenId, state, updateOperationId, assetStateIndex } = eventData;
+        const { blockchain } = event;
+
+        const operationId = await this.operationIdService.generateOperationId(
+            OPERATION_ID_STATUS.UPDATE_FINALIZATION.UPDATE_FINALIZATION_START,
+        );
+
+        let data;
+        let datasetPath;
+        try {
+            datasetPath = this.fileService.getPendingStorageDocumentPath(updateOperationId);
+            data = await this.fileService.readFile(datasetPath, true);
+        } catch (error) {
+            this.operationIdService.markOperationAsFailed(
+                operationId,
+                blockchain,
+                `Unable to read cached data from ${datasetPath}, error: ${error.message}`,
+                ERROR_TYPE.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_NO_CACHED_DATA,
+            );
+        }
+        const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
+
+        await this.commandExecutor.add({
+            name: 'updateValidateAssertionMetadataCommand',
+            sequence: ['updateAssertionCommand'],
+            delay: 0,
+            data: {
+                operationId,
+                ual,
+                blockchain,
+                contract: assetContract,
+                tokenId,
+                assetStateIndex,
                 merkleRoot: state,
                 assertion: data.assertion,
                 cachedMerkleRoot: data.merkleRoot,

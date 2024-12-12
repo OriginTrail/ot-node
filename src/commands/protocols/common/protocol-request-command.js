@@ -16,7 +16,7 @@ class ProtocolRequestCommand extends ProtocolMessageCommand {
     async execute(command) {
         const { operationId, blockchain } = command.data;
         this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
-        const result = this.executeProtocolMessageCommand(
+        const result = await this.executeProtocolMessageCommand(
             command,
             NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST,
         );
