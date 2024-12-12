@@ -935,15 +935,7 @@ export const OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
 
 export const REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER = 10_000;
 
-export const ARCHIVE_FOLDER = 'archive';
-
-export const MIGRATION_FOLDER = 'migrations';
-
 export const ARCHIVE_COMMANDS_FOLDER = 'commands';
-
-export const PUBLISHER_NODE_SIGNATURES_FOLDER = 'publisher';
-
-export const NETWORK_SIGNATURES_FOLDER = 'network';
 
 export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
 

@@ -12,13 +12,10 @@ import {
     chmod,
 } from 'fs/promises';
 import appRootPath from 'app-root-path';
-import {
-    ARCHIVE_FOLDER,
-    BLS_KEY_DIRECTORY,
-    BLS_KEY_FILENAME,
-    MIGRATION_FOLDER,
-    NODE_ENVIRONMENTS,
-} from '../constants/constants.js';
+import { BLS_KEY_DIRECTORY, BLS_KEY_FILENAME, NODE_ENVIRONMENTS } from '../constants/constants.js';
+
+const ARCHIVE_FOLDER_NAME = 'archive';
+const MIGRATION_FOLDER_NAME = 'migrations';
 
 class FileService {
     constructor(ctx) {
@@ -177,7 +174,7 @@ class FileService {
     }
 
     getMigrationFolderPath() {
-        return path.join(this.getDataFolderPath(), MIGRATION_FOLDER);
+        return path.join(this.getDataFolderPath(), MIGRATION_FOLDER_NAME);
     }
 
     getOperationIdCachePath() {
@@ -200,16 +197,12 @@ class FileService {
         return path.join(this.getDataFolderPath(), 'signature_storage_cache');
     }
 
-    getSignatureStorageFolderPath(folderName) {
-        return path.join(this.getSignatureStorageCachePath(), folderName);
-    }
-
-    getSignatureStorageDocumentPath(folderName, operationId) {
-        return path.join(this.getSignatureStorageFolderPath(folderName), operationId);
+    getSignatureStorageDocumentPath(operationId) {
+        return path.join(this.getSignatureStorageCachePath(), operationId);
     }
 
     getArchiveFolderPath(subFolder) {
-        return path.join(this.getDataFolderPath(), ARCHIVE_FOLDER, subFolder);
+        return path.join(this.getDataFolderPath(), ARCHIVE_FOLDER_NAME, subFolder);
     }
 
     getParentDirectory(filePath) {
