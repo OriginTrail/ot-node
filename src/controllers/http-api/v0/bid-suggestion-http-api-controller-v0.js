@@ -5,10 +5,10 @@ class BidSuggestionController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager; // i think this is not used anywhere
         this.shardingTableService = ctx.shardingTableService;
     }
 
+    // TODO: We should use new on chain calculation
     async handleRequest(req, res) {
         if ((await this.repositoryModuleManager.getPeersCount(req.query.blockchain)) === 0) {
             const message = `Unable to get bid suggestion. Empty sharding table for blockchain id: ${req.query.blockchain}`;
@@ -37,7 +37,6 @@ class BidSuggestionController extends BaseController {
             //     bidSuggestionRange,
             // );
 
-            // We should use new on chain calculation
             const bidSuggestion = {};
             this.returnResponse(res, 200, { bidSuggestion });
         } catch (error) {
