@@ -1,16 +1,4 @@
-import {
-    BYTES_IN_KILOBYTE,
-    PEER_RECORD_UPDATE_DELAY,
-    LOW_BID_SUGGESTION,
-    MED_BID_SUGGESTION,
-    HIGH_BID_SUGGESTION,
-    ALL_BID_SUGGESTION,
-    LOW_BID_SUGGESTION_OFFSET,
-    MED_BID_SUGGESTION_OFFSET,
-    HIGH_BID_SUGGESTION_OFFSET,
-    ERROR_TYPE,
-    BID_SUGGESTION_RANGE_ENUM,
-} from '../constants/constants.js';
+import { BYTES_IN_KILOBYTE, PEER_RECORD_UPDATE_DELAY } from '../constants/constants.js';
 
 class ShardingTableService {
     constructor(ctx) {
@@ -99,82 +87,7 @@ class ShardingTableService {
         return this.repositoryModuleManager.isNodePartOfShard(blockchainId, peerId);
     }
 
-    // TODO: Can we remove this
-    async getBidSuggestion(
-        blockchainId,
-        epochsNumber,
-        assertionSize,
-        contentAssetStorageAddress,
-        firstAssertionId,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        bidSuggestionRange = LOW_BID_SUGGESTION,
-    ) {
-        const kbSize = assertionSize < BYTES_IN_KILOBYTE ? BYTES_IN_KILOBYTE : assertionSize;
-        const peerRecords = await this.findShard(blockchainId);
-        const r0 = await this.blockchainModuleManager.getR0(blockchainId);
-        // todo remove this line once we implement logic for storing assertion in publish node if it's in neighbourhood
-        const myPeerId = this.networkModuleManager.getPeerId().toB58String();
-        const filteredPeerRecords = peerRecords.filter((peer) => peer.peerId !== myPeerId);
-        const sorted = filteredPeerRecords.sort((a, b) => a.ask - b.ask);
-
-        if (bidSuggestionRange === ALL_BID_SUGGESTION) {
-            const allBidSuggestions = {};
-            allBidSuggestions[LOW_BID_SUGGESTION] = this.calculateBidSuggestion(
-                LOW_BID_SUGGESTION_OFFSET,
-                sorted,
-                blockchainId,
-                kbSize,
-                epochsNumber,
-                r0,
-            );
-            allBidSuggestions[MED_BID_SUGGESTION] = this.calculateBidSuggestion(
-                MED_BID_SUGGESTION_OFFSET,
-                sorted,
-                blockchainId,
-                kbSize,
-                epochsNumber,
-                r0,
-            );
-            allBidSuggestions[HIGH_BID_SUGGESTION] = this.calculateBidSuggestion(
-                HIGH_BID_SUGGESTION_OFFSET,
-                sorted,
-                blockchainId,
-                kbSize,
-                epochsNumber,
-                r0,
-            );
-
-            return allBidSuggestions;
-        }
-        let askOffset;
-        switch (bidSuggestionRange) {
-            case LOW_BID_SUGGESTION:
-                askOffset = LOW_BID_SUGGESTION_OFFSET;
-                break;
-            case MED_BID_SUGGESTION:
-                askOffset = MED_BID_SUGGESTION_OFFSET;
-                break;
-            case HIGH_BID_SUGGESTION:
-                askOffset = HIGH_BID_SUGGESTION_OFFSET;
-                break;
-            default:
-                this.logger.error(
-                    `${ERROR_TYPE.UNSUPPORTED_BID_SUGGESTION_RANGE_ERROR}: Supported values: ${BID_SUGGESTION_RANGE_ENUM}.`,
-                );
-                throw Error(ERROR_TYPE.UNSUPPORTED_BID_SUGGESTION_RANGE_ERROR);
-        }
-        const bidSuggestion = this.calculateBidSuggestion(
-            askOffset,
-            sorted,
-            blockchainId,
-            kbSize,
-            epochsNumber,
-            r0,
-        );
-        return bidSuggestion;
-    }
-
+    // TODO: Remove this
     calculateBidSuggestion(askOffset, sorted, blockchainId, kbSize, epochsNumber, r0) {
         const effectiveAskOffset = Math.min(askOffset, sorted.length - 1);
         const { ask } = sorted[effectiveAskOffset];

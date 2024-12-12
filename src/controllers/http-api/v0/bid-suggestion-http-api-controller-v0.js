@@ -20,33 +20,25 @@ class BidSuggestionController extends BaseController {
             return;
         }
 
-        const {
-            blockchain,
-            epochsNumber,
-            assertionSize,
-            contentAssetStorageAddress,
-            firstAssertionId,
-            hashFunctionId,
-        } = req.query;
         let { bidSuggestionRange } = req.query;
         try {
-            const proximityScoreFunctionsPairId = 2;
-
             if (!bidSuggestionRange) {
                 bidSuggestionRange = LOW_BID_SUGGESTION;
             }
+            // TODO: This isn't backwards compatible
+            // const bidSuggestion = await this.shardingTableService.getBidSuggestion(
+            //     blockchain,
+            //     epochsNumber,
+            //     assertionSize,
+            //     contentAssetStorageAddress,
+            //     firstAssertionId,
+            //     hashFunctionId,
+            //     proximityScoreFunctionsPairId,
+            //     bidSuggestionRange,
+            // );
 
-            const bidSuggestion = await this.shardingTableService.getBidSuggestion(
-                blockchain,
-                epochsNumber,
-                assertionSize,
-                contentAssetStorageAddress,
-                firstAssertionId,
-                hashFunctionId,
-                proximityScoreFunctionsPairId,
-                bidSuggestionRange,
-            );
-
+            // We should use new on chain calculation
+            const bidSuggestion = {};
             this.returnResponse(res, 200, { bidSuggestion });
         } catch (error) {
             this.logger.error(`Unable to get bid suggestion. Error: ${error}`);
