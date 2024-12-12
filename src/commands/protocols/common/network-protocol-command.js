@@ -49,10 +49,6 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    async getKeywords() {
-        throw Error('getKeywords not implemented');
-    }
-
     async getBatchSize() {
         throw Error('getBatchSize not implemented');
     }

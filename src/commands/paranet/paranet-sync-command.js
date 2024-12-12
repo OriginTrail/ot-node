@@ -171,7 +171,6 @@ class ParanetSyncCommand extends Command {
         blockchain,
         contract,
         tokenId,
-        keyword,
         assertionIds,
         stateIndex,
         paranetId,
@@ -300,7 +299,6 @@ class ParanetSyncCommand extends Command {
                 blockchain,
                 contract,
                 tokenId,
-                keyword,
                 LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
                 LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
             );
@@ -312,7 +310,6 @@ class ParanetSyncCommand extends Command {
                     blockchain,
                     contract,
                     tokenId,
-                    keyword,
                 );
             }
             const privateAssertionId =
@@ -372,13 +369,6 @@ class ParanetSyncCommand extends Command {
                     tokenId,
                 );
 
-            const keyword = await this.ualService.calculateLocationKeyword(
-                blockchain,
-                contract,
-                tokenId,
-                assertionIds[0],
-            );
-
             let isSuccessful = true;
             for (let stateIndex = 0; stateIndex < assertionIds.length; stateIndex += 1) {
                 isSuccessful =
@@ -388,7 +378,6 @@ class ParanetSyncCommand extends Command {
                         blockchain,
                         contract,
                         tokenId,
-                        keyword,
                         assertionIds,
                         stateIndex,
                         paranetId,

@@ -44,8 +44,6 @@ class UpdateController extends BaseController {
             blockchain: dataSource.blockchain,
             contract: dataSource.contract,
             tokenId: dataSource.tokenId,
-            // TODO: Don't use keyword
-            keyword: dataSource.keyword,
         };
 
         await this.commandExecutor.add(command);
