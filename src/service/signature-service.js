@@ -20,16 +20,19 @@ class SignatureService {
         return { signer, v, r, s, vs: _vs };
     }
 
-    async addSignatureToStorage(operationId, identityId, signer, v, r, s, vs) {
+    async addSignatureToStorage(folderName, operationId, identityId, signer, v, r, s, vs) {
         await this.fileService.appendContentsToFile(
-            this.fileService.getSignatureStorageCachePath(),
+            this.fileService.getSignatureStorageFolderPath(folderName),
             operationId,
             `${JSON.stringify({ identityId, signer, v, r, s, vs })}\n`,
         );
     }
 
-    async getSignaturesFromStorage(operationId) {
-        const signatureStorageFile = this.fileService.getSignatureStorageDocumentPath(operationId);
+    async getSignaturesFromStorage(folderName, operationId) {
+        const signatureStorageFile = this.fileService.getSignatureStorageDocumentPath(
+            folderName,
+            operationId,
+        );
 
         const rawSignatures = await this.fileService.readFile(signatureStorageFile);
         const signaturesArray = [];
