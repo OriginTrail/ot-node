@@ -6,7 +6,7 @@ export default () => ({
             oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' }, minItems: 1 }],
         },
         blockchain: {
-            type: 'string',
+            enum: argumentsObject.blockchainImplementationNames,
         },
         minimumNumberOfNodeReplications: {
             type: 'number',
