@@ -41,6 +41,12 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
     async prepareMessage(commandData) {
         const { blockchain, operationId, datasetRoot, remotePeerId, isOperationV0 } = commandData;
 
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_REMOTE_START,
+        );
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
             operationId,
@@ -53,12 +59,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
         );
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_REMOTE_START,
-        );
-
         const validationResult = await this.validateReceivedData(
             operationId,
             datasetRoot,
@@ -67,7 +67,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             isOperationV0,
         );
 
-        this.operationIdService.updateOperationIdStatus(
+        await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_REMOTE_END,
@@ -95,20 +95,9 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_END,
         );
 
-        await this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START,
-            operationId,
-            blockchain,
-        );
-
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-        await this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_END,
-            operationId,
-            blockchain,
-        );
 
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SIGN_START,
             operationId,
             blockchain,
@@ -117,10 +106,16 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             datasetRoot,
         );
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SIGN_END,
             operationId,
             blockchain,
+        );
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSET_REMOTE_END,
         );
 
         return {

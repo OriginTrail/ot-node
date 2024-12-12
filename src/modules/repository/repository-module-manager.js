@@ -96,6 +96,14 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
+    async updateMinAcksReached(operationId, minAcksReached, options = {}) {
+        return this.getRepository('operation_id').updateMinAcksReached(
+            operationId,
+            minAcksReached,
+            options,
+        );
+    }
+
     async createOperationRecord(operation, operationId, status, options = {}) {
         return this.getRepository('operation').createOperationRecord(
             operation,

@@ -477,6 +477,7 @@ class BlockchainEventListenerCommand extends Command {
 
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
+            publishOperationId,
         );
 
         const datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);

@@ -56,7 +56,7 @@ class QueryCommand extends Command {
                     );
                     data = await this.tripleStoreService.construct(query);
                     this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_START,
+                        OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_END,
                         operationId,
                     );
                     break;

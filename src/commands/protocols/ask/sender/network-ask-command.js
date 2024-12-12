@@ -10,8 +10,6 @@ class NetworkAskCommand extends NetworkProtocolCommand {
         this.errorType = ERROR_TYPE.ASK.ASK_NETWORK_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.ASK.ASK_NETWORK_START;
         this.operationEndEvent = OPERATION_ID_STATUS.ASK.ASK_NETWORK_END;
-        this.getBatchSizeStartEvent = OPERATION_ID_STATUS.ASK.ASK_NETWORK_GET_BATCH_SIZE_START;
-        this.getBatchSizeEndEvent = OPERATION_ID_STATUS.ASK.ASK_NETWORK_GET_BATCH_SIZE_END;
     }
 
     /**
