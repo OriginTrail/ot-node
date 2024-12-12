@@ -9,7 +9,6 @@ class HandleProtocolMessageCommand extends Command {
         this.operationIdService = ctx.operationIdService;
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.operationStartEvent = OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_START;

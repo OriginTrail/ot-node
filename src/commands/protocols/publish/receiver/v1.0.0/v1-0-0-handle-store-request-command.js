@@ -11,7 +11,6 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
         super(ctx);
         this.validationService = ctx.validationService;
         this.operationService = ctx.publishService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.tripleStoreService = ctx.tripleStoreService;

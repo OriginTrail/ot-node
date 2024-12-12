@@ -20,7 +20,6 @@ class LocalStoreCommand extends Command {
         this.operationService = ctx.publishService;
         this.dataService = ctx.dataService;
         this.ualService = ctx.ualService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.commandExecutor = ctx.commandExecutor;
         this.repositoryModuleManager = ctx.repositoryModuleManager;

@@ -7,7 +7,6 @@ class BidSuggestionController extends BaseController {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager; // i think this is not used anywhere
         this.shardingTableService = ctx.shardingTableService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
     }
 
     async handleRequest(req, res) {

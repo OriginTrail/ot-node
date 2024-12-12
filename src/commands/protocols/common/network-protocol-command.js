@@ -6,7 +6,6 @@ class NetworkProtocolCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
 
         this.errorType = ERROR_TYPE.NETWORK_PROTOCOL_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_START;

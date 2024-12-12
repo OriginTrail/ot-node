@@ -18,8 +18,6 @@ class ShardingTableService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.networkModuleManager = ctx.networkModuleManager;
-        this.hashingService = ctx.hashingService;
-        this.proximityScoringService = ctx.proximityScoringService;
         this.cryptoService = ctx.cryptoService;
 
         this.memoryCachedPeerIds = {};
@@ -76,7 +74,7 @@ class ShardingTableService {
         const newPeerRecords = await Promise.all(
             shardingTable.map(async (peer) => {
                 const nodeId = this.cryptoService.convertHexToAscii(peer.nodeId);
-                const sha256 = await this.hashingService.callHashFunction(1, nodeId);
+                const sha256 = await this.cryptoService.sha256(nodeId);
 
                 return {
                     peerId: nodeId,
@@ -99,47 +97,6 @@ class ShardingTableService {
 
     async isNodePartOfShard(blockchainId, peerId) {
         return this.repositoryModuleManager.isNodePartOfShard(blockchainId, peerId);
-    }
-
-    async sortPeers(
-        blockchainId,
-        keyHash,
-        peers,
-        count,
-        hashFunctionId,
-        proximityScoreFunctionsPairId,
-        filterInactive,
-    ) {
-        const hashFunctionName = this.hashingService.getHashFunctionName(hashFunctionId);
-        let peersWithDistance = await Promise.all(
-            peers.map(async (peer) => ({
-                ...peer,
-                distance: await this.proximityScoringService.callProximityFunction(
-                    blockchainId,
-                    proximityScoreFunctionsPairId,
-                    peer[hashFunctionName],
-                    keyHash,
-                ),
-            })),
-        );
-
-        if (filterInactive) {
-            peersWithDistance = peersWithDistance.filter(
-                (node) => node.lastSeen >= node.lastDialed,
-            );
-        }
-
-        peersWithDistance.sort((a, b) => {
-            if (a.distance.lt(b.distance)) {
-                return -1;
-            }
-            if (a.distance.gt(b.distance)) {
-                return 1;
-            }
-            return 0;
-        });
-
-        return peersWithDistance.slice(0, count);
     }
 
     // TODO: Can we remove this

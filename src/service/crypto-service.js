@@ -10,12 +10,20 @@ class CryptoService {
         return ethers.BigNumber.from(value);
     }
 
-    keccak256(bytesLikeData) {
-        return ethers.utils.keccak256(bytesLikeData);
+    keccak256(data) {
+        if (!ethers.utils.isBytesLike(data)) {
+            const bytesLikeData = ethers.utils.toUtf8Bytes(data);
+            return ethers.utils.keccak256(bytesLikeData);
+        }
+        return ethers.utils.keccak256(data);
     }
 
-    sha256(bytesLikeData) {
-        return ethers.utils.sha256(bytesLikeData);
+    sha256(data) {
+        if (!ethers.utils.isBytesLike(data)) {
+            const bytesLikeData = ethers.utils.toUtf8Bytes(data);
+            return ethers.utils.sha256(bytesLikeData);
+        }
+        return ethers.utils.sha256(data);
     }
 
     encodePacked(types, values) {
