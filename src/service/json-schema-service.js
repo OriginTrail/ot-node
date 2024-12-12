@@ -117,7 +117,6 @@ class JsonSchemaService {
         const schemaArgs = {};
 
         switch (version) {
-            case 'v0':
             case 'v1':
                 schemaArgs.blockchainImplementationNames =
                     this.blockchainModuleManager.getImplementationNames();
@@ -133,7 +132,6 @@ class JsonSchemaService {
         const schemaArgs = {};
 
         switch (version) {
-            case 'v0':
             case 'v1':
                 schemaArgs.blockchainImplementationNames =
                     this.blockchainModuleManager.getImplementationNames();
