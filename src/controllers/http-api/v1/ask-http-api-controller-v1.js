@@ -49,12 +49,11 @@ class AskController extends BaseController {
                     .map((ual) => async () => {
                         const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
 
-                        const datasetRoot =
-                            await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkleRoot(
-                                blockchain,
-                                contract,
-                                knowledgeCollectionId,
-                            );
+                        const datasetRoot = await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkleRoot(
+                            blockchain,
+                            contract,
+                            knowledgeCollectionId,
+                        );
 
                         return datasetRoot;
                     })
