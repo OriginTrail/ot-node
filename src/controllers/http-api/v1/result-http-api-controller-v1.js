@@ -1,4 +1,8 @@
-import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
+import {
+    NETWORK_SIGNATURES_FOLDER,
+    OPERATION_ID_STATUS,
+    PUBLISHER_NODE_SIGNATURES_FOLDER,
+} from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
 
 class ResultController extends BaseController {
@@ -52,10 +56,21 @@ class ResultController extends BaseController {
                         const minAcksReached = handlerRecord.minAcksReached || false;
                         response.data = { ...response.data, minAcksReached };
                         if (minAcksReached) {
+                            const publisherNodeSignature = (
+                                await this.signatureService.getSignaturesFromStorage(
+                                    PUBLISHER_NODE_SIGNATURES_FOLDER,
+                                    operationId,
+                                )
+                            )[0];
                             const signatures = await this.signatureService.getSignaturesFromStorage(
+                                NETWORK_SIGNATURES_FOLDER,
                                 operationId,
                             );
-                            response.data = { ...response.data, signatures };
+                            response.data = {
+                                ...response.data,
+                                publisherNodeSignature,
+                                signatures,
+                            };
                         }
                         break;
                     }
