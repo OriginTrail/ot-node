@@ -5,6 +5,8 @@ import {
     OPERATION_REQUEST_STATUS,
     NETWORK_MESSAGE_TYPES,
     TRIPLE_STORE_REPOSITORIES,
+    NETWORK_SIGNATURES_FOLDER,
+    PUBLISHER_NODE_SIGNATURES_FOLDER,
 } from '../../constants/constants.js';
 import Command from '../command.js';
 
@@ -220,12 +222,13 @@ class LocalStoreCommand extends Command {
             }
 
             const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+
             const { signer, v, r, s, vs } = await this.signatureService.signMessage(
                 blockchain,
                 datasetRoot,
             );
-
             await this.signatureService.addSignatureToStorage(
+                NETWORK_SIGNATURES_FOLDER,
                 operationId,
                 identityId,
                 signer,
@@ -233,6 +236,31 @@ class LocalStoreCommand extends Command {
                 r,
                 s,
                 vs,
+            );
+
+            const {
+                signer: publisherNodeSigner,
+                v: publisherNodeV,
+                r: publisherNodeR,
+                s: publisherNodeS,
+                vs: publisherNodeVS,
+            } = await this.signatureService.signMessage(
+                blockchain,
+                this.blockchainModuleManager.encodePacked(
+                    blockchain,
+                    ['uint72', 'bytes32'],
+                    [identityId, datasetRoot],
+                ),
+            );
+            await this.signatureService.addSignatureToStorage(
+                PUBLISHER_NODE_SIGNATURES_FOLDER,
+                operationId,
+                identityId,
+                publisherNodeSigner,
+                publisherNodeV,
+                publisherNodeR,
+                publisherNodeS,
+                publisherNodeVS,
             );
 
             const batchSize = await this.operationService.getBatchSize(blockchain);

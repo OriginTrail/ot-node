@@ -1,6 +1,8 @@
 import path from 'path';
 import {
     CONTENT_ASSET_HASH_FUNCTION_ID,
+    NETWORK_SIGNATURES_FOLDER,
+    PUBLISHER_NODE_SIGNATURES_FOLDER,
     SERVICE_AGREEMENT_SOURCES,
 } from '../constants/constants.js';
 
@@ -58,7 +60,8 @@ class PendingStorageService {
             // Define the paths to the directories we want to clean
             const storagePaths = [
                 this.fileService.getPendingStorageCachePath(),
-                this.fileService.getSignatureStorageCachePath(),
+                this.fileService.getSignatureStorageFolderPath(NETWORK_SIGNATURES_FOLDER),
+                this.fileService.getSignatureStorageFolderPath(PUBLISHER_NODE_SIGNATURES_FOLDER),
             ];
 
             const filesToDelete = [];
