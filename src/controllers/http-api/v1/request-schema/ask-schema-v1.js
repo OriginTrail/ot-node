@@ -12,5 +12,9 @@ export default (argumentsObject) => ({
             type: 'number',
             minimum: 0,
         },
+        batchSize: {
+            type: 'number',
+            minimum: 1,
+        },
     },
 });
