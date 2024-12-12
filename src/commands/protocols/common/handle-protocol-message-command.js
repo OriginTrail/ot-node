@@ -66,10 +66,10 @@ class HandleProtocolMessageCommand extends Command {
                 operationId,
                 messageData,
             );
-            this.operationIdService.emitChangeEvent(
-                this.sendMessageResponseEndEvent,
+            this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
+                this.operationEndEvent,
             );
         } catch (error) {
             if (command.retries) {
