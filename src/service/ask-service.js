@@ -107,7 +107,8 @@ class AskService extends OperationService {
             cumulatedResponsesData.completedNodes < minimumNumberOfNodeReplications &&
             (isAllNodesResponded || isBatchCompleted)
         ) {
-            const potentialCompletedNumber = completedNumber + leftoverNodes.length;
+            const potentialCompletedNumber =
+                cumulatedResponsesData.completedNodes + leftoverNodes.length;
 
             await this.operationIdService.cacheOperationIdDataToFile(
                 operationId,
