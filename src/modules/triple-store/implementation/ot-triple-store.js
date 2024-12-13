@@ -195,11 +195,30 @@ class OtTripleStore {
 
     async knowledgeCollectionsExistInUnifiedGraph(repository, namedGraph, uals) {
         const query = `
-            TODO: create query returning array of bools for array of uals
-             ${namedGraph} ${uals}
+            SELECT 
+                ${uals
+                    .map(
+                        (_, i) => `
+                        (BOUND(?ual${i}) AS ?exists${i})`,
+                    )
+                    .join('\n')}
+            WHERE {
+                GRAPH <${namedGraph}> {
+                    ${uals
+                        .map(
+                            (ual, i) => `
+                        {
+                            << ?s ?p ?o >> ${UAL_PREDICATE} ?ual${i}
+                            FILTER(STRSTARTS(STR(?ual${i}), "${ual}/"))
+                        }
+                    `,
+                        )
+                        .join(' UNION ')}
+                }
+            }
         `;
 
-        return this.ask(repository, query);
+        return this.select(repository, query).then((res) => uals.map((_, i) => res[`exists${i}`]));
     }
 
     async deleteUniqueKnowledgeAssetTriplesFromUnifiedGraph(repository, namedGraph, ual) {
