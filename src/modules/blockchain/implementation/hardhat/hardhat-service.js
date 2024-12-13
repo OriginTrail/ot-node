@@ -1,3 +1,4 @@
+import ethers from 'ethers';
 import Web3Service from '../web3-service.js';
 
 class HardhatService extends Web3Service {
@@ -17,7 +18,7 @@ class HardhatService extends Web3Service {
     }
 
     async getGasPrice() {
-        return this.convertToWei(20, 'wei');
+        return ethers.utils.parseUnits('20', 'wei');
     }
 }
 

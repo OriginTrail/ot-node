@@ -117,11 +117,11 @@ class OperationService {
         );
     }
 
-    async getBatchSize() {
+    getBatchSize() {
         throw Error('getBatchSize not implemented');
     }
 
-    async getMinAckResponses() {
+    getMinAckResponses() {
         throw Error('getMinAckResponses not implemented');
     }
 }

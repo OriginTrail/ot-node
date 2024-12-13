@@ -197,7 +197,7 @@ class LocalStoreCommand extends Command {
             }
 
             const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-            const { signer, v, r, s, vs } = await this.signatureService.signMessage(
+            const { v, r, s, vs } = await this.signatureService.signMessage(
                 blockchain,
                 datasetRoot,
             );
@@ -205,7 +205,6 @@ class LocalStoreCommand extends Command {
                 NETWORK_SIGNATURES_FOLDER,
                 operationId,
                 identityId,
-                signer,
                 v,
                 r,
                 s,
@@ -213,29 +212,29 @@ class LocalStoreCommand extends Command {
             );
 
             const {
-                signer: publisherNodeSigner,
                 v: publisherNodeV,
                 r: publisherNodeR,
                 s: publisherNodeS,
                 vs: publisherNodeVS,
             } = await this.signatureService.signMessage(
                 blockchain,
-                this.cryptoService.encodePacked(['uint72', 'bytes32'], [identityId, datasetRoot]),
+                this.cryptoService.keccak256EncodePacked(
+                    ['uint72', 'bytes32'],
+                    [identityId, datasetRoot],
+                ),
             );
             await this.signatureService.addSignatureToStorage(
                 PUBLISHER_NODE_SIGNATURES_FOLDER,
                 operationId,
                 identityId,
-                publisherNodeSigner,
                 publisherNodeV,
                 publisherNodeR,
                 publisherNodeS,
                 publisherNodeVS,
             );
 
-            const batchSize = await this.operationService.getBatchSize(blockchain);
-            const minAckResponses = await this.operationService.getMinAckResponses(
-                blockchain,
+            const batchSize = this.operationService.getBatchSize();
+            const minAckResponses = this.operationService.getMinAckResponses(
                 minimumNumberOfNodeReplications,
             );
 
@@ -250,7 +249,7 @@ class LocalStoreCommand extends Command {
                 OPERATION_REQUEST_STATUS.COMPLETED,
                 {
                     messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                    messageData: { identityId, signer, v, r, s, vs },
+                    messageData: { identityId, v, r, s, vs },
                 },
                 null,
             );

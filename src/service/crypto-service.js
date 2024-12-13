@@ -30,6 +30,14 @@ class CryptoService {
         return ethers.utils.solidityPack(types, values);
     }
 
+    keccak256EncodePacked(types, values) {
+        return ethers.utils.solidityKeccak256(types, values);
+    }
+
+    sha256EncodePacked(types, values) {
+        return ethers.utils.soliditySha256(types, values);
+    }
+
     convertUint8ArrayToHex(uint8Array) {
         return ethers.utils.hexlify(uint8Array);
     }
@@ -52,16 +60,6 @@ class CryptoService {
 
     convertFromWei(value, toUnit = 'ether') {
         return ethers.utils.formatUnits(value, toUnit);
-    }
-
-    hashMessage(message) {
-        return ethers.utils.hashMessage(message);
-    }
-
-    async signMessage(messageHash) {
-        const wallet = this.getRandomOperationalWallet();
-        const signature = await wallet.signMessage(ethers.utils.arrayify(messageHash));
-        return { signer: wallet.address, signature };
     }
 
     splitSignature(flatSignature) {

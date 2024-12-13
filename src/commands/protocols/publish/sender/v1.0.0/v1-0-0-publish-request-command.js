@@ -66,7 +66,6 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             NETWORK_SIGNATURES_FOLDER,
             operationId,
             responseData.identityId,
-            responseData.signer,
             responseData.v,
             responseData.r,
             responseData.s,

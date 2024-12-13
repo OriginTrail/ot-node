@@ -60,10 +60,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             operationId,
             blockchain,
         );
-        const isValidPublicAssertion = await this.validationService.validateDatasetRoot(
-            cachedData.dataset.public,
-            datasetRoot,
-        );
+        await this.validationService.validateDatasetRoot(cachedData.dataset.public, datasetRoot);
 
         const privateAssertionTriple = cachedData.dataset.public.find((triple) =>
             triple.includes(PRIVATE_ASSERTION_PREDICATE),
@@ -72,22 +69,10 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         if (privateAssertionTriple) {
             const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
 
-            const isValidPrivateAssertion = await this.validationService.validateDatasetRoot(
+            await this.validationService.validateDatasetRoot(
                 cachedData.dataset.private,
                 privateAssertionRoot,
             );
-
-            if (!isValidPrivateAssertion) {
-                await this.handleError(
-                    operationId,
-                    blockchain,
-                    `Invalid dataset root for private assertion. Received value from request: ${cachedData.dataset.public.find(
-                        () => true,
-                    )}`,
-                    this.errorType,
-                );
-                return Command.empty();
-            }
         }
 
         this.operationIdService.emitChangeEvent(
@@ -96,15 +81,6 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
         );
 
-        if (!isValidPublicAssertion) {
-            await this.handleError(
-                operationId,
-                blockchain,
-                `Invalid dataset root for public assertion. Received value received value from request: ${cachedData.datasetRoot}`,
-                this.errorType,
-            );
-            return Command.empty();
-        }
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,

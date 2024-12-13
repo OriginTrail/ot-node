@@ -307,7 +307,7 @@ class Web3Service {
     initializeAssetStorageContract(assetStorageAddress) {
         this.assetStorageContracts[assetStorageAddress.toLowerCase()] = new ethers.Contract(
             assetStorageAddress,
-            ABIs.ContentAssetStorage,
+            ABIs.KnowledgeCollectionStorage,
             this.operationalWallets[0],
         );
         this.contractAddresses[assetStorageAddress] =
@@ -492,7 +492,7 @@ class Web3Service {
                     [
                         this.getManagementKey(),
                         this.getPublicKeys().slice(1),
-                        this.convertAsciiToHex(peerId),
+                        ethers.utils.hexlify(ethers.utils.toUtf8Bytes(peerId)),
                         this.config.sharesTokenName,
                         this.config.sharesTokenSymbol,
                         this.config.operatorFee,
@@ -590,7 +590,7 @@ class Web3Service {
             this._decodeEstimateGasError(contractInstance, functionName, error, args);
         }
 
-        gasLimit = gasLimit ?? this.convertToWei(900, 'kwei');
+        gasLimit = gasLimit ?? ethers.utils.parseUnits('900', 'kwei');
 
         const gasLimitMultiplier = CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS[functionName] ?? 1;
 
@@ -1139,6 +1139,11 @@ class Web3Service {
 
     async getNodeId(identityId) {
         return this.callContractFunction(this.contracts.ProfileStorage, 'getNodeId', [identityId]);
+    }
+
+    async signMessage(messageHash) {
+        const wallet = this.getRandomOperationalWallet();
+        return wallet.signMessage(ethers.utils.arrayify(messageHash));
     }
 }
 

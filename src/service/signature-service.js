@@ -4,23 +4,24 @@ class SignatureService {
         this.logger = ctx.logger;
 
         this.cryptoService = ctx.cryptoService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.fileService = ctx.fileService;
     }
 
-    async signMessage(blockchain, message) {
-        const messageHash = this.cryptoService.hashMessage(message);
-        const { signer, signature: flatSignature } = await this.cryptoService.signMessage(
+    async signMessage(blockchain, messageHash) {
+        const flatSignature = await this.blockchainModuleManager.signMessage(
+            blockchain,
             messageHash,
         );
         const { v, r, s, _vs } = this.cryptoService.splitSignature(flatSignature);
-        return { signer, v, r, s, vs: _vs };
+        return { v, r, s, vs: _vs };
     }
 
-    async addSignatureToStorage(folderName, operationId, identityId, signer, v, r, s, vs) {
+    async addSignatureToStorage(folderName, operationId, identityId, v, r, s, vs) {
         await this.fileService.appendContentsToFile(
             this.fileService.getSignatureStorageFolderPath(folderName),
             operationId,
-            `${JSON.stringify({ identityId, signer, v, r, s, vs })}\n`,
+            `${JSON.stringify({ identityId, v, r, s, vs })}\n`,
         );
     }
 

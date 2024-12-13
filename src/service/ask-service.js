@@ -102,7 +102,7 @@ class AskService extends OperationService {
         }
     }
 
-    async getBatchSize() {
+    getBatchSize() {
         return 20;
     }
 }

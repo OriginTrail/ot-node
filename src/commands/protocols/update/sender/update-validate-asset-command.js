@@ -1,5 +1,4 @@
 import ValidateAssetCommand from '../../../common/validate-asset-command.js';
-import Command from '../../../command.js';
 import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class UpdateValidateAssetCommand extends ValidateAssetCommand {
@@ -48,25 +47,12 @@ class UpdateValidateAssetCommand extends ValidateAssetCommand {
             operationId,
             blockchain,
         );
-        const isValidAssertion = await this.validationService.validateDatasetRoot(
-            cachedData.dataset,
-            datasetRoot,
-        );
+       await this.validationService.validateDatasetRoot(cachedData.dataset, datasetRoot);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_DATASET_ROOT_END,
             operationId,
             blockchain,
         );
-
-        if (!isValidAssertion) {
-            await this.handleError(
-                operationId,
-                blockchain,
-                `Invalid dataset root for assertion. Received value received value from request: ${cachedData.datasetRoot}`,
-                this.errorType,
-            );
-            return Command.empty();
-        }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

@@ -26,14 +26,16 @@ class ParanetService {
     }
 
     constructParanetId(contract, tokenId) {
-        return this.cryptoService.keccak256(
-            this.cryptoService.encodePacked(['address', 'uint256'], [contract, tokenId]),
+        return this.cryptoService.keccak256EncodePacked(
+            ['address', 'uint256'],
+            [contract, tokenId],
         );
     }
 
     constructKnowledgeAssetId(contract, tokenId) {
-        return this.cryptoService.keccak256(
-            this.cryptoService.encodePacked(['address', 'uint256'], [contract, tokenId]),
+        return this.cryptoService.keccak256EncodePacked(
+            ['address', 'uint256'],
+            [contract, tokenId],
         );
     }
 

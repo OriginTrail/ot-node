@@ -101,12 +101,9 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             operationId,
             blockchain,
         );
-      
-        const { signer, v, r, s, vs } = await this.signatureService.signMessage(
-            blockchain,
-            datasetRoot,
-        );
-      
+
+        const { v, r, s, vs } = await this.signatureService.signMessage(blockchain, datasetRoot);
+
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_SIGN_END,
             operationId,
@@ -121,7 +118,7 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
 
         return {
             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-            messageData: { identityId, signer, v, r, s, vs },
+            messageData: { identityId, v, r, s, vs },
         };
     }
 
