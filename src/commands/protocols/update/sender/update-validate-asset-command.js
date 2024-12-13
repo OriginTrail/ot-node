@@ -47,7 +47,7 @@ class UpdateValidateAssetCommand extends ValidateAssetCommand {
             operationId,
             blockchain,
         );
-        this.validationService.validateAssertionMerkleRoot(
+        await this.validationService.validateAssertionMerkleRoot(
             cachedData.assertion,
             assertionMerkleRoot,
         );
