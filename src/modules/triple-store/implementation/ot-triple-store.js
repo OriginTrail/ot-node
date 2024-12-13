@@ -183,10 +183,10 @@ class OtTripleStore {
         const query = `
             ASK
             WHERE {
-                GRAPH <${namedGraph}> {
-                    << ?s ?p ?o >> ${UAL_PREDICATE} ?ual
-                    FILTER(STRSTARTS(STR(?ual), "${ual}/"))
+                GRAPH ?g {
+                    ?s ?p ?o
                 }
+                FILTER(STRSTARTS(STR(?g), "${ual}/"))
             }
         `;
 
@@ -195,30 +195,20 @@ class OtTripleStore {
 
     async knowledgeCollectionsExistInUnifiedGraph(repository, namedGraph, uals) {
         const query = `
-            SELECT 
-                ${uals
-                    .map(
-                        (_, i) => `
-                        (BOUND(?ual${i}) AS ?exists${i})`,
-                    )
-                    .join('\n')}
+            SELECT DISTINCT ?ual
             WHERE {
-                GRAPH <${namedGraph}> {
-                    ${uals
-                        .map(
-                            (ual, i) => `
-                        {
-                            << ?s ?p ?o >> ${UAL_PREDICATE} ?ual${i}
-                            FILTER(STRSTARTS(STR(?ual${i}), "${ual}/"))
-                        }
-                    `,
-                        )
-                        .join(' UNION ')}
+                VALUES ?ual {
+                    ${uals.map((ual) => `"${ual}/"\n`).join('\n')}
                 }
+                GRAPH ?g { ?s ?p ?o }
+                FILTER(STRSTARTS(STR(?g), ?ual))
             }
         `;
 
-        return this.select(repository, query).then((res) => uals.map((_, i) => res[`exists${i}`]));
+        return this.select(repository, query).then((res) => {
+            const existsMap = Object.fromEntries(res.ual.entries().map((e) => [e[1], true]));
+            return uals.map((ual) => !!existsMap[ual]);
+        });
     }
 
     async deleteUniqueKnowledgeAssetTriplesFromUnifiedGraph(repository, namedGraph, ual) {
