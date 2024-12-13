@@ -194,11 +194,12 @@ class OtTripleStore {
     }
 
     async knowledgeCollectionsExistInUnifiedGraph(repository, namedGraph, uals) {
+        const prefixUALs = uals.map((ual) => `"${ual}/"`);
         const query = `
             SELECT DISTINCT ?ual
             WHERE {
                 VALUES ?ual {
-                    ${uals.map((ual) => `"${ual}/"\n`).join('\n')}
+                    ${prefixUALs.join('\n')}
                 }
                 GRAPH ?g { ?s ?p ?o }
                 FILTER(STRSTARTS(STR(?g), ?ual))
@@ -206,8 +207,8 @@ class OtTripleStore {
         `;
 
         return this.select(repository, query).then((res) => {
-            const existsMap = Object.fromEntries(res.ual.entries().map((e) => [e[1], true]));
-            return uals.map((ual) => !!existsMap[ual]);
+            const existsMap = Object.fromEntries(res.entries().map((e) => [e[1].ual, true]));
+            return prefixUALs.map((ual) => !!existsMap[ual]);
         });
     }
 
