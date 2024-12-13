@@ -482,7 +482,6 @@ class BlockchainEventListenerCommand extends Command {
         let cachedData;
         try {
             datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
-
             cachedData = await this.fileService.readFile(datasetPath, true);
         } catch (error) {
             this.operationIdService.updateOperationIdStatus(
@@ -541,11 +540,11 @@ class BlockchainEventListenerCommand extends Command {
             OPERATION_ID_STATUS.UPDATE_FINALIZATION.UPDATE_FINALIZATION_START,
         );
 
-        let data;
         let datasetPath;
+        let cachedData;
         try {
             datasetPath = this.fileService.getPendingStorageDocumentPath(updateOperationId);
-            data = await this.fileService.readFile(datasetPath, true);
+            cachedData = await this.fileService.readFile(datasetPath, true);
         } catch (error) {
             this.operationIdService.markOperationAsFailed(
                 operationId,
@@ -568,8 +567,8 @@ class BlockchainEventListenerCommand extends Command {
                 tokenId,
                 assetStateIndex,
                 merkleRoot: state,
-                assertion: data.assertion,
-                cachedMerkleRoot: data.merkleRoot,
+                assertion: cachedData.assertion,
+                cachedMerkleRoot: cachedData.merkleRoot,
             },
             transactional: false,
         });
