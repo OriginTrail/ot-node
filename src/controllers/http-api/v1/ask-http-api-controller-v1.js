@@ -44,21 +44,24 @@ class AskController extends BaseController {
 
             const commandSequence = ['askFindShardCommand', 'networkAskCommand'];
 
-            const datasetRoots = await Promise.all(
-                uals
-                    .map((ual) => async () => {
-                        const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
-
-                        const datasetRoot = await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkleRoot(
-                            blockchain,
-                            contract,
-                            knowledgeCollectionId,
-                        );
-
-                        return datasetRoot;
-                    })
-                    .map((f) => f()),
-            );
+            // TODO: fix this?
+            // NOTE: datasetRoot is never used in ask, this now works
+            //
+            // const datasetRoots = await Promise.all(
+            //     uals
+            //         .map((ual) => async () => {
+            //             const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
+            //             const datasetRoot =
+            //                 await this.blockchainModuleManager.getKnowledgeCollectionLatestMerkleRoot(
+            //                     blockchain,
+            //                     contract,
+            //                     knowledgeCollectionId,
+            //                 );
+            //             return datasetRoot;
+            //         })
+            //         .map((f) => f()),
+            // );
+            const datasetRoots = [];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
