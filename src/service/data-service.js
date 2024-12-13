@@ -130,7 +130,7 @@ class DataService {
         return groupedPublic;
     }
 
-    insertStringInSortadArray(array, str) {
+    insertStringInSortedArray(array, str) {
         // Assuming triplesArray is already sorted
         let left = 0;
         let right = array.length;

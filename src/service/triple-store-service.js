@@ -127,6 +127,58 @@ class TripleStoreService {
                     publicKnowledgeAssetsTriplesGrouped,
                 ),
             );
+
+            if (triples.private?.length) {
+                const privateKnowledgeAssetsTriplesGrouped = kcTools.groupNquadsBySubject(
+                    publicAssertion,
+                    true,
+                );
+
+                const privateKnowledgeAssetsUALs = [];
+
+                // const privateSubjectHashMap = privateKnowledgeAssetsTriplesGrouped.reduce(
+                //     (map, group, index) => {
+                //         const [privateSubject] = group[0].split(' ');
+                //         const privateSubjectHash = privateSubject.slice(1, -1);
+                //         map.set(privateSubjectHash, index);
+                //         return map;
+                //     },
+                //     new Map(), );
+
+                const privateRepresentationTriplesSubjectMap =
+                    sortedPrivateRepresentationTriples.reduce((map, triple, index) => {
+                        const privateHashedSubject = triple
+                            .split(' ')[0]
+                            .slice(PRIVATE_RESOURCE_PREDICATE.length + 1, -1);
+                        map.set(privateHashedSubject, index);
+                        return map;
+                    }, new Map());
+
+                for (const privateTriple of privateKnowledgeAssetsTriplesGrouped) {
+                    const [privateSubject] = privateTriple[0].split(' ');
+                    const privateSubjectHash = this.cryptoService.sha256(
+                        privateSubject.slice(1, -1),
+                    );
+
+                    if (publicSubjectHashMap.has(privateSubjectHash)) {
+                        const publicIndex = publicSubjectHashMap.get(privateSubjectHash);
+                        privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[publicIndex]);
+                    } else {
+                        const publicIndex =
+                            privateRepresentationTriplesSubjectMap.get(privateSubjectHash);
+                        privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[publicIndex]);
+                    }
+                }
+                promises.push(
+                    this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                        this.repositoryImplementations[repository],
+                        repository,
+                        privateKnowledgeAssetsUALs,
+                        TRIPLES_VISIBILITY.PRIVATE,
+                        privateKnowledgeAssetsTriplesGrouped,
+                    ),
+                );
+            }
         }
         const metadataTriples = publicKnowledgeAssetsUALs
             .map(
