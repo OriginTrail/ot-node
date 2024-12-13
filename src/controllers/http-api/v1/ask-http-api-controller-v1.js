@@ -42,7 +42,7 @@ class AskController extends BaseController {
                 `Ask for ${uals.join(', ')} with operation id ${operationId} initiated.`,
             );
 
-            const commandSequence = ['askFindShardCommand', 'networkAskCommand'];
+            const commandSequence = ['askFindShardCommand'];
 
             // TODO: fix this?
             // NOTE: datasetRoot is never used in ask, this now works

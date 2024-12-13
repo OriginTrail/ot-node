@@ -20,7 +20,13 @@ class AskFindShardCommand extends FindShardCommand {
 
     // eslint-disable-next-line no-unused-vars
     getOperationCommandSequence(nodePartOfShard, commandData) {
-        return [];
+        const sequence = [];
+        if (nodePartOfShard) {
+            sequence.push('localAskCommand');
+        }
+        sequence.push('networkAskCommand');
+
+        return sequence;
     }
 
     /**

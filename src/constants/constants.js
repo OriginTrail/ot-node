@@ -418,6 +418,7 @@ export const ERROR_TYPE = {
     },
     ASK: {
         ASK_ERROR: 'AskError',
+        ASK_LOCAL_ERROR: 'AskLocalError',
         ASK_NETWORK_ERROR: 'AskNetworkError',
         ASK_REQUEST_ERROR: 'AskRequestError',
         ASK_REQUEST_REMOTE_ERROR: 'AskRequestRemoteError',
