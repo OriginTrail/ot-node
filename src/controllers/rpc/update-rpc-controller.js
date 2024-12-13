@@ -26,7 +26,7 @@ class UpdateController extends BaseController {
                 // eslint-disable-next-line no-case-declarations
                 dataSource = await this.operationIdService.getCachedOperationIdData(operationId);
                 await this.operationIdService.cacheOperationIdData(operationId, {
-                    assertionId: dataSource.assertionId,
+                    assertionMerkleRoot: dataSource.assertionMerkleRoot,
                     assertion: message.data.assertion,
                 });
                 command.name = handleRequestCommand;
@@ -40,7 +40,7 @@ class UpdateController extends BaseController {
             remotePeerId,
             operationId,
             protocol,
-            assertionId: dataSource.assertionId,
+            assertionMerkleRoot: dataSource.assertionMerkleRoot,
             blockchain: dataSource.blockchain,
             contract: dataSource.contract,
             tokenId: dataSource.tokenId,

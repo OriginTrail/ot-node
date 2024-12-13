@@ -25,7 +25,7 @@ describe('Sharding table service test', async () => {
         const epochsNumber = 5;
         const assertionSize = BYTES_IN_KILOBYTE;
         const contentAssetStorageAddress = '0xABd59A9aa71847F499d624c492d3903dA953d67a';
-        const firstAssertionId =
+        const firstAssertionMerkleRoot =
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const bidSuggestions = await shardingTableService.getBidSuggestion(
@@ -33,7 +33,7 @@ describe('Sharding table service test', async () => {
             epochsNumber,
             assertionSize,
             contentAssetStorageAddress,
-            firstAssertionId,
+            firstAssertionMerkleRoot,
             hashFunctionId,
         );
         expect(bidSuggestions).to.be.equal('3788323225298705400');
@@ -42,7 +42,7 @@ describe('Sharding table service test', async () => {
     it('Get bid suggestion, returns valid value for assertion size 1b and ask 1 wei', async () => {
         const epochsNumber = 5;
         const contentAssetStorageAddress = '0xABd59A9aa71847F499d624c492d3903dA953d67a';
-        const firstAssertionId =
+        const firstAssertionMerkleRoot =
             '0xb44062de45333119471934bc0340c05ff09c0b463392384bc2030cd0a20c334b';
         const hashFunctionId = 1;
         const askInWei = '0.000000000000000001';
@@ -59,7 +59,7 @@ describe('Sharding table service test', async () => {
             epochsNumber,
             1,
             contentAssetStorageAddress,
-            firstAssertionId,
+            firstAssertionMerkleRoot,
             hashFunctionId,
         );
         expect(bidSuggestion1B).to.be.equal('15');
@@ -68,7 +68,7 @@ describe('Sharding table service test', async () => {
             epochsNumber,
             10,
             contentAssetStorageAddress,
-            firstAssertionId,
+            firstAssertionMerkleRoot,
             hashFunctionId,
         );
         expect(bidSuggestion10B).to.be.equal('15');
@@ -77,7 +77,7 @@ describe('Sharding table service test', async () => {
             epochsNumber,
             1024,
             contentAssetStorageAddress,
-            firstAssertionId,
+            firstAssertionMerkleRoot,
             hashFunctionId,
         );
         expect(bidSuggestion1024B).to.be.equal('15');
@@ -86,7 +86,7 @@ describe('Sharding table service test', async () => {
             epochsNumber,
             2048,
             contentAssetStorageAddress,
-            firstAssertionId,
+            firstAssertionMerkleRoot,
             hashFunctionId,
         );
         expect(bidSuggestion2048B).to.be.equal('30');

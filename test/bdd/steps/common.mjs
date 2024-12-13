@@ -27,8 +27,8 @@ Given(
                     blockchainId,
                     operationalWallet: wallets[nodeIndex],
                     managementWallet: wallets[nodeIndex + Math.floor(wallets.length / 2)],
-                    port: blockchain.port
-                })
+                    port: blockchain.port,
+                });
             });
             const rpcPort = 8901 + nodeIndex;
             const networkPort = 9001 + nodeIndex;
@@ -119,8 +119,8 @@ Given(
                 blockchainId,
                 operationalWallet: wallets[0],
                 managementWallet: wallets[Math.floor(wallets.length / 2)],
-                port: this.state.localBlockchains[blockchainId].port
-            })
+                port: this.state.localBlockchains[blockchainId].port,
+            });
         });
         const rpcPort = 8900;
         const networkPort = 9000;
@@ -262,7 +262,7 @@ Given(
 // );
 
 Then(
-    /Latest (Get|Publish|Update) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionIdError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
+    /Latest (Get|Publish|Update) operation finished with status: ([COMPLETED|FAILED|PublishValidateAssertionError|PublishStartError|GetAssertionMerkleRootError|GetNetworkError|GetLocalError|PublishRouteError]+)$/,
     { timeout: 120000 },
     async function latestResolveFinishedCall(operationName, status) {
         this.logger.log(`Latest ${operationName} operation finished with status: ${status}`);

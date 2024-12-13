@@ -12,17 +12,17 @@ class PendingStorageService {
         this.tripleStoreService = ctx.tripleStoreService; // this is not used
     }
 
-    async cacheDataset(operationId, datasetRoot, dataset, remotePeerId) {
+    async cacheAssertion(operationId, assertionMerkleRoot, assertion, remotePeerId) {
         this.logger.debug(
-            `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage`,
+            `Caching ${assertionMerkleRoot} assertion root, operation id: ${operationId} in file in pending storage`,
         );
 
         await this.fileService.writeContentsToFile(
             this.fileService.getPendingStorageCachePath(),
             operationId,
             JSON.stringify({
-                merkleRoot: datasetRoot,
-                assertion: dataset,
+                merkleRoot: assertionMerkleRoot,
+                assertion,
                 remotePeerId,
             }),
         );
@@ -38,7 +38,7 @@ class PendingStorageService {
             return fileContents.assertion;
         } catch (error) {
             this.logger.error(
-                `Failed to retrieve or parse cached dataset for ${operationId}: ${error.message}`,
+                `Failed to retrieve or parse cached assertion for ${operationId}: ${error.message}`,
             );
             throw error;
         }
@@ -129,11 +129,18 @@ class PendingStorageService {
         return removedCount;
     }
 
-    async getCachedAssertion(repository, blockchain, contract, tokenId, assertionId, operationId) {
+    async getCachedAssertion(
+        repository,
+        blockchain,
+        contract,
+        tokenId,
+        assertionMerkleRoot,
+        operationId,
+    ) {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         this.logger.debug(
-            `Reading cached assertion for ual: ${ual}, assertion id: ${assertionId}, operation id: ${operationId} from file in ${repository} pending storage`,
+            `Reading cached assertion for ual: ${ual}, assertion id: ${assertionMerkleRoot}, operation id: ${operationId} from file in ${repository} pending storage`,
         );
         try {
             const documentPath = await this.fileService.getPendingStorageDocumentPath(operationId);

@@ -21,11 +21,11 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
                 type: DataTypes.STRING,
             },
-            publicAssertionId: {
+            publicAssertionMerkleRoot: {
                 allowNull: true,
                 type: DataTypes.STRING,
             },
-            privateAssertionId: {
+            privateAssertionMerkleRoot: {
                 allowNull: true,
                 type: DataTypes.STRING,
             },

@@ -6,9 +6,9 @@ export default (argumentsObject) => ({
         oneOf: [
             {
                 type: 'object',
-                required: ['assertionId', 'assertion'],
+                required: ['assertionMerkleRoot', 'assertion'],
                 properties: {
-                    assertionId: {
+                    assertionMerkleRoot: {
                         type: 'string',
                         minLength: 66,
                         maxLength: 66,

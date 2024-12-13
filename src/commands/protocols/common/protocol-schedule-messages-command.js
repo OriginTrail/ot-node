@@ -76,10 +76,10 @@ class ProtocolScheduleMessagesCommand extends Command {
     }
 
     getNextCommandData(command) {
-        const { datasetRoot, blockchain } = command.data;
+        const { assertionMerkleRoot, blockchain } = command.data;
         return {
             blockchain,
-            datasetRoot,
+            assertionMerkleRoot,
         };
     }
 

@@ -31,7 +31,7 @@ class BidSuggestionController extends BaseController {
             //     epochsNumber,
             //     assertionSize,
             //     contentAssetStorageAddress,
-            //     firstAssertionId,
+            //     firstAssertionMerkleRoot,
             //     hashFunctionId,
             //     proximityScoreFunctionsPairId,
             //     bidSuggestionRange,

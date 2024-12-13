@@ -38,25 +38,25 @@ class LocalStoreController extends BaseController {
         };
         switch (assertions.length) {
             case 1: {
-                const { assertion, assertionId } = assertions[0];
-                cachedAssertions.public = { assertion, assertionId };
+                const { assertion, assertionMerkleRoot } = assertions[0];
+                cachedAssertions.public = { assertion, assertionMerkleRoot };
 
                 break;
             }
             case 2: {
                 const isFirstPublic =
-                    this.dataService.getPrivateAssertionId(assertions[0].assertion) != null;
+                    this.dataService.getPrivateAssertionMerkleRoot(assertions[0].assertion) != null;
 
                 const publicAssertionData = isFirstPublic ? assertions[0] : assertions[1];
                 const privateAssertionData = isFirstPublic ? assertions[1] : assertions[0];
 
                 cachedAssertions.public = {
                     assertion: publicAssertionData.assertion,
-                    assertionId: publicAssertionData.assertionId,
+                    assertionMerkleRoot: publicAssertionData.assertionMerkleRoot,
                 };
                 cachedAssertions.private = {
                     assertion: privateAssertionData.assertion,
-                    assertionId: privateAssertionData.assertionId,
+                    assertionMerkleRoot: privateAssertionData.assertionMerkleRoot,
                 };
 
                 break;
@@ -67,7 +67,7 @@ class LocalStoreController extends BaseController {
 
         this.logger.info(
             `Received assertion with assertion ids: ${assertions.map(
-                (reqObject) => reqObject.assertionId,
+                (reqObject) => reqObject.assertionMerkleRoot,
             )}. Operation id: ${operationId}`,
         );
 

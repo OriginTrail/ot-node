@@ -22,7 +22,7 @@ const createAgreement = ({
     proofWindowOffsetPerc = 66,
     hashFunctionId = 1,
     keyword = '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
-    assertionId = '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+    assertionMerkleRoot = '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
     stateIndex = 1,
     lastCommitEpoch = null,
     lastProofEpoch = null,
@@ -49,7 +49,7 @@ const createAgreement = ({
         proofWindowOffsetPerc,
         hashFunctionId,
         keyword,
-        assertionId,
+        assertionMerkleRoot,
         stateIndex,
         lastCommitEpoch,
         lastProofEpoch,
@@ -104,7 +104,8 @@ describe('Repository module', () => {
             hashFunctionId: 1,
             keyword:
                 '0xB0D4afd8879eD9F52b28595d31B441D079B2Ca0768e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
-            assertionId: '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
+            assertionMerkleRoot:
+                '0x68e44dc71bf509adfccbea9df949f253afa56796a3a926203f90a1e4914247d3',
             stateIndex: 1,
         };
 
@@ -121,7 +122,7 @@ describe('Repository module', () => {
                 agreement.proofWindowOffsetPerc,
                 agreement.hashFunctionId,
                 agreement.keyword,
-                agreement.assertionId,
+                agreement.assertionMerkleRoot,
                 agreement.stateIndex,
                 agreement.lastCommitEpoch,
                 agreement.lastProofEpoch,
@@ -140,7 +141,7 @@ describe('Repository module', () => {
             expect(row.proofWindowOffsetPerc).to.equal(agreement.proofWindowOffsetPerc);
             expect(row.hashFunctionId).to.equal(agreement.hashFunctionId);
             expect(row.keyword).to.equal(agreement.keyword);
-            expect(row.assertionId).to.equal(agreement.assertionId);
+            expect(row.assertionMerkleRoot).to.equal(agreement.assertionMerkleRoot);
             expect(row.stateIndex).to.equal(agreement.stateIndex);
             assert(expect(row.lastCommitEpoch).to.not.exist);
             assert(expect(row.lastProofEpoch).to.not.exist);
@@ -180,7 +181,7 @@ describe('Repository module', () => {
                         agreement.proofWindowOffsetPerc,
                         agreement.hashFunctionId,
                         agreement.keyword,
-                        agreement.assertionId,
+                        agreement.assertionMerkleRoot,
                         agreement.stateIndex,
                         agreement.lastCommitEpoch,
                         agreement.lastProofEpoch,

@@ -1,13 +1,13 @@
 export default (argumentsObject) => ({
     type: 'object',
-    required: ['datasetRoot', 'dataset', 'blockchain'],
+    required: ['assertionMerkleRoot', 'assertion', 'blockchain'],
     properties: {
-        datasetRoot: {
+        assertionMerkleRoot: {
             type: 'string',
             minLength: 66,
             maxLength: 66,
         },
-        dataset: {
+        assertion: {
             type: 'object',
             properties: {
                 public: {

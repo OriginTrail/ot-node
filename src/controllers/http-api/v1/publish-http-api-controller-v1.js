@@ -18,10 +18,11 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { dataset, datasetRoot, blockchain, minimumNumberOfNodeReplications } = req.body;
+        const { assertion, assertionMerkleRoot, blockchain, minimumNumberOfNodeReplications } =
+            req.body;
 
         this.logger.info(
-            `Received asset with dataset root: ${datasetRoot}, blockchain: ${blockchain}`,
+            `Received asset with assertion root: ${assertionMerkleRoot}, blockchain: ${blockchain}`,
         );
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -51,20 +52,20 @@ class PublishController extends BaseController {
 
         try {
             await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
-                dataset,
-                datasetRoot,
+                assertion,
+                assertionMerkleRoot,
             });
 
             await this.operationIdService.cacheOperationIdDataToFile(operationId, {
-                dataset,
-                datasetRoot,
+                assertion,
+                assertionMerkleRoot,
             });
 
             const publisherNodePeerId = this.networkModuleManager.getPeerId().toB58String();
-            await this.pendingStorageService.cacheDataset(
+            await this.pendingStorageService.cacheAssertion(
                 operationId,
-                datasetRoot,
-                dataset,
+                assertionMerkleRoot,
+                assertion,
                 publisherNodePeerId,
             );
 
@@ -77,7 +78,7 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    datasetRoot,
+                    assertionMerkleRoot,
                     blockchain,
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,

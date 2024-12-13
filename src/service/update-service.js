@@ -33,16 +33,16 @@ class UpdateService extends OperationService {
             leftoverNodes,
             batchSize,
             minAckResponses,
-            datasetRoot,
+            assertionMerkleRoot,
         } = command.data;
 
-        const datasetRootStatus = await this.getResponsesStatuses(
+        const assertionMerkleRootStatus = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
             operationId,
         );
 
-        const { completedNumber, failedNumber } = datasetRootStatus[operationId];
+        const { completedNumber, failedNumber } = assertionMerkleRootStatus[operationId];
 
         const totalResponses = completedNumber + failedNumber;
 
@@ -65,7 +65,7 @@ class UpdateService extends OperationService {
         // Minimum replication reached, mark in the operational DB
         if (completedNumber === minAckResponses) {
             this.logger.debug(
-                `Minimum replication ${minAckResponses} reached for operationId: ${operationId}, dataset root: ${datasetRoot}`,
+                `Minimum replication ${minAckResponses} reached for operationId: ${operationId}, assertion root: ${assertionMerkleRoot}`,
             );
 
             await this.repositoryModuleManager.updateMinAcksReached(operationId, true);

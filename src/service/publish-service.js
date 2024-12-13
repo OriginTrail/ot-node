@@ -32,23 +32,23 @@ class PublishService extends OperationService {
             leftoverNodes,
             batchSize,
             minAckResponses,
-            datasetRoot,
+            assertionMerkleRoot,
         } = command.data;
 
-        const datasetRootStatus = await this.getResponsesStatuses(
+        const assertionMerkleRootStatus = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
             operationId,
         );
 
-        const { completedNumber, failedNumber } = datasetRootStatus[operationId];
+        const { completedNumber, failedNumber } = assertionMerkleRootStatus[operationId];
 
         const totalResponses = completedNumber + failedNumber;
 
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response with status: ${responseStatus} for operationId: ${operationId}, dataset root: ${datasetRoot}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+            } response with status: ${responseStatus} for operationId: ${operationId}, assertion root: ${assertionMerkleRoot}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
                 numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
@@ -57,14 +57,14 @@ class PublishService extends OperationService {
         );
         if (responseData.errorMessage) {
             this.logger.trace(
-                `Error message for operation id: ${operationId}, dataset root: ${datasetRoot} : ${responseData.errorMessage}`,
+                `Error message for operation id: ${operationId}, assertion root: ${assertionMerkleRoot} : ${responseData.errorMessage}`,
             );
         }
 
         // Minimum replication reached, mark in the operational DB
         if (completedNumber === minAckResponses) {
             this.logger.debug(
-                `Minimum replication ${minAckResponses} reached for operationId: ${operationId}, dataset root: ${datasetRoot}`,
+                `Minimum replication ${minAckResponses} reached for operationId: ${operationId}, assertion root: ${assertionMerkleRoot}`,
             );
 
             await this.repositoryModuleManager.updateMinAcksReached(operationId, true);

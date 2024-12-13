@@ -1,8 +1,8 @@
 export default (argumentsObject) => ({
     type: 'object',
-    required: ['assertionId', 'assertion', 'blockchain', 'contract', 'tokenId'],
+    required: ['assertionMerkleRoot', 'assertion', 'blockchain', 'contract', 'tokenId'],
     properties: {
-        assertionId: {
+        assertionMerkleRoot: {
             type: 'string',
             minLength: 66,
             maxLength: 66,

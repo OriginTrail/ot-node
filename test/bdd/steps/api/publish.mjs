@@ -36,7 +36,7 @@ When(
         this.state.latestPublishData = {
             nodeId: node - 1,
             UAL: result.UAL,
-            assertionId: result.assertionId,
+            assertionMerkleRoot: result.assertionMerkleRoot,
             operationId,
             assertion: assertions[assertionName],
             status: result.operation.status,
@@ -166,7 +166,7 @@ When(
         this.state.latestPublishData = {
             nodeId: node - 1,
             UAL: result.UAL,
-            assertionId: result.assertionId,
+            assertionMerkleRoot: result.assertionMerkleRoot,
             operationId,
             assertion: assertions[assertionName],
             status: result.operation.status,

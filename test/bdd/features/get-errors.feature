@@ -48,4 +48,4 @@ Feature: Get errors test
     And I wait for latest Publish to finalize
     And I call Get directly on the node 1 with invalidStateHash on blockchain hardhat1:31337
     And I wait for latest resolve to finalize
-    Then Latest Get operation finished with status: GetAssertionIdError
+    Then Latest Get operation finished with status: GetAssertionMerkleRootError

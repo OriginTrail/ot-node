@@ -66,13 +66,13 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //         const syncedAssetRecord =
         //             await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
 
-        //         nquads = await this.tripleStoreService.getAssertion(paranetRepository, assertionId);
+        //         nquads = await this.tripleStoreService.getAssertion(paranetRepository, AssertionMerkleRoot);
 
         //         let privateNquads;
-        //         if (syncedAssetRecord.privateAssertionId) {
+        //         if (syncedAssetRecord.privateAssertionMerkleRoot) {
         //             privateNquads = await this.tripleStoreService.getAssertion(
         //                 paranetRepository,
-        //                 syncedAssetRecord.privateAssertionId,
+        //                 syncedAssetRecord.privateAssertionMerkleRoot,
         //             );
         //         }
 
@@ -92,7 +92,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //         return {
         //             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
         //             messageData: {
-        //                 errorMessage: `Unable to find assertion ${assertionId} for Paranet ${paranetId} with UAL: ${paranetUAL}`,
+        //                 errorMessage: `Unable to find assertion ${assertionMerkleRoot} for Paranet ${paranetId} with UAL: ${paranetUAL}`,
         //             },
         //         };
         //     }

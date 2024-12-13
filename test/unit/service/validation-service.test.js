@@ -71,7 +71,7 @@ describe('Validation service test', async () => {
     it('Tries to validate assertion but fails due to triple number mismatch', async () => {
         validationService.blockchainModuleManager.getAssertionTriplesNumber = (
             blockchain,
-            assertionId,
+            assertionMerkleRoot,
         ) => 5; // Will lead to mismatch with assertion calculated value
 
         let errorThrown = false;
@@ -105,7 +105,7 @@ describe('Validation service test', async () => {
     it('Tries to validate assertion but fails due to chunk number mismatch', async () => {
         validationService.blockchainModuleManager.getAssertionChunksNumber = (
             blockchain,
-            assertionId,
+            assertionMerkleRoot,
         ) => 5; // Will lead to mismatch with assertion chunk number calculated value
 
         let errorThrown = false;

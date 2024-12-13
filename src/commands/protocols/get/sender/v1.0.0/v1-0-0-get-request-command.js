@@ -65,7 +65,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
         if (responseData?.assertion) {
             // TODO: Add this validation
             try {
-                await this.validationService.validateDatasetOnBlockchain(
+                await this.validationService.validateAssertionOnBlockchain(
                     command.data.knowledgeCollectionId,
                     responseData.assertion,
                     command.data.blockchain,

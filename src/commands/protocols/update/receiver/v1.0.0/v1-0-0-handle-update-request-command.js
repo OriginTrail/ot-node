@@ -34,14 +34,14 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
     }
 
     async prepareMessage(commandData) {
-        const { blockchain, operationId, datasetRoot } = commandData;
+        const { blockchain, operationId, assertionMerkleRoot } = commandData;
 
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_GET_CACHED_OPERATION_ID_DATA_START,
             operationId,
             blockchain,
         );
-        const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
@@ -56,8 +56,8 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         const validationResult = await this.validateReceivedData(
             operationId,
-            datasetRoot,
-            dataset,
+            assertionMerkleRoot,
+            assertion,
             blockchain,
         );
 
@@ -74,13 +74,17 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_START,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_CACHE_ASSERTION_START,
         );
-        await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+        await this.pendingStorageService.cacheAssertion(
+            operationId,
+            assertionMerkleRoot,
+            assertion,
+        );
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_END,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_CACHE_ASSERTION_END,
         );
 
         this.operationIdService.emitChangeEvent(
@@ -89,7 +93,10 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
         );
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-        const { v, r, s, vs } = await this.signatureService.signMessage(blockchain, datasetRoot);
+        const { v, r, s, vs } = await this.signatureService.signMessage(
+            blockchain,
+            assertionMerkleRoot,
+        );
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_SIGN_END,
             operationId,

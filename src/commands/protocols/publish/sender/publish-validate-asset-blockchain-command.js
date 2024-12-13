@@ -22,7 +22,7 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, contract, tokenId, datasetRoot } = command.data;
+        const { operationId, blockchain, contract, tokenId, assertionMerkleRoot } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -30,36 +30,36 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             OPERATION_ID_STATUS.VALIDATE_ASSET_BLOCKCHAIN_START,
         );
 
-        const blockchainAssertionId =
+        const blockchainAssertionMerkleRoot =
             await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
                 blockchain,
                 contract,
                 tokenId,
             );
-        if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
+        if (!blockchainAssertionMerkleRoot || blockchainAssertionMerkleRoot === ZERO_BYTES32) {
             return Command.retry();
         }
 
-        const { dataset: cachedData } = await this.operationIdService.getCachedOperationIdData(
+        const { assertion: cachedData } = await this.operationIdService.getCachedOperationIdData(
             operationId,
         );
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.debug(
-            `Validating asset's public assertion with id: ${datasetRoot} ual: ${ual}`,
+            `Validating asset's public assertion with id: ${assertionMerkleRoot} ual: ${ual}`,
         );
 
-        if (blockchainAssertionId !== datasetRoot) {
+        if (blockchainAssertionMerkleRoot !== assertionMerkleRoot) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${datasetRoot}`,
+                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionMerkleRoot}, received value from request: ${assertionMerkleRoot}`,
                 this.errorType,
                 true,
             );
             return Command.empty();
         }
 
-        await this.validationService.validateDatasetRoot(cachedData, datasetRoot);
+        await this.validationService.validateAssertionMerkleRoot(cachedData, assertionMerkleRoot);
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

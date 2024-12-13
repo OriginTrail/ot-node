@@ -25,10 +25,10 @@ class FindShardCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, datasetRoot, minimumNumberOfNodeReplications } =
+        const { operationId, blockchain, assertionMerkleRoot, minimumNumberOfNodeReplications } =
             command.data;
         this.logger.debug(
-            `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
+            `Searching for shard for operationId: ${operationId}, assertion root: ${assertionMerkleRoot}`,
         );
         await this.operationIdService.updateOperationIdStatus(
             operationId,

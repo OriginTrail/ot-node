@@ -113,22 +113,28 @@ class HandleProtocolMessageCommand extends Command {
         return isNodePartOfShard;
     }
 
-    async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
-        const blockchainAssertionId =
+    async validateAssertionMerkleRoot(blockchain, contract, tokenId, assertionMerkleRoot, ual) {
+        const blockchainAssertionMerkleRoot =
             await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
                 blockchain,
                 contract,
                 tokenId,
             );
-        if (blockchainAssertionId !== assertionId) {
+        if (blockchainAssertionMerkleRoot !== assertionMerkleRoot) {
             throw Error(
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
+                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionMerkleRoot}, received value from request: ${assertionMerkleRoot}`,
             );
         }
     }
 
-    async validateReceivedData(operationId, datasetRoot, dataset, blockchain, isOperationV0) {
-        this.logger.trace(`Validating shard for datasetRoot: ${datasetRoot}`);
+    async validateReceivedData(
+        operationId,
+        assertionMerkleRoot,
+        assertion,
+        blockchain,
+        isOperationV0,
+    ) {
+        this.logger.trace(`Validating shard for assertionMerkleRoot: ${assertionMerkleRoot}`);
         const isShardValid = await this.validateShard(blockchain);
         if (!isShardValid) {
             this.logger.warn(
@@ -142,7 +148,10 @@ class HandleProtocolMessageCommand extends Command {
 
         if (!isOperationV0) {
             try {
-                await this.validationService.validateDatasetRoot(dataset, datasetRoot);
+                await this.validationService.validateAssertionMerkleRoot(
+                    assertion,
+                    assertionMerkleRoot,
+                );
             } catch (error) {
                 return {
                     messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,

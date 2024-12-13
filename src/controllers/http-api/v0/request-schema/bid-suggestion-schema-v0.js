@@ -7,7 +7,7 @@ export default (argumentsObject) => ({
         'epochsNumber',
         'assertionSize',
         'contentAssetStorageAddress',
-        'firstAssertionId',
+        'firstAssertionMerkleRoot',
         'hashFunctionId',
     ],
     properties: {
@@ -27,7 +27,7 @@ export default (argumentsObject) => ({
             minLength: 42,
             maxLength: 42,
         },
-        firstAssertionId: {
+        firstAssertionMerkleRoot: {
             type: 'string',
             minLength: 66,
             maxLength: 66,

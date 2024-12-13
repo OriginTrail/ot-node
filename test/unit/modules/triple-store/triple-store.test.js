@@ -18,26 +18,26 @@ const implementationName = 'ot-blazegraph';
 
 async function _insertAndGet(content) {
     const assertion = await formatAssertion(content);
-    const assertionId = calculateRoot(assertion);
+    const assertionMerkleRoot = calculateRoot(assertion);
 
     await tripleStoreModuleManager.insertKnowledgeAssets(
         implementationName,
         TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-        assertionId,
+        assertionMerkleRoot,
         assertion.join('\n'),
     );
 
     const nquads = await tripleStoreModuleManager.getKnowledgeCollection(
         implementationName,
         TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-        assertionId,
+        assertionMerkleRoot,
     );
 
     const retrievedAssertion = await dataService.toNQuads(nquads, 'application/n-quads');
-    const retrievedAssertionId = calculateRoot(retrievedAssertion);
+    const retrievedAssertionMerkleRoot = calculateRoot(retrievedAssertion);
 
     assert.deepEqual(retrievedAssertion, assertion, `assertions are not equal`);
-    assert.equal(retrievedAssertionId, assertionId, `assertion ids are not equal`);
+    assert.equal(retrievedAssertionMerkleRoot, assertionMerkleRoot, `assertion ids are not equal`);
 }
 
 describe('Triple store module', () => {

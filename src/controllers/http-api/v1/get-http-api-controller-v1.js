@@ -48,7 +48,7 @@ class GetController extends BaseController {
 
             this.logger.info(`Get for ${id} with operation id ${operationId} initiated.`);
 
-            // Get assertionId - datasetRoot
+            // Get assertionMerkleRoot - assertionMerkleRoot
             //
 
             const commandSequence = ['getValidateAssetCommand', 'getFindShardCommand'];

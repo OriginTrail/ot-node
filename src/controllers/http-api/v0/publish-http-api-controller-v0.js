@@ -18,16 +18,10 @@ class PublishController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const {
-            assertion: dataset,
-            assertionId: datasetRoot,
-            blockchain,
-            contract,
-            tokenId,
-        } = req.body;
+        const { assertion, assertionMerkleRoot, blockchain, contract, tokenId } = req.body;
 
         this.logger.info(
-            `Received asset with dataset root: ${datasetRoot}, blockchain: ${blockchain}`,
+            `Received asset with assertion root: ${assertionMerkleRoot}, blockchain: ${blockchain}`,
         );
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -62,8 +56,8 @@ class PublishController extends BaseController {
                 blockchain,
             );
             await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
-                dataset,
-                datasetRoot,
+                assertion,
+                assertionMerkleRoot,
             });
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_OPERATION_ID_DATA_TO_MEMORY_END,
@@ -77,8 +71,8 @@ class PublishController extends BaseController {
                 blockchain,
             );
             await this.operationIdService.cacheOperationIdDataToFile(operationId, {
-                dataset,
-                datasetRoot,
+                assertion,
+                assertionMerkleRoot,
             });
             this.operationIdService.emitChangeEvent(
                 OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_OPERATION_ID_DATA_TO_FILE_END,
@@ -87,13 +81,17 @@ class PublishController extends BaseController {
             );
 
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_DATASET_START,
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_ASSERTION_START,
                 operationId,
                 blockchain,
             );
-            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+            await this.pendingStorageService.cacheAssertion(
+                operationId,
+                assertionMerkleRoot,
+                assertion,
+            );
             this.operationIdService.emitChangeEvent(
-                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_DATASET_END,
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_ASSERTION_END,
                 operationId,
                 blockchain,
             );
@@ -107,7 +105,7 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    datasetRoot,
+                    assertionMerkleRoot,
                     blockchain,
                     operationId,
                     contract,

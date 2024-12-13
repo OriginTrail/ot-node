@@ -126,10 +126,10 @@ class UALService {
         blockchain,
         contract,
         knowledgeCollectionId,
-        assertionId = null,
+        assertionMerkleRoot = null,
     ) {
-        const firstAssertionId =
-            assertionId ??
+        const firstAssertionMerkleRoot =
+            assertionMerkleRoot ??
             (await this.blockchainModuleManager.getKnowledgeCollectionMerkleRootByIndex(
                 blockchain,
                 contract,
@@ -138,7 +138,7 @@ class UALService {
             ));
         return this.cryptoService.encodePacked(
             ['address', 'bytes32'],
-            [contract, firstAssertionId],
+            [contract, firstAssertionMerkleRoot],
         );
     }
 

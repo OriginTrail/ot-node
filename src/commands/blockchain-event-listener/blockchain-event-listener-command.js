@@ -478,12 +478,12 @@ class BlockchainEventListenerCommand extends Command {
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
             publishOperationId,
         );
-        let datasetPath;
+        let assertionPath;
         let cachedData;
         try {
-            datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
+            assertionPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
 
-            cachedData = await this.fileService.readFile(datasetPath, true);
+            cachedData = await this.fileService.readFile(assertionPath, true);
         } catch (error) {
             this.operationIdService.updateOperationIdStatus(
                 operationId,
@@ -541,15 +541,15 @@ class BlockchainEventListenerCommand extends Command {
         );
 
         let data;
-        let datasetPath;
+        let assertionPath;
         try {
-            datasetPath = this.fileService.getPendingStorageDocumentPath(updateOperationId);
-            data = await this.fileService.readFile(datasetPath, true);
+            assertionPath = this.fileService.getPendingStorageDocumentPath(updateOperationId);
+            data = await this.fileService.readFile(assertionPath, true);
         } catch (error) {
             this.operationIdService.markOperationAsFailed(
                 operationId,
                 blockchain,
-                `Unable to read cached data from ${datasetPath}, error: ${error.message}`,
+                `Unable to read cached data from ${assertionPath}, error: ${error.message}`,
                 ERROR_TYPE.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_NO_CACHED_DATA,
             );
         }

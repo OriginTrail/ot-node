@@ -34,7 +34,7 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetUAL,
-            datasetRoot,
+            assertionMerkleRoot,
         } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
@@ -56,27 +56,30 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         );
 
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_START,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSERTION_ROOT_START,
             operationId,
             blockchain,
         );
-        await this.validationService.validateDatasetRoot(cachedData.dataset.public, datasetRoot);
+        await this.validationService.validateAssertionMerkleRoot(
+            cachedData.assertion.public,
+            assertionMerkleRoot,
+        );
 
-        const privateAssertionTriple = cachedData.dataset.public.find((triple) =>
+        const privateAssertionTriple = cachedData.assertion.public.find((triple) =>
             triple.includes(PRIVATE_ASSERTION_PREDICATE),
         );
 
         if (privateAssertionTriple) {
             const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
 
-            await this.validationService.validateDatasetRoot(
-                cachedData.dataset.private,
+            await this.validationService.validateAssertionMerkleRoot(
+                cachedData.assertion.private,
                 privateAssertionRoot,
             );
         }
 
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_END,
+            OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_ASSERTION_ROOT_END,
             operationId,
             blockchain,
         );

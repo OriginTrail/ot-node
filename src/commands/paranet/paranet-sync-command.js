@@ -171,7 +171,7 @@ class ParanetSyncCommand extends Command {
         blockchain,
         contract,
         tokenId,
-        assertionIds,
+        assertionMerkleRoots,
         stateIndex,
         paranetId,
         latestState,
@@ -179,11 +179,11 @@ class ParanetSyncCommand extends Command {
         paranetNodesAccessPolicy,
         paranetRepository,
     ) {
-        const assertionId = assertionIds[stateIndex];
+        const assertionMerkleRoot = assertionMerkleRoots[stateIndex];
 
         this.logger.debug(
-            `Paranet sync: Fetching state: ${assertionId} index: ${stateIndex + 1} of ${
-                assertionIds.length
+            `Paranet sync: Fetching state: ${assertionMerkleRoot} index: ${stateIndex + 1} of ${
+                assertionMerkleRoots.length
             } for asset with ual: ${ual}.`,
         );
 
@@ -215,8 +215,8 @@ class ParanetSyncCommand extends Command {
                         blockchain,
                         contract,
                         tokenId,
-                        state: assertionId,
-                        assertionId,
+                        state: assertionMerkleRoot,
+                        assertionMerkleRoot,
                         paranetId,
                         paranetUAL,
                     },
@@ -233,8 +233,8 @@ class ParanetSyncCommand extends Command {
                         blockchain,
                         contract,
                         tokenId,
-                        state: assertionId,
-                        assertionId,
+                        state: assertionMerkleRoot,
+                        assertionMerkleRoot,
                         paranetId,
                         paranetUAL,
                     },
@@ -278,7 +278,7 @@ class ParanetSyncCommand extends Command {
 
             const data = await this.operationIdService.getCachedOperationIdData(getOperationId);
             this.logger.debug(
-                `Paranet sync: ${data.assertion.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
+                `Paranet sync: ${data.assertion.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionMerkleRoot: ${assertionMerkleRoot}`,
             );
 
             let repository;
@@ -294,7 +294,7 @@ class ParanetSyncCommand extends Command {
 
             await this.tripleStoreService.localStoreAsset(
                 repository,
-                assertionId,
+                assertionMerkleRoot,
                 data.assertion,
                 blockchain,
                 contract,
@@ -305,16 +305,16 @@ class ParanetSyncCommand extends Command {
             if (paranetNodesAccessPolicy === 'CURATED' && data.privateAssertion) {
                 await this.tripleStoreService.localStoreAsset(
                     repository,
-                    data.syncedAssetRecord.privateAssertionId,
+                    data.syncedAssetRecord.privateAssertionMerkleRoot,
                     data.privateAssertion,
                     blockchain,
                     contract,
                     tokenId,
                 );
             }
-            const privateAssertionId =
+            const privateAssertionMerkleRoot =
                 paranetNodesAccessPolicy === 'CURATED'
-                    ? data.syncedAssetRecord?.privateAssertionId
+                    ? data.syncedAssetRecord?.privateAssertionMerkleRoot
                     : null;
 
             await this.repositoryModuleManager.incrementParanetKaCount(paranetId, blockchain);
@@ -322,8 +322,8 @@ class ParanetSyncCommand extends Command {
                 blockchain,
                 ual,
                 paranetUAL,
-                assertionId,
-                privateAssertionId,
+                assertionMerkleRoot,
+                privateAssertionMerkleRoot,
                 data.syncedAssetRecord?.sender,
                 data.syncedAssetRecord?.transactionHash,
                 PARANET_SYNC_SOURCES.SYNC,
@@ -362,7 +362,7 @@ class ParanetSyncCommand extends Command {
                 `Paranet sync: Syncing asset: ${ual} for paranet: ${paranetId}, operation ID: ${operationId}`,
             );
 
-            const assertionIds =
+            const assertionMerkleRoots =
                 await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoots(
                     blockchain,
                     contract,
@@ -370,7 +370,7 @@ class ParanetSyncCommand extends Command {
                 );
 
             let isSuccessful = true;
-            for (let stateIndex = 0; stateIndex < assertionIds.length; stateIndex += 1) {
+            for (let stateIndex = 0; stateIndex < assertionMerkleRoots.length; stateIndex += 1) {
                 isSuccessful =
                     isSuccessful &&
                     (await this.syncAssetState(
@@ -378,10 +378,10 @@ class ParanetSyncCommand extends Command {
                         blockchain,
                         contract,
                         tokenId,
-                        assertionIds,
+                        assertionMerkleRoots,
                         stateIndex,
                         paranetId,
-                        stateIndex === assertionIds.length - 1,
+                        stateIndex === assertionMerkleRoots.length - 1,
                         paranetUAL,
                         paranetNodesAccessPolicy,
                         paranetRepository,

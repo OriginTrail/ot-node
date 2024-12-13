@@ -43,7 +43,7 @@ class AskController extends BaseController {
 
             const { contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
 
-            const datasetRoot =
+            const assertionMerkleRoot =
                 await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkleRoot(
                     blockchain,
                     contract,
@@ -58,7 +58,7 @@ class AskController extends BaseController {
                     ual,
                     operationId,
                     blockchain,
-                    datasetRoot,
+                    assertionMerkleRoot,
                     minimumNumberOfNodeReplications,
                 },
                 transactional: false,

@@ -29,15 +29,15 @@ class BlockchainModuleManagerMock {
         return ethers.BigNumber.from(value);
     }
 
-    getAssertionSize(blockchain, assertionId) {
+    getAssertionSize(blockchain, assertionMerkleRoot) {
         return 246;
     }
 
-    getAssertionTriplesNumber(blockchain, assertionId) {
+    getAssertionTriplesNumber(blockchain, assertionMerkleRoot) {
         return undefined;
     }
 
-    getAssertionChunksNumber(blockchain, assertionId) {
+    getAssertionChunksNumber(blockchain, assertionMerkleRoot) {
         return undefined;
     }
 }

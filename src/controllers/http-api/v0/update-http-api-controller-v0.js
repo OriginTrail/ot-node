@@ -16,10 +16,10 @@ class UpdateController extends BaseController {
     }
 
     async handleRequest(req, res) {
-        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
+        const { assertion, assertionMerkleRoot, blockchain, contract, tokenId } = req.body;
 
         this.logger.info(
-            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+            `Received asset with assertion id: ${assertionMerkleRoot}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
         );
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -52,7 +52,7 @@ class UpdateController extends BaseController {
             await this.operationIdService.cacheOperationIdData(operationId, {
                 public: {
                     assertion,
-                    assertionId,
+                    assertionMerkleRoot,
                 },
                 blockchain,
                 contract,
@@ -71,7 +71,7 @@ class UpdateController extends BaseController {
                     blockchain,
                     contract,
                     tokenId,
-                    assertionId,
+                    assertionMerkleRoot,
                     operationId,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
                 },

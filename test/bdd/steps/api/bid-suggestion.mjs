@@ -39,8 +39,8 @@ When(
         ).to.be.equal(true);
 
         const assertion = assertions[assertionName];
-        const publicAssertionId = await this.state.nodes[node - 1].client
-            .getPublicAssertionId(assertion)
+        const publicAssertionMerkleRoot = await this.state.nodes[node - 1].client
+            .getPublicAssertionMerkleRoot(assertion)
             .catch((error) => {
                 assert.fail(`Error while trying to get public assertion id. ${error}`);
             });
@@ -58,14 +58,14 @@ When(
         };
         let getBidSuggestionError;
         const result = await this.state.nodes[node - 1].client
-            .getBidSuggestion(publicAssertionId, sizeInBytes, options)
+            .getBidSuggestion(publicAssertionMerkleRoot, sizeInBytes, options)
             .catch((error) => {
                 getBidSuggestionError = error;
                 assert.fail(`Error while trying to get bid suggestion. ${error}`);
             });
         this.state.latestBidSuggestionResult = {
             nodeId: node - 1,
-            publicAssertionId,
+            publicAssertionMerkleRoot,
             sizeInBytes,
             assertion: assertions[assertionName],
             result,
@@ -93,8 +93,8 @@ When(
         ).to.be.equal(true);
 
         const assertion = assertions[assertionName];
-        const publicAssertionId = await this.state.nodes[node - 1].client
-            .getPublicAssertionId(assertion)
+        const publicAssertionMerkleRoot = await this.state.nodes[node - 1].client
+            .getPublicAssertionMerkleRoot(assertion)
             .catch((error) => {
                 assert.fail(`Error while trying to get public assertion id. ${error}`);
             });
@@ -108,14 +108,14 @@ When(
         const options = this.state.nodes[node - 1].clientBlockchainOptions[blockchain];
         let getBidSuggestionError;
         const result = await this.state.nodes[node - 1].client
-            .getBidSuggestion(publicAssertionId, sizeInBytes, options)
+            .getBidSuggestion(publicAssertionMerkleRoot, sizeInBytes, options)
             .catch((error) => {
                 getBidSuggestionError = error;
                 assert.fail(`Error while trying to get bid suggestion. ${error}`);
             });
         this.state.latestBidSuggestionResult = {
             nodeId: node - 1,
-            publicAssertionId,
+            publicAssertionMerkleRoot,
             sizeInBytes,
             assertion: assertions[assertionName],
             result,

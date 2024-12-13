@@ -39,13 +39,13 @@ class ValidateAssetCommand extends Command {
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
-        const blockchainAssertionId =
+        const blockchainAssertionMerkleRoot =
             await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkelRoot(
                 blockchain,
                 contract,
                 tokenId,
             );
-        if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
+        if (!blockchainAssertionMerkleRoot || blockchainAssertionMerkleRoot === ZERO_BYTES32) {
             return Command.retry();
         }
         // TODO: Validate number of triplets and other stuff we did before so it matches like we did it in v6
@@ -53,16 +53,17 @@ class ValidateAssetCommand extends Command {
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
         // backwards compatibility
-        const cachedAssertion = cachedData.datasetRoot || cachedData.public.assertionId;
-        const cachedDataset = cachedData.dataset || cachedData.public.assertion;
+        const cachedAssertion =
+            cachedData.assertionMerkleRoot || cachedData.public.AssertionMerkleRoot;
+        const cachedDataset = cachedData.assertion || cachedData.public.assertion;
         this.logger.info(
             `Validating asset's public assertion with id: ${cachedAssertion} ual: ${ual}`,
         );
-        if (blockchainAssertionId !== cachedAssertion) {
+        if (blockchainAssertionMerkleRoot !== cachedAssertion) {
             await this.handleError(
                 operationId,
                 blockchain,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
+                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionMerkleRoot}, received value from request: ${cachedData.public.assertionMerkleRoot}`,
                 this.errorType,
                 true,
             );
@@ -70,15 +71,15 @@ class ValidateAssetCommand extends Command {
         }
 
         // V0 backwards compatibility
-        if (cachedData.private?.assertionId && cachedData.private?.assertion) {
+        if (cachedData.private?.assertionMerkleRoot && cachedData.private?.assertion) {
             this.logger.info(
-                `Validating asset's private assertion with id: ${cachedData.private.assertionId} ual: ${ual}`,
+                `Validating asset's private assertion with id: ${cachedData.private.assertionMerkleRoot} ual: ${ual}`,
             );
 
             try {
-                await this.validationService.validateDatasetRoot(
+                await this.validationService.validateAssertionMerkleRoot(
                     cachedData.private.assertion,
-                    cachedData.private.assertionId,
+                    cachedData.private.assertionMerkleRoot,
                 );
             } catch (error) {
                 await this.handleError(
@@ -92,7 +93,7 @@ class ValidateAssetCommand extends Command {
             }
         }
 
-        await this.validationService.validateDatasetRoot(cachedDataset, cachedAssertion);
+        await this.validationService.validateAssertionMerkleRoot(cachedDataset, cachedAssertion);
 
         let paranetId;
         if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {

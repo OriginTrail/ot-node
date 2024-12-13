@@ -47,14 +47,14 @@ class LocalGetCommand extends Command {
 
         //     const nquads = await this.tripleStoreService.getAssertion(
         //         paranetRepository,
-        //         syncedAssetRecord.publicAssertionId,
+        //         syncedAssetRecord.publicAssertionMerkleRoot,
         //     );
 
         //     let privateNquads;
-        //     if (syncedAssetRecord.privateAssertionId) {
+        //     if (syncedAssetRecord.privateAssertionMerkleRoot) {
         //         privateNquads = await this.tripleStoreService.getAssertion(
         //             paranetRepository,
-        //             syncedAssetRecord.privateAssertionId,
+        //             syncedAssetRecord.privateAssertionMerkleRoot,
         //         );
         //     }
 

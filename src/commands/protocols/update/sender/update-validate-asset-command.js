@@ -22,7 +22,7 @@ class UpdateValidateAssetCommand extends ValidateAssetCommand {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, datasetRoot } = command.data;
+        const { operationId, blockchain, assertionMerkleRoot } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -43,13 +43,16 @@ class UpdateValidateAssetCommand extends ValidateAssetCommand {
         );
 
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_DATASET_ROOT_START,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_ASSERTION_ROOT_START,
             operationId,
             blockchain,
         );
-        this.validationService.validateDatasetRoot(cachedData.dataset, datasetRoot);
+        this.validationService.validateAssertionMerkleRoot(
+            cachedData.assertion,
+            assertionMerkleRoot,
+        );
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_DATASET_ROOT_END,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_ASSERTION_ROOT_END,
             operationId,
             blockchain,
         );

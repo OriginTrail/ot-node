@@ -238,8 +238,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         return this.getRepository('shard').updatePeerStake(peerId, blockchainId, stake, options);
     }
 
-    async getNeighbourhood(assertionId, r2, options = {}) {
-        return this.getRepository('shard').getNeighbourhood(assertionId, r2, options);
+    async getNeighbourhood(assertionMerkleRoot, r2, options = {}) {
+        return this.getRepository('shard').getNeighbourhood(assertionMerkleRoot, r2, options);
     }
 
     async cleanShardingTable(blockchainId, options = {}) {
@@ -448,8 +448,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         blockchainId,
         ual,
         paranetUal,
-        publicAssertionId,
-        privateAssertionId,
+        publicAssertionMerkleRoot,
+        privateAssertionMerkleRoot,
         sender,
         transactionHash,
         dataSource,
@@ -459,8 +459,8 @@ class RepositoryModuleManager extends BaseModuleManager {
             blockchainId,
             ual,
             paranetUal,
-            publicAssertionId,
-            privateAssertionId,
+            publicAssertionMerkleRoot,
+            privateAssertionMerkleRoot,
             sender,
             transactionHash,
             dataSource,

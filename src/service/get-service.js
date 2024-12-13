@@ -31,7 +31,7 @@ class GetService extends OperationService {
             leftoverNodes,
             batchSize,
             minAckResponses,
-            assertionId,
+            assertionMerkleRoot,
         } = command.data;
 
         const responseStatusesFromDB = await this.getResponsesStatuses(
@@ -81,7 +81,7 @@ class GetService extends OperationService {
                 this.markOperationAsFailed(
                     operationId,
                     blockchain,
-                    `Unable to find assertion ${assertionId} on the network!`,
+                    `Unable to find assertion ${assertionMerkleRoot} on the network!`,
                     this.errorType,
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);

@@ -69,8 +69,9 @@ class OtFuseki extends OtTripleStore {
         try {
             const response = await axios.get(`${url}/$/datasets`);
 
-            return response.data.datasets.filter((dataset) => dataset['ds.name'] === `/${name}`)
-                .length;
+            return response.data.assertions.filter(
+                (assertion) => assertion['ds.name'] === `/${name}`,
+            ).length;
         } catch (error) {
             this.logger.error(
                 `Error while getting ${this.getName()} repositories. Error: ${error.message}`,

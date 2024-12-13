@@ -53,12 +53,14 @@ class UpdateAssertionCommand extends Command {
     // TODO: Move maybe outside of the command into metadata validation command (but it's not metadata)
     async validateCurrentData(ual) {
         const { blockchain, contract, knowledgeCollectionId } = this.ualService.resolveUAL(ual);
-        const assertionIds = await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
-            blockchain,
-            contract,
-            knowledgeCollectionId,
-        );
-        const assertionIdOfCurrent = assertionIds[assertionIds.length() - 2];
+        const assertionMerkleRoots =
+            await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
+                blockchain,
+                contract,
+                knowledgeCollectionId,
+            );
+        const assertionMerkleRootOfCurrent =
+            assertionMerkleRoots[assertionMerkleRoots.length() - 2];
 
         const preUpdateAssertion = await this.tripleStoreService.getKnowledgeAssetNamedGraph(
             TRIPLE_STORE_REPOSITORY.DKG,
@@ -68,7 +70,7 @@ class UpdateAssertionCommand extends Command {
 
         const preUpdateMerkleRoot = kcTools.calculateMerkleRoot(preUpdateAssertion);
 
-        return assertionIdOfCurrent === preUpdateMerkleRoot;
+        return assertionMerkleRootOfCurrent === preUpdateMerkleRoot;
     }
 
     /**

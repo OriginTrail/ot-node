@@ -25,7 +25,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { datasetRoot, operationId, isOperationV0 } = command.data;
+        const { assertionMerkleRoot, operationId, isOperationV0 } = command.data;
 
         // TODO: Backwards compatibility, send blockchain without chainId
         const { blockchain } = command.data;
@@ -35,7 +35,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             operationId,
             blockchain,
         );
-        const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
+        const { assertion } = await this.operationIdService.getCachedOperationIdData(operationId);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
@@ -43,8 +43,8 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         );
 
         return {
-            dataset: dataset.public,
-            datasetRoot,
+            assertion: assertion.public,
+            assertionMerkleRoot,
             blockchain,
             isOperationV0,
         };

@@ -35,7 +35,7 @@ class LocalStoreCommand extends Command {
             blockchain,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
             paranetId,
-            datasetRoot,
+            assertionMerkleRoot,
             isOperationV0,
             contract,
             tokenId,
@@ -68,7 +68,7 @@ class LocalStoreCommand extends Command {
                     const assertions = [cachedData.public, cachedData.private];
 
                     for (const data of assertions) {
-                        if (data?.assertion && data?.assertionId) {
+                        if (data?.assertion && data?.assertionMerkleRoot) {
                             const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
                             storePromises.push(
@@ -130,10 +130,10 @@ class LocalStoreCommand extends Command {
                     blockchain,
                 );
 
-                if (isOperationV0 && cachedData && cachedData.datasetRoot) {
+                if (isOperationV0 && cachedData && cachedData.assertionMerkleRoot) {
                     // await this.tripleStoreService.localStoreAsset(
                     //     paranetRepository,
-                    //     cachedData.public.assertionId,
+                    //     cachedData.public.assertionMerkleRoot,
                     //     cachedData.public.assertion,
                     //     blockchain,
                     //     contract,
@@ -143,10 +143,10 @@ class LocalStoreCommand extends Command {
                     //     LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
                     // );
                 }
-                if (isOperationV0 && cachedData && cachedData.datasetRoot) {
+                if (isOperationV0 && cachedData && cachedData.assertionMerkleRoot) {
                     // await this.tripleStoreService.localStoreAsset(
                     //     paranetRepository,
-                    //     cachedData.private.assertionId,
+                    //     cachedData.private.assertionMerkleRoot,
                     //     cachedData.private.assertion,
                     //     blockchain,
                     //     contract,
@@ -172,8 +172,8 @@ class LocalStoreCommand extends Command {
                 //     blockchain,
                 //     this.ualService.deriveUAL(blockchain, contract, tokenId),
                 //     paranetUAL,
-                //     cachedData.public.datasetRoot,
-                //     cachedData.private?.assertionId,
+                //     cachedData.public.assertionMerkleRoot,
+                //     cachedData.private?.assertionMerkleRoot,
                 //     cachedData.sender,
                 //     cachedData.txHash,
                 //     PARANET_SYNC_SOURCES.LOCAL_STORE,
@@ -199,7 +199,7 @@ class LocalStoreCommand extends Command {
             const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
             const { v, r, s, vs } = await this.signatureService.signMessage(
                 blockchain,
-                datasetRoot,
+                assertionMerkleRoot,
             );
             await this.signatureService.addSignatureToStorage(
                 NETWORK_SIGNATURES_FOLDER,
@@ -220,7 +220,7 @@ class LocalStoreCommand extends Command {
                 blockchain,
                 this.cryptoService.keccak256EncodePacked(
                     ['uint72', 'bytes32'],
-                    [identityId, datasetRoot],
+                    [identityId, assertionMerkleRoot],
                 ),
             );
             await this.signatureService.addSignatureToStorage(

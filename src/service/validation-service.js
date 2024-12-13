@@ -30,31 +30,43 @@ class ValidationService {
         return isValid;
     }
 
-    async validateAssertion(assertionId, blockchain, assertion) {
-        this.logger.info(`Validating assertionId: ${assertionId}`);
+    async validateAssertion(assertionMerkleRoot, blockchain, assertion) {
+        this.logger.info(`Validating assertionMerkleRoot: ${assertionMerkleRoot}`);
 
-        await this.validateDatasetRoot(assertion, assertionId);
+        await this.validateAssertionMerkleRoot(assertion, assertionMerkleRoot);
 
-        this.logger.info(`Assertion integrity validated! AssertionId: ${assertionId}`);
+        this.logger.info(
+            `Assertion integrity validated! assertionMerkleRoot: ${assertionMerkleRoot}`,
+        );
     }
 
-    async validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain) {
+    async validateAssertionMerkleRootOnBlockchain(
+        knowledgeCollectionId,
+        assertionMerkleRoot,
+        blockchain,
+    ) {
         // call contract TO DO, dont return anything or return true
-        return { knowledgeCollectionId, assertionId, blockchain };
+        return { knowledgeCollectionId, assertionMerkleRoot, blockchain };
     }
 
-    async validateDatasetOnBlockchain(knowledgeCollectionId, assertion, blockchain) {
-        const assertionId = await this.validationModuleManager.calculateRoot(assertion);
+    async validateAssertionOnBlockchain(knowledgeCollectionId, assertion, blockchain) {
+        const assertionMerkleRoot = await this.validationModuleManager.calculateRoot(assertion);
 
-        await this.validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain);
+        await this.validateAssertionMerkleRootOnBlockchain(
+            knowledgeCollectionId,
+            assertionMerkleRoot,
+            blockchain,
+        );
     }
 
-    async validateDatasetRoot(dataset, datasetRoot) {
-        const calculatedDatasetRoot = await this.validationModuleManager.calculateRoot(dataset);
+    async validateAssertionMerkleRoot(assertion, assertionMerkleRoot) {
+        const calculatedassertionMerkleRoot = await this.validationModuleManager.calculateRoot(
+            assertion,
+        );
 
-        if (datasetRoot !== calculatedDatasetRoot) {
+        if (assertionMerkleRoot !== calculatedassertionMerkleRoot) {
             throw new Error(
-                `Merkle Root validation failed. Received Merkle Root: ${datasetRoot}; Calculated Merkle Root: ${calculatedDatasetRoot}`,
+                `Merkle Root validation failed. Received Merkle Root: ${assertionMerkleRoot}; Calculated Merkle Root: ${calculatedassertionMerkleRoot}`,
             );
         }
     }

@@ -47,18 +47,22 @@ class DkgClientHelper {
         return this.client.query(query);
     }
 
-    async getBidSuggestion(publicAssertionId, sizeInBytes, userOptions = {}) {
+    async getBidSuggestion(publicAssertionMerkleRoot, sizeInBytes, userOptions = {}) {
         const defaultOptions = {
             epochsNum: 2,
         };
 
         const options = { ...defaultOptions, ...userOptions };
 
-        return this.client.network.getBidSuggestion(publicAssertionId, sizeInBytes, options);
+        return this.client.network.getBidSuggestion(
+            publicAssertionMerkleRoot,
+            sizeInBytes,
+            options,
+        );
     }
 
-    async getPublicAssertionId(content) {
-        return this.client.assertion.getPublicAssertionId(content);
+    async getPublicAssertionMerkleRoot(content) {
+        return this.client.assertion.getPublicAssertionMerkleRoot(content);
     }
 
     async getSizeInBytes(content) {
