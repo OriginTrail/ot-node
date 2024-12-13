@@ -520,9 +520,10 @@ class TripleStoreService {
                 }
                 if (s) {
                     if (s.startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`)) {
-                        pair.subjectHash = s;
+                        pair.subjectHash = s.trim(PRIVATE_HASH_SUBJECT_PREFIX.length + 1, -1);
                     } else {
-                        pair.subject = s;
+                        pair.subject = s.trim(1, -1);
+                        pair.subjectHash = this.cryptoService.sha256(pair.subject);
                     }
                 }
                 map.set(g, pair);
