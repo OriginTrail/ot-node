@@ -67,9 +67,9 @@ class TripleStoreService {
         const privateHashTriples = [];
         publicAssertion.forEach((triple) => {
             if (triple.includes(PRIVATE_RESOURCE_PREDICATE)) {
-                filteredPublic.push(triple);
-            } else {
                 privateHashTriples.push(triple);
+            } else {
+                filteredPublic.push(triple);
             }
         });
 
