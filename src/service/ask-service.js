@@ -123,11 +123,11 @@ class AskService extends OperationService {
                 await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             } else {
                 // Not enough potential responses to meet minimumNumberOfNodeReplications, or no leftover nodes
-                await this.markOperationAsFailed(
+                await this.markOperationAsCompleted(
                     operationId,
                     blockchain,
-                    `Unable to replicate data on the network!`,
-                    this.errorType,
+                    cumulatedResponsesData,
+                    [...this.completedStatuses],
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
             }
