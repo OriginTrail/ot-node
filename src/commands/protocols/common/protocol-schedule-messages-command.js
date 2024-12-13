@@ -56,6 +56,7 @@ class ProtocolScheduleMessagesCommand extends Command {
                     batchSize,
                     minAckResponses,
                     leftoverNodes: currentBatchLeftoverNodes,
+                    isOperationV0: command.data.isOperationV0,
                 },
                 period: 5000,
                 retries: 3,
@@ -75,13 +76,10 @@ class ProtocolScheduleMessagesCommand extends Command {
     }
 
     getNextCommandData(command) {
-        const { datasetRoot, blockchain, hashFunctionId } = command.data;
-        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
+        const { datasetRoot, blockchain } = command.data;
         return {
             blockchain,
             datasetRoot,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
         };
     }
 

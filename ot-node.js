@@ -54,7 +54,6 @@ class OTNode {
 
         await this.initializeRouters();
         await this.startNetworkModule();
-        await this.initializeBLSService();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
     }
@@ -161,6 +160,7 @@ class OTNode {
     }
 
     async createProfiles() {
+        const cryptoService = this.container.resolve('cryptoService');
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const networkModuleManager = this.container.resolve('networkModuleManager');
         const peerId = networkModuleManager.getPeerId().toB58String();
@@ -205,10 +205,7 @@ class OTNode {
                             blockchain,
                             identityId,
                         );
-                        const onChainPeerId = blockchainModuleManager.convertHexToAscii(
-                            blockchain,
-                            onChainNodeId,
-                        );
+                        const onChainPeerId = cryptoService.convertHexToAscii(onChainNodeId);
 
                         if (peerId !== onChainPeerId) {
                             this.logger.warn(
@@ -339,7 +336,7 @@ class OTNode {
                 continue;
             }
 
-            const paranetId = paranetService.constructParanetId(blockchain, contract, tokenId);
+            const paranetId = paranetService.constructParanetId(contract, tokenId);
             // eslint-disable-next-line no-await-in-loop
             const paranetExists = await blockchainModuleManager.paranetExists(
                 blockchain,
@@ -383,18 +380,6 @@ class OTNode {
         }
         this.config.assetSync.syncParanets = validParanets;
         tripleStoreService.initializeRepositories();
-    }
-
-    async initializeBLSService() {
-        try {
-            const blsService = this.container.resolve('blsService');
-            await blsService.initialize();
-        } catch (error) {
-            this.logger.error(
-                `Unable to initialize BLS Service. Error message: ${error.message} OT-node shutting down...`,
-            );
-            this.stop(1);
-        }
     }
 
     stop(code = 0) {

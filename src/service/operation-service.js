@@ -61,15 +61,18 @@ class OperationService {
     async markOperationAsCompleted(operationId, blockchain, responseData, endStatuses) {
         this.logger.info(`Finalizing ${this.operationName} for operationId: ${operationId}`);
 
+        if (responseData === null) {
+            await this.operationIdService.removeOperationIdCache(operationId);
+        } else {
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, responseData);
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, responseData);
+        }
+
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
             operationId,
             OPERATION_STATUS.COMPLETED,
         );
-
-        if (responseData != null) {
-            await this.operationIdService.cacheOperationIdDataToFile(operationId, responseData);
-        }
 
         for (const status of endStatuses) {
             // eslint-disable-next-line no-await-in-loop
@@ -79,6 +82,8 @@ class OperationService {
 
     async markOperationAsFailed(operationId, blockchain, message, errorType) {
         this.logger.info(`${this.operationName} for operationId: ${operationId} failed.`);
+
+        await this.operationIdService.removeOperationIdCache(operationId);
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
@@ -112,11 +117,11 @@ class OperationService {
         );
     }
 
-    async getBatchSize() {
+    getBatchSize() {
         throw Error('getBatchSize not implemented');
     }
 
-    async getMinAckResponses() {
+    getMinAckResponses() {
         throw Error('getMinAckResponses not implemented');
     }
 }

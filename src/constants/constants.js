@@ -33,7 +33,16 @@ export const ZERO_ADDRESS = ethers.constants.AddressZero;
 
 export const SCHEMA_CONTEXT = 'http://schema.org/';
 
+export const PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateMerkleRoot';
+
 export const TRIPLE_ANNOTATION_LABEL_PREDICATE = 'https://ontology.origintrail.io/dkg/1.0#label';
+
+export const PRIVATE_RESOURCE_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#representsPrivateResource';
+
+export const PRIVATE_HASH_SUBJECT_PREFIX = 'https://ontology.origintrail.io/dkg/1.0#metadata-hash:';
+
 export const UAL_PREDICATE = '<https://ontology.origintrail.io/dkg/1.0#UAL>';
 
 export const COMMIT_BLOCK_DURATION_IN_BLOCKS = 5;
@@ -135,6 +144,7 @@ export const REQUIRED_MODULES = [
     'validation',
     'blockchain',
     'tripleStore',
+    'blockchainEventsService',
 ];
 
 /**
@@ -230,53 +240,30 @@ export const TRANSACTION_PRIORITY = {
     LOWEST: 20,
 };
 
+export const V0_PRIVATE_ASSERTION_PREDICATE =
+    'https://ontology.origintrail.io/dkg/1.0#privateAssertionID';
+
 const require = createRequire(import.meta.url);
 
 export const ABIs = {
-    ContentAsset: require('dkg-evm-module/abi/ContentAssetV2.json'),
-    ContentAssetStorage: require('dkg-evm-module/abi/ContentAssetStorageV2.json'),
-    AssertionStorage: require('dkg-evm-module/abi/AssertionStorage.json'),
+    KnowledgeCollection: require('dkg-evm-module/abi/KnowledgeCollection.json'),
+    KnowledgeCollectionStorage: require('dkg-evm-module/abi/KnowledgeCollectionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
-    StakingStorage: require('dkg-evm-module/abi/StakingStorage.json'),
     Token: require('dkg-evm-module/abi/Token.json'),
-    HashingProxy: require('dkg-evm-module/abi/HashingProxy.json'),
     Hub: require('dkg-evm-module/abi/Hub.json'),
     IdentityStorage: require('dkg-evm-module/abi/IdentityStorage.json'),
-    Log2PLDSF: require('dkg-evm-module/abi/Log2PLDSF.json'),
     ParametersStorage: require('dkg-evm-module/abi/ParametersStorage.json'),
     Profile: require('dkg-evm-module/abi/Profile.json'),
     ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
-    ScoringProxy: require('dkg-evm-module/abi/ScoringProxy.json'),
-    ServiceAgreementV1: require('dkg-evm-module/abi/ServiceAgreementV1.json'),
-    CommitManagerV1: require('dkg-evm-module/abi/CommitManagerV2.json'),
-    CommitManagerV1U1: require('dkg-evm-module/abi/CommitManagerV2U1.json'),
-    ProofManagerV1: require('dkg-evm-module/abi/ProofManagerV1.json'),
-    ProofManagerV1U1: require('dkg-evm-module/abi/ProofManagerV1U1.json'),
     ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
     ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
-    ServiceAgreementStorageProxy: require('dkg-evm-module/abi/ServiceAgreementStorageProxy.json'),
-    UnfinalizedStateStorage: require('dkg-evm-module/abi/UnfinalizedStateStorage.json'),
-    LinearSum: require('dkg-evm-module/abi/LinearSum.json'),
     ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
     ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
 };
 
-export const CONTRACT_FUNCTION_PRIORITY = {
-    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.MEDIUM,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.MEDIUM,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))':
-        TRANSACTION_PRIORITY.HIGH,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': TRANSACTION_PRIORITY.HIGH,
-    sendProof: TRANSACTION_PRIORITY.MEDIUM,
-};
+export const CONTRACT_FUNCTION_PRIORITY = {};
 
-export const COMMAND_RETRIES = {
-    SIMPLE_ASSET_SYNC: 1,
-    SUBMIT_COMMIT: 5,
-    SUBMIT_UPDATE_COMMIT: 5,
-    SUBMIT_PROOFS: 5,
-};
+export const COMMAND_RETRIES = {};
 
 export const SIMPLE_ASSET_SYNC_PARAMETERS = {
     GET_RESULT_POLLING_INTERVAL_MILLIS: 1 * 1000,
@@ -294,13 +281,7 @@ export const COMMAND_TX_GAS_INCREASE_FACTORS = {
     SUBMIT_PROOFS: 1.2,
 };
 
-export const CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS = {
-    sendProof: 2,
-    'submitCommit((address,uint256,bytes,uint8,uint16))': 2,
-    'submitCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 2,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16,uint72,uint72,uint72))': 2,
-    'submitUpdateCommit((address,uint256,bytes,uint8,uint16))': 2,
-};
+export const CONTRACT_FUNCTION_GAS_LIMIT_INCREASE_FACTORS = {};
 
 export const GNOSIS_DEFAULT_GAS_PRICE = {
     TESTNET: 25,
@@ -312,11 +293,7 @@ export const NEURO_DEFAULT_GAS_PRICE = {
     MAINNET: 8,
 };
 
-export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {
-    'otp:2043': {
-        SUBMIT_UPDATE_COMMIT: 30,
-    },
-};
+export const CONTRACT_FUNCTION_FIXED_GAS_PRICE = {};
 
 export const WEBSOCKET_PROVIDER_OPTIONS = {
     reconnect: {
@@ -338,7 +315,6 @@ export const TRIPLE_STORE_IMPLEMENTATION = {
 
 export const NETWORK_MESSAGE_TYPES = {
     REQUESTS: {
-        PROTOCOL_INIT: 'PROTOCOL_INIT',
         PROTOCOL_REQUEST: 'PROTOCOL_REQUEST',
     },
     RESPONSES: {
@@ -355,15 +331,15 @@ export const NETWORK_MESSAGE_TIMEOUT_MILLS = {
         REQUEST: 60 * 1000,
     },
     UPDATE: {
-        INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
     GET: {
-        INIT: 60 * 1000,
         REQUEST: 5 * 60 * 1000,
     },
+    ASK: {
+        REQUEST: 60 * 1000,
+    },
     FINALITY: {
-        INIT: 60 * 1000,
         REQUEST: 60 * 1000,
     },
 };
@@ -385,9 +361,9 @@ export const ERROR_TYPE = {
         PUBLISH_LOCAL_STORE_REMOTE_ERROR: 'PublishLocalStoreRemoteError',
         PUBLISH_FIND_NODES_ERROR: 'PublishFindNodesError',
         PUBLISH_STORE_REQUEST_ERROR: 'PublishStoreRequestError',
+        PUBLISH_VALIDATE_ASSERTION_METADATA_ERROR: 'PublishValidateAssertionMetadataError',
         PUBLISH_ERROR: 'PublishError',
     },
-    VALIDATE_ASSERTION_METADATA_ERROR: 'ValidateAssertionMetadataError',
     STORE_ASSERTION_ERROR: 'StoreAssertionError',
     UPDATE: {
         UPDATE_INIT_ERROR: 'UpdateInitError',
@@ -400,6 +376,11 @@ export const ERROR_TYPE = {
         UPDATE_STORE_INIT_ERROR: 'UpdateStoreInitError',
         UPDATE_REMOTE_ERROR: 'UpdateRemoteError',
         UPDATE_DELETE_PENDING_STATE_ERROR: 'UpdateDeletePendingStateError',
+        UPDATE_VALIDATE_ASSET_ERROR: 'UpdateValidateAssetError',
+        UPDATE_STORE_REQUEST_ERROR: 'UpdateStoreRequestError',
+        UPDATE_VALIDATE_ASSERTION_METADATA_ERROR: 'UpadateValidateAssertionMetadataError',
+        UPDATE_ASSERTION_ERROR: 'UpdateAssertionError',
+        UPDATE_NETWORK_START_ERROR: 'UpdateNetworkStartError',
     },
     GET: {
         GET_ROUTE_ERROR: 'GetRouteError',
@@ -422,18 +403,6 @@ export const ERROR_TYPE = {
     QUERY: {
         LOCAL_QUERY_ERROR: 'LocalQueryError',
     },
-    COMMIT_PROOF: {
-        CALCULATE_PROOFS_ERROR: 'CalculateProofsError',
-        EPOCH_CHECK_ERROR: 'EpochCheckError',
-        BLOCKCHAIN_EPOCH_CHECK_ERROR: 'BlockchainEpochCheckError',
-        SIMPLE_ASSET_SYNC_ERROR: 'SimpleAssetSyncError',
-        SUBMIT_COMMIT_ERROR: 'SubmitCommitError',
-        SUBMIT_COMMIT_SEND_TX_ERROR: 'SubmitCommitSendTxError',
-        SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
-        SUBMIT_PROOFS_SEND_TX_ERROR: 'SubmitProofsSendTxError',
-        SUBMIT_UPDATE_COMMIT_ERROR: 'SubmitUpdateCommitError',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_ERROR: 'SubmitUpdateCommitSendTxError',
-    },
     GET_BID_SUGGESTION: {
         UNSUPPORTED_BID_SUGGESTION_RANGE_ERROR: 'UnsupportedBidSuggestionRangeError',
     },
@@ -444,13 +413,29 @@ export const ERROR_TYPE = {
     FIND_SHARD: {
         FIND_SHARD_ERROR: 'FindShardError',
         PUBLISH_FIND_SHARD_ERROR: 'PublishFindShardError',
+        UPDATE_FIND_SHARD_ERROR: 'UpdateFindShardError',
         GET_FIND_SHARD_ERROR: 'GetFindShardError',
+    },
+    ASK: {
+        ASK_ERROR: 'AskError',
+        ASK_NETWORK_ERROR: 'AskNetworkError',
+        ASK_REQUEST_ERROR: 'AskRequestError',
+        ASK_REQUEST_REMOTE_ERROR: 'AskRequestRemoteError',
+        ASK_FIND_SHARD_ERROR: 'AskFindShardError',
+    },
+    PUBLISH_FINALIZATION: {
+        PUBLISH_FINALIZATION_NO_CACHED_DATA: 'PublishFinalizationNoCachedData',
+    },
+    UPDATE_FINALIZATION: {
+        UPDATE_FINALIZATION_NO_CACHED_DATA: 'UpdateFinalizationNoCachedData',
+        UPDATE_FINALIZATION_NO_OLD_DATA: 'UpdateFinalizationNoOldData',
     },
     FINALITY: {
         FINALITY_ERROR: 'FinalityError',
         FINALITY_NETWORK_ERROR: 'FinalityNetworkError',
         FINALITY_REQUEST_ERROR: 'FinalityRequestError',
         FINALITY_REQUEST_REMOTE_ERROR: 'FinalityRequestRemoteError',
+        FINALITY_START_ERROR: 'FinalityStartError',
     },
 };
 export const OPERATION_ID_STATUS = {
@@ -473,8 +458,6 @@ export const OPERATION_ID_STATUS = {
     VALIDATE_ASSET_BLOCKCHAIN_END: 'VALIDATE_ASSET_BLOCKCHAIN_END',
     NETWORK_PROTOCOL_START: 'NETWORK_PROTOCOL_START',
     NETWORK_PROTOCOL_END: 'NETWORK_PROTOCOL_END',
-    NETWORK_PROTOCOL_GET_BATCH_SIZE_START: 'NETWORK_PROTOCOL_GET_BATCH_SIZE_START',
-    NETWORK_PROTOCOL_GET_BATCH_SIZE_END: 'NETWORK_PROTOCOL_GET_BATCH_SIZE_END',
     PROTOCOL_SCHEDULE_MESSAGE_START: 'PROTOCOL_SCHEDULE_MESSAGE_START',
     PROTOCOL_SCHEDULE_MESSAGE_END: 'PROTOCOL_SCHEDULE_MESSAGE_END',
     PROTOCOL_PREPARE_MESSAGE_START: 'PROTOCOL_PREPARE_MESSAGE_START',
@@ -532,10 +515,6 @@ export const OPERATION_ID_STATUS = {
             'PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_START',
         PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_END:
             'PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_END',
-        PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START:
-            'PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START',
-        PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_END:
-            'PUBLISH_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_END',
         PUBLISH_LOCAL_STORE_REMOTE_SIGN_START: 'PUBLISH_LOCAL_STORE_REMOTE_SIGN_START',
         PUBLISH_LOCAL_STORE_REMOTE_SIGN_END: 'PUBLISH_LOCAL_STORE_REMOTE_SIGN_END',
         PUBLISH_REPLICATE_START: 'PUBLISH_REPLICATE_START',
@@ -550,8 +529,6 @@ export const OPERATION_ID_STATUS = {
         PUBLISH_END: 'PUBLISH_END',
         PUBLISH_NETWORK_START: 'NETWORK_PUBLISH_START',
         PUBLISH_NETWORK_END: 'NETWORK_PUBLISH_END',
-        PUBLISH_NETWORK_GET_BATCH_SIZE_START: 'PUBLISH_NETWORK_GET_BATCH_SIZE_START',
-        PUBLISH_NETWORK_GET_BATCH_SIZE_END: 'PUBLISH_NETWORK_GET_BATCH_SIZE_END',
         PUBLISH_REQUEST_START: 'PUBLISH_REQUEST_START',
         PUBLISH_REQUEST_END: 'PUBLISH_REQUEST_END',
         PUBLISH_REQUEST_PREPARE_MESSAGE_START: 'PUBLISH_REQUEST_PREPARE_MESSAGE_START',
@@ -585,15 +562,67 @@ export const OPERATION_ID_STATUS = {
         PUBLISH_FINALIZATION_STORE_ASSERTION_END: 'PUBLISH_FINALIZATION_STORE_ASSERTION_END',
         PUBLISH_FINALIZATION_END: 'PUBLISH_FINALIZATION_END',
     },
+    UPDATE_FINALIZATION: {
+        UPDATE_FINALIZATION_START: 'UPDATE_FINALIZATION_START',
+        UPDATE_FINALIZATION_METADATA_VALIDATION_START:
+            'UPDATE_FINALIZATION_METADATA_VALIDATION_START',
+        UPDATE_FINALIZATION_METADATA_VALIDATION_END: 'UPDATE_FINALIZATION_METADATA_VALIDATION_END',
+        UPDATE_FINALIZATION_STORE_ASSERTION_START: 'UPDATE_FINALIZATION_STORE_ASSERTION_START',
+        UPDATE_FINALIZATION_STORE_ASSERTION_END: 'UPDATE_FINALIZATION_STORE_ASSERTION_END',
+        UPDATE_FINALIZATION_END: 'UPDATE_FINALIZATION_END',
+    },
     UPDATE: {
         UPDATE_START: 'UPDATE_START',
         UPDATE_INIT_START: 'UPDATE_INIT_START',
         UPDATE_INIT_END: 'UPDATE_INIT_END',
         UPDATE_REPLICATE_START: 'UPDATE_REPLICATE_START',
         UPDATE_REPLICATE_END: 'UPDATE_REPLICATE_END',
+        UPDATE_FIND_NODES_START: 'UPDATE_FIND_NODES_START',
+        UPDATE_FIND_NODES_END: 'UPDATE_FIND_NODES_END',
+        UPDATE_FIND_NODES_FIND_SHARD_NODES_START: 'UPDATE_FIND_NODES_FIND_SHARD_NODES_START',
+        UPDATE_FIND_NODES_FIND_SHARD_NODES_END: 'UPDATE_FIND_NODES_FIND_SHARD_NODES_END',
+        UPDATE_FIND_NODES_PROCESS_FOUND_NODES_START: 'UPDATE_FIND_NODES_PROCESS_FOUND_NODES_START',
+        UPDATE_FIND_NODES_PROCESS_FOUND_NODES_END: 'UPDATE_FIND_NODES_PROCESS_FOUND_NODES_END',
         VALIDATING_UPDATE_ASSERTION_REMOTE_START: 'VALIDATING_UPDATE_ASSERTION_REMOTE_START',
         VALIDATING_UPDATE_ASSERTION_REMOTE_END: 'VALIDATING_UPDATE_ASSERTION_REMOTE_END',
         UPDATE_END: 'UPDATE_END',
+        UPDATE_VALIDATE_ASSET_START: 'UPDATE_VALIDATE_ASSET_START',
+        UPDATE_VALIDATE_ASSET_END: 'UPDATE_VALIDATE_ASSET_END',
+        UPDATE_GET_CACHED_OPERATION_ID_DATA_START: 'UPDATE_GET_CACHED_OPERATION_ID_DATA_START',
+        UPDATE_GET_CACHED_OPERATION_ID_DATA_END: 'UPDATE_GET_CACHED_OPERATION_ID_DATA_END',
+        UPDATE_VALIDATE_DATASET_ROOT_START: 'UPDATE_VALIDATE_DATASET_ROOT_START',
+        UPDATE_VALIDATE_DATASET_ROOT_END: 'UPDATE_VALIDATE_DATASET_ROOT_END',
+        UPDATE_NETWORK_START_ERROR: 'UPDATE_NETWORK_START_ERROR',
+        UPDATE_NETWORK_START: 'UPDATE_NETWORK_START',
+        UPDATE_NETWORK_END: 'UPDATE_NETWORK_END',
+        UPDATE_REQUEST_START: 'UPDATE_REQUEST_START',
+        UPDATE_REQUEST_END: 'UPDATE_REQUEST_END',
+        UPDATE_REQUEST_PREPARE_MESSAGE_START: 'UPDATE_REQUEST_PREPARE_MESSAGE_START',
+        UPDATE_REQUEST_PREPARE_MESSAGE_END: 'UPDATE_REQUEST_PREPARE_MESSAGE_END',
+        UPDATE_SEND_MESSAGE_START: 'UPDATE_SEND_MESSAGE_START',
+        UPDATE_SEND_MESSAGE_END: 'UPDATE_SEND_MESSAGE_END',
+        UPDATE_ADD_SIGNATURE_TO_STORAGE_START: 'UPDATE_ADD_SIGNATURE_TO_STORAGE_START',
+        UPDATE_ADD_SIGNATURE_TO_STORAGE_END: 'UPDATE_ADD_SIGNATURE_TO_STORAGE_END',
+        UPDATE_LOCAL_STORE_REMOTE_START: 'UPDATE_LOCAL_STORE_REMOTE_START',
+        UPDATE_LOCAL_STORE_REMOTE_END: 'UPDATE_LOCAL_STORE_REMOTE_END',
+        UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_START:
+            'UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_START',
+        UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_END:
+            'UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_END',
+        UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_START:
+            'UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_START',
+        UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_END: 'UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_END',
+        UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_START:
+            'UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_START',
+        UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_END:
+            'UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_END',
+        UPDATE_VALIDATE_ASSET_REMOTE_START: 'UPDATE_VALIDATE_ASSET_REMOTE_START',
+        UPDATE_VALIDATE_ASSET_REMOTE_END: 'UPDATE_VALIDATE_ASSET_REMOTE_END',
+        UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_START:
+            'UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_START',
+        UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_END: 'UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_END',
+        UPDATE_LOCAL_STORE_REMOTE_SIGN_START: 'UPDATE_LOCAL_STORE_REMOTE_SIGN_START',
+        UPDATE_LOCAL_STORE_REMOTE_SIGN_END: 'UPDATE_LOCAL_STORE_REMOTE_SIGN_END',
     },
     GET: {
         ASSERTION_EXISTS_LOCAL_START: 'ASSERTION_EXISTS_LOCAL_START',
@@ -615,8 +644,6 @@ export const OPERATION_ID_STATUS = {
         GET_FIND_NODES_FIND_SHARD_NODES_END: 'GET_FIND_NODES_FIND_SHARD_NODES_END',
         GET_NETWORK_START: 'GET_NETWORK_START',
         GET_NETWORK_END: 'GET_NETWORK_END',
-        GET_NETWORK_GET_BATCH_SIZE_START: 'GET_NETWORK_GET_BATCH_SIZE_START',
-        GET_NETWORK_GET_BATCH_SIZE_END: 'GET_NETWORK_GET_BATCH_SIZE_END',
         GET_VALIDATE_UAL_START: 'GET_VALIDATE_UAL_START',
         GET_VALIDATE_UAL_END: 'GET_VALIDATE_UAL_END',
         GET_LOCAL_GET_ASSERTION_START: 'GET_LOCAL_GET_ASSERTION_START',
@@ -642,26 +669,6 @@ export const OPERATION_ID_STATUS = {
         GET_FIND_NODES_PROCESS_FOUND_NODES_START: 'GET_FIND_NODES_PROCESS_FOUND_NODES_START',
         GET_FIND_NODES_PROCESS_FOUND_NODES_END: 'GET_FIND_NODES_PROCESS_FOUND_NODES_END',
         GET_END: 'GET_END',
-    },
-    COMMIT_PROOF: {
-        EPOCH_CHECK_START: 'EPOCH_CHECK_START',
-        EPOCH_CHECK_END: 'EPOCH_CHECK_END',
-        SIMPLE_ASSET_SYNC_START: 'SIMPLE_ASSET_SYNC_START',
-        SIMPLE_ASSET_SYNC_END: 'SIMPLE_ASSET_SYNC_END',
-        SUBMIT_COMMIT_START: 'SUBMIT_COMMIT_START',
-        SUBMIT_COMMIT_END: 'SUBMIT_COMMIT_END',
-        SUBMIT_COMMIT_SEND_TX_START: 'SUBMIT_COMMIT_SEND_TX_START',
-        SUBMIT_COMMIT_SEND_TX_END: 'SUBMIT_COMMIT_SEND_TX_END',
-        CALCULATE_PROOFS_START: 'CALCULATE_PROOFS_START',
-        CALCULATE_PROOFS_END: 'CALCULATE_PROOFS_END',
-        SUBMIT_PROOFS_START: 'SUBMIT_PROOFS_START',
-        SUBMIT_PROOFS_END: 'SUBMIT_PROOFS_END',
-        SUBMIT_PROOFS_SEND_TX_START: 'SUBMIT_PROOFS_START',
-        SUBMIT_PROOFS_SEND_TX_END: 'SUBMIT_PROOFS_END',
-        SUBMIT_UPDATE_COMMIT_START: 'SUBMIT_UPDATE_COMMIT_START',
-        SUBMIT_UPDATE_COMMIT_END: 'SUBMIT_UPDATE_COMMIT_END',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_START: 'SUBMIT_UPDATE_COMMIT_START',
-        SUBMIT_UPDATE_COMMIT_SEND_TX_END: 'SUBMIT_UPDATE_COMMIT_END',
     },
     QUERY: {
         QUERY_INIT_START: 'QUERY_INIT_START',
@@ -709,21 +716,68 @@ export const OPERATION_ID_STATUS = {
         PARANET_SYNC_NEW_KAS_SYNC_START: 'PARANET_SYNC_NEW_KAS_SYNC_START',
         PARANET_SYNC_NEW_KAS_SYNC_END: 'PARANET_SYNC_NEW_KAS_SYNC_END',
     },
+    ASK: {
+        ASK_START: 'ASK_START',
+        ASK_END: 'ASK_END',
+        ASK_REMOTE_START: 'ASK_REMOTE_START',
+        ASK_REMOTE_END: 'ASK_REMOTE_START',
+        ASK_REMOTE_PREPARE_MESSAGE_START: 'ASK_REMOTE_PREPARE_MESSAGE_START',
+        ASK_REMOTE_PREPARE_MESSAGE_END: 'ASK_REMOTE_PREPARE_MESSAGE_END',
+        ASK_REMOTE_SEND_MESSAGE_START: 'ASK_REMOTE_SEND_MESSAGE_START',
+        ASK_REMOTE_SEND_MESSAGE_END: 'ASK_REMOTE_SEND_MESSAGE_END',
+        ASK_REMOTE_REMOVE_CACHED_SESSION_START: 'ASK_REMOTE_REMOVE_CACHED_SESSION_START',
+        ASK_REMOTE_REMOVE_CACHED_SESSION_END: 'ASK_REMOTE_REMOVE_CACHED_SESSION_END',
+        ASK_FIND_NODES_START: 'ASK_FIND_NODES_START',
+        ASK_FIND_NODES_END: 'ASK_FIND_NODES_END',
+        ASK_FIND_NODES_FIND_SHARD_NODES_START: 'ASK_FIND_NODES_FIND_SHARD_NODES_START',
+        ASK_FIND_NODES_FIND_SHARD_NODES_END: 'ASK_FIND_NODES_FIND_SHARD_NODES_END',
+        ASK_FIND_NODES_PROCESS_FOUND_NODES_START: 'ASK_FIND_NODES_PROCESS_FOUND_NODES_START',
+        ASK_FIND_NODES_PROCESS_FOUND_NODES_END: 'ASK_FIND_NODES_PROCESS_FOUND_NODES_END',
+        ASK_FETCH_FROM_NODES_START: 'ASK_FETCH_FROM_NODES_START',
+        ASK_FETCH_FROM_NODES_END: 'ASK_FETCH_FROM_NODES_END',
+        ASK_NETWORK_START: 'ASK_NETWORK_START',
+        ASK_NETWORK_END: 'ASK_NETWORK_END',
+        ASK_REQUEST_START: 'ASK_REQUEST_START',
+        ASK_REQUEST_END: 'ASK_REQUEST_END',
+        ASK_REQUEST_PREPARE_MESSAGE_START: 'ASK_REQUEST_PREPARE_MESSAGE_START',
+        ASK_REQUEST_PREPARE_MESSAGE_END: 'ASK_REQUEST_PREPARE_MESSAGE_END',
+        ASK_REQUEST_SEND_MESSAGE_START: 'ASK_REQUEST_SEND_MESSAGE_START',
+        ASK_REQUEST_SEND_MESSAGE_END: 'ASK_REQUEST_SEND_MESSAGE_END',
+    },
     FINALITY: {
         FINALITY_START: 'FINALITY_START',
         FINALITY_END: 'FINALITY_END',
         FINALITY_REMOTE_START: 'FINALITY_REMOTE_START',
         FINALITY_REMOTE_END: 'FINALITY_REMOTE_START',
+        FINALITY_REMOTE_PREPARE_MESSAGE_START: 'FINALITY_REMOTE_PREPARE_MESSAGE_START',
+        FINALITY_REMOTE_PREPARE_MESSAGE_END: 'FINALITY_REMOTE_PREPARE_MESSAGE_END',
+        FINALITY_REMOTE_SEND_MESSAGE_START: 'FINALITY_REMOTE_SEND_MESSAGE_START',
+        FINALITY_REMOTE_SEND_MESSAGE_END: 'FINALITY_REMOTE_SEND_MESSAGE_END',
+        FINALITY_REMOTE_REMOVE_CACHED_SESSION_START: 'FINALITY_REMOTE_REMOVE_CACHED_SESSION_START',
+        FINALITY_REMOTE_REMOVE_CACHED_SESSION_END: 'FINALITY_REMOTE_REMOVE_CACHED_SESSION_END',
+        FINALITY_REPLICATE_START: 'FINALITY_REPLICATE_START',
+        FINALITY_REPLICATE_END: 'FINALITY_REPLICATE_END',
         FINALITY_FETCH_FROM_NODES_START: 'FINALITY_FETCH_FROM_NODES_START',
         FINALITY_FETCH_FROM_NODES_END: 'FINALITY_FETCH_FROM_NODES_END',
+        FINALITY_REQUEST_START: 'FINALITY_REQUEST_START',
+        FINALITY_REQUEST_END: 'FINALITY_REQUEST_END',
+        FINALITY_REQUEST_PREPARE_MESSAGE_START: 'FINALITY_REQUEST_PREPARE_MESSAGE_START',
+        FINALITY_REQUEST_PREPARE_MESSAGE_END: 'FINALITY_REQUEST_PREPARE_MESSAGE_END',
+        FINALITY_REQUEST_SEND_MESSAGE_START: 'FINALITY_REQUEST_SEND_MESSAGE_START',
+        FINALITY_REQUEST_SEND_MESSAGE_END: 'FINALITY_REQUEST_SEND_MESSAGE_END',
+        PUBLISH_FINALITY_REMOTE_START: 'PUBLISH_FINALITY_REMOTE_START',
+        PUBLISH_FINALITY_REMOTE_END: 'PUBLISH_FINALITY_REMOTE_END',
+        PUBLISH_FINALITY_END: 'PUBLISH_FINALITY_END',
+        PUBLISH_FINALITY_FETCH_FROM_NODES_END: 'PUBLISH_FINALITY_FETCH_FROM_NODES_END',
     },
 };
 
 export const OPERATIONS = {
     PUBLISH: 'publish',
+    FINALITY: 'finality',
     UPDATE: 'update',
     GET: 'get',
-    FINALITY: 'finality',
+    ASK: 'ask',
 };
 
 export const SERVICE_AGREEMENT_START_TIME_DELAY_FOR_COMMITS_SECONDS = {
@@ -741,7 +795,6 @@ export const EXPECTED_TRANSACTION_ERRORS = {
     TOO_LOW_PRIORITY: 'TooLowPriority',
     NODE_ALREADY_REWARDED: 'NodeAlreadyRewarded',
     SERVICE_AGREEMENT_DOESNT_EXIST: 'ServiceAgreementDoesntExist',
-    INVALID_PROXIMITY_SCORE_FUNCTIONS_PAIR_ID: 'InvalidProximityScoreFunctionsPairId',
     INVALID_SCORE_FUNCTION_ID: 'InvalidScoreFunctionId',
     COMMIT_WINDOW_CLOSED: 'CommitWindowClosed',
     NODE_NOT_IN_SHARDING_TABLE: 'NodeNotInShardingTable',
@@ -762,38 +815,38 @@ export const OPERATION_ID_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 
 export const PUBLISH_STORAGE_MEMORY_CLEANUP_COMMAND_CLEANUP_TIME_MILLS = 4 * 60 * 60 * 1000;
-
 export const PUBLISH_STORAGE_FILE_CLEANUP_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const FINALIZED_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 export const GET_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const GET_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
-
 export const GET_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const GET_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
 export const PUBLISH_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const PUBLISH_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
-
 export const PUBLISH_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const PUBLISH_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
 export const UPDATE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const UPDATE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
-
 export const UPDATE_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
-
 export const UPDATE_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
-export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const ASK_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const ASK_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+export const ASK_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const ASK_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
 
+export const FINALITY_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const FINALITY_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+export const FINALITY_RESPONSE_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+export const FINALITY_RESPONSE_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
+export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 export const PROCESSED_BLOCKCHAIN_EVENTS_CLEANUP_TIME_DELAY = 24 * 60 * 60 * 1000;
+
 /**
  * @constant {number} COMMAND_STATUS -
  * Status for commands
@@ -814,21 +867,32 @@ export const OPERATION_ID_FILES_FOR_REMOVAL_MAX_NUMBER = 100;
 
 export const REPOSITORY_ROWS_FOR_REMOVAL_MAX_NUMBER = 10_000;
 
+export const ARCHIVE_FOLDER = 'archive';
+
+export const MIGRATION_FOLDER = 'migrations';
+
 export const ARCHIVE_COMMANDS_FOLDER = 'commands';
+
+export const PUBLISHER_NODE_SIGNATURES_FOLDER = 'publisher';
+
+export const NETWORK_SIGNATURES_FOLDER = 'network';
 
 export const ARCHIVE_BLOCKCHAIN_EVENTS_FOLDER = 'blockchain_events';
 
 export const ARCHIVE_GET_FOLDER = 'get';
-
 export const ARCHIVE_GET_RESPONSES_FOLDER = 'get_responses';
 
 export const ARCHIVE_PUBLISH_FOLDER = 'publish';
-
 export const ARCHIVE_PUBLISH_RESPONSES_FOLDER = 'publish_responses';
 
 export const ARCHIVE_UPDATE_FOLDER = 'update';
-
 export const ARCHIVE_UPDATE_RESPONSES_FOLDER = 'update_responses';
+
+export const ARCHIVE_ASK_FOLDER = 'ask';
+export const ARCHIVE_ASK_RESPONSES_FOLDER = 'ask_responses';
+
+export const ARCHIVE_FINALITY_FOLDER = 'finality';
+export const ARCHIVE_FINALITY_RESPONSES_FOLDER = 'finality_responses';
 
 /**
  * How many commands will run in parallel
@@ -890,18 +954,48 @@ export const HTTP_API_ROUTES = {
             path: '/bid-suggestion',
             options: {},
         },
-        finality: {
+    },
+    v1: {
+        publish: {
             method: 'post',
+            path: '/publish',
+            options: { rateLimit: true },
+        },
+        finality: {
+            method: 'get',
             path: '/finality',
             options: {},
         },
-    },
-    v1: {
-        // get: {
+        // update: {
         //     method: 'post',
-        //     path: '/get',
+        //     path: '/update',
         //     options: { rateLimit: true },
         // },
+        query: {
+            method: 'post',
+            path: '/query',
+            options: {},
+        },
+        get: {
+            method: 'post',
+            path: '/get',
+            options: { rateLimit: true },
+        },
+        result: {
+            method: 'get',
+            path: '/:operation/:operationId',
+            options: {},
+        },
+        info: {
+            method: 'get',
+            path: '/info',
+            options: {},
+        },
+        ask: {
+            method: 'post',
+            path: '/ask',
+            options: {},
+        },
     },
 };
 
@@ -913,6 +1007,7 @@ export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
     UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
+    ASK: ['/ask/1.0.0'],
     FINALITY: ['/finality/1.0.0'],
 };
 
@@ -948,7 +1043,6 @@ export const QUERY_TYPES = {
 export const LOCAL_STORE_TYPES = {
     TRIPLE: 'TRIPLE',
     TRIPLE_PARANET: 'TRIPLE_PARANET',
-    PENDING: 'PENDING',
 };
 
 /**
@@ -960,8 +1054,6 @@ export const CONTRACTS = {
     STAKING: 'Staking',
     PROFILE: 'Profile',
     HUB: 'Hub',
-    CONTENT_ASSET: 'ContentAsset',
-    COMMIT_MANAGER_V1_U1: 'CommitManagerV1U1',
     PARAMETERS_STORAGE: 'ParametersStorage',
     IDENTITY_STORAGE: 'IdentityStorage',
     LOG2PLDSF: 'Log2PLDSF',
@@ -972,7 +1064,7 @@ export const CONTRACTS = {
 export const MONITORED_CONTRACT_EVENTS = {
     Hub: ['NewContract', 'ContractChanged', 'NewAssetStorage', 'AssetStorageChanged'],
     ParametersStorage: ['ParameterChanged'],
-    ContentAsset: ['AssetMinted'],
+    KnowledgeCollectionStorage: ['KnowledgeCollectionCreated'],
 };
 
 export const MONITORED_CONTRACTS = Object.keys(MONITORED_CONTRACT_EVENTS);
@@ -1042,12 +1134,6 @@ export const CACHED_FUNCTIONS = {
     IdentityStorageContract: {
         getIdentityId: CACHE_DATA_TYPES.NUMBER,
     },
-    Log2PLDSFContract: {
-        getParameters: CACHE_DATA_TYPES.ANY,
-    },
-    LinearSumContract: {
-        getParameters: CACHE_DATA_TYPES.ANY,
-    },
 };
 
 export const LOW_BID_SUGGESTION = 'low';
@@ -1072,4 +1158,11 @@ export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
 
 export const TRIPLE_STORE_REPOSITORY = {
     DKG: 'dkg',
+    DKG_HISTORIC: 'dkg-historic',
+};
+
+export const TRIPLES_VISIBILITY = {
+    PUBLIC: 'public',
+    PRIVATE: 'private',
+    ALL: 'all',
 };

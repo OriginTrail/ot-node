@@ -20,11 +20,6 @@ class GetService extends OperationService {
             OPERATION_ID_STATUS.GET.GET_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
-        this.ualService = ctx.ualService;
-        this.tripleStoreService = ctx.tripleStoreService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.paranetService = ctx.paranetService;
         this.operationMutex = new Mutex();
     }
 
@@ -94,11 +89,11 @@ class GetService extends OperationService {
         }
     }
 
-    async getBatchSize() {
+    getBatchSize() {
         return 2;
     }
 
-    async getMinAckResponses() {
+    getMinAckResponses() {
         return 1;
     }
 }

@@ -6,13 +6,10 @@ class NetworkProtocolCommand extends Command {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
 
         this.errorType = ERROR_TYPE.NETWORK_PROTOCOL_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_START;
         this.operationEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_END;
-        this.getBatchSizeStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_BATCH_SIZE_START;
-        this.getBatchSizeEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_GET_BATCH_SIZE_END;
     }
 
     /**
@@ -20,19 +17,14 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain, operationId } = command.data;
+        const { blockchain, operationId, minimumNumberOfNodeReplications } = command.data;
 
         this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
 
-        this.operationIdService.emitChangeEvent(
-            this.getBatchSizeStartEvent,
-            operationId,
-            blockchain,
+        const batchSize = this.operationService.getBatchSize();
+        const minAckResponses = this.operationService.getMinAckResponses(
+            minimumNumberOfNodeReplications,
         );
-        const batchSize = await this.operationService.getBatchSize(blockchain);
-        this.operationIdService.emitChangeEvent(this.getBatchSizeEndEvent, operationId, blockchain);
-
-        const minAckResponses = await this.operationService.getMinAckResponses(blockchain);
 
         const commandSequence = [
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
@@ -56,15 +48,11 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    async getKeywords() {
-        throw Error('getKeywords not implemented');
-    }
-
-    async getBatchSize() {
+    getBatchSize() {
         throw Error('getBatchSize not implemented');
     }
 
-    async getMinAckResponses() {
+    getMinAckResponses() {
         throw Error('getMinAckResponses not implemented');
     }
 

@@ -9,6 +9,7 @@ class FindCuratedParanetNodesCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.shardingTableService = ctx.shardingTableService;
+        this.cryptoService = ctx.cryptoService;
     }
 
     /**
@@ -77,7 +78,7 @@ class FindCuratedParanetNodesCommand extends Command {
             paranetId,
         );
         const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
-            this.blockchainModuleManager.convertHexToAscii(blockchainId, node.nodeId),
+            this.cryptoService.convertHexToAscii(node.nodeId),
         );
 
         const paranetCuratedNodePeerRecords =
