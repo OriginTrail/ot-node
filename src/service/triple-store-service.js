@@ -1,10 +1,12 @@
 /* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
+import { kcTools } from 'assertion-tools';
 
 import {
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
     TRIPLES_VISIBILITY,
+    PRIVATE_RESOURCE_PREDICATE,
 } from '../constants/constants.js';
 
 class TripleStoreService {
@@ -17,6 +19,7 @@ class TripleStoreService {
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
         this.paranetService = ctx.paranetService;
+        this.cryptoService = ctx.cryptoService;
     }
 
     initializeRepositories() {
@@ -34,6 +37,7 @@ class TripleStoreService {
         repository,
         knowledgeCollectionUAL,
         triples,
+        ual,
         retries = 1,
         retryDelay = 0,
     ) {
@@ -56,66 +60,79 @@ class TripleStoreService {
         //     knowledgeAssetsUALs.map((ual) => `<${ual}>`),
         // );
         // const unifiedGraphTriples = [...triples, ...tripleAnnotations];
-        const publicKnowledgeAssetsTriples = this.dataService.splitConnectedArrays(
-            triples.public ?? triples,
+        const promises = [];
+        const publicAssertion = triples.public ?? triples;
+
+        const filteredPublic = [];
+        const privateHashTriples = [];
+        publicAssertion.forEach((triple) => {
+            if (triple.includes(PRIVATE_RESOURCE_PREDICATE)) {
+                filteredPublic.push(triple);
+            } else {
+                privateHashTriples.push(triple);
+            }
+        });
+
+        const publicKnowledgeAssetsTriplesGrouped = kcTools.groupNquadsBySubject(
+            publicAssertion,
+            true,
+        );
+        const publicKnowledgeAssetsUALs = publicKnowledgeAssetsTriplesGrouped.map(
+            (_, index) => `${ual}:${index + 1}`,
         );
 
-        const publicKnowledgeAssetsUALs = [];
-
-        for (let i = 1; i <= publicKnowledgeAssetsTriples.length; i += 1) {
-            publicKnowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i}`);
-        }
-        const promises = [];
-
-        if (triples.private?.length && !existsInNamedGraphs) {
-            const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
-                triples.private,
-            );
-            const privateKnowledgeAssetsUALs = [];
-            let publicIndex = 0;
-            let privateIndex = 0;
-            while (
-                publicIndex < publicKnowledgeAssetsTriples.length &&
-                privateIndex < privateKnowledgeAssetsTriples.length
-            ) {
-                // const [privateSubject] = privateKnowledgeAssetsTriples[privateIndex][0].split(' ');
-                // Check if first triple is content or private existence identifier
-                if (
-                    this.dataService.quadsContainsPrivateRepresentations(
-                        publicKnowledgeAssetsTriples[publicIndex],
-                    )
-                ) {
-                    privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[publicIndex]);
-                    privateIndex += 1;
-                }
-                publicIndex += 1;
-            }
-
-            if (privateKnowledgeAssetsUALs.length > 0) {
-                promises.push(
-                    this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
-                        this.repositoryImplementations[repository],
-                        repository,
-                        privateKnowledgeAssetsUALs,
-                        privateKnowledgeAssetsTriples,
-                        TRIPLES_VISIBILITY.PRIVATE,
-                    ),
+        const publicSubjectHashMap = publicKnowledgeAssetsTriplesGrouped.reduce(
+            (map, group, index) => {
+                const [publicSubject] = group[0].split(' ');
+                const publicSubjectHash = this.cryptoService(publicSubject.slice(1, -1));
+                map.set(publicSubjectHash, index);
+                return map;
+            },
+            new Map(),
+        );
+        const sortedPrivateRepresentationTriples = [];
+        for (const privateHashTriple of privateHashTriples) {
+            const privateHash = privateHashTriple
+                .split(' ')[0]
+                .slice(PRIVATE_RESOURCE_PREDICATE.length + 1, -1);
+            if (publicSubjectHashMap.has(privateHash)) {
+                const publicIndex = publicSubjectHashMap.get(privateHash);
+                this.dataService.insertStringInSortadArray(
+                    publicKnowledgeAssetsTriplesGrouped[publicIndex],
+                    privateHashTriple,
                 );
+            } else {
+                sortedPrivateRepresentationTriples.push(privateHashTriple);
             }
         }
+        const startIndexForPrivateKnowledgeAssetsWithoutPublicPair =
+            publicKnowledgeAssetsUALs.length + 1;
+        publicKnowledgeAssetsTriplesGrouped.push(
+            ...sortedPrivateRepresentationTriples.map((triple) => [triple]),
+        );
+        publicKnowledgeAssetsUALs.push(
+            ...sortedPrivateRepresentationTriples.map(
+                (_, index) =>
+                    `${ual}:${startIndexForPrivateKnowledgeAssetsWithoutPublicPair + index}`,
+            ),
+        );
+
         if (!existsInNamedGraphs) {
             promises.push(
                 this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                     this.repositoryImplementations[repository],
                     repository,
                     publicKnowledgeAssetsUALs,
-                    publicKnowledgeAssetsTriples,
                     TRIPLES_VISIBILITY.PUBLIC,
+                    publicKnowledgeAssetsTriplesGrouped,
                 ),
             );
         }
         const metadataTriples = publicKnowledgeAssetsUALs
-            .map((ual) => `<${ual}> <http://schema.org/states> "${ual}:0" .`)
+            .map(
+                (publicKnowledgeAssetUAL) =>
+                    `<${publicKnowledgeAssetUAL}> <http://schema.org/states> "${publicKnowledgeAssetUAL}:0" .`,
+            )
             .join('\n');
 
         promises.push(

@@ -129,6 +129,22 @@ class DataService {
 
         return groupedPublic;
     }
+
+    insertStringInSortadArray(array, str) {
+        // Assuming triplesArray is already sorted
+        let left = 0;
+        let right = array.length;
+        while (left < right) {
+            const mid = Math.floor((left + right) / 2);
+            if (array[mid].localeCompare(str) < 0) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        array.splice(left, 0, str);
+        return left;
+    }
 }
 
 export default DataService;
