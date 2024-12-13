@@ -141,16 +141,13 @@ class HandleProtocolMessageCommand extends Command {
         }
 
         if (!isOperationV0) {
-            const isValidAssertion = await this.validationService.validateDatasetRoot(
-                dataset,
-                datasetRoot,
-            );
-
-            if (!isValidAssertion) {
+            try {
+                await this.validationService.validateDatasetRoot(dataset, datasetRoot);
+            } catch (error) {
                 return {
                     messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                     messageData: {
-                        errorMessage: `Invalid dataset root for asset ???. Received value , received value from request: ${datasetRoot}`,
+                        errorMessage: error.message,
                     },
                 };
             }

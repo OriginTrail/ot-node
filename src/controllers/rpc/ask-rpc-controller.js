@@ -29,7 +29,7 @@ class AskController extends BaseController {
                 operationId,
                 protocol,
                 ual: message.data.ual,
-                numberOfShardNodes: message.data.numberOfShardNodes,
+                numberOfFoundNodes: message.data.numberOfFoundNodes,
                 blockchain: message.data.blockchain,
             },
             transactional: false,

@@ -160,6 +160,7 @@ class OTNode {
     }
 
     async createProfiles() {
+        const cryptoService = this.container.resolve('cryptoService');
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
         const networkModuleManager = this.container.resolve('networkModuleManager');
         const peerId = networkModuleManager.getPeerId().toB58String();
@@ -204,10 +205,7 @@ class OTNode {
                             blockchain,
                             identityId,
                         );
-                        const onChainPeerId = blockchainModuleManager.convertHexToAscii(
-                            blockchain,
-                            onChainNodeId,
-                        );
+                        const onChainPeerId = cryptoService.convertHexToAscii(onChainNodeId);
 
                         if (peerId !== onChainPeerId) {
                             this.logger.warn(

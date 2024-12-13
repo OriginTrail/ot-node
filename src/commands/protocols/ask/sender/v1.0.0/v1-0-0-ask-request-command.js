@@ -38,12 +38,12 @@ class AskRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { ual, operationId, numberOfShardNodes, blockchain } = command.data;
+        const { ual, operationId, numberOfFoundNodes, blockchain } = command.data;
 
         return {
             ual,
             operationId,
-            numberOfShardNodes,
+            numberOfFoundNodes,
             blockchain,
         };
     }

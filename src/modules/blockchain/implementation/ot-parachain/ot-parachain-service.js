@@ -131,7 +131,8 @@ class OtParachainService extends Web3Service {
                 process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
                     ? NEURO_DEFAULT_GAS_PRICE.MAINNET
                     : NEURO_DEFAULT_GAS_PRICE.TESTNET;
-            return this.convertToWei(defaultGasPrice, 'wei');
+
+            return ethers.utils.parseUnits(defaultGasPrice.toString(), 'wei');
         }
     }
 

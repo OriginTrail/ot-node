@@ -28,7 +28,7 @@ class PublishService extends OperationService {
         const {
             operationId,
             blockchain,
-            numberOfShardNodes,
+            numberOfFoundNodes,
             leftoverNodes,
             batchSize,
             minAckResponses,
@@ -48,8 +48,8 @@ class PublishService extends OperationService {
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response with status: ${responseStatus} for operationId: ${operationId}, dataset root: ${datasetRoot}. Total number of nodes: ${numberOfShardNodes}, number of nodes in batch: ${Math.min(
-                numberOfShardNodes,
+            } response with status: ${responseStatus} for operationId: ${operationId}, dataset root: ${datasetRoot}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+                numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
                 leftoverNodes.length
@@ -100,11 +100,11 @@ class PublishService extends OperationService {
         }
     }
 
-    async getBatchSize() {
+    getBatchSize() {
         return 20;
     }
 
-    async getMinAckResponses(minimumNumberOfNodeReplications = null) {
+    getMinAckResponses(minimumNumberOfNodeReplications = null) {
         return minimumNumberOfNodeReplications ?? 10;
     }
 }

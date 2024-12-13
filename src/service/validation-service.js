@@ -52,7 +52,11 @@ class ValidationService {
     async validateDatasetRoot(dataset, datasetRoot) {
         const calculatedDatasetRoot = await this.validationModuleManager.calculateRoot(dataset);
 
-        return datasetRoot === calculatedDatasetRoot;
+        if (datasetRoot !== calculatedDatasetRoot) {
+            throw new Error(
+                `Merkle Root validation failed. Received Merkle Root: ${datasetRoot}; Calculated Merkle Root: ${calculatedDatasetRoot}`,
+            );
+        }
     }
 }
 

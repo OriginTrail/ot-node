@@ -21,7 +21,7 @@ class FindPublisherNodeCommand extends Command {
             {
                 ...command.data,
                 leftoverNodes,
-                numberOfShardNodes: leftoverNodes.length,
+                numberOfFoundNodes: leftoverNodes.length,
             },
             command.sequence,
         );

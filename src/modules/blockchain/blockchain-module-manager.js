@@ -263,6 +263,10 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getNodeId(blockchain, identityId) {
         return this.callImplementationFunction(blockchain, 'getNodeId', [identityId]);
     }
+
+    async signMessage(blockchain, messageHash) {
+        return this.callImplementationFunction(blockchain, 'signMessage', [messageHash]);
+    }
 }
 
 export default BlockchainModuleManager;

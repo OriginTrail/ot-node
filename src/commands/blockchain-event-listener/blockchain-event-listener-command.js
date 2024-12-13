@@ -468,11 +468,11 @@ class BlockchainEventListenerCommand extends Command {
         }
     }
 
-    async handleAssetMintedEvent(event) {
+    async handleKnowledgeCollectionCreatedEvent(event) {
         const eventData = JSON.parse(event.data);
 
-        const { assetContract, tokenId, state, publishOperationId } = eventData;
-        const { blockchain } = event;
+        const { id, merkleRoot, publishOperationId } = eventData;
+        const { blockchain, contractAddress } = event;
 
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
@@ -493,7 +493,7 @@ class BlockchainEventListenerCommand extends Command {
                 ERROR_TYPE.FINALITY.FINALITY_ERROR,
             );
         }
-        const ual = this.ualService.deriveUAL(blockchain, assetContract, tokenId);
+        const ual = this.ualService.deriveUAL(blockchain, contractAddress, id);
 
         const sequence = ['storeAssertionCommand'];
 
@@ -516,9 +516,9 @@ class BlockchainEventListenerCommand extends Command {
                 operationId,
                 ual,
                 blockchain,
-                contract: assetContract,
-                tokenId,
-                merkleRoot: state,
+                contract: contractAddress,
+                tokenId: id,
+                merkleRoot,
                 remotePeerId: cachedData.remotePeerId,
                 publishOperationId,
                 assertion: cachedData.assertion,

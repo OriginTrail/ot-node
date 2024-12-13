@@ -76,7 +76,7 @@ class ValidateAssetCommand extends Command {
             );
 
             try {
-                this.validationService.validateDatasetRoot(
+                await this.validationService.validateDatasetRoot(
                     cachedData.private.assertion,
                     cachedData.private.assertionId,
                 );

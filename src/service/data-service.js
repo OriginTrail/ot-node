@@ -1,4 +1,3 @@
-import { ethers } from 'ethers';
 import { kcTools } from 'assertion-tools';
 import {
     XML_DATA_TYPES,
@@ -10,6 +9,8 @@ class DataService {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
+
+        this.cryptoService = ctx.cryptoService;
     }
 
     createTripleAnnotations(groupedTriples, annotationPredicate, annotations) {
@@ -91,7 +92,7 @@ class DataService {
     }
 
     generateHashFromString(string) {
-        return ethers.utils.sha256(ethers.utils.solidityPack(['string'], [string]));
+        return this.cryptoService.sha256EncodePacked(['string'], [string]);
     }
 
     splitConnectedArrays(publicTriples) {

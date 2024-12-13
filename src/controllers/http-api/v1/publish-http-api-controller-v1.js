@@ -10,6 +10,7 @@ class PublishController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
+        this.operationService = ctx.publishService;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.pendingStorageService = ctx.pendingStorageService;

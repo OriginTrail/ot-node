@@ -89,10 +89,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
         );
         const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-        const { signer, v, r, s, vs } = await this.signatureService.signMessage(
-            blockchain,
-            datasetRoot,
-        );
+        const { v, r, s, vs } = await this.signatureService.signMessage(blockchain, datasetRoot);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_SIGN_END,
             operationId,
@@ -101,7 +98,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         return {
             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-            messageData: { identityId, signer, v, r, s, vs },
+            messageData: { identityId, v, r, s, vs },
         };
     }
 

@@ -89,11 +89,11 @@ class GetService extends OperationService {
         }
     }
 
-    async getBatchSize() {
+    getBatchSize() {
         return 2;
     }
 
-    async getMinAckResponses() {
+    getMinAckResponses() {
         return 1;
     }
 }

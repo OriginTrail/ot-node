@@ -21,9 +21,8 @@ class NetworkProtocolCommand extends Command {
 
         this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
 
-        const batchSize = await this.operationService.getBatchSize(blockchain);
-
-        const minAckResponses = await this.operationService.getMinAckResponses(
+        const batchSize = this.operationService.getBatchSize();
+        const minAckResponses = this.operationService.getMinAckResponses(
             minimumNumberOfNodeReplications,
         );
 
@@ -49,11 +48,11 @@ class NetworkProtocolCommand extends Command {
         return Command.empty();
     }
 
-    async getBatchSize() {
+    getBatchSize() {
         throw Error('getBatchSize not implemented');
     }
 
-    async getMinAckResponses() {
+    getMinAckResponses() {
         throw Error('getMinAckResponses not implemented');
     }
 
