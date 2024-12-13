@@ -471,7 +471,7 @@ class BlockchainEventListenerCommand extends Command {
     async handleKnowledgeCollectionCreatedEvent(event) {
         const eventData = JSON.parse(event.data);
 
-        const { id, merkleRoot, publishOperationId } = eventData;
+        const { id, publishOperationId, merkleRoot, chunksAmount } = eventData;
         const { blockchain, contractAddress } = event;
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -519,6 +519,7 @@ class BlockchainEventListenerCommand extends Command {
                 contract: contractAddress,
                 tokenId: id,
                 merkleRoot,
+                chunksAmount,
                 remotePeerId: cachedData.remotePeerId,
                 publishOperationId,
                 assertion: cachedData.assertion,
