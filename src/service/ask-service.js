@@ -125,6 +125,10 @@ class AskService extends OperationService {
     getBatchSize() {
         return 20;
     }
+
+    getMinAckResponses(minimumNumberOfNodeReplications) {
+        return minimumNumberOfNodeReplications;
+    }
 }
 
 export default AskService;
