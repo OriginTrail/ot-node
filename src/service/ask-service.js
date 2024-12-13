@@ -64,12 +64,23 @@ class AskService extends OperationService {
                 operationId,
             )) ?? {
                 responses: [],
+                finalized: [],
                 completedNodes: 0,
                 allNodesReplicatedData: false,
             };
 
             if (responseData.knowledgeCollectionsExistArray)
                 cumulatedResponsesData.responses.push(responseData.knowledgeCollectionsExistArray);
+
+            const finalized = [];
+            for (let i = 0; i < cumulatedResponsesData.responses.length; i += 1) {
+                const nodeResponse = cumulatedResponsesData.responses[i];
+                for (let j = 0; j < nodeResponse.length; j += 1) {
+                    if (finalized[j] === undefined) finalized[j] = nodeResponse[j];
+                    else finalized[j] = finalized[j] && nodeResponse[j];
+                }
+            }
+            cumulatedResponsesData.finalized = finalized;
 
             cumulatedResponsesData.completedNodes = cumulatedResponsesData.responses.filter(
                 (arr) => !arr.includes(false),
