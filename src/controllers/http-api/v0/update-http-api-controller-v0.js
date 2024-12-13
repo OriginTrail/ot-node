@@ -3,7 +3,6 @@ import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
     LOCAL_STORE_TYPES,
 } from '../../../constants/constants.js';
 
@@ -18,7 +17,6 @@ class UpdateController extends BaseController {
 
     async handleRequest(req, res) {
         const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
-        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
 
         this.logger.info(
             `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
@@ -74,9 +72,8 @@ class UpdateController extends BaseController {
                     contract,
                     tokenId,
                     assertionId,
-                    hashFunctionId,
                     operationId,
-                    storeType: LOCAL_STORE_TYPES.PENDING,
+                    storeType: LOCAL_STORE_TYPES.TRIPLE,
                 },
                 transactional: false,
             });

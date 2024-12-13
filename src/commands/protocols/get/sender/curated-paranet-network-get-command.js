@@ -1,87 +1,84 @@
-import Command from '../../../command.js';
-import NetworkProtocolCommand from '../../common/network-protocol-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+// import Command from '../../../command.js';
+// import NetworkProtocolCommand from '../../common/network-protocol-command.js';
+// import { ERROR_TYPE } from '../../../../constants/constants.js';
 
-class CuratedParanetNetworkGetCommand extends NetworkProtocolCommand {
-    constructor(ctx) {
-        super(ctx);
-        this.operationService = ctx.getService;
-        this.ualService = ctx.ualService;
+// class CuratedParanetNetworkGetCommand extends NetworkProtocolCommand {
+//     constructor(ctx) {
+//         super(ctx);
+//         this.operationService = ctx.getService;
+//         this.ualService = ctx.ualService;
 
-        this.errorType = ERROR_TYPE.GET.GET_CURATED_PARANET_NETWORK_ERROR;
-    }
+//         this.errorType = ERROR_TYPE.GET.GET_CURATED_PARANET_NETWORK_ERROR;
+//     }
 
-    /**
-     * Executes command and produces one or more events
-     * @param command
-     */
-    async execute(command) {
-        const { blockchain } = command.data;
+//     /**
+//      * Executes command and produces one or more events
+//      * @param command
+//      */
+//     async execute(command) {
+//         const batchSize = await this.getBatchSize();
+//         const minAckResponses = await this.getMinAckResponses();
 
-        const keywords = await this.getKeywords(command);
-        const batchSize = await this.getBatchSize(blockchain);
-        const minAckResponses = await this.getMinAckResponses(blockchain);
+//         const commandSequence = [
+//             'findCuratedParanetNodesCommand',
+//             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
+//         ];
+//         //
+//         const addCommandPromises = keywords.map((keyword) =>
+//             this.commandExecutor.add({
+//                 name: commandSequence[0],
+//                 sequence: commandSequence.slice(1),
+//                 delay: 0,
+//                 data: {
+//                     ...command.data,
+//                     keyword,
+//                     batchSize,
+//                     minAckResponses,
+//                     errorType: this.errorType,
+//                     networkProtocols: this.operationService.getNetworkProtocols(),
+//                 },
+//                 transactional: false,
+//             }),
+//         );
 
-        const commandSequence = [
-            'findCuratedParanetNodesCommand',
-            `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
-        ];
+//         await Promise.all(addCommandPromises);
 
-        const addCommandPromises = keywords.map((keyword) =>
-            this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
-                delay: 0,
-                data: {
-                    ...command.data,
-                    keyword,
-                    batchSize,
-                    minAckResponses,
-                    errorType: this.errorType,
-                    networkProtocols: this.operationService.getNetworkProtocols(),
-                },
-                transactional: false,
-            }),
-        );
+//         return Command.empty();
+//     }
 
-        await Promise.all(addCommandPromises);
+//     async getKeywords(command) {
+//         const { blockchain, contract, tokenId } = command.data;
+//         const locationKeyword = await this.ualService.calculateLocationKeyword(
+//             blockchain,
+//             contract,
+//             tokenId,
+//         );
 
-        return Command.empty();
-    }
+//         return [locationKeyword];
+//     }
 
-    async getKeywords(command) {
-        const { blockchain, contract, tokenId } = command.data;
-        const locationKeyword = await this.ualService.calculateLocationKeyword(
-            blockchain,
-            contract,
-            tokenId,
-        );
+//     async getBatchSize() {
+//         return 2;
+//     }
 
-        return [locationKeyword];
-    }
+//     async getMinAckResponses() {
+//         return 1;
+//     }
 
-    async getBatchSize() {
-        return 2;
-    }
+//     /**
+//      * Builds default curatedParanetNetworkGetCommand
+//      * @param map
+//      * @returns {{add, data: *, delay: *, deadline: *}}
+//      */
+//     default(map) {
+//         const command = {
+//             name: 'curatedParanetNetworkGetCommand',
+//             delay: 0,
+//             transactional: false,
+//         };
+//         Object.assign(command, map);
+//         return command;
+//     }
+// }
 
-    async getMinAckResponses() {
-        return 1;
-    }
-
-    /**
-     * Builds default curatedParanetNetworkGetCommand
-     * @param map
-     * @returns {{add, data: *, delay: *, deadline: *}}
-     */
-    default(map) {
-        const command = {
-            name: 'curatedParanetNetworkGetCommand',
-            delay: 0,
-            transactional: false,
-        };
-        Object.assign(command, map);
-        return command;
-    }
-}
-
-export default CuratedParanetNetworkGetCommand;
+// export default CuratedParanetNetworkGetCommand;

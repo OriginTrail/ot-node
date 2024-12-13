@@ -11,6 +11,7 @@ export default (sequelize, DataTypes) => {
             },
             data: DataTypes.TEXT,
             status: DataTypes.STRING,
+            minAcksReached: DataTypes.BOOLEAN,
             timestamp: {
                 type: DataTypes.BIGINT,
                 defaultValue: () => Date.now(),

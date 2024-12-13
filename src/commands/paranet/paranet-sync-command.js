@@ -5,7 +5,6 @@ import {
     ERROR_TYPE,
     PARANET_SYNC_FREQUENCY_MILLS,
     OPERATION_ID_STATUS,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
     PARANET_SYNC_PARAMETERS,
     PARANET_SYNC_KA_COUNT,
     PARANET_SYNC_RETRIES_LIMIT,
@@ -44,7 +43,10 @@ class ParanetSyncCommand extends Command {
 
         // Fetch counts from blockchain and database
         const contractKaCount = (
-            await this.blockchainModuleManager.getParanetKnowledgeAssetsCount(blockchain, paranetId)
+            await this.blockchainModuleManager.getParanetKnowledgeCollectionCount(
+                blockchain,
+                paranetId,
+            )
         ).toNumber();
 
         const syncedAssetsCount =
@@ -169,7 +171,6 @@ class ParanetSyncCommand extends Command {
         blockchain,
         contract,
         tokenId,
-        keyword,
         assertionIds,
         stateIndex,
         paranetId,
@@ -215,7 +216,6 @@ class ParanetSyncCommand extends Command {
                         contract,
                         tokenId,
                         state: assertionId,
-                        hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
                         assertionId,
                         paranetId,
                         paranetUAL,
@@ -234,7 +234,6 @@ class ParanetSyncCommand extends Command {
                         contract,
                         tokenId,
                         state: assertionId,
-                        hashFunctionId: CONTENT_ASSET_HASH_FUNCTION_ID,
                         assertionId,
                         paranetId,
                         paranetUAL,
@@ -300,7 +299,6 @@ class ParanetSyncCommand extends Command {
                 blockchain,
                 contract,
                 tokenId,
-                keyword,
                 LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS,
                 LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY,
             );
@@ -312,7 +310,6 @@ class ParanetSyncCommand extends Command {
                     blockchain,
                     contract,
                     tokenId,
-                    keyword,
                 );
             }
             const privateAssertionId =
@@ -365,18 +362,12 @@ class ParanetSyncCommand extends Command {
                 `Paranet sync: Syncing asset: ${ual} for paranet: ${paranetId}, operation ID: ${operationId}`,
             );
 
-            const assertionIds = await this.blockchainModuleManager.getAssertionIds(
-                blockchain,
-                contract,
-                tokenId,
-            );
-
-            const keyword = await this.ualService.calculateLocationKeyword(
-                blockchain,
-                contract,
-                tokenId,
-                assertionIds[0],
-            );
+            const assertionIds =
+                await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoots(
+                    blockchain,
+                    contract,
+                    tokenId,
+                );
 
             let isSuccessful = true;
             for (let stateIndex = 0; stateIndex < assertionIds.length; stateIndex += 1) {
@@ -387,7 +378,6 @@ class ParanetSyncCommand extends Command {
                         blockchain,
                         contract,
                         tokenId,
-                        keyword,
                         assertionIds,
                         stateIndex,
                         paranetId,
@@ -487,7 +477,7 @@ class ParanetSyncCommand extends Command {
         const results = [];
         while (i <= contractKaCount) {
             const nextKaArray =
-                await this.blockchainModuleManager.getParanetKnowledgeAssetsWithPagination(
+                await this.blockchainModuleManager.getParanetKnowledgeCollectionsWithPagination(
                     blockchain,
                     paranetId,
                     i,
@@ -504,7 +494,7 @@ class ParanetSyncCommand extends Command {
             // NOTE: This could also be processed in parallel if needed
             for (const knowledgeAssetId of nextKaArray) {
                 const { knowledgeAssetStorageContract, tokenId: knowledgeAssetTokenId } =
-                    await this.blockchainModuleManager.getParanetKnowledgeAssetLocator(
+                    await this.blockchainModuleManager.getParanetKnowledgeCollectionLocator(
                         blockchain,
                         knowledgeAssetId,
                     );

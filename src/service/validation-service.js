@@ -15,7 +15,7 @@ class ValidationService {
 
         let isValid = true;
         try {
-            const result = await this.blockchainModuleManager.getKnowledgeAssetOwner(
+            const result = await this.blockchainModuleManager.getKnowledgeCollectionPublisher(
                 blockchain,
                 contract,
                 tokenId,
@@ -38,10 +38,25 @@ class ValidationService {
         this.logger.info(`Assertion integrity validated! AssertionId: ${assertionId}`);
     }
 
+    async validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain) {
+        // call contract TO DO, dont return anything or return true
+        return { knowledgeCollectionId, assertionId, blockchain };
+    }
+
+    async validateDatasetOnBlockchain(knowledgeCollectionId, assertion, blockchain) {
+        const assertionId = await this.validationModuleManager.calculateRoot(assertion);
+
+        await this.validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain);
+    }
+
     async validateDatasetRoot(dataset, datasetRoot) {
         const calculatedDatasetRoot = await this.validationModuleManager.calculateRoot(dataset);
 
-        return datasetRoot === calculatedDatasetRoot;
+        if (datasetRoot !== calculatedDatasetRoot) {
+            throw new Error(
+                `Merkle Root validation failed. Received Merkle Root: ${datasetRoot}; Calculated Merkle Root: ${calculatedDatasetRoot}`,
+            );
+        }
     }
 }
 

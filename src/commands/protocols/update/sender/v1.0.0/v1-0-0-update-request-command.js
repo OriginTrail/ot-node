@@ -3,13 +3,14 @@ import {
     NETWORK_MESSAGE_TIMEOUT_MILLS,
     ERROR_TYPE,
     OPERATION_ID_STATUS,
+    NETWORK_SIGNATURES_FOLDER,
 } from '../../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.updateService;
-        this.signatureStorageService = ctx.signatureStorageService;
+        this.signatureService = ctx.signatureService;
         this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_STORE_REQUEST_ERROR;
 
@@ -58,10 +59,14 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             operationId,
             blockchain,
         );
-        await this.signatureStorageService.addSignatureToStorage(
+        await this.signatureService.addSignatureToStorage(
+            NETWORK_SIGNATURES_FOLDER,
             operationId,
             responseData.identityId,
-            responseData.signature,
+            responseData.v,
+            responseData.r,
+            responseData.s,
+            responseData.vs,
         );
         await this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_ADD_SIGNATURE_TO_STORAGE_END,

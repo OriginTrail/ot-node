@@ -9,7 +9,6 @@ class HandleProtocolMessageCommand extends Command {
         this.operationIdService = ctx.operationIdService;
         this.shardingTableService = ctx.shardingTableService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.operationStartEvent = OPERATION_ID_STATUS.HANDLE_PROTOCOL_MESSAGE_START;
@@ -66,10 +65,10 @@ class HandleProtocolMessageCommand extends Command {
                 operationId,
                 messageData,
             );
-            this.operationIdService.emitChangeEvent(
-                this.sendMessageResponseEndEvent,
+            await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
+                this.operationEndEvent,
             );
         } catch (error) {
             if (command.retries) {
@@ -91,7 +90,7 @@ class HandleProtocolMessageCommand extends Command {
             blockchain,
         );
 
-        this.operationIdService.this.updateOperationIdStatus(
+        await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             this.operationEndEvent,
@@ -115,11 +114,12 @@ class HandleProtocolMessageCommand extends Command {
     }
 
     async validateAssertionId(blockchain, contract, tokenId, assertionId, ual) {
-        const blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
-            blockchain,
-            contract,
-            tokenId,
-        );
+        const blockchainAssertionId =
+            await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
+                blockchain,
+                contract,
+                tokenId,
+            );
         if (blockchainAssertionId !== assertionId) {
             throw Error(
                 `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${assertionId}`,
@@ -127,7 +127,7 @@ class HandleProtocolMessageCommand extends Command {
         }
     }
 
-    async validateReceivedData(operationId, datasetRoot, dataset, blockchain) {
+    async validateReceivedData(operationId, datasetRoot, dataset, blockchain, isOperationV0) {
         this.logger.trace(`Validating shard for datasetRoot: ${datasetRoot}`);
         const isShardValid = await this.validateShard(blockchain);
         if (!isShardValid) {
@@ -140,18 +140,17 @@ class HandleProtocolMessageCommand extends Command {
             };
         }
 
-        const isValidAssertion = await this.validationService.validateDatasetRoot(
-            dataset,
-            datasetRoot,
-        );
-
-        if (!isValidAssertion) {
-            return {
-                messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                messageData: {
-                    errorMessage: `Invalid dataset root for asset ???. Received value , received value from request: ${datasetRoot}`,
-                },
-            };
+        if (!isOperationV0) {
+            try {
+                await this.validationService.validateDatasetRoot(dataset, datasetRoot);
+            } catch (error) {
+                return {
+                    messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                    messageData: {
+                        errorMessage: error.message,
+                    },
+                };
+            }
         }
 
         return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };

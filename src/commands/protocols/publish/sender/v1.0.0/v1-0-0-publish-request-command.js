@@ -3,13 +3,14 @@ import {
     NETWORK_MESSAGE_TIMEOUT_MILLS,
     ERROR_TYPE,
     OPERATION_ID_STATUS,
+    NETWORK_SIGNATURES_FOLDER,
 } from '../../../../../constants/constants.js';
 
 class PublishRequestCommand extends ProtocolRequestCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.signatureStorageService = ctx.signatureStorageService;
+        this.signatureService = ctx.signatureService;
         this.operationIdService = ctx.operationIdService;
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_STORE_REQUEST_ERROR;
 
@@ -24,18 +25,18 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { datasetRoot, operationId } = command.data;
+        const { datasetRoot, operationId, isOperationV0 } = command.data;
 
         // TODO: Backwards compatibility, send blockchain without chainId
         const { blockchain } = command.data;
 
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_START,
             operationId,
             blockchain,
         );
         const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_GET_CACHED_OPERATION_ID_DATA_END,
             operationId,
             blockchain,
@@ -45,6 +46,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             dataset: dataset.public,
             datasetRoot,
             blockchain,
+            isOperationV0,
         };
     }
 
@@ -54,17 +56,22 @@ class PublishRequestCommand extends ProtocolRequestCommand {
 
     async handleAck(command, responseData) {
         const { operationId, blockchain } = command.data;
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_ADD_SIGNATURE_TO_STORAGE_START,
             operationId,
             blockchain,
         );
-        await this.signatureStorageService.addSignatureToStorage(
+
+        await this.signatureService.addSignatureToStorage(
+            NETWORK_SIGNATURES_FOLDER,
             operationId,
             responseData.identityId,
-            responseData.signature,
+            responseData.v,
+            responseData.r,
+            responseData.s,
+            responseData.vs,
         );
-        await this.operationIdService.emitChangeEvent(
+        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_ADD_SIGNATURE_TO_STORAGE_END,
             operationId,
             blockchain,

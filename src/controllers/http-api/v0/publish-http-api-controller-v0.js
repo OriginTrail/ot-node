@@ -3,26 +3,28 @@ import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
     LOCAL_STORE_TYPES,
 } from '../../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
         this.commandExecutor = ctx.commandExecutor;
+        this.operationService = ctx.publishService;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.ualService = ctx.ualService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // this is not used
         this.pendingStorageService = ctx.pendingStorageService;
     }
 
     async handleRequest(req, res) {
-        const { dataset, datasetRoot, blockchain } = req.body;
-        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+        const {
+            assertion: dataset,
+            assertionId: datasetRoot,
+            blockchain,
+            contract,
+            tokenId,
+        } = req.body;
 
         this.logger.info(
             `Received asset with dataset root: ${datasetRoot}, blockchain: ${blockchain}`,
@@ -107,8 +109,10 @@ class PublishController extends BaseController {
                 data: {
                     datasetRoot,
                     blockchain,
-                    hashFunctionId,
                     operationId,
+                    contract,
+                    tokenId,
+                    isOperationV0: true,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
                 },
                 transactional: false,

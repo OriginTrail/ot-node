@@ -37,6 +37,18 @@ class OperationIdRepository {
             ...options,
         });
     }
+
+    async updateMinAcksReached(operationId, minAcksReached, options) {
+        await this.model.update(
+            { minAcksReached },
+            {
+                where: {
+                    operationId,
+                },
+                ...options,
+            },
+        );
+    }
 }
 
 export default OperationIdRepository;

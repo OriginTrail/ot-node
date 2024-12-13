@@ -1,11 +1,20 @@
-import { ethers } from 'ethers';
 import { kcTools } from 'assertion-tools';
-import { XML_DATA_TYPES, PRIVATE_HASH_SUBJECT_PREFIX } from '../constants/constants.js';
+import {
+    XML_DATA_TYPES,
+    PRIVATE_HASH_SUBJECT_PREFIX,
+    V0_PRIVATE_ASSERTION_PREDICATE,
+} from '../constants/constants.js';
 
 class DataService {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
+
+        this.cryptoService = ctx.cryptoService;
+    }
+
+    calculateChunksAmount(assertion) {
+        return kcTools.calculateNumberOfChunks(assertion);
     }
 
     createTripleAnnotations(groupedTriples, annotationPredicate, annotations) {
@@ -69,6 +78,15 @@ class DataService {
         }
     }
 
+    getPrivateAssertionId(publicAssertion) {
+        const privateAssertionLinkTriple = publicAssertion.filter((triple) =>
+            triple.includes(V0_PRIVATE_ASSERTION_PREDICATE),
+        )[0];
+        if (!privateAssertionLinkTriple) return;
+
+        return privateAssertionLinkTriple.match(/"(.*?)"/)[1];
+    }
+
     // Asumes nobody is using PRIVATE_HASH_SUBJECT_PREFIX subject in assertion
     quadsContainsPrivateRepresentations(quads) {
         return (
@@ -78,7 +96,7 @@ class DataService {
     }
 
     generateHashFromString(string) {
-        return ethers.utils.sha256(ethers.utils.solidityPack(['string'], [string]));
+        return this.cryptoService.sha256EncodePacked(['string'], [string]);
     }
 
     splitConnectedArrays(publicTriples) {
