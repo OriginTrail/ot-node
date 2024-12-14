@@ -102,11 +102,13 @@ class TripleStoreService {
                     privateHashTriple,
                 );
             } else {
+                // If there is no public match add it as new KA at the end
                 sortedPrivateRepresentationTriples.push(privateHashTriple);
             }
         }
         const startIndexForPrivateKnowledgeAssetsWithoutPublicPair =
             publicKnowledgeAssetsUALs.length;
+        // Add private hashes without public pair to the end
         publicKnowledgeAssetsTriplesGrouped.push(
             ...sortedPrivateRepresentationTriples.map((triple) => [triple]),
         );
