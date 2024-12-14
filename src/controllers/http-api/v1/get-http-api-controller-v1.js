@@ -3,8 +3,11 @@ import {
     OPERATION_STATUS,
     ERROR_TYPE,
     TRIPLES_VISIBILITY,
+    TRIPLE_STORE_REPOSITORIES_MIGRATION,
+    OLD_CONTENT_STORAGE_MAP,
 } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
+import MigrationExecutor from '../../../migration/migration-executor.js';
 
 class GetController extends BaseController {
     constructor(ctx) {
@@ -15,6 +18,7 @@ class GetController extends BaseController {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.ualService = ctx.ualService;
         this.validationService = ctx.validationService;
+        this.fileService = ctx.fileService;
     }
 
     async handleRequest(req, res) {
@@ -37,6 +41,13 @@ class GetController extends BaseController {
             operationId,
             OPERATION_STATUS.IN_PROGRESS,
         );
+
+        const tripleStoreMigrationAlreadyExecuted =
+            await MigrationExecutor.migrationAlreadyExecuted(
+                TRIPLE_STORE_REPOSITORIES_MIGRATION,
+                this.fileService,
+            );
+
         let blockchain;
         let contract;
         let knowledgeCollectionId;
@@ -51,7 +62,19 @@ class GetController extends BaseController {
             // Get assertionId - datasetRoot
             //
 
-            const commandSequence = ['getValidateAssetCommand', 'getFindShardCommand'];
+            const commandSequence = [];
+            commandSequence.push('getValidateAssetCommand');
+
+            if (
+                !tripleStoreMigrationAlreadyExecuted &&
+                Object.values(OLD_CONTENT_STORAGE_MAP)
+                    .map((ca) => ca.toLowerCase())
+                    .includes(contract.toLowerCase())
+            ) {
+                commandSequence.push('getAssertionMerkleRootCommand');
+            }
+
+            commandSequence.push('getFindShardCommand');
 
             await this.commandExecutor.add({
                 name: commandSequence[0],

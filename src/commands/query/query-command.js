@@ -18,7 +18,7 @@ class QueryCommand extends Command {
     }
 
     async execute(command) {
-        const { operationId, query, queryType } = command.data;
+        const { operationId, query, queryType, repository } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -54,7 +54,7 @@ class QueryCommand extends Command {
                         OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_START,
                         operationId,
                     );
-                    data = await this.tripleStoreService.construct(query);
+                    data = await this.tripleStoreService.construct(query, repository);
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_END,
                         operationId,
@@ -66,7 +66,7 @@ class QueryCommand extends Command {
                         OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_START,
                         operationId,
                     );
-                    data = await this.tripleStoreService.select(query);
+                    data = await this.tripleStoreService.select(query, repository);
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_END,
                         operationId,

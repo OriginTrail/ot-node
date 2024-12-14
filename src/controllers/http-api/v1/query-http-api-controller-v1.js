@@ -1,16 +1,22 @@
 import BaseController from '../base-http-api-controller.js';
 
-import { OPERATION_ID_STATUS, TRIPLE_STORE_REPOSITORIES } from '../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    TRIPLE_STORE_REPOSITORIES,
+    TRIPLE_STORE_REPOSITORIES_MIGRATION,
+} from '../../../constants/constants.js';
+import MigrationExecutor from '../../../migration/migration-executor.js';
 
 class QueryController extends BaseController {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
+        this.fileService = ctx.fileService;
     }
 
     async handleRequest(req, res) {
-        const { query, type: queryType } = req.body;
+        const { query, type: queryType, repository } = req.body;
 
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.QUERY.QUERY_INIT_START,
@@ -19,6 +25,12 @@ class QueryController extends BaseController {
         this.returnResponse(res, 202, {
             operationId,
         });
+
+        const tripleStoreMigrationAlreadyExecuted =
+            await MigrationExecutor.migrationAlreadyExecuted(
+                TRIPLE_STORE_REPOSITORIES_MIGRATION,
+                this.fileService,
+            );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -33,7 +45,10 @@ class QueryController extends BaseController {
             data: {
                 query,
                 queryType,
-                repository: TRIPLE_STORE_REPOSITORIES.DKG,
+                repository:
+                    !tripleStoreMigrationAlreadyExecuted && repository
+                        ? repository
+                        : TRIPLE_STORE_REPOSITORIES.DKG,
                 operationId,
             },
             transactional: false,
