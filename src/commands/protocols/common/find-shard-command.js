@@ -5,7 +5,6 @@ class FindShardCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.networkModuleManager = ctx.networkModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.shardingTableService = ctx.shardingTableService;
         this.errorType = ERROR_TYPE.FIND_SHARD.FIND_SHARD_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.FIND_NODES_START;
@@ -17,7 +16,7 @@ class FindShardCommand extends Command {
     }
 
     // eslint-disable-next-line no-unused-vars
-    getOperationCommandSequence(nodePartOfShard) {
+    getOperationCommandSequence(nodePartOfShard, commandData) {
         return [];
     }
 
@@ -26,7 +25,8 @@ class FindShardCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, datasetRoot } = command.data;
+        const { operationId, blockchain, datasetRoot, minimumNumberOfNodeReplications } =
+            command.data;
         this.logger.debug(
             `Searching for shard for operationId: ${operationId}, dataset root: ${datasetRoot}`,
         );
@@ -36,7 +36,9 @@ class FindShardCommand extends Command {
             this.operationStartEvent,
         );
 
-        this.minAckResponses = await this.operationService.getMinAckResponses(blockchain);
+        this.minAckResponses = this.operationService.getMinAckResponses(
+            minimumNumberOfNodeReplications,
+        );
 
         const networkProtocols = this.operationService.getNetworkProtocols();
 
@@ -74,13 +76,13 @@ class FindShardCommand extends Command {
             blockchain,
         );
 
-        const commandSequence = this.getOperationCommandSequence(nodePartOfShard);
+        const commandSequence = this.getOperationCommandSequence(nodePartOfShard, command.data);
 
         command.sequence.push(...commandSequence);
 
         this.logger.debug(
             `Found ${
-                shardNodes.length + nodePartOfShard ? 1 : 0
+                shardNodes.length + (nodePartOfShard ? 1 : 0)
             } node(s) for operationId: ${operationId}`,
         );
         // TODO: Log local node
@@ -113,7 +115,7 @@ class FindShardCommand extends Command {
             {
                 ...command.data,
                 leftoverNodes: shardNodes,
-                numberOfShardNodes: shardNodes.length + nodePartOfShard ? 1 : 0,
+                numberOfFoundNodes: shardNodes.length + (nodePartOfShard ? 1 : 0),
             },
             command.sequence,
         );

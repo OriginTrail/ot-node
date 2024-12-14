@@ -5,9 +5,8 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // this should be removed (???)
+        this.repositoryModuleManager = ctx.repositoryModuleManager; // this should be removed (???)
 
         this.operationStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_START;
         this.operationEndEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_REPLICATE_END;

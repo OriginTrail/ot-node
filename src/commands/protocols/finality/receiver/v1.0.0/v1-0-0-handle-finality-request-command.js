@@ -1,9 +1,5 @@
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
-import {
-    ERROR_TYPE,
-    NETWORK_MESSAGE_TYPES,
-    OPERATION_ID_STATUS,
-} from '../../../../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../../constants/constants.js';
 
 class HandleFinalityRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
@@ -12,48 +8,27 @@ class HandleFinalityRequestCommand extends HandleProtocolMessageCommand {
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
         this.paranetService = ctx.paranetService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.FINALITY.FINALITY_REQUEST_REMOTE_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_END;
+        this.prepareMessageStartEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_PREPARE_MESSAGE_END;
+        this.sendMessageResponseStartEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_SEND_MESSAGE_START;
+        this.sendMessageResponseEndEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_SEND_MESSAGE_END;
+        this.removeCachedSessionStartEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_REMOVE_CACHED_SESSION_START;
+        this.removeCachedSessionEndEvent =
+            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_REMOVE_CACHED_SESSION_END;
     }
 
     async prepareMessage(commandData) {
-        const { ual, operationId, blockchain } = commandData;
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_START,
-        );
-
-        const knowledgeCollectionExistsInUnifiedGraph =
-            await this.tripleStoreService.checkIfKnowledgeCollectionExistsInUnifiedGraph(ual);
-        if (knowledgeCollectionExistsInUnifiedGraph) {
-            await this.operationService.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                knowledgeCollectionExistsInUnifiedGraph,
-                [
-                    OPERATION_ID_STATUS.FINALITY.FINALITY_FETCH_FROM_NODES_END,
-                    OPERATION_ID_STATUS.FINALITY.FINALITY_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
-            );
-        }
-
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.FINALITY.FINALITY_REMOTE_END,
-        );
-
-        return knowledgeCollectionExistsInUnifiedGraph
-            ? {
-                  messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-                  messageData: { knowledgeCollectionExistsInUnifiedGraph },
-              }
-            : {
-                  messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                  messageData: { errorMessage: `Unable to find knowledge collection ${ual}` },
-              };
+        return commandData.response;
     }
 
     /**

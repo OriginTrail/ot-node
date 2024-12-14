@@ -33,11 +33,7 @@ export default (argumentsObject) => ({
                         minimum: 0,
                     },
                     storeType: {
-                        enum: [
-                            LOCAL_STORE_TYPES.TRIPLE,
-                            LOCAL_STORE_TYPES.TRIPLE_PARANET,
-                            LOCAL_STORE_TYPES.PENDING,
-                        ],
+                        enum: [LOCAL_STORE_TYPES.TRIPLE, LOCAL_STORE_TYPES.TRIPLE_PARANET],
                     },
                     paranetUAL: {
                         type: 'string',
@@ -69,11 +65,7 @@ export default (argumentsObject) => ({
                         minimum: 0,
                     },
                     storeType: {
-                        enum: [
-                            LOCAL_STORE_TYPES.TRIPLE,
-                            LOCAL_STORE_TYPES.TRIPLE_PARANET,
-                            LOCAL_STORE_TYPES.PENDING,
-                        ],
+                        enum: [LOCAL_STORE_TYPES.TRIPLE, LOCAL_STORE_TYPES.TRIPLE_PARANET],
                     },
                 },
             },

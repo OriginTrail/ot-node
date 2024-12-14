@@ -1,20 +1,18 @@
 import path from 'path';
 import {
-    CONTENT_ASSET_HASH_FUNCTION_ID,
-    SERVICE_AGREEMENT_SOURCES,
+    NETWORK_SIGNATURES_FOLDER,
+    PUBLISHER_NODE_SIGNATURES_FOLDER,
 } from '../constants/constants.js';
 
 class PendingStorageService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.fileService = ctx.fileService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.tripleStoreService = ctx.tripleStoreService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager; // this is not used
+        this.tripleStoreService = ctx.tripleStoreService; // this is not used
     }
 
-    async cacheDataset(operationId, datasetRoot, dataset) {
+    async cacheDataset(operationId, datasetRoot, dataset, remotePeerId) {
         this.logger.debug(
             `Caching ${datasetRoot} dataset root, operation id: ${operationId} in file in pending storage`,
         );
@@ -25,6 +23,7 @@ class PendingStorageService {
             JSON.stringify({
                 merkleRoot: datasetRoot,
                 assertion: dataset,
+                remotePeerId,
             }),
         );
     }
@@ -57,7 +56,8 @@ class PendingStorageService {
             // Define the paths to the directories we want to clean
             const storagePaths = [
                 this.fileService.getPendingStorageCachePath(),
-                this.fileService.getSignatureStorageCachePath(),
+                this.fileService.getSignatureStorageFolderPath(NETWORK_SIGNATURES_FOLDER),
+                this.fileService.getSignatureStorageFolderPath(PUBLISHER_NODE_SIGNATURES_FOLDER),
             ];
 
             const filesToDelete = [];
@@ -179,145 +179,6 @@ class PendingStorageService {
 
     async getPendingState(operationId) {
         return this.fileService.getPendingStorageLatestDocument(operationId);
-    }
-
-    async moveAndDeletePendingState(
-        currentRepository,
-        historyRepository,
-        pendingRepository,
-        blockchain,
-        contract,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        assertionId,
-        stateIndex,
-    ) {
-        const agreementId = this.serviceAgreementService.generateId(
-            blockchain,
-            contract,
-            tokenId,
-            keyword,
-            hashFunctionId,
-        );
-
-        let serviceAgreementData = await this.repositoryModuleManager.getServiceAgreementRecord(
-            agreementId,
-        );
-        if (!serviceAgreementData) {
-            serviceAgreementData = await this.blockchainModuleManager.getAgreementData(
-                blockchain,
-                agreementId,
-            );
-        }
-
-        await this.repositoryModuleManager.updateServiceAgreementRecord(
-            blockchain,
-            contract,
-            tokenId,
-            agreementId,
-            serviceAgreementData.startTime,
-            serviceAgreementData.epochsNumber,
-            serviceAgreementData.epochLength,
-            serviceAgreementData.scoreFunctionId,
-            serviceAgreementData.proofWindowOffsetPerc,
-            CONTENT_ASSET_HASH_FUNCTION_ID,
-            keyword,
-            assertionId,
-            stateIndex,
-            serviceAgreementData.dataSource ?? SERVICE_AGREEMENT_SOURCES.BLOCKCHAIN,
-            serviceAgreementData?.lastCommitEpoch,
-            serviceAgreementData?.lastProofEpoch,
-        );
-
-        const assertionLinks = await this.tripleStoreService.getAssetAssertionLinks(
-            currentRepository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-        const storedAssertionIds = assertionLinks.map(({ assertion }) =>
-            assertion.replace('assertion:', ''),
-        );
-
-        // event already handled
-        if (storedAssertionIds.includes(assertionId)) {
-            return;
-        }
-
-        // move old assertions to history repository
-        await Promise.all(
-            storedAssertionIds.map((storedAssertionId) =>
-                this.tripleStoreService.moveAsset(
-                    currentRepository,
-                    historyRepository,
-                    storedAssertionId,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                ),
-            ),
-        );
-
-        await this.tripleStoreService.deleteAssetMetadata(
-            currentRepository,
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        const cachedData = await this.getCachedAssertion(
-            pendingRepository,
-            blockchain,
-            contract,
-            tokenId,
-            assertionId,
-        );
-
-        const storePromises = [];
-        if (cachedData?.public?.assertion) {
-            // insert public assertion in current repository
-            storePromises.push(
-                this.tripleStoreService.localStoreAsset(
-                    currentRepository,
-                    assertionId,
-                    cachedData.public.assertion,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                ),
-            );
-        }
-
-        if (cachedData?.private?.assertion && cachedData?.private?.assertionId) {
-            // insert private assertion in current repository
-            storePromises.push(
-                this.tripleStoreService.localStoreAsset(
-                    currentRepository,
-                    cachedData.private.assertionId,
-                    cachedData.private.assertion,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                ),
-            );
-        }
-
-        await Promise.all(storePromises);
-
-        // remove asset from pending storage
-        if (cachedData) {
-            await this.removeCachedAssertion(
-                pendingRepository,
-                blockchain,
-                contract,
-                tokenId,
-                assertionId,
-            );
-        }
     }
 }
 

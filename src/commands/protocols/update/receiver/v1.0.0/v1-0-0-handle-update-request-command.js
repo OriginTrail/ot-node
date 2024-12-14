@@ -12,9 +12,9 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         this.operationService = ctx.updateService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.pendingStorageService = ctx.pendingStorageService;
-        this.blsService = ctx.blsService;
         this.operationIdService = ctx.operationIdService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.signatureService = ctx.signatureService;
 
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_LOCAL_STORE_REMOTE_ERROR;
         this.operationStartEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_START;
@@ -84,23 +84,12 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
         );
 
         this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_START,
-            operationId,
-            blockchain,
-        );
-        const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_GET_IDENTITY_ID_END,
-            operationId,
-            blockchain,
-        );
-
-        this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_SIGN_START,
             operationId,
             blockchain,
         );
-        const signature = await this.blsService.sign(datasetRoot);
+        const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+        const { v, r, s, vs } = await this.signatureService.signMessage(blockchain, datasetRoot);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_SIGN_END,
             operationId,
@@ -109,7 +98,7 @@ class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
 
         return {
             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
-            messageData: { identityId, signature },
+            messageData: { identityId, v, r, s, vs },
         };
     }
 

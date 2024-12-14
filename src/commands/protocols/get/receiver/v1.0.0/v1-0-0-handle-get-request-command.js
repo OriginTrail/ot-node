@@ -178,15 +178,10 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         };
 
         if (assertion.length) {
-            await this.operationService.markOperationAsCompleted(
+            await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
-                responseData,
-                [
-                    OPERATION_ID_STATUS.GET.GET_LOCAL_END,
-                    OPERATION_ID_STATUS.GET.GET_END,
-                    OPERATION_ID_STATUS.COMPLETED,
-                ],
+                OPERATION_ID_STATUS.GET.GET_REMOTE_END,
             );
         }
 

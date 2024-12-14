@@ -29,11 +29,19 @@ class FinalityController extends BaseController {
                 operationId,
                 protocol,
                 ual: message.data.ual,
-                numberOfShardNodes: message.data.numberOfShardNodes,
                 blockchain: message.data.blockchain,
+                publishOperationId: message.data.publishOperationId,
             },
             transactional: false,
         });
+    }
+
+    getCommandSequence(protocol) {
+        // TODO: Rework this to schedule different command for update
+        return [
+            'publishFinalitySaveAckCommand',
+            ...this.protocolService.getReceiverCommandSequence(protocol),
+        ];
     }
 }
 

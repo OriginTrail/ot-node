@@ -6,12 +6,13 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
-    OPERATION_REQUEST_STATUS,
 } from '../constants/constants.js';
 
 class UpdateService extends OperationService {
     constructor(ctx) {
         super(ctx);
+
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.operationName = OPERATIONS.UPDATE;
         this.networkProtocols = NETWORK_PROTOCOLS.UPDATE;
@@ -30,28 +31,25 @@ class UpdateService extends OperationService {
             blockchain,
             numberOfFoundNodes,
             leftoverNodes,
-            keyword,
             batchSize,
             minAckResponses,
+            datasetRoot,
         } = command.data;
 
-        const keywordsStatuses = await this.getResponsesStatuses(
+        const datasetRootStatus = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
             operationId,
-            keyword,
         );
 
-        const { completedNumber, failedNumber } = keywordsStatuses[keyword];
+        const { completedNumber, failedNumber } = datasetRootStatus[operationId];
 
         const totalResponses = completedNumber + failedNumber;
-        const isAllNodesResponded = numberOfFoundNodes === totalResponses;
-        const isBatchCompleted = totalResponses % batchSize === 0;
 
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response with status: ${responseStatus} for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+            } response with status: ${responseStatus} for operationId: ${operationId}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
                 numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
@@ -60,14 +58,21 @@ class UpdateService extends OperationService {
         );
         if (responseData.errorMessage) {
             this.logger.trace(
-                `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
+                `Error message for operation id: ${operationId} : ${responseData.errorMessage}`,
             );
         }
 
-        if (
-            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minAckResponses
-        ) {
+        // Minimum replication reached, mark in the operational DB
+        if (completedNumber === minAckResponses) {
+            this.logger.debug(
+                `Minimum replication ${minAckResponses} reached for operationId: ${operationId}, dataset root: ${datasetRoot}`,
+            );
+
+            await this.repositoryModuleManager.updateMinAcksReached(operationId, true);
+        }
+
+        // All requests sent, minimum replication reached, mark as completed
+        if (leftoverNodes.length === 0 && completedNumber >= minAckResponses) {
             await this.markOperationAsCompleted(
                 operationId,
                 blockchain,
@@ -75,22 +80,24 @@ class UpdateService extends OperationService {
                 this.completedStatuses,
             );
             this.logResponsesSummary(completedNumber, failedNumber);
-        } else if (completedNumber < minAckResponses && (isAllNodesResponded || isBatchCompleted)) {
-            const potentialCompletedNumber = completedNumber + leftoverNodes.length;
+        }
 
-            // Still possible to meet minAckResponses, schedule leftover nodes
-            if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
-                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
-            } else {
-                // Not enough potential responses to meet minAckResponses, or no leftover nodes
-                this.markOperationAsFailed(
-                    operationId,
-                    blockchain,
-                    'Not replicated to enough nodes!',
-                    this.errorType,
-                );
-                this.logResponsesSummary(completedNumber, failedNumber);
-            }
+        // All requests sent, minimum replication not reached, mark as failed
+        if (leftoverNodes.length === 0 && completedNumber < minAckResponses) {
+            this.markOperationAsFailed(
+                operationId,
+                blockchain,
+                'Not replicated to enough nodes!',
+                this.errorType,
+            );
+            this.logResponsesSummary(completedNumber, failedNumber);
+        }
+
+        // Not all requests sent, still possible to reach minimum replication,
+        // schedule requests for leftover nodes
+        const potentialCompletedNumber = completedNumber + leftoverNodes.length;
+        if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
+            await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
         }
     }
 }
