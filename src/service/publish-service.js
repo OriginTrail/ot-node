@@ -6,6 +6,8 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
+    PUBLISH_SERVICE_BATCHSIZE,
+    PUBLISH_SERVICE_MIN_NUM_OF_NODE_REP,
 } from '../constants/constants.js';
 
 class PublishService extends OperationService {
@@ -100,12 +102,12 @@ class PublishService extends OperationService {
         }
     }
 
-    getBatchSize() {
-        return 20;
+    getBatchSize(batchSize = null) {
+        return batchSize ?? PUBLISH_SERVICE_BATCHSIZE;
     }
 
     getMinAckResponses(minimumNumberOfNodeReplications = null) {
-        return minimumNumberOfNodeReplications ?? 10;
+        return minimumNumberOfNodeReplications ?? PUBLISH_SERVICE_MIN_NUM_OF_NODE_REP;
     }
 }
 
