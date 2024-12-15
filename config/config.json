@@ -738,7 +738,7 @@
                                 "base:84532": ["https://sepolia.base.org"]
                             },
                             "hubContractAddress": {
-                                "base:84532": "0xAB4A4794Fc1F415C24807B947280aCa8dC492238"
+                                "base:84532": "0x3e5dd82e7529F4e55AA64893D8f8879AE14BF87D"
                             }
                         }
                     }
