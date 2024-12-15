@@ -38,7 +38,7 @@ class QuestTelemetry {
             await this.localSender.flush();
             await this.localSender.close();
 
-            this.logger.info('Event telemetry successfully sent to local QuestDB');
+            // this.logger.info('Event telemetry successfully sent to local QuestDB');
         } catch (err) {
             this.logger.error(`Error sending telemetry to local QuestDB: ${err.message}`);
         }
