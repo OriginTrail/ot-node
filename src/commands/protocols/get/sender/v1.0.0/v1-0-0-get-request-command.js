@@ -68,7 +68,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
             if (!knowledgeAssetId) {
                 try {
                     const isValid = await this.validationService.validateDatasetOnBlockchain(
-                        responseData.assertion,
+                        responseData.assertion.public,
                         blockchain,
                         contract,
                         knowledgeCollectionId,
