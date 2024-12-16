@@ -39,7 +39,7 @@ class ValidationService {
     }
 
     async validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain) {
-        // call contract TO DO, dont return anything or return true
+        // TODO: call contract TO DO, dont return anything or return true
         return { knowledgeCollectionId, assertionId, blockchain };
     }
 

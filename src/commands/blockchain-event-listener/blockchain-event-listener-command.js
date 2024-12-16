@@ -76,13 +76,14 @@ class BlockchainEventListenerCommand extends Command {
             await this.repositoryModuleManager.insertBlockchainEvents(newEvents, {
                 transaction: repositoryTransaction,
             });
-            await this.repositoryModuleManager.updateLastCheckedBlock(
-                blockchainId,
-                this.currentBlock,
-                Date.now(),
-                { transaction: repositoryTransaction },
-            );
         }
+
+        await this.repositoryModuleManager.updateLastCheckedBlock(
+            blockchainId,
+            this.currentBlock,
+            Date.now(),
+            { transaction: repositoryTransaction },
+        );
 
         const unprocessedEvents =
             await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(
@@ -470,10 +471,8 @@ class BlockchainEventListenerCommand extends Command {
 
     async handleKnowledgeCollectionCreatedEvent(event) {
         const eventData = JSON.parse(event.data);
-
         const { id, publishOperationId, merkleRoot, chunksAmount } = eventData;
         const { blockchain, contractAddress } = event;
-
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
             publishOperationId,
