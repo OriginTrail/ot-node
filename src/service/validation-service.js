@@ -1,4 +1,4 @@
-import { ZERO_ADDRESS } from '../constants/constants.js';
+import { ZERO_ADDRESS, PRIVATE_ASSERTION_PREDICATE } from '../constants/constants.js';
 
 class ValidationService {
     constructor(ctx) {
@@ -39,7 +39,7 @@ class ValidationService {
     }
 
     async validateDatasetRootOnBlockchain(
-        assertionId,
+        knowledgeCollectionMerkleRoot,
         blockchain,
         assetStorageContractAddress,
         knowledgeCollectionId,
@@ -51,7 +51,11 @@ class ValidationService {
                 knowledgeCollectionId,
             );
 
-        return assertionId === blockchainAssertionRoot;
+        if (knowledgeCollectionMerkleRoot !== blockchainAssertionRoot) {
+            throw new Error(
+                `Merkle Root validation failed. Merkle Root on chain: ${blockchainAssertionRoot}; Calculated Merkle Root: ${knowledgeCollectionMerkleRoot}`,
+            );
+        }
     }
 
     // Used to validate assertion node received through network get
@@ -61,10 +65,12 @@ class ValidationService {
         assetStorageContractAddress,
         knowledgeCollectionId,
     ) {
-        const assertionId = await this.validationModuleManager.calculateRoot(assertion);
+        const knowledgeCollectionMerkleRoot = await this.validationModuleManager.calculateRoot(
+            assertion,
+        );
 
-        return this.validateDatasetRootOnBlockchain(
-            assertionId,
+        await this.validateDatasetRootOnBlockchain(
+            knowledgeCollectionMerkleRoot,
             blockchain,
             assetStorageContractAddress,
             knowledgeCollectionId,
@@ -79,6 +85,24 @@ class ValidationService {
                 `Merkle Root validation failed. Received Merkle Root: ${datasetRoot}; Calculated Merkle Root: ${calculatedDatasetRoot}`,
             );
         }
+    }
+
+    async validatePrivateMerkleRoot(publicAssertion, privateAssertion) {
+        const privateAssertionTriple = publicAssertion.find((triple) =>
+            triple.includes(PRIVATE_ASSERTION_PREDICATE),
+        );
+
+        if (privateAssertionTriple) {
+            const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
+
+            await this.validationService.validateDatasetRoot(
+                privateAssertion,
+                privateAssertionRoot,
+            );
+        }
+        throw new Error(
+            `Merkle Root validation failed. Private Merkle Root not present in public assertion.`,
+        );
     }
 }
 
