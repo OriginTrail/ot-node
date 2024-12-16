@@ -95,14 +95,12 @@ class ValidationService {
         if (privateAssertionTriple) {
             const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
 
-            await this.validationService.validateDatasetRoot(
-                privateAssertion,
-                privateAssertionRoot,
+            await this.validateDatasetRoot(privateAssertion, privateAssertionRoot);
+        } else {
+            throw new Error(
+                `Merkle Root validation failed. Private Merkle Root not present in public assertion.`,
             );
         }
-        throw new Error(
-            `Merkle Root validation failed. Private Merkle Root not present in public assertion.`,
-        );
     }
 }
 
