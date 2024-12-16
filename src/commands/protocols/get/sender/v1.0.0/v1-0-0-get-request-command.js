@@ -67,25 +67,22 @@ class GetRequestCommand extends ProtocolRequestCommand {
             // Only whole collection can be validated not particular KA
             if (!knowledgeAssetId) {
                 try {
-                    const isValid = await this.validationService.validateDatasetOnBlockchain(
+                    await this.validationService.validateDatasetOnBlockchain(
                         responseData.assertion.public,
                         blockchain,
                         contract,
                         knowledgeCollectionId,
                     );
-                    if (!isValid) {
-                        return this.handleNack(command, {
-                            errorMessage:
-                                "Merkle root of received assertion doesn't match on chain merkle root",
-                        });
-                    }
+                    if (responseData.assertion?.private?.length)
+                        await this.validationService.validatePrivateMerkleRoot(
+                            responseData.assertion.public,
+                            responseData.assertion.private,
+                        );
                 } catch (e) {
                     return this.handleNack(command, {
                         errorMessage: e.message,
                     });
                 }
-
-                // TODO: Validate private part
             }
             await this.operationService.processResponse(
                 command,

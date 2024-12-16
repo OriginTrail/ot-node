@@ -5,7 +5,6 @@ import {
     ERROR_TYPE,
     LOCAL_STORE_TYPES,
     PARANET_ACCESS_POLICY,
-    PRIVATE_ASSERTION_PREDICATE,
 } from '../../../../constants/constants.js';
 
 class PublishValidateAssetCommand extends ValidateAssetCommand {
@@ -62,18 +61,11 @@ class PublishValidateAssetCommand extends ValidateAssetCommand {
         );
         await this.validationService.validateDatasetRoot(cachedData.dataset.public, datasetRoot);
 
-        const privateAssertionTriple = cachedData.dataset.public.find((triple) =>
-            triple.includes(PRIVATE_ASSERTION_PREDICATE),
-        );
-
-        if (privateAssertionTriple) {
-            const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
-
-            await this.validationService.validateDatasetRoot(
+        if (cachedData.dataset?.private?.length)
+            await this.validationService.validatePrivateMerkleRoot(
+                cachedData.dataset.public,
                 cachedData.dataset.private,
-                privateAssertionRoot,
             );
-        }
 
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_VALIDATE_DATASET_ROOT_END,
