@@ -122,7 +122,6 @@ class OtEthers extends BlockchainEventsService {
         let fromBlock =
             currentBlock - lastCheckedBlock > maxBlocksToSync ? currentBlock : lastCheckedBlock + 1;
         const eventsMissed = currentBlock - lastCheckedBlock > maxBlocksToSync;
-
         if (eventsMissed) {
             return {
                 events: [],
@@ -168,12 +167,19 @@ class OtEthers extends BlockchainEventsService {
                     fromBlock + MAXIMUM_NUMBERS_OF_BLOCKS_TO_FETCH - 1,
                     currentBlock,
                 );
+
+                const fromBlockParam = ethers.BigNumber.from(fromBlock)
+                    .toHexString()
+                    .replace(/^0x0+/, '0x');
+                const toBlockParam = ethers.BigNumber.from(toBlock)
+                    .toHexString()
+                    .replace(/^0x0+/, '0x');
                 const provider = this._getRandomProvider(blockchain);
                 const newLogs = await provider.send('eth_getLogs', [
                     {
                         address: contractAddresses,
-                        fromBlock: ethers.BigNumber.from(fromBlock).toHexString(),
-                        toBlock: ethers.BigNumber.from(toBlock).toHexString(),
+                        fromBlock: fromBlockParam,
+                        toBlock: toBlockParam,
                         topics: [topics],
                     },
                 ]);

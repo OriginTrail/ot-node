@@ -76,13 +76,14 @@ class BlockchainEventListenerCommand extends Command {
             await this.repositoryModuleManager.insertBlockchainEvents(newEvents, {
                 transaction: repositoryTransaction,
             });
-            await this.repositoryModuleManager.updateLastCheckedBlock(
-                blockchainId,
-                this.currentBlock,
-                Date.now(),
-                { transaction: repositoryTransaction },
-            );
         }
+
+        await this.repositoryModuleManager.updateLastCheckedBlock(
+            blockchainId,
+            this.currentBlock,
+            Date.now(),
+            { transaction: repositoryTransaction },
+        );
 
         const unprocessedEvents =
             await this.repositoryModuleManager.getAllUnprocessedBlockchainEvents(
@@ -470,10 +471,8 @@ class BlockchainEventListenerCommand extends Command {
 
     async handleKnowledgeCollectionCreatedEvent(event) {
         const eventData = JSON.parse(event.data);
-
-        const { id, merkleRoot, publishOperationId } = eventData;
+        const { id, publishOperationId, merkleRoot, chunksAmount } = eventData;
         const { blockchain, contractAddress } = event;
-
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
             publishOperationId,
@@ -482,7 +481,6 @@ class BlockchainEventListenerCommand extends Command {
         let cachedData;
         try {
             datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
-
             cachedData = await this.fileService.readFile(datasetPath, true);
         } catch (error) {
             this.operationIdService.updateOperationIdStatus(
@@ -519,6 +517,7 @@ class BlockchainEventListenerCommand extends Command {
                 contract: contractAddress,
                 tokenId: id,
                 merkleRoot,
+                chunksAmount,
                 remotePeerId: cachedData.remotePeerId,
                 publishOperationId,
                 assertion: cachedData.assertion,
@@ -540,11 +539,11 @@ class BlockchainEventListenerCommand extends Command {
             OPERATION_ID_STATUS.UPDATE_FINALIZATION.UPDATE_FINALIZATION_START,
         );
 
-        let data;
         let datasetPath;
+        let cachedData;
         try {
             datasetPath = this.fileService.getPendingStorageDocumentPath(updateOperationId);
-            data = await this.fileService.readFile(datasetPath, true);
+            cachedData = await this.fileService.readFile(datasetPath, true);
         } catch (error) {
             this.operationIdService.markOperationAsFailed(
                 operationId,
@@ -567,8 +566,8 @@ class BlockchainEventListenerCommand extends Command {
                 tokenId,
                 assetStateIndex,
                 merkleRoot: state,
-                assertion: data.assertion,
-                cachedMerkleRoot: data.merkleRoot,
+                assertion: cachedData.assertion,
+                cachedMerkleRoot: cachedData.merkleRoot,
             },
             transactional: false,
         });

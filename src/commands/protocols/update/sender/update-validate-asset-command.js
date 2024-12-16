@@ -47,7 +47,7 @@ class UpdateValidateAssetCommand extends ValidateAssetCommand {
             operationId,
             blockchain,
         );
-        this.validationService.validateDatasetRoot(cachedData.dataset, datasetRoot);
+        await this.validationService.validateDatasetRoot(cachedData.dataset, datasetRoot);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_DATASET_ROOT_END,
             operationId,

@@ -247,7 +247,7 @@ const require = createRequire(import.meta.url);
 
 export const ABIs = {
     KnowledgeCollection: require('dkg-evm-module/abi/KnowledgeCollection.json'),
-    KnowledgeCollectionStorage: require('dkg-evm-module/abi/KnowledgeCollectionLib.json'),
+    KnowledgeCollectionStorage: require('dkg-evm-module/abi/KnowledgeCollectionStorage.json'),
     Staking: require('dkg-evm-module/abi/Staking.json'),
     Token: require('dkg-evm-module/abi/Token.json'),
     Hub: require('dkg-evm-module/abi/Hub.json'),

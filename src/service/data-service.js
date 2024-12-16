@@ -13,6 +13,10 @@ class DataService {
         this.cryptoService = ctx.cryptoService;
     }
 
+    calculateChunksAmount(assertion) {
+        return kcTools.calculateNumberOfChunks(assertion);
+    }
+
     createTripleAnnotations(groupedTriples, annotationPredicate, annotations) {
         return groupedTriples.flatMap((knowledgeAssetTriples, index) =>
             knowledgeAssetTriples.map(
