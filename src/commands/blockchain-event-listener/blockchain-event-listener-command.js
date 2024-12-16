@@ -15,11 +15,9 @@ class BlockchainEventListenerCommand extends Command {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.ualService = ctx.ualService;
-        this.shardingTableService = ctx.shardingTableService;
         this.blockchainEventsService = ctx.blockchainEventsService;
         this.fileService = ctx.fileService;
         this.operationIdService = ctx.operationIdService;
-        this.networkModuleManager = ctx.networkModuleManager;
         this.commandExecutor = ctx.commandExecutor;
 
         this.invalidatedContracts = new Set();
@@ -470,58 +468,14 @@ class BlockchainEventListenerCommand extends Command {
     }
 
     async handleKnowledgeCollectionCreatedEvent(event) {
-        const eventData = JSON.parse(event.data);
-        const { id, publishOperationId, merkleRoot, chunksAmount } = eventData;
-        const { blockchain, contractAddress } = event;
-        const operationId = await this.operationIdService.generateOperationId(
-            OPERATION_ID_STATUS.PUBLISH_FINALIZATION.PUBLISH_FINALIZATION_START,
-            publishOperationId,
-        );
-        let datasetPath;
-        let cachedData;
-        try {
-            datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
-            cachedData = await this.fileService.readFile(datasetPath, true);
-        } catch (error) {
-            this.operationIdService.updateOperationIdStatus(
-                operationId,
-                blockchain,
-                OPERATION_ID_STATUS.FAILED,
-                error.message,
-                ERROR_TYPE.FINALITY.FINALITY_ERROR,
-            );
-        }
-        const ual = this.ualService.deriveUAL(blockchain, contractAddress, id);
-
-        const sequence = ['storeAssertionCommand'];
-
-        const myPeerId = this.networkModuleManager.getPeerId().toB58String();
-        if (cachedData.remotePeerId === myPeerId) {
-            await this.repositoryModuleManager.saveFinalityAck(
-                publishOperationId,
-                ual,
-                cachedData.remotePeerId,
-            );
-        } else {
-            sequence.push('findPublisherNodeCommand', 'networkFinalityCommand');
-        }
+        const sequence = ['validateAssertionMetadataCommand', 'storeAssertionCommand'];
 
         await this.commandExecutor.add({
-            name: 'validateAssertionMetadataCommand',
+            name: 'readCachedPublishDataCommand',
             sequence,
             delay: 0,
             data: {
-                operationId,
-                ual,
-                blockchain,
-                contract: contractAddress,
-                tokenId: id,
-                merkleRoot,
-                chunksAmount,
-                remotePeerId: cachedData.remotePeerId,
-                publishOperationId,
-                assertion: cachedData.assertion,
-                cachedMerkleRoot: cachedData.merkleRoot,
+                event,
             },
             transactional: false,
         });
