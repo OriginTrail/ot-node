@@ -373,8 +373,8 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async createMissedParanetAssetRecord(missedParanetAssset, options = {}) {
-        return this.getRepository('missed_paranet_asset').createMissedParanetAssetRecord(
+    async createParanetAssetRecord(missedParanetAssset, options = {}) {
+        return this.getRepository('paranet_asset').createParanetAssetRecord(
             missedParanetAssset,
             options,
         );
@@ -388,8 +388,13 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async missedParanetAssetRecordExists(ual, options = {}) {
-        return this.getRepository('missed_paranet_asset').missedParanetAssetRecordExists(
+        return this.getRepository('paranet_asset').missedParanetAssetRecordExists(ual, options);
+    }
+
+    async incrementRetriesForUalAndParanetUal(ual, paranetUal, options = {}) {
+        return this.getRepository('paranet_asset').incrementRetriesForUalAndParanetUal(
             ual,
+            paranetUal,
             options,
         );
     }
@@ -408,9 +413,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         limit = null,
         options = {},
     ) {
-        return this.getRepository(
-            'missed_paranet_asset',
-        ).getMissedParanetAssetsRecordsWithRetryCount(
+        return this.getRepository('paranet_asset').getMissedParanetAssetsRecordsWithRetryCount(
             paranetUal,
             retryCountLimit,
             retryDelayInMs,
@@ -419,26 +422,27 @@ class RepositoryModuleManager extends BaseModuleManager {
         );
     }
 
-    async getCountOfMissedAssetsOfParanet(ual, options = {}) {
-        return this.getRepository('missed_paranet_asset').getCountOfMissedAssetsOfParanet(
-            ual,
+    async getCountOfMissedAssetsOfParanet(paranetUal, options = {}) {
+        return this.getRepository('paranet_asset').getCountOfMissedAssetsOfParanet(
+            paranetUal,
             options,
         );
     }
 
-    async getFilteredCountOfMissedAssetsOfParanet(
-        ual,
-        retryCountLimit,
-        retryDelayInMs,
-        options = {},
-    ) {
-        return this.getRepository('missed_paranet_asset').getFilteredCountOfMissedAssetsOfParanet(
-            ual,
-            retryCountLimit,
-            retryDelayInMs,
-            options,
-        );
-    }
+    // TODO: remove
+    // async getFilteredCountOfMissedAssetsOfParanet(
+    //     ual,
+    //     retryCountLimit,
+    //     retryDelayInMs,
+    //     options = {},
+    // ) {
+    //     return this.getRepository('paranet_asset').getFilteredCountOfMissedAssetsOfParanet(
+    //         ual,
+    //         retryCountLimit,
+    //         retryDelayInMs,
+    //         options,
+    //     );
+    // }
 
     async getParanetsBlockchains(options = {}) {
         return this.getRepository('paranet').getParanetsBlockchains(options);
@@ -455,7 +459,7 @@ class RepositoryModuleManager extends BaseModuleManager {
         dataSource,
         options = {},
     ) {
-        return this.getRepository('paranet_synced_asset').createParanetSyncedAssetRecord(
+        return this.getRepository('paranet_asset').createParanetSyncedAssetRecord(
             blockchainId,
             ual,
             paranetUal,
@@ -469,23 +473,21 @@ class RepositoryModuleManager extends BaseModuleManager {
     }
 
     async getParanetSyncedAssetRecordByUAL(ual, options = {}) {
-        return this.getRepository('paranet_synced_asset').getParanetSyncedAssetRecordByUAL(
-            ual,
-            options,
-        );
+        return this.getRepository('paranet_asset').getParanetSyncedAssetRecordByUAL(ual, options);
     }
 
-    async getParanetSyncedAssetRecordsCountByDataSource(paranetUal, dataSource, options = {}) {
+    async getParanetSyncedAssetRecordsCountByDataSource(paranetUal, options = {}) {
         return this.getRepository(
             'paranet_synced_asset',
-        ).getParanetSyncedAssetRecordsCountByDataSource(paranetUal, dataSource, options);
+        ).getParanetSyncedAssetRecordsCountByDataSource(paranetUal, options);
     }
 
     async paranetSyncedAssetRecordExists(ual, options = {}) {
-        return this.getRepository('paranet_synced_asset').paranetSyncedAssetRecordExists(
-            ual,
-            options,
-        );
+        return this.getRepository('paranet_asset').paranetSyncedAssetRecordExists(ual, options);
+    }
+
+    async updateAssetToBeSynced(ual, asset, options = {}) {
+        return this.getRepository('paranet_asset').updateAssetToBeSynced(ual, asset, options);
     }
 
     async incrementParanetKaCount(paranetId, blockchainId, options = {}) {
