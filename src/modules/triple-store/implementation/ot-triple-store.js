@@ -291,40 +291,52 @@ class OtTripleStore {
         await this.queryVoid(repository, query);
     }
 
-    async getKnowledgeCollectionNamedGraphs(repository, ual, visibility, sort = true) {
+    async getKnowledgeCollectionNamedGraphs(repository, ual, visibility) {
         const assertion = {};
         if (visibility === TRIPLES_VISIBILITY.PUBLIC || visibility === TRIPLES_VISIBILITY.ALL) {
             const query = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT { ?s ?p ?o . }
-            WHERE {
-                GRAPH ?g {
-                    ?s ?p ?o .
-                }
-                FILTER(
-                    STRSTARTS(STR(?g), "${ual}/")
-                    && STRENDS(STR(?g), "${TRIPLES_VISIBILITY.PUBLIC}")
-                )
+            PREFIX schema: <http://schema.org/>
+            CONSTRUCT {
+                ?s ?p ?o .
             }
-            ${sort ? 'ORDER BY ?g ?s ?p ?o' : ''}
-            `;
+            WHERE {
+                {
+                    SELECT ?s ?p ?o ?g
+                    WHERE {
+                        GRAPH ?g {
+                            ?s ?p ?o .
+                        }
+                        FILTER (
+                            STRSTARTS(STR(?g), "${ual}")
+                            && STRENDS(STR(?g), "${TRIPLES_VISIBILITY.PUBLIC}")
+                        )
+                    }
+                    ORDER BY ?g ?s ?p ?o
+                }
+            }`;
             assertion.public = await this.construct(repository, query);
         }
         if (visibility === TRIPLES_VISIBILITY.PRIVATE || visibility === TRIPLES_VISIBILITY.ALL) {
             const query = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT { ?s ?p ?o . }
-            WHERE {
-                GRAPH ?g {
+                PREFIX schema: <http://schema.org/>
+                CONSTRUCT {
                     ?s ?p ?o .
                 }
-                FILTER(
-                    STRSTARTS(STR(?g), "${ual}/")
-                    && STRENDS(STR(?g), "${TRIPLES_VISIBILITY.PRIVATE}")
-                )
-            }
-            ${sort ? 'ORDER BY ?g ?s ?p ?o' : ''}
-            `;
+                WHERE {
+                    {
+                        SELECT ?s ?p ?o ?g
+                        WHERE {
+                            GRAPH ?g {
+                                ?s ?p ?o .
+                            }
+                            FILTER (
+                                STRSTARTS(STR(?g), "${ual}")
+                                && STRENDS(STR(?g), "${TRIPLES_VISIBILITY.PRIVATE}")
+                            )
+                        }
+                        ORDER BY ?g ?s ?p ?o
+                    }
+                }`;
             assertion.private = await this.construct(repository, query);
         }
 

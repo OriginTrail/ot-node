@@ -137,7 +137,7 @@ class LocalGetCommand extends Command {
             assertion,
             ...(includeMetadata && metadata && { metadata }),
         };
-        if (assertion.length) {
+        if (assertion?.public?.length || assertion?.private?.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
