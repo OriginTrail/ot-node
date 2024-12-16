@@ -149,7 +149,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             ...(includeMetadata && metadata && { metadata }),
         };
 
-        if (assertion.length) {
+        if (assertion?.public?.length) {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
@@ -157,7 +157,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             );
         }
 
-        return assertion.length
+        return assertion?.public?.length
             ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
