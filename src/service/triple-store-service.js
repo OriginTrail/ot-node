@@ -1,10 +1,13 @@
 /* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
+import { kcTools } from 'assertion-tools';
 
 import {
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
     TRIPLES_VISIBILITY,
+    PRIVATE_RESOURCE_PREDICATE,
+    PRIVATE_HASH_SUBJECT_PREFIX,
 } from '../constants/constants.js';
 
 class TripleStoreService {
@@ -17,6 +20,7 @@ class TripleStoreService {
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
         this.paranetService = ctx.paranetService;
+        this.cryptoService = ctx.cryptoService;
     }
 
     initializeRepositories() {
@@ -56,66 +60,139 @@ class TripleStoreService {
         //     knowledgeAssetsUALs.map((ual) => `<${ual}>`),
         // );
         // const unifiedGraphTriples = [...triples, ...tripleAnnotations];
-        const publicKnowledgeAssetsTriples = this.dataService.splitConnectedArrays(
-            triples.public ?? triples,
+        const promises = [];
+        const publicAssertion = triples.public ?? triples;
+
+        const filteredPublic = [];
+        const privateHashTriples = [];
+        publicAssertion.forEach((triple) => {
+            if (triple.includes(PRIVATE_RESOURCE_PREDICATE)) {
+                privateHashTriples.push(triple);
+            } else {
+                filteredPublic.push(triple);
+            }
+        });
+
+        const publicKnowledgeAssetsTriplesGrouped = kcTools.groupNquadsBySubject(
+            filteredPublic,
+            true,
+        );
+        const publicKnowledgeAssetsUALs = publicKnowledgeAssetsTriplesGrouped.map(
+            (_, index) => `${knowledgeCollectionUAL}/${index + 1}`,
         );
 
-        const publicKnowledgeAssetsUALs = [];
-
-        for (let i = 1; i <= publicKnowledgeAssetsTriples.length; i += 1) {
-            publicKnowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i}`);
-        }
-        const promises = [];
-
-        if (triples.private?.length && !existsInNamedGraphs) {
-            const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
-                triples.private,
-            );
-            const privateKnowledgeAssetsUALs = [];
-            let publicIndex = 0;
-            let privateIndex = 0;
-            while (
-                publicIndex < publicKnowledgeAssetsTriples.length &&
-                privateIndex < privateKnowledgeAssetsTriples.length
-            ) {
-                // const [privateSubject] = privateKnowledgeAssetsTriples[privateIndex][0].split(' ');
-                // Check if first triple is content or private existence identifier
-                if (
-                    this.dataService.quadsContainsPrivateRepresentations(
-                        publicKnowledgeAssetsTriples[publicIndex],
-                    )
-                ) {
-                    privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[publicIndex]);
-                    privateIndex += 1;
-                }
-                publicIndex += 1;
-            }
-
-            if (privateKnowledgeAssetsUALs.length > 0) {
-                promises.push(
-                    this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
-                        this.repositoryImplementations[repository],
-                        repository,
-                        privateKnowledgeAssetsUALs,
-                        privateKnowledgeAssetsTriples,
-                        TRIPLES_VISIBILITY.PRIVATE,
-                    ),
+        const publicSubjectHashMap = publicKnowledgeAssetsTriplesGrouped.reduce(
+            (map, group, index) => {
+                const [publicSubject] = group[0].split(' ');
+                const publicSubjectHash = this.cryptoService.sha256(publicSubject.slice(1, -1));
+                map.set(publicSubjectHash, index);
+                return map;
+            },
+            new Map(),
+        );
+        const sortedPrivateRepresentationTriples = [];
+        for (const privateHashTriple of privateHashTriples) {
+            const privateHash = privateHashTriple
+                .split(' ')[0]
+                .slice(PRIVATE_HASH_SUBJECT_PREFIX.length + 1, -1);
+            if (publicSubjectHashMap.has(privateHash)) {
+                const publicIndex = publicSubjectHashMap.get(privateHash);
+                this.dataService.insertStringInSortedArray(
+                    publicKnowledgeAssetsTriplesGrouped[publicIndex],
+                    privateHashTriple,
                 );
+            } else {
+                // If there is no public match add it as new KA at the end
+                sortedPrivateRepresentationTriples.push(privateHashTriple);
             }
         }
+        const startIndexForPrivateKnowledgeAssetsWithoutPublicPair =
+            publicKnowledgeAssetsUALs.length;
+        // Add private hashes without public pair to the end
+        publicKnowledgeAssetsTriplesGrouped.push(
+            ...sortedPrivateRepresentationTriples.map((triple) => [triple]),
+        );
+        publicKnowledgeAssetsUALs.push(
+            ...sortedPrivateRepresentationTriples.map(
+                (_, index) =>
+                    `${knowledgeCollectionUAL}/${
+                        startIndexForPrivateKnowledgeAssetsWithoutPublicPair + index + 1
+                    }`,
+            ),
+        );
+
         if (!existsInNamedGraphs) {
             promises.push(
                 this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                     this.repositoryImplementations[repository],
                     repository,
                     publicKnowledgeAssetsUALs,
-                    publicKnowledgeAssetsTriples,
+                    publicKnowledgeAssetsTriplesGrouped,
                     TRIPLES_VISIBILITY.PUBLIC,
                 ),
             );
+
+            if (triples.private?.length) {
+                const privateKnowledgeAssetsTriplesGrouped = kcTools.groupNquadsBySubject(
+                    triples.private,
+                    true,
+                );
+
+                const privateKnowledgeAssetsUALs = [];
+
+                // const privateSubjectHashMap = privateKnowledgeAssetsTriplesGrouped.reduce(
+                //     (map, group, index) => {
+                //         const [privateSubject] = group[0].split(' ');
+                //         const privateSubjectHash = privateSubject.slice(1, -1);
+                //         map.set(privateSubjectHash, index);
+                //         return map;
+                //     },
+                //     new Map(), );
+
+                const privateRepresentationTriplesSubjectMap =
+                    sortedPrivateRepresentationTriples.reduce((map, triple, index) => {
+                        const privateHashedSubject = triple
+                            .split(' ')[0]
+                            .slice(PRIVATE_HASH_SUBJECT_PREFIX.length + 1, -1);
+                        map.set(privateHashedSubject, index);
+                        return map;
+                    }, new Map());
+
+                for (const privateTriple of privateKnowledgeAssetsTriplesGrouped) {
+                    const [privateSubject] = privateTriple[0].split(' ');
+                    const privateSubjectHash = this.cryptoService.sha256(
+                        privateSubject.slice(1, -1),
+                    );
+
+                    if (publicSubjectHashMap.has(privateSubjectHash)) {
+                        const publicIndex = publicSubjectHashMap.get(privateSubjectHash);
+                        privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[publicIndex]);
+                    } else {
+                        const publicIndex =
+                            privateRepresentationTriplesSubjectMap.get(privateSubjectHash);
+                        privateKnowledgeAssetsUALs.push(
+                            publicKnowledgeAssetsUALs[
+                                startIndexForPrivateKnowledgeAssetsWithoutPublicPair + publicIndex
+                            ],
+                        );
+                    }
+                }
+                promises.push(
+                    this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                        this.repositoryImplementations[repository],
+                        repository,
+                        privateKnowledgeAssetsUALs,
+                        privateKnowledgeAssetsTriplesGrouped,
+                        TRIPLES_VISIBILITY.PRIVATE,
+                    ),
+                );
+            }
         }
         const metadataTriples = publicKnowledgeAssetsUALs
-            .map((ual) => `<${ual}> <http://schema.org/states> "${ual}:0" .`)
+            .map(
+                (publicKnowledgeAssetUAL) =>
+                    `<${publicKnowledgeAssetUAL}> <http://schema.org/states> "${publicKnowledgeAssetUAL}:0" .`,
+            )
             .join('\n');
 
         promises.push(
