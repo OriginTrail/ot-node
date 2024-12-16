@@ -63,7 +63,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
 
     async handleAck(command, responseData) {
         const { blockchain, contract, knowledgeCollectionId, knowledgeAssetId } = command.data;
-        if (responseData?.assertion) {
+        if (responseData?.assertion?.public) {
             // Only whole collection can be validated not particular KA
             if (!knowledgeAssetId) {
                 try {
@@ -84,6 +84,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
                         errorMessage: e.message,
                     });
                 }
+
+                // TODO: Validate private part
             }
             await this.operationService.processResponse(
                 command,

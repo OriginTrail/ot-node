@@ -419,18 +419,24 @@ class TripleStoreService {
                 visibility,
             );
         }
+        if (nquads?.public) {
+            nquads.public = nquads.public.split('\n').filter((line) => line !== '');
+        }
+        if (nquads?.private) {
+            nquads.private = nquads.private.split('\n').filter((line) => line !== '');
+        }
 
-        nquads = nquads.split('\n').filter((line) => line !== '');
+        const numberOfnquads = (nquads?.public?.length ?? 0) + (nquads?.private?.length ?? 0);
 
         this.logger.debug(
             `Assertion: ${ual} ${
-                nquads.length ? '' : 'is not'
+                numberOfnquads ? '' : 'is not'
             } found in the Triple Store's ${repository} repository.`,
         );
 
         if (nquads.length) {
             this.logger.debug(
-                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${numberOfnquads}.`,
             );
         }
 
