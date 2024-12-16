@@ -15,7 +15,6 @@ class FinalityController extends BaseController {
         const { ual } = req.query;
 
         const finality = await this.repositoryModuleManager.getFinalityAcksCount(ual || '');
- 
 
         if (typeof finality !== 'number')
             return this.returnResponse(res, 400, {
