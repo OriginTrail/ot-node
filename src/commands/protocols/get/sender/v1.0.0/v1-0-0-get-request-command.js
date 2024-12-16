@@ -62,20 +62,29 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command, responseData) {
+        const { blockchain, contract, knowledgeCollectionId, knowledgeAssetId } = command.data;
         if (responseData?.assertion) {
-            // TODO: Add this validation
-            try {
-                await this.validationService.validateDatasetOnBlockchain(
-                    command.data.knowledgeCollectionId,
-                    responseData.assertion,
-                    command.data.blockchain,
-                );
-            } catch (e) {
-                return this.handleNack(command, {
-                    errorMessage: e.message,
-                });
+            // Only whole collection can be validated not particular KA
+            if (!knowledgeAssetId) {
+                try {
+                    const isValid = await this.validationService.validateDatasetOnBlockchain(
+                        responseData.assertion,
+                        blockchain,
+                        contract,
+                        knowledgeCollectionId,
+                    );
+                    if (!isValid) {
+                        return this.handleNack(command, {
+                            errorMessage:
+                                "Merkle root of received assertion doesn't match on chain merkle root",
+                        });
+                    }
+                } catch (e) {
+                    return this.handleNack(command, {
+                        errorMessage: e.message,
+                    });
+                }
             }
-
             await this.operationService.processResponse(
                 command,
                 OPERATION_REQUEST_STATUS.COMPLETED,

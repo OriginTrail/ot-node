@@ -38,15 +38,37 @@ class ValidationService {
         this.logger.info(`Assertion integrity validated! AssertionId: ${assertionId}`);
     }
 
-    async validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain) {
-        // TODO: call contract TO DO, dont return anything or return true
-        return { knowledgeCollectionId, assertionId, blockchain };
+    async validateDatasetRootOnBlockchain(
+        assertionId,
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        const blockchainAssertionRoot =
+            await this.blockchainModuleManager.getKnowledgeCollectionLatestMerkleRoot(
+                blockchain,
+                assetStorageContractAddress,
+                knowledgeCollectionId,
+            );
+
+        return assertionId === blockchainAssertionRoot;
     }
 
-    async validateDatasetOnBlockchain(knowledgeCollectionId, assertion, blockchain) {
+    // Used to validate assertion node received through network get
+    async validateDatasetOnBlockchain(
+        assertion,
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
         const assertionId = await this.validationModuleManager.calculateRoot(assertion);
 
-        await this.validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain);
+        return this.validateDatasetRootOnBlockchain(
+            assertionId,
+            blockchain,
+            assetStorageContractAddress,
+            knowledgeCollectionId,
+        );
     }
 
     async validateDatasetRoot(dataset, datasetRoot) {
