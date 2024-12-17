@@ -1,0 +1,1 @@
+node data-migration.js 2>&1 | tee -a log.txt
