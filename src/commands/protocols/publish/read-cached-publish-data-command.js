@@ -1,4 +1,3 @@
-import { setTimeout } from 'timers/promises';
 import Command from '../../command.js';
 import {
     OPERATION_ID_STATUS,
@@ -31,30 +30,15 @@ class ReadCachedPublishDataCommand extends Command {
         let datasetPath;
         let cachedData;
 
-        for (let attempt = 1; attempt <= MAX_RETRIES_READ_CACHED_PUBLISH_DATA; attempt += 1) {
-            try {
-                if (attempt <= 2) throw Error();
-                datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
+        try {
+            datasetPath = this.fileService.getPendingStorageDocumentPath(publishOperationId);
 
-                // eslint-disable-next-line no-await-in-loop
-                cachedData = await this.fileService.readFile(datasetPath, true);
-
-                break;
-            } catch (error) {
-                if (attempt === MAX_RETRIES_READ_CACHED_PUBLISH_DATA) {
-                    this.operationIdService.updateOperationIdStatus(
-                        operationId,
-                        blockchain,
-                        OPERATION_ID_STATUS.FAILED,
-                        error.message,
-                        ERROR_TYPE.FINALITY.FINALITY_ERROR,
-                    );
-                } else {
-                    // eslint-disable-next-line no-await-in-loop
-                    await setTimeout(RETRY_DELAY_READ_CACHED_PUBLISH_DATA);
-                }
-            }
+            // eslint-disable-next-line no-await-in-loop
+            cachedData = await this.fileService.readFile(datasetPath, true);
+        } catch (error) {
+            return Command.retry();
         }
+
         const ual = this.ualService.deriveUAL(blockchain, contractAddress, id);
 
         const myPeerId = this.networkModuleManager.getPeerId().toB58String();
@@ -94,8 +78,8 @@ class ReadCachedPublishDataCommand extends Command {
     default(map) {
         const command = {
             name: 'readCachedPublishDataCommand',
-            delay: 0,
-            retries: 0,
+            delay: RETRY_DELAY_READ_CACHED_PUBLISH_DATA,
+            retries: MAX_RETRIES_READ_CACHED_PUBLISH_DATA,
             transactional: false,
         };
         Object.assign(command, map);

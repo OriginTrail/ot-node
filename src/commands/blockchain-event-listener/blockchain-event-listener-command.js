@@ -7,6 +7,8 @@ import {
     OPERATION_ID_STATUS,
     MONITORED_CONTRACTS,
     MONITORED_EVENTS,
+    RETRY_DELAY_READ_CACHED_PUBLISH_DATA,
+    MAX_RETRIES_READ_CACHED_PUBLISH_DATA,
 } from '../../constants/constants.js';
 
 class BlockchainEventListenerCommand extends Command {
@@ -473,7 +475,8 @@ class BlockchainEventListenerCommand extends Command {
         await this.commandExecutor.add({
             name: 'readCachedPublishDataCommand',
             sequence,
-            delay: 0,
+            delay: RETRY_DELAY_READ_CACHED_PUBLISH_DATA,
+            retries: MAX_RETRIES_READ_CACHED_PUBLISH_DATA,
             data: {
                 event,
             },
