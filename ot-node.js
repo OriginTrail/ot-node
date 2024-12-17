@@ -9,6 +9,7 @@ import { MIN_NODE_VERSION, PARANET_ACCESS_POLICY } from './src/constants/constan
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
+import MigrationExecutor from './src/migration/migration-executor.js';
 
 const require = createRequire(import.meta.url);
 const { setTimeout } = require('timers/promises');
@@ -28,6 +29,12 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
+        await MigrationExecutor.executeTripleStoreUserConfigurationMigration(
+            this.container,
+            this.logger,
+            this.config,
+        );
+
         this.logger.info('██████╗ ██╗  ██╗ ██████╗     ██╗   ██╗ █████╗ ');
         this.logger.info('██╔══██╗██║ ██╔╝██╔════╝     ██║   ██║██╔══██╗');
         this.logger.info('██║  ██║█████╔╝ ██║  ███╗    ██║   ██║╚█████╔╝');
@@ -42,7 +49,6 @@ class OTNode {
 
         await this.initializeDependencyContainer();
         this.initializeEventEmitter();
-
         await this.initializeModules();
         this.initializeBlockchainEventsService();
         await this.initializeShardingTableService();
