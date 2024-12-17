@@ -1,11 +1,11 @@
 import ValidateAssetCommand from '../../../common/validate-asset-command.js';
-import Command from '../../../command.js';
-import { OPERATION_ID_STATUS, ZERO_BYTES32 } from '../../../../constants/constants.js';
+import { OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.publishService;
+        this.validationService = ctx.validationService;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -29,37 +29,17 @@ class PublishValidateAssetBlockchainCommand extends ValidateAssetCommand {
             blockchain,
             OPERATION_ID_STATUS.VALIDATE_ASSET_BLOCKCHAIN_START,
         );
-
-        const blockchainAssertionId =
-            await this.blockchainModuleManager.getKnowledgeCollectionMerkleRoot(
-                blockchain,
-                contract,
-                tokenId,
-            );
-        if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
-            return Command.retry();
-        }
-
-        const { dataset: cachedData } = await this.operationIdService.getCachedOperationIdData(
-            operationId,
-        );
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
         this.logger.debug(
             `Validating asset's public assertion with id: ${datasetRoot} ual: ${ual}`,
         );
 
-        if (blockchainAssertionId !== datasetRoot) {
-            await this.handleError(
-                operationId,
-                blockchain,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${datasetRoot}`,
-                this.errorType,
-                true,
-            );
-            return Command.empty();
-        }
-
-        await this.validationService.validateDatasetRoot(cachedData, datasetRoot);
+        await this.validationService.validateDatasetRootOnBlockchain(
+            datasetRoot,
+            blockchain,
+            contract,
+            tokenId,
+        );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

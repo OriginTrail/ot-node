@@ -291,35 +291,56 @@ class OtTripleStore {
         await this.queryVoid(repository, query);
     }
 
-    async getKnowledgeCollectionNamedGraphs(repository, ual, visibility, sort) {
-        let visibilityFilter;
-        switch (visibility) {
-            case TRIPLES_VISIBILITY.PUBLIC:
-            case TRIPLES_VISIBILITY.PRIVATE:
-                visibilityFilter = `&& STRENDS(STR(?g), "${visibility}")`;
-                break;
-            case TRIPLES_VISIBILITY.ALL:
-                visibilityFilter = '';
-                break;
-            default:
-                throw new Error(`Unsupported visibility: ${visibility}`);
-        }
-        const query = `
-            PREFIX schema: <${SCHEMA_CONTEXT}>
-            CONSTRUCT { ?s ?p ?o . }
+    async getKnowledgeCollectionNamedGraphs(repository, ual, visibility) {
+        const assertion = {};
+        if (visibility === TRIPLES_VISIBILITY.PUBLIC || visibility === TRIPLES_VISIBILITY.ALL) {
+            const query = `
+            PREFIX schema: <http://schema.org/>
+            CONSTRUCT {
+                ?s ?p ?o .
+            }
             WHERE {
-                GRAPH ?g {
+                {
+                    SELECT ?s ?p ?o ?g
+                    WHERE {
+                        GRAPH ?g {
+                            ?s ?p ?o .
+                        }
+                        FILTER (
+                            STRSTARTS(STR(?g), "${ual}")
+                            && STRENDS(STR(?g), "${TRIPLES_VISIBILITY.PUBLIC}")
+                        )
+                    }
+                    ORDER BY ?g ?s ?p ?o
+                }
+            }`;
+            assertion.public = await this.construct(repository, query);
+        }
+        if (visibility === TRIPLES_VISIBILITY.PRIVATE || visibility === TRIPLES_VISIBILITY.ALL) {
+            const query = `
+                PREFIX schema: <http://schema.org/>
+                CONSTRUCT {
                     ?s ?p ?o .
                 }
-                FILTER(
-                    STRSTARTS(STR(?g), "${ual}/")
-                    ${visibilityFilter}
-                )
-            }
-            ${sort ? 'ORDER BY ?s' : ''}
-        `;
+                WHERE {
+                    {
+                        SELECT ?s ?p ?o ?g
+                        WHERE {
+                            GRAPH ?g {
+                                ?s ?p ?o .
+                            }
+                            FILTER (
+                                STRSTARTS(STR(?g), "${ual}")
+                                && STRENDS(STR(?g), "${TRIPLES_VISIBILITY.PRIVATE}")
+                            )
+                        }
+                        ORDER BY ?g ?s ?p ?o
+                    }
+                }`;
+            assertion.private = await this.construct(repository, query);
+        }
 
-        return this.construct(repository, query);
+        return assertion;
     }
 
     async knowledgeCollectionNamedGraphsExist(repository, ual) {

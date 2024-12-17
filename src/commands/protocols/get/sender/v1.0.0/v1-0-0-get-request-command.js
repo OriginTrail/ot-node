@@ -62,20 +62,30 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command, responseData) {
-        if (responseData?.assertion) {
-            // TODO: Add this validation
-            try {
-                await this.validationService.validateDatasetOnBlockchain(
-                    command.data.knowledgeCollectionId,
-                    responseData.assertion,
-                    command.data.blockchain,
-                );
-            } catch (e) {
-                return this.handleNack(command, {
-                    errorMessage: e.message,
-                });
-            }
+        const { blockchain, contract, knowledgeCollectionId, knowledgeAssetId } = command.data;
+        if (responseData?.assertion?.public) {
+            // Only whole collection can be validated not particular KA
+            if (!knowledgeAssetId) {
+                try {
+                    await this.validationService.validateDatasetOnBlockchain(
+                        responseData.assertion.public,
+                        blockchain,
+                        contract,
+                        knowledgeCollectionId,
+                    );
 
+                    // This is added as support when get starts supporting private for curated paranet
+                    if (responseData.assertion?.private?.length)
+                        await this.validationService.validatePrivateMerkleRoot(
+                            responseData.assertion.public,
+                            responseData.assertion.private,
+                        );
+                } catch (e) {
+                    return this.handleNack(command, {
+                        errorMessage: e.message,
+                    });
+                }
+            }
             await this.operationService.processResponse(
                 command,
                 OPERATION_REQUEST_STATUS.COMPLETED,
