@@ -23,12 +23,6 @@ class OtnodeUpdateCommand extends Command {
             const { upToDate, currentVersion, remoteVersion } =
                 await this.autoUpdaterModuleManager.compareVersions();
             if (!upToDate) {
-                if (semver.major(currentVersion) < semver.major(remoteVersion)) {
-                    this.logger.info(
-                        `New major update available. Please run update to version ${remoteVersion} manually.`,
-                    );
-                    return Command.repeat();
-                }
                 if (semver.lt(semver.valid(remoteVersion), semver.valid(currentVersion))) {
                     this.logger.info(
                         'Remote version less than current version, update will be skipped',
