@@ -6,6 +6,7 @@ import {
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
     TRIPLES_VISIBILITY,
+    PRIVATE_HASH_SUBJECT_PREFIX,
 } from '../constants/constants.js';
 
 class TripleStoreService {
@@ -61,10 +62,24 @@ class TripleStoreService {
         const promises = [];
         const publicAssertion = triples.public ?? triples;
 
+        const filteredPublic = [];
+        const privateHashTriples = [];
+        publicAssertion.forEach((triple) => {
+            if (triple.startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`)) {
+                privateHashTriples.push(triple);
+            } else {
+                filteredPublic.push(triple);
+            }
+        });
+
         const publicKnowledgeAssetsTriplesGrouped = kcTools.groupNquadsBySubject(
-            publicAssertion,
+            filteredPublic,
             true,
         );
+        publicKnowledgeAssetsTriplesGrouped.push(
+            ...kcTools.groupNquadsBySubject(privateHashTriples, true),
+        );
+
         const publicKnowledgeAssetsUALs = publicKnowledgeAssetsTriplesGrouped.map(
             (_, index) => `${knowledgeCollectionUAL}/${index + 1}`,
         );
@@ -103,11 +118,11 @@ class TripleStoreService {
                         const ualIndex = publicSubjectMap.get(privateSubject);
                         privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[ualIndex]);
                     } else {
-                        const privateSubjectHash = this.cryptoService.sha256(
+                        const privateSubjectHashed = `<${PRIVATE_HASH_SUBJECT_PREFIX}${this.cryptoService.sha256(
                             privateSubject.slice(1, -1),
-                        );
-                        if (publicSubjectMap.has(privateSubjectHash)) {
-                            const ualIndex = publicSubjectMap.get(privateSubjectHash);
+                        )}>`;
+                        if (publicSubjectMap.has(privateSubjectHashed)) {
+                            const ualIndex = publicSubjectMap.get(privateSubjectHashed);
                             privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[ualIndex]);
                         }
                     }
