@@ -111,7 +111,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         if (assertionId) {
             assertionPromise = this.tripleStoreService
-                .getOldAssertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
+                .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
                 .then((result) => {
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,

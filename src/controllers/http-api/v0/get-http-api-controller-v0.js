@@ -67,7 +67,9 @@ class GetController extends BaseController {
 
             if (
                 !tripleStoreMigrationAlreadyExecuted &&
-                OLD_CONTENT_STORAGE_MAP.values.includes(contract)
+                Object.values(OLD_CONTENT_STORAGE_MAP)
+                    .map((ca) => ca.toLowerCase())
+                    .includes(contract.toLowerCase())
             ) {
                 commandSequence.push('getAssertionMerkleRootCommand');
             }

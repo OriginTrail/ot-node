@@ -548,7 +548,7 @@ class OtTripleStore {
         return query.replace(/['|[\]\\]/g, '\\$&');
     }
 
-    async getOldAssertion(repository, assertionId) {
+    async getV6Assertion(repository, assertionId) {
         const escapedGraphName = this.cleanEscapeCharacter(assertionId);
 
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>

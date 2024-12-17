@@ -110,7 +110,7 @@ class LocalGetCommand extends Command {
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
                 ]) {
                     // eslint-disable-next-line no-await-in-loop
-                    result = await this.tripleStoreService.getOldAssertion(repository, assertionId);
+                    result = await this.tripleStoreService.getV6Assertion(repository, assertionId);
                     if (result?.length) {
                         break;
                     }

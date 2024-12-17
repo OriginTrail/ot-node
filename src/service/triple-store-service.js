@@ -360,11 +360,11 @@ class TripleStoreService {
         return nquads;
     }
 
-    async getOldAssertion(repository, assertionId) {
+    async getV6Assertion(repository, assertionId) {
         this.logger.debug(
             `Getting Assertion with the ID: ${assertionId} from the Triple Store's ${repository} repository.`,
         );
-        const nquads = await this.tripleStoreModuleManager.getOldAssertion(
+        const nquads = await this.tripleStoreModuleManager.getV6Assertion(
             this.repositoryImplementations[repository],
             repository,
             assertionId,

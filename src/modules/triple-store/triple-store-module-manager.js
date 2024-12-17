@@ -272,9 +272,9 @@ class TripleStoreModuleManager extends BaseModuleManager {
 
     // OLD REPOSITORIES SUPPORT
 
-    async getOldAssertion(implementationName, repository, assertionId) {
+    async getV6Assertion(implementationName, repository, assertionId) {
         if (this.getImplementation(implementationName)) {
-            return this.getImplementation(implementationName).module.getOldAssertion(
+            return this.getImplementation(implementationName).module.getV6Assertion(
                 repository,
                 assertionId,
             );
