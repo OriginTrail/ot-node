@@ -7,7 +7,8 @@ class MigrationExecutor {
     static async executeTripleStoreUserConfigurationMigration(container, logger, config) {
         if (
             process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVELOPMENT ||
-            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.TEST ||
+            process.env.NODE_ENV === NODE_ENVIRONMENTS.DEVNET
         )
             return;
 
