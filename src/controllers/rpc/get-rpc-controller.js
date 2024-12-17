@@ -34,6 +34,7 @@ class GetController extends BaseController {
                 knowledgeCollectionId: message.data.knowledgeCollectionId,
                 knowledgeAssetId: message.data.knowledgeAssetId,
                 includeMetadata: message.data.includeMetadata,
+                subjectUAL: message.data.subjectUAL,
                 state: message.data.state ?? DEFAULT_GET_STATE,
                 paranetUAL: message.data.paranetUAL,
                 paranetId: message.data.paranetId,

@@ -4,6 +4,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     TRIPLES_VISIBILITY,
+    TRIPLE_STORE_REPOSITORY,
 } from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -36,6 +37,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             knowledgeAssetId,
             ual,
             includeMetadata,
+            subjectUAL,
         } = commandData;
 
         // if (paranetUAL) {
@@ -97,7 +99,33 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         //         };
         //     }
         // }
+        // TODO: Add telemetry events and fix old wrong ones in here
+        if (subjectUAL) {
+            const subjectUALPairs = await this.tripleStoreService.findAllSubjectsWithGraphNames(
+                TRIPLE_STORE_REPOSITORY.DKG,
+                ual,
+            );
 
+            if (subjectUALPairs.subjectUALPairs?.length) {
+                await this.operationService.markOperationAsCompleted(
+                    operationId,
+                    blockchain,
+                    subjectUALPairs,
+                    [
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+                        OPERATION_ID_STATUS.GET.GET_END,
+                        OPERATION_ID_STATUS.COMPLETED,
+                    ],
+                );
+            }
+
+            return subjectUALPairs.subjectUALPairs?.length
+                ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: subjectUALPairs }
+                : {
+                      messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                      messageData: { errorMessage: `Unable to find assertion ${ual}` },
+                  };
+        }
         const promises = [];
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_START,

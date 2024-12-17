@@ -42,7 +42,7 @@ class GetController extends BaseController {
         let knowledgeCollectionId;
         let knowledgeAssetId;
         try {
-            const { id, paranetUAL, includeMetadata, contentType } = req.body;
+            const { id, paranetUAL, includeMetadata, subjectUAL, contentType } = req.body;
             ({ blockchain, contract, knowledgeCollectionId, knowledgeAssetId } =
                 this.ualService.resolveUAL(id));
 
@@ -64,6 +64,7 @@ class GetController extends BaseController {
                     contract,
                     knowledgeCollectionId,
                     knowledgeAssetId,
+                    subjectUAL,
                     operationId,
                     paranetUAL,
                     contentType: contentType ?? TRIPLES_VISIBILITY.ALL,

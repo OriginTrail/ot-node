@@ -99,6 +99,8 @@ class DataService {
         return this.cryptoService.sha256EncodePacked(['string'], [string]);
     }
 
+    // We asume clients in certin way for assing UALs to work
+    // TODO: Move this to assertion-tools
     splitConnectedArrays(publicTriples) {
         const groupedPublic = [];
         let currentSubject = publicTriples[0].split(' ')[0];

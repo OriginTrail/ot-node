@@ -45,6 +45,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
             knowledgeAssetId,
             includeMetadata,
             ual,
+            subjectUAL,
             paranetUAL,
             paranetId,
         } = command.data;
@@ -56,6 +57,7 @@ class GetRequestCommand extends ProtocolRequestCommand {
             knowledgeAssetId,
             includeMetadata,
             ual,
+            subjectUAL,
             paranetUAL,
             paranetId,
         };

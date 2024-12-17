@@ -476,19 +476,31 @@ class OtTripleStore {
                 FILTER(STRSTARTS(STR(?g), "${ual}"))
             }`;
 
-        this.select(repository, query);
+        return this.select(repository, query);
     }
 
     async findAllSubjectsWithGraphNames(repository, ual) {
         const query = `
-            SELECT DISTINCT ?s ?g
-            WHERE {
-                GRAPH ?g {
-                    ?s ?p ?o
-                }
-                FILTER(STRSTARTS(STR(?g), "${ual}"))
-            }`;
-        this.select(repository, query);
+        SELECT DISTINCT ?s ?g
+        WHERE {
+            GRAPH ?g {
+                ?s ?p ?o
+            }
+            FILTER(STRSTARTS(STR(?g), "${ual}") && STRENDS(STR(?g), "${TRIPLES_VISIBILITY.PUBLIC}"))
+        }
+        ORDER BY ?g`;
+        return this.select(repository, query);
+    }
+
+    async getKCPrivateAssertionIdentifierTriple(repository, ual) {
+        const query = `
+        CONSTRUCT {?s ?p ?o .}
+        WHERE {
+            GRAPH <${ual}/public> {
+                ?s ?p ?o
+            }
+        }`;
+        return this.construct(repository, query);
     }
 
     async construct(repository, query) {
