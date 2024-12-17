@@ -12,16 +12,24 @@ class TripleStoreUserConfigurationMigration extends BaseMigration {
 
         const userConfiguration = await this.fileService.readFile(configurationFilePath, true);
 
-        if ('tripleStore' in userConfiguration) {
+        if ('tripleStore' in userConfiguration.modules) {
             const oldConfigTripleStore = userConfiguration.modules;
-            const implementation = oldConfigTripleStore.implementation[0];
-            const { url, username, password } = implementation.config.repositories.publicCurrent;
-            implementation.config.repositories.dkg = {
-                url,
-                name: 'dkg',
-                username,
-                password,
-            };
+            for (const implementation in oldConfigTripleStore.tripleStore.implementation) {
+                if (oldConfigTripleStore.tripleStore.implementation[implementation].enabled) {
+                    const { url, username, password } =
+                        oldConfigTripleStore.tripleStore.implementation[implementation].config
+                            .repositories.publicCurrent;
+
+                    oldConfigTripleStore.tripleStore.implementation[
+                        implementation
+                    ].config.repositories.dkg = {
+                        url,
+                        name: 'dkg',
+                        username,
+                        password,
+                    };
+                }
+            }
 
             await this.fileService.writeContentsToFile(
                 configurationFolderPath,
