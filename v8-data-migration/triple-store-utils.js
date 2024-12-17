@@ -1,4 +1,3 @@
-import { QueryEngine as Engine } from '@comunica/query-sparql';
 import { setTimeout } from 'timers/promises';
 import axios from 'axios';
 import graphdb from 'graphdb';
@@ -30,7 +29,6 @@ import {
     validateUal,
 } from './validation.js';
 
-const queryEngine = new Engine();
 const { server, repository: repo, http } = graphdb;
 
 export function getTripleStoreData(tripleStoreConfig) {
@@ -454,23 +452,28 @@ export async function _executeQuery(
         throw new Error(`[VALIDATION ERROR] Media type is not defined. Media type: ${mediaType}`);
     }
 
-    const result = await queryEngine.query(query, tripleStoreRepositories[repository].queryContext);
-    const { data } = await queryEngine.resultToString(result, mediaType);
+    const response = await axios.post(
+        tripleStoreRepositories[repository].sparqlEndpoint,
+        new URLSearchParams({
+            query,
+        }),
+        {
+            headers: {
+                Accept: mediaType,
+            },
+        },
+    );
 
-    let response = '';
-
-    for await (const chunk of data) {
-        response += chunk;
-    }
+    let { data } = response;
 
     if (tripleStoreImplementation === OT_BLAZEGRAPH) {
         // Handle Blazegraph special characters corruption
-        if (hasUnicodeCodePoints(response)) {
-            response = decodeUnicodeCodePoints(response);
+        if (hasUnicodeCodePoints(data)) {
+            data = decodeUnicodeCodePoints(data);
         }
     }
 
-    return response;
+    return data;
 }
 
 export async function construct(
@@ -511,7 +514,6 @@ export async function getAssertion(
     validateAssertionId(assertionId);
 
     const escapedGraphName = cleanEscapeCharacter(assertionId);
-
     const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
                 CONSTRUCT { ?s ?p ?o }
                 WHERE {
@@ -629,6 +631,7 @@ export async function getAssertionFromV6TripleStore(
         console.error(
             `--> [ERROR] Error fetching assertion from triple store for tokenId: ${tokenId}, assertionId: ${assertionId}, error: ${e}`,
         );
+        success = false;
     }
 
     return {
@@ -727,9 +730,22 @@ async function ask(tripleStoreRepositories, repository, query) {
     validateRepository(repository);
     validateQuery(query);
 
-    return queryEngine.queryBoolean(query, tripleStoreRepositories[repository].queryContext);
+    const response = await axios.post(
+        tripleStoreRepositories[repository].sparqlEndpoint,
+        new URLSearchParams({
+            query,
+        }),
+        {
+            headers: {
+                Accept: 'application/json',
+            },
+        },
+    );
+
+    return response.data.boolean;
 }
 
+// TODO: If error happens, return false?
 export async function getKnowledgeCollectionNamedGraphsExist(
     tokenId,
     tripleStoreRepositories,
@@ -778,7 +794,11 @@ export async function queryVoid(tripleStoreRepositories, repository, query) {
     validateRepository(repository);
     validateQuery(query);
 
-    return queryEngine.queryVoid(query, tripleStoreRepositories[repository].updateContext);
+    await axios.post(tripleStoreRepositories[repository].sparqlEndpointUpdate, query, {
+        headers: {
+            'Content-Type': 'application/sparql-update',
+        },
+    });
 }
 
 export async function insertAssertionsIntoV8UnifiedRepository(
