@@ -1,1 +1,1 @@
-node data-migration.js 2>&1 | tee -a log.txt
+nohup node v8-data-migration.js >> log.txt 2>&1 &

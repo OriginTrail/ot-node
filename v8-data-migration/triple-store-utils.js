@@ -618,13 +618,6 @@ export async function getAssertionFromV6TripleStore(
                 tripleStoreImplementation,
                 assertionId,
             );
-
-            // TODO: Uncomment later
-            // if (!publicAssertion) {
-            //     console.log(
-            //         `--> Assertion with id ${assertionId} does not exist in V6 triple store. Continuing...`,
-            //     );
-            // }
             success = true;
         }
     } catch (e) {
@@ -729,23 +722,28 @@ async function ask(tripleStoreRepositories, repository, query) {
     validateTripleStoreRepositories(tripleStoreRepositories);
     validateRepository(repository);
     validateQuery(query);
-
-    const response = await axios.post(
-        tripleStoreRepositories[repository].sparqlEndpoint,
-        new URLSearchParams({
-            query,
-        }),
-        {
-            headers: {
-                Accept: 'application/json',
+    try {
+        const response = await axios.post(
+            tripleStoreRepositories[repository].sparqlEndpoint,
+            new URLSearchParams({
+                query,
+            }),
+            {
+                headers: {
+                    Accept: 'application/json',
+                },
             },
-        },
-    );
+        );
 
-    return response.data.boolean;
+        return response.data.boolean;
+    } catch (e) {
+        console.error(
+            `--> [ERROR] Error while doing ASK query: ${query} in repository: ${repository}. Error: ${e.message}`,
+        );
+        return false;
+    }
 }
 
-// TODO: If error happens, return false?
 export async function getKnowledgeCollectionNamedGraphsExist(
     tokenId,
     tripleStoreRepositories,

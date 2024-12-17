@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { stringify } from 'csv-stringify'; // TODO - check if it works without /sync
+import { stringify } from 'csv-stringify';
 import { parse as csvParse } from 'csv-parse';
 import readLastLines from 'read-last-lines';
-import { NODERC_CONFIG_PATH } from './constants.js';
+import { NODERC_CONFIG_PATH, MIGRATION_PROGRESS_FILE } from './constants.js';
 import { validateSuccessfulInserts, validateConfig } from './validation.js';
 
 export function initializeConfig() {
@@ -121,4 +121,45 @@ export async function updateCsvFile(filePath, successfulInserts) {
         }
         throw error;
     }
+}
+
+export function ensureDirectoryExists(dirPath) {
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+        console.log(`Created directory: ${dirPath}`);
+    }
+}
+
+export function ensureMigrationProgressFileExists() {
+    if (!fs.existsSync(MIGRATION_PROGRESS_FILE)) {
+        fs.writeFileSync(MIGRATION_PROGRESS_FILE, '');
+
+        console.log(`Created migration progress file: ${MIGRATION_PROGRESS_FILE}`);
+
+        if (!fs.existsSync(MIGRATION_PROGRESS_FILE)) {
+            throw new Error(
+                `Something went wrong. Progress file: ${MIGRATION_PROGRESS_FILE} does not exist after creation.`,
+            );
+        }
+    } else {
+        console.log(`Migration progress file already exists: ${MIGRATION_PROGRESS_FILE}.`);
+        console.log('Checking if migration is already successful...');
+
+        const fileContent = fs.readFileSync(MIGRATION_PROGRESS_FILE, 'utf8');
+        if (fileContent === 'MIGRATED') {
+            console.log('Migration is already successful. Exiting...');
+            process.exit(0);
+        }
+    }
+}
+
+export function markMigrationAsSuccessfull() {
+    // open file
+    const file = fs.openSync(MIGRATION_PROGRESS_FILE, 'w');
+
+    // write MIGRATED
+    fs.writeSync(file, 'MIGRATED');
+
+    // close file
+    fs.closeSync(file);
 }

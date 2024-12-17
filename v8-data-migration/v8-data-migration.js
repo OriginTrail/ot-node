@@ -1,12 +1,22 @@
 import path from 'path';
+import fs from 'fs';
 import { createRequire } from 'module';
 import dotenv from 'dotenv';
-import { DKG_REPOSITORY, BATCH_SIZE, ENV_PATH, BLOCKCHAINS } from './constants.js';
+import {
+    DKG_REPOSITORY,
+    BATCH_SIZE,
+    ENV_PATH,
+    BLOCKCHAINS,
+    DATA_MIGRATION_DIR,
+} from './constants.js';
 import {
     updateCsvFile,
     initializeConfig,
     getCsvDataStream,
     getHighestTokenId,
+    ensureDirectoryExists,
+    ensureMigrationProgressFileExists,
+    markMigrationAsSuccessfull,
 } from './v8-data-migration-utils.js';
 import {
     repositoryExists,
@@ -42,6 +52,7 @@ async function processAndInsertNewerAssertions(
     highestTokenId,
     tripleStoreRepositories,
     tripleStoreImplementation,
+    rpcEndpoints,
 ) {
     // Validation
     validateBlockchainName(blockchainName);
@@ -50,7 +61,7 @@ async function processAndInsertNewerAssertions(
     validateTripleStoreRepositories(tripleStoreRepositories);
     validateTripleStoreImplementation(tripleStoreImplementation);
 
-    const provider = await initializeRpc(blockchainDetails.RPC_ENDPOINT);
+    const provider = await initializeRpc(rpcEndpoints[0]);
     const storageContract = await getContentAssetStorageContract(provider, blockchainDetails);
     let assertionExists = true;
     let newTokenId = highestTokenId;
@@ -266,6 +277,13 @@ async function getAssertionsInBatch(
 }
 
 async function main() {
+    // REMOTE
+    ensureMigrationProgressFileExists();
+
+    // Make sure data/data-migration directory exists (for csv files)
+    ensureDirectoryExists(DATA_MIGRATION_DIR);
+    // REMOTE END
+
     // initialize node config
     const config = initializeConfig();
 
@@ -301,6 +319,7 @@ async function main() {
     // Ensure connections
     await ensureConnections(tripleStoreRepositories, tripleStoreImplementation);
 
+    // TODO: Is it necessary? Any other migration doing it?
     await createDkgRepository(tripleStoreRepositories, DKG_REPOSITORY, tripleStoreImplementation);
 
     // Iterate through all chains
@@ -311,6 +330,13 @@ async function main() {
         const blockchainImplementation = blockchainConfig.implementation[blockchain];
         if (!blockchainImplementation.enabled) {
             console.log(`--> Blockchain ${blockchain} is not enabled. Skipping...`);
+            continue;
+        }
+        const rpcEndpoints = blockchainImplementation?.config?.rpcEndpoints;
+        if (!Array.isArray(rpcEndpoints) || rpcEndpoints.length === 0) {
+            console.error(
+                `--> [ERROR] RPC endpoints are not defined for blockchain ${blockchain}. Skipping...`,
+            );
             continue;
         }
 
@@ -329,12 +355,31 @@ async function main() {
             continue;
         }
 
-        console.log(`--> Processing blockchain: ${blockchainName}`);
+        // REMOTE
+        // Check if blockchain csv exists and if it doesn't copy the csv to it
+        const filePath = path.join(DATA_MIGRATION_DIR, `${blockchainName}.csv`);
+        if (!fs.existsSync(filePath)) {
+            console.log(
+                `--> CSV file for blockchain ${blockchainName} does not exist in ${DATA_MIGRATION_DIR}. Creating it...`,
+            );
+            const __dirname = path.dirname(new URL(import.meta.url).pathname);
+            const csvFilePath = path.join(__dirname, `${blockchainName}.csv`);
+            fs.copyFileSync(csvFilePath, filePath);
 
+            if (!fs.existsSync(filePath)) {
+                console.error(
+                    `--> [ERROR] CSV file for blockchain ${blockchainName} could not be created. Continuing to the next blockchain...`,
+                );
+                continue;
+            }
+        }
+        // REMOTE END
         console.log('GET CSV DATA');
-        // TODO: Change path to data/data-migration-csv/blockchainName.csv
-        const __dirname = path.dirname(new URL(import.meta.url).pathname);
-        const filePath = path.join(__dirname, `${blockchainName}.csv`);
+
+        // // LOCAL TESTING
+        // const __dirname = path.dirname(new URL(import.meta.url).pathname);
+        // const filePath = path.join(__dirname, `${blockchainName}.csv`);
+        // // LOCAL TESTING END
 
         const csvDataStream = getCsvDataStream(filePath, BATCH_SIZE);
 
@@ -413,6 +458,7 @@ async function main() {
             highestTokenId,
             tripleStoreRepositories,
             tripleStoreImplementation,
+            rpcEndpoints,
         );
         console.timeEnd('BLOCKCHAIN ASSERRTION GET AND TRIPLE STORE INSERT');
     }
@@ -421,7 +467,9 @@ async function main() {
     await deleteV6TripleStoreRepositories(tripleStoreConfig, tripleStoreImplementation);
     console.timeEnd('DELETE V6 TRIPLE STORE REPOSITORIES');
 
-    // TODO: Add data/migration/v8-data-migration file and mark MIGRATED into it
+    // REMOTE
+    markMigrationAsSuccessfull();
+    // REMOTE END
 }
 
 main();
