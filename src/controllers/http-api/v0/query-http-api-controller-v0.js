@@ -1,11 +1,6 @@
 import BaseController from '../base-http-api-controller.js';
 
-import {
-    OPERATION_ID_STATUS,
-    TRIPLE_STORE_REPOSITORIES,
-    TRIPLE_STORE_REPOSITORIES_MIGRATION,
-} from '../../../constants/constants.js';
-import MigrationExecutor from '../../../migration/migration-executor.js';
+import { OPERATION_ID_STATUS, TRIPLE_STORE_REPOSITORIES } from '../../../constants/constants.js';
 
 class QueryController extends BaseController {
     constructor(ctx) {
@@ -27,10 +22,8 @@ class QueryController extends BaseController {
         });
 
         const tripleStoreMigrationAlreadyExecuted =
-            await MigrationExecutor.migrationAlreadyExecuted(
-                TRIPLE_STORE_REPOSITORIES_MIGRATION,
-                this.fileService,
-            );
+            this.fileService.readFile('/root/ot-node/data/migrations/v8DataMigration') ===
+            'MIGRATED';
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

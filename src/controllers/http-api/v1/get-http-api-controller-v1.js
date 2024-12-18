@@ -3,11 +3,9 @@ import {
     OPERATION_STATUS,
     ERROR_TYPE,
     TRIPLES_VISIBILITY,
-    TRIPLE_STORE_REPOSITORIES_MIGRATION,
     OLD_CONTENT_STORAGE_MAP,
 } from '../../../constants/constants.js';
 import BaseController from '../base-http-api-controller.js';
-import MigrationExecutor from '../../../migration/migration-executor.js';
 
 class GetController extends BaseController {
     constructor(ctx) {
@@ -43,10 +41,8 @@ class GetController extends BaseController {
         );
 
         const tripleStoreMigrationAlreadyExecuted =
-            await MigrationExecutor.migrationAlreadyExecuted(
-                TRIPLE_STORE_REPOSITORIES_MIGRATION,
-                this.fileService,
-            );
+            this.fileService.readFile('/root/ot-node/data/migrations/v8DataMigration') ===
+            'MIGRATED';
 
         let blockchain;
         let contract;
