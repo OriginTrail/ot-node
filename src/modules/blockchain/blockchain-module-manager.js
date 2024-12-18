@@ -149,12 +149,12 @@ class BlockchainModuleManager extends BaseModuleManager {
     //     ]);
     // }
 
-    async getKnowledgeCollectionPublisher(
+    async getLatestMerkleRootPublisher(
         blockchain,
         assetStorageContractAddress,
         knowledgeCollectionId,
     ) {
-        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionPublisher', [
+        return this.callImplementationFunction(blockchain, 'getLatestMerkleRootPublisher', [
             assetStorageContractAddress,
             knowledgeCollectionId,
         ]);

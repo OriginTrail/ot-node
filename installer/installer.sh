@@ -372,11 +372,8 @@ install_node() {
         read -p "$(print_color $YELLOW "Enter your EVM management wallet address : ")" EVM_MANAGEMENT_WALLET
         print_color $GREEN "✅ EVM management wallet address : $EVM_MANAGEMENT_WALLET"
 
-        read -p "$(print_color $YELLOW "Enter your profile shares token name : ")" SHARES_TOKEN_NAME
-        print_color $GREEN "✅ Profile shares token name : $SHARES_TOKEN_NAME"
-
-        read -p "$(print_color $YELLOW "Enter your profile shares token symbol : ")" SHARES_TOKEN_SYMBOL
-        print_color $GREEN "✅ Profile shares token symbol : $SHARES_TOKEN_SYMBOL"
+        read -p "$(print_color $YELLOW "Enter your profile node name : ")" NODE_NAME
+        print_color $GREEN "✅ Profile shares token name : $NODE_NAME"
 
         validate_operator_fees $blockchain
 
@@ -389,8 +386,7 @@ install_node() {
             "config": {
                 "operationalWallets": $EVM_OP_WALLET_KEYS,
                 "evmManagementWalletPublicKey": "$EVM_MANAGEMENT_WALLET",
-                "sharesTokenName": "$SHARES_TOKEN_NAME",
-                "sharesTokenSymbol": "$SHARES_TOKEN_SYMBOL",
+                "nodeName": "$NODE_NAME",
                 "operatorFee": $OPERATOR_FEE,
                 "rpcEndpoints": ["$RPC_ENDPOINT"]
             }
