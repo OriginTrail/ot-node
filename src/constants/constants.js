@@ -148,11 +148,6 @@ export const BASE_NAMED_GRAPHS = {
     METADATA: 'metadata:graph',
 };
 
-export const PENDING_STORAGE_REPOSITORIES = {
-    PUBLIC: 'public',
-    PRIVATE: 'private',
-};
-
 export const REQUIRED_MODULES = [
     'repository',
     'httpClient',
@@ -791,7 +786,7 @@ export const OPERATION_ID_STATUS = {
 export const OPERATIONS = {
     PUBLISH: 'publish',
     FINALITY: 'finality',
-    UPDATE: 'update',
+    // UPDATE: 'update',
     GET: 'get',
     ASK: 'ask',
 };
@@ -935,11 +930,11 @@ export const HTTP_API_ROUTES = {
             path: '/publish',
             options: { rateLimit: true },
         },
-        update: {
-            method: 'post',
-            path: '/update',
-            options: { rateLimit: true },
-        },
+        // update: {
+        //     method: 'post',
+        //     path: '/update',
+        //     options: { rateLimit: true },
+        // },
         query: {
             method: 'post',
             path: '/query',
@@ -1021,7 +1016,7 @@ export const HTTP_API_ROUTES = {
  */
 export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
-    UPDATE: ['/update/1.0.0'],
+    // UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
     ASK: ['/ask/1.0.0'],
     FINALITY: ['/finality/1.0.0'],
