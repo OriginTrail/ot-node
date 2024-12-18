@@ -6,6 +6,8 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
+    FINALITY_BATCH_SIZE,
+    FINALITY_MIN_NUM_OF_NODE_REPLICATIONS,
 } from '../constants/constants.js';
 
 class FinalityService extends OperationService {
@@ -71,12 +73,12 @@ class FinalityService extends OperationService {
         }
     }
 
-    getBatchSize() {
-        return 1;
+    getBatchSize(batchSize = null) {
+        return batchSize ?? FINALITY_BATCH_SIZE;
     }
 
-    getMinAckResponses() {
-        return 1;
+    getMinAckResponses(minimumNumberOfNodeReplications = null) {
+        return minimumNumberOfNodeReplications ?? FINALITY_MIN_NUM_OF_NODE_REPLICATIONS;
     }
 }
 

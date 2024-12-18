@@ -951,19 +951,6 @@ class Web3Service {
         return Number(knowledgeCollectionSize);
     }
 
-    async getKnowledgeCollectionTriplesNumber(assetStorageContractAddress, knowledgeCollectionId) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
-        const knowledgeCollectionTriplesNumber = await this.callContractFunction(
-            assetStorageContractInstance,
-            'getTriplesAmount',
-            [knowledgeCollectionId],
-        );
-        return Number(knowledgeCollectionTriplesNumber);
-    }
-
     async getKnowledgeCollectionChunksAmount(assetStorageContractAddress, knowledgeCollectionId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
@@ -1146,12 +1133,25 @@ class Web3Service {
         return wallet.signMessage(ethers.utils.arrayify(messageHash));
     }
 
+
     async getStakeWeightedAverageAsk() {
         return this.callContractFunction(
             this.contracts.ShardingTableStorage,
             'getStakeWeightedAverageAsk',
             [],
         );
+    }
+    // SUPPORT FOR OLD CONTRACTS
+
+    async getLatestAssertionId(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
+            tokenId,
+        ]);
     }
 }
 

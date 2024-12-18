@@ -7,10 +7,11 @@ class QueryController extends BaseController {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
+        this.fileService = ctx.fileService;
     }
 
     async handleRequest(req, res) {
-        const { query, type: queryType } = req.body;
+        const { query, type: queryType, repository } = req.body;
 
         const operationId = await this.operationIdService.generateOperationId(
             OPERATION_ID_STATUS.QUERY.QUERY_INIT_START,
@@ -20,6 +21,14 @@ class QueryController extends BaseController {
             operationId,
         });
 
+        let tripleStoreMigrationAlreadyExecuted = false;
+        try {
+            tripleStoreMigrationAlreadyExecuted =
+                this.fileService.readFile('/root/ot-node/data/migrations/v8DataMigration') ===
+                'MIGRATED';
+        } catch (e) {
+            this.logger.warn(`No triple store migration file error: ${e}`);
+        }
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             null,
@@ -33,7 +42,10 @@ class QueryController extends BaseController {
             data: {
                 query,
                 queryType,
-                repository: TRIPLE_STORE_REPOSITORIES.DKG,
+                repository:
+                    !tripleStoreMigrationAlreadyExecuted && repository
+                        ? repository
+                        : TRIPLE_STORE_REPOSITORIES.DKG,
                 operationId,
             },
             transactional: false,

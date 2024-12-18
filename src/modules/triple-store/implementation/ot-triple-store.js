@@ -562,6 +562,28 @@ class OtTripleStore {
             this.implementation.initialize(this.logger);
         }
     }
+
+    // OLD REPOSITORIES SUPPORT
+
+    cleanEscapeCharacter(query) {
+        return query.replace(/['|[\]\\]/g, '\\$&');
+    }
+
+    async getV6Assertion(repository, assertionId) {
+        const escapedGraphName = this.cleanEscapeCharacter(assertionId);
+
+        const query = `PREFIX schema: <${SCHEMA_CONTEXT}>
+                    CONSTRUCT { ?s ?p ?o }
+                    WHERE {
+                        {
+                            GRAPH <assertion:${escapedGraphName}>
+                            {
+                                ?s ?p ?o .
+                            }
+                        }
+                    }`;
+        return this.construct(repository, query);
+    }
 }
 
 export default OtTripleStore;

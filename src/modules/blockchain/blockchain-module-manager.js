@@ -181,12 +181,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getKnowledgeCollectionTriplesNumber(blockchain, knowledgeCollectionId) {
-        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionTriplesNumber', [
-            knowledgeCollectionId,
-        ]);
-    }
-
     async getKnowledgeCollectionChunksAmount(blockchain, knowledgeCollectionId) {
         return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionChunksAmount', [
             knowledgeCollectionId,
@@ -270,6 +264,14 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async getStakeWeightedAverageAsk(blockchain) {
         return this.callImplementationFunction(blockchain, 'getStakeWeightedAverageAsk', []);
+    }
+  
+    // SUPPORT FOR OLD CONTRACTS
+    async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
+            assetContractAddress,
+            tokenId,
+        ]);
     }
 }
 
