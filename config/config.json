@@ -569,7 +569,7 @@
                         "enabled": true,
                         "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "blockchains": ["base:84532"],
+                            "blockchains": ["otp:20430", "gnosis:10200", "base:84532"],
                             "rpcEndpoints": {
                                 "base:84532": ["https://sepolia.base.org"],
                                 "otp:20430": [
