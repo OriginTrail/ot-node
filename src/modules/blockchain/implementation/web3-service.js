@@ -1145,6 +1145,19 @@ class Web3Service {
         const wallet = this.getRandomOperationalWallet();
         return wallet.signMessage(ethers.utils.arrayify(messageHash));
     }
+
+    // SUPPORT FOR OLD CONTRACTS
+
+    async getLatestAssertionId(assetContractAddress, tokenId) {
+        const assetStorageContractInstance =
+            this.assetStorageContracts[assetContractAddress.toString().toLowerCase()];
+        if (!assetStorageContractInstance)
+            throw new Error('Unknown asset storage contract address');
+
+        return this.callContractFunction(assetStorageContractInstance, 'getLatestAssertionId', [
+            tokenId,
+        ]);
+    }
 }
 
 export default Web3Service;

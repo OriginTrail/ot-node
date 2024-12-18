@@ -267,6 +267,15 @@ class BlockchainModuleManager extends BaseModuleManager {
     async signMessage(blockchain, messageHash) {
         return this.callImplementationFunction(blockchain, 'signMessage', [messageHash]);
     }
+
+    // SUPPORT FOR OLD CONTRACTS
+
+    async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
+            assetContractAddress,
+            tokenId,
+        ]);
+    }
 }
 
 export default BlockchainModuleManager;

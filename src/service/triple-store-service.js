@@ -393,6 +393,31 @@ class TripleStoreService {
         return nquads;
     }
 
+    async getV6Assertion(repository, assertionId) {
+        this.logger.debug(
+            `Getting Assertion with the ID: ${assertionId} from the Triple Store's ${repository} repository.`,
+        );
+        const nquads = await this.tripleStoreModuleManager.getV6Assertion(
+            this.repositoryImplementations[repository],
+            repository,
+            assertionId,
+        );
+
+        this.logger.debug(
+            `Assertion: ${assertionId} ${
+                nquads.length ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
+        );
+
+        if (nquads.length) {
+            this.logger.debug(
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${nquads.length}.`,
+            );
+        }
+
+        return nquads;
+    }
+
     async getAssertionMetadata(
         blockchain,
         contract,
@@ -437,7 +462,8 @@ class TripleStoreService {
 
     async construct(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.construct(
-            this.repositoryImplementations[repository],
+            this.repositoryImplementations[repository] ??
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
             repository,
             query,
         );
@@ -502,7 +528,8 @@ class TripleStoreService {
 
     async select(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.select(
-            this.repositoryImplementations[repository],
+            this.repositoryImplementations[repository] ??
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
             repository,
             query,
         );
