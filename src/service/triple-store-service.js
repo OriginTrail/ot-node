@@ -1,10 +1,12 @@
 /* eslint-disable no-await-in-loop */
 import { setTimeout } from 'timers/promises';
+import { kcTools } from 'assertion-tools';
 
 import {
     BASE_NAMED_GRAPHS,
     TRIPLE_STORE_REPOSITORY,
     TRIPLES_VISIBILITY,
+    PRIVATE_HASH_SUBJECT_PREFIX,
 } from '../constants/constants.js';
 
 class TripleStoreService {
@@ -17,6 +19,7 @@ class TripleStoreService {
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
         this.paranetService = ctx.paranetService;
+        this.cryptoService = ctx.cryptoService;
     }
 
     initializeRepositories() {
@@ -56,66 +59,90 @@ class TripleStoreService {
         //     knowledgeAssetsUALs.map((ual) => `<${ual}>`),
         // );
         // const unifiedGraphTriples = [...triples, ...tripleAnnotations];
-        const publicKnowledgeAssetsTriples = this.dataService.splitConnectedArrays(
-            triples.public ?? triples,
+        const promises = [];
+        const publicAssertion = triples.public ?? triples;
+
+        const filteredPublic = [];
+        const privateHashTriples = [];
+        publicAssertion.forEach((triple) => {
+            if (triple.startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`)) {
+                privateHashTriples.push(triple);
+            } else {
+                filteredPublic.push(triple);
+            }
+        });
+
+        const publicKnowledgeAssetsTriplesGrouped = kcTools.groupNquadsBySubject(
+            filteredPublic,
+            true,
+        );
+        publicKnowledgeAssetsTriplesGrouped.push(
+            ...kcTools.groupNquadsBySubject(privateHashTriples, true),
         );
 
-        const publicKnowledgeAssetsUALs = [];
+        const publicKnowledgeAssetsUALs = publicKnowledgeAssetsTriplesGrouped.map(
+            (_, index) => `${knowledgeCollectionUAL}/${index + 1}`,
+        );
 
-        for (let i = 1; i <= publicKnowledgeAssetsTriples.length; i += 1) {
-            publicKnowledgeAssetsUALs.push(`${knowledgeCollectionUAL}/${i}`);
-        }
-        const promises = [];
-
-        if (triples.private?.length && !existsInNamedGraphs) {
-            const privateKnowledgeAssetsTriples = this.dataService.groupTriplesBySubject(
-                triples.private,
-            );
-            const privateKnowledgeAssetsUALs = [];
-            let publicIndex = 0;
-            let privateIndex = 0;
-            while (
-                publicIndex < publicKnowledgeAssetsTriples.length &&
-                privateIndex < privateKnowledgeAssetsTriples.length
-            ) {
-                // const [privateSubject] = privateKnowledgeAssetsTriples[privateIndex][0].split(' ');
-                // Check if first triple is content or private existence identifier
-                if (
-                    this.dataService.quadsContainsPrivateRepresentations(
-                        publicKnowledgeAssetsTriples[publicIndex],
-                    )
-                ) {
-                    privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[publicIndex]);
-                    privateIndex += 1;
-                }
-                publicIndex += 1;
-            }
-
-            if (privateKnowledgeAssetsUALs.length > 0) {
-                promises.push(
-                    this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
-                        this.repositoryImplementations[repository],
-                        repository,
-                        privateKnowledgeAssetsUALs,
-                        privateKnowledgeAssetsTriples,
-                        TRIPLES_VISIBILITY.PRIVATE,
-                    ),
-                );
-            }
-        }
         if (!existsInNamedGraphs) {
             promises.push(
                 this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
                     this.repositoryImplementations[repository],
                     repository,
                     publicKnowledgeAssetsUALs,
-                    publicKnowledgeAssetsTriples,
+                    publicKnowledgeAssetsTriplesGrouped,
                     TRIPLES_VISIBILITY.PUBLIC,
                 ),
             );
+
+            if (triples.private?.length) {
+                const privateKnowledgeAssetsTriplesGrouped = kcTools.groupNquadsBySubject(
+                    triples.private,
+                    true,
+                );
+
+                const privateKnowledgeAssetsUALs = [];
+
+                const publicSubjectMap = publicKnowledgeAssetsTriplesGrouped.reduce(
+                    (map, group, index) => {
+                        const [publicSubject] = group[0].split(' ');
+                        map.set(publicSubject, index);
+                        return map;
+                    },
+                    new Map(),
+                );
+
+                for (const privateTriple of privateKnowledgeAssetsTriplesGrouped) {
+                    const [privateSubject] = privateTriple[0].split(' ');
+                    if (publicSubjectMap.has(privateSubject)) {
+                        const ualIndex = publicSubjectMap.get(privateSubject);
+                        privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[ualIndex]);
+                    } else {
+                        const privateSubjectHashed = `<${PRIVATE_HASH_SUBJECT_PREFIX}${this.cryptoService.sha256(
+                            privateSubject.slice(1, -1),
+                        )}>`;
+                        if (publicSubjectMap.has(privateSubjectHashed)) {
+                            const ualIndex = publicSubjectMap.get(privateSubjectHashed);
+                            privateKnowledgeAssetsUALs.push(publicKnowledgeAssetsUALs[ualIndex]);
+                        }
+                    }
+                }
+                promises.push(
+                    this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                        this.repositoryImplementations[repository],
+                        repository,
+                        privateKnowledgeAssetsUALs,
+                        privateKnowledgeAssetsTriplesGrouped,
+                        TRIPLES_VISIBILITY.PRIVATE,
+                    ),
+                );
+            }
         }
         const metadataTriples = publicKnowledgeAssetsUALs
-            .map((ual) => `<${ual}> <http://schema.org/states> "${ual}:0" .`)
+            .map(
+                (publicKnowledgeAssetUAL) =>
+                    `<${publicKnowledgeAssetUAL}> <http://schema.org/states> "${publicKnowledgeAssetUAL}:0" .`,
+            )
             .join('\n');
 
         promises.push(
@@ -342,11 +369,42 @@ class TripleStoreService {
                 visibility,
             );
         }
+        if (nquads?.public) {
+            nquads.public = nquads.public.split('\n').filter((line) => line !== '');
+        }
+        if (nquads?.private) {
+            nquads.private = nquads.private.split('\n').filter((line) => line !== '');
+        }
 
-        nquads = nquads.split('\n').filter((line) => line !== '');
+        const numberOfnquads = (nquads?.public?.length ?? 0) + (nquads?.private?.length ?? 0);
 
         this.logger.debug(
             `Assertion: ${ual} ${
+                numberOfnquads ? '' : 'is not'
+            } found in the Triple Store's ${repository} repository.`,
+        );
+
+        if (nquads.length) {
+            this.logger.debug(
+                `Number of n-quads retrieved from the Triple Store's ${repository} repository: ${numberOfnquads}.`,
+            );
+        }
+
+        return nquads;
+    }
+
+    async getV6Assertion(repository, assertionId) {
+        this.logger.debug(
+            `Getting Assertion with the ID: ${assertionId} from the Triple Store's ${repository} repository.`,
+        );
+        const nquads = await this.tripleStoreModuleManager.getV6Assertion(
+            this.repositoryImplementations[repository],
+            repository,
+            assertionId,
+        );
+
+        this.logger.debug(
+            `Assertion: ${assertionId} ${
                 nquads.length ? '' : 'is not'
             } found in the Triple Store's ${repository} repository.`,
         );
@@ -404,7 +462,8 @@ class TripleStoreService {
 
     async construct(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.construct(
-            this.repositoryImplementations[repository],
+            this.repositoryImplementations[repository] ??
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
             repository,
             query,
         );
@@ -469,7 +528,8 @@ class TripleStoreService {
 
     async select(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.select(
-            this.repositoryImplementations[repository],
+            this.repositoryImplementations[repository] ??
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
             repository,
             query,
         );

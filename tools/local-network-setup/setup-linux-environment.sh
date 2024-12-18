@@ -48,13 +48,13 @@ then
   echo ================================
   echo ====== Starting hardhat1 ======
   echo ================================
-  sh -c "cd $pathToOtNode && node tools/local-network-setup/run-local-blockchain.js 8545 :v2" &
+  sh -c "cd $pathToOtNode && node tools/local-network-setup/run-local-blockchain.js 8545 " &
   echo Waiting for hardhat to start and contracts deployment
 
   echo ================================
   echo ====== Starting hardhat 2 ======
   echo ================================
-  sh -c "cd $pathToOtNode && node tools/local-network-setup/run-local-blockchain.js 9545 :v2" &
+  sh -c "cd $pathToOtNode && node tools/local-network-setup/run-local-blockchain.js 9545 " &
   echo Waiting for hardhat to start and contracts deployment
 fi
 

@@ -6,6 +6,7 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
+    ASK_BATCH_SIZE,
 } from '../constants/constants.js';
 
 class AskService extends OperationService {
@@ -102,8 +103,8 @@ class AskService extends OperationService {
         }
     }
 
-    getBatchSize() {
-        return 20;
+    getBatchSize(batchSize = null) {
+        return batchSize ?? ASK_BATCH_SIZE;
     }
 }
 

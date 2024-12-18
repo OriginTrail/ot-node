@@ -4,6 +4,7 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     TRIPLES_VISIBILITY,
+    TRIPLE_STORE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -36,6 +37,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             knowledgeAssetId,
             ual,
             includeMetadata,
+            assertionId,
         } = commandData;
 
         // if (paranetUAL) {
@@ -105,22 +107,37 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
         );
 
-        const assertionPromise = this.tripleStoreService
-            .getAssertion(
-                blockchain,
-                contract,
-                knowledgeCollectionId,
-                knowledgeAssetId,
-                TRIPLES_VISIBILITY.PUBLIC,
-            )
-            .then((result) => {
-                this.operationIdService.emitChangeEvent(
-                    OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
-                    operationId,
+        let assertionPromise;
+
+        if (assertionId) {
+            assertionPromise = this.tripleStoreService
+                .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+        } else {
+            assertionPromise = this.tripleStoreService
+                .getAssertion(
                     blockchain,
-                );
-                return result;
-            });
+                    contract,
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
+                    TRIPLES_VISIBILITY.PUBLIC,
+                )
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+        }
         promises.push(assertionPromise);
 
         if (includeMetadata) {
@@ -149,7 +166,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             ...(includeMetadata && metadata && { metadata }),
         };
 
-        if (assertion.length) {
+        if (assertion?.public?.length) {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
@@ -157,7 +174,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             );
         }
 
-        return assertion.length
+        return assertion?.public?.length
             ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,

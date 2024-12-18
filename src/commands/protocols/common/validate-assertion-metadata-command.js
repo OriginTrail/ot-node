@@ -4,6 +4,7 @@ class ValidateAssertionMetadataCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.operationIdService = ctx.operationIdService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager;
     }
 
     async execute(command) {

@@ -1,4 +1,4 @@
-import { ZERO_ADDRESS } from '../constants/constants.js';
+import { ZERO_ADDRESS, PRIVATE_ASSERTION_PREDICATE } from '../constants/constants.js';
 
 class ValidationService {
     constructor(ctx) {
@@ -15,7 +15,7 @@ class ValidationService {
 
         let isValid = true;
         try {
-            const result = await this.blockchainModuleManager.getKnowledgeCollectionPublisher(
+            const result = await this.blockchainModuleManager.getLatestMerkleRootPublisher(
                 blockchain,
                 contract,
                 tokenId,
@@ -38,15 +38,43 @@ class ValidationService {
         this.logger.info(`Assertion integrity validated! AssertionId: ${assertionId}`);
     }
 
-    async validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain) {
-        // call contract TO DO, dont return anything or return true
-        return { knowledgeCollectionId, assertionId, blockchain };
+    async validateDatasetRootOnBlockchain(
+        knowledgeCollectionMerkleRoot,
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        const blockchainAssertionRoot =
+            await this.blockchainModuleManager.getKnowledgeCollectionLatestMerkleRoot(
+                blockchain,
+                assetStorageContractAddress,
+                knowledgeCollectionId,
+            );
+
+        if (knowledgeCollectionMerkleRoot !== blockchainAssertionRoot) {
+            throw new Error(
+                `Merkle Root validation failed. Merkle Root on chain: ${blockchainAssertionRoot}; Calculated Merkle Root: ${knowledgeCollectionMerkleRoot}`,
+            );
+        }
     }
 
-    async validateDatasetOnBlockchain(knowledgeCollectionId, assertion, blockchain) {
-        const assertionId = await this.validationModuleManager.calculateRoot(assertion);
+    // Used to validate assertion node received through network get
+    async validateDatasetOnBlockchain(
+        assertion,
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        const knowledgeCollectionMerkleRoot = await this.validationModuleManager.calculateRoot(
+            assertion,
+        );
 
-        await this.validateDatasetRootOnBlockchain(knowledgeCollectionId, assertionId, blockchain);
+        await this.validateDatasetRootOnBlockchain(
+            knowledgeCollectionMerkleRoot,
+            blockchain,
+            assetStorageContractAddress,
+            knowledgeCollectionId,
+        );
     }
 
     async validateDatasetRoot(dataset, datasetRoot) {
@@ -55,6 +83,22 @@ class ValidationService {
         if (datasetRoot !== calculatedDatasetRoot) {
             throw new Error(
                 `Merkle Root validation failed. Received Merkle Root: ${datasetRoot}; Calculated Merkle Root: ${calculatedDatasetRoot}`,
+            );
+        }
+    }
+
+    async validatePrivateMerkleRoot(publicAssertion, privateAssertion) {
+        const privateAssertionTriple = publicAssertion.find((triple) =>
+            triple.includes(PRIVATE_ASSERTION_PREDICATE),
+        );
+
+        if (privateAssertionTriple) {
+            const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
+
+            await this.validateDatasetRoot(privateAssertion, privateAssertionRoot);
+        } else {
+            throw new Error(
+                `Merkle Root validation failed. Private Merkle Root not present in public assertion.`,
             );
         }
     }

@@ -28,24 +28,7 @@ class OtEthers extends BlockchainEventsService {
 
                     // eslint-disable-next-line no-await-in-loop
                     await provider.getNetwork();
-
-                    let isArchiveNode = false;
-                    try {
-                        // eslint-disable-next-line no-await-in-loop
-                        const block = await provider.getBlock(1);
-                        if (block) {
-                            isArchiveNode = true;
-                        }
-                    } catch (error) {
-                        this.logger.warn(`RPC ${rpcEndpoint} is not an archive node.`);
-                    }
-
-                    if (isArchiveNode) {
-                        validProviders.push(provider);
-                        this.logger.info(`Connected to archive node: ${rpcEndpoint}`);
-                    } else {
-                        this.logger.warn(`Skipping non-archive node: ${rpcEndpoint}`);
-                    }
+                    validProviders.push(provider);
                 } catch (error) {
                     this.logger.error(
                         `Failed to initialize provider: ${rpcEndpoint}. Error: ${error.message}`,

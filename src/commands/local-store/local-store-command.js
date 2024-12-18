@@ -40,6 +40,7 @@ class LocalStoreCommand extends Command {
             contract,
             tokenId,
             minimumNumberOfNodeReplications,
+            batchSize,
         } = command.data;
 
         try {
@@ -233,14 +234,14 @@ class LocalStoreCommand extends Command {
                 publisherNodeVS,
             );
 
-            const batchSize = this.operationService.getBatchSize();
+            const batchSizePar = this.operationService.getBatchSize(batchSize);
             const minAckResponses = this.operationService.getMinAckResponses(
                 minimumNumberOfNodeReplications,
             );
 
             const updatedData = {
                 ...command.data,
-                batchSize,
+                batchSize: batchSizePar,
                 minAckResponses,
             };
 
