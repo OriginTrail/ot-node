@@ -17,6 +17,7 @@ import {
     ensureDirectoryExists,
     ensureMigrationProgressFileExists,
     markMigrationAsSuccessfull,
+    getTokenIdsToProcessCount,
 } from './v8-data-migration-utils.js';
 import {
     repositoryExists,
@@ -40,6 +41,7 @@ import {
     validateTripleStoreConfig,
     validateBatchData,
 } from './validation.js';
+import logger from './logger.js';
 
 dotenv.config({ ENV_PATH, override: true });
 
@@ -70,14 +72,14 @@ async function processAndInsertNewerAssertions(
     while (assertionExists) {
         // increase the tokenId by 1
         newTokenId += 1;
-        console.log(`--> Fetching assertion for tokenId: ${newTokenId}`);
+        logger.info(`Fetching assertion for tokenId: ${newTokenId}`);
 
         // construct new ual
         const newUal = `did:dkg:${blockchainDetails.ID}/${blockchainDetails.CONTENT_ASSET_STORAGE_CONTRACT_ADDRESS}/${newTokenId}`;
 
         const assertionIds = await storageContract.getAssertionIds(newTokenId);
         if (assertionIds.length === 0) {
-            console.log(`--> You have processed all assertions on ${blockchainName}. Skipping...`);
+            logger.info(`You have processed all assertions on ${blockchainName}. Skipping...`);
             assertionExists = false;
             break;
         }
@@ -96,23 +98,23 @@ async function processAndInsertNewerAssertions(
         );
 
         if (!assertion.success) {
-            console.error(
-                `--> [ERROR] Assertion with assertionId ${assertionId} exists in V6 triple store but could not be fetched. Retrying...`,
+            logger.error(
+                `Assertion with assertionId ${assertionId} exists in V6 triple store but could not be fetched. Retrying...`,
             );
             newTokenId -= 1;
             continue;
         }
 
-        console.log(
-            `--> Found assertion with assertionId ${assertionId} for tokenId ${newTokenId} in V6 triple store`,
+        logger.info(
+            `Found assertion with assertionId ${assertionId} for tokenId ${newTokenId} in V6 triple store`,
         );
 
         const { successfullyProcessed, assertionsToCheck } =
             await insertAssertionsIntoV8UnifiedRepository([assertion], tripleStoreRepositories);
 
         if (successfullyProcessed.length === 0) {
-            console.error(
-                `--> [ERROR] Assertion with assertionId ${assertionId} could not be inserted. Retrying...`,
+            logger.error(
+                `Assertion with assertionId ${assertionId} could not be inserted. Retrying...`,
             );
             newTokenId -= 1;
             continue;
@@ -121,7 +123,7 @@ async function processAndInsertNewerAssertions(
         if (assertionsToCheck.length > 0) {
             const { tokenId, ual, privateAssertion } = assertionsToCheck[0];
             const knowledgeAssetUal = `${ual}/1`;
-            console.time(`GETTING KNOWLEDGE COLLECTION NAMED GRAPHS EXIST FOR 1 ASSERTION`);
+            logger.time(`GETTING KNOWLEDGE COLLECTION NAMED GRAPHS EXIST FOR 1 ASSERTION`);
             // eslint-disable-next-line no-await-in-loop
             const { exists } = await getKnowledgeCollectionNamedGraphsExist(
                 tokenId,
@@ -129,19 +131,19 @@ async function processAndInsertNewerAssertions(
                 knowledgeAssetUal,
                 privateAssertion,
             );
-            console.timeEnd(`GETTING KNOWLEDGE COLLECTION NAMED GRAPHS EXIST FOR 1 ASSERTION`);
+            logger.timeEnd(`GETTING KNOWLEDGE COLLECTION NAMED GRAPHS EXIST FOR 1 ASSERTION`);
 
             if (!exists) {
-                console.error(
-                    `--> [ERROR] Assertion with assertionId ${assertionId} was inserted but its KA named graph does not exist. Retrying...`,
+                logger.error(
+                    `Assertion with assertionId ${assertionId} was inserted but its KA named graph does not exist. Retrying...`,
                 );
                 newTokenId -= 1;
                 continue;
             }
         }
 
-        console.log(
-            `--> Successfully inserted public/private assertions into V8 triple store for tokenId: ${newTokenId}`,
+        logger.info(
+            `Successfully inserted public/private assertions into V8 triple store for tokenId: ${newTokenId}`,
         );
     }
 }
@@ -159,7 +161,7 @@ async function deleteV6TripleStoreRepositories(tripleStoreConfig, tripleStoreImp
             continue;
         }
 
-        console.log(`--> Deleting repository: ${repository}`);
+        logger.info(`Deleting repository: ${repository}`);
 
         let deleted = false;
         while (!deleted) {
@@ -177,14 +179,14 @@ async function deleteV6TripleStoreRepositories(tripleStoreConfig, tripleStoreImp
                     tripleStoreImplementation,
                 )
             ) {
-                console.error(
-                    `--> [ERROR] Something went wrong. Repository ${repository} still exists after deletion. Retrying deletion...`,
+                logger.error(
+                    `Something went wrong. Repository ${repository} still exists after deletion. Retrying deletion...`,
                 );
             } else {
                 deleted = true;
             }
         }
-        console.log(`--> Repository ${repository} deleted successfully`);
+        logger.info(`Repository ${repository} deleted successfully`);
     }
 }
 
@@ -202,11 +204,9 @@ async function processAndInsertAssertions(
     validateTripleStoreRepositories(tripleStoreRepositories);
     validateTripleStoreImplementation(tripleStoreImplementation);
 
-    console.log(`--> Inserting assertions into V8 triple store`);
     const { successfullyProcessed, assertionsToCheck } =
         await insertAssertionsIntoV8UnifiedRepository(v6Assertions, tripleStoreRepositories);
 
-    console.log(`--> Checking if knowledge collection named graphs exist for assertions`);
     const promises = [];
     for (const assertion of assertionsToCheck) {
         const { tokenId, ual, privateAssertion } = assertion;
@@ -222,11 +222,11 @@ async function processAndInsertAssertions(
         );
     }
 
-    console.time(
+    logger.time(
         `GETTING KNOWLEDGE COLLECTION NAMED GRAPHS EXIST FOR ${promises.length} ASSERTIONS`,
     );
     const results = await Promise.all(promises);
-    console.timeEnd(
+    logger.timeEnd(
         `GETTING KNOWLEDGE COLLECTION NAMED GRAPHS EXIST FOR ${promises.length} ASSERTIONS`,
     );
 
@@ -235,7 +235,7 @@ async function processAndInsertAssertions(
         .map((result) => result.tokenId);
 
     successfullyProcessed.push(...successfulInserts);
-    console.log(`--> Successfully processed assertions: ${successfullyProcessed.length}`);
+    logger.info(`Successfully processed assertions: ${successfullyProcessed.length}`);
 
     return successfullyProcessed;
 }
@@ -293,7 +293,7 @@ async function main() {
         throw new Error('Invalid configuration for blockchain.');
     }
 
-    console.log('TRIPLE STORE INITIALIZATION START');
+    logger.info('TRIPLE STORE INITIALIZATION START');
 
     // Initialize triple store config
     const tripleStoreConfig = config.modules.tripleStore;
@@ -324,19 +324,16 @@ async function main() {
 
     // Iterate through all chains
     for (const blockchain in blockchainConfig.implementation) {
-        console.time(`CSV PROCESSING TIME FOR ${blockchain}`);
-        console.log(`--> Time now: ${new Date().toISOString()}`);
+        logger.time(`CSV PROCESSING TIME FOR ${blockchain}`);
         let processed = 0;
         const blockchainImplementation = blockchainConfig.implementation[blockchain];
         if (!blockchainImplementation.enabled) {
-            console.log(`--> Blockchain ${blockchain} is not enabled. Skipping...`);
+            logger.info(`Blockchain ${blockchain} is not enabled. Skipping...`);
             continue;
         }
         const rpcEndpoints = blockchainImplementation?.config?.rpcEndpoints;
         if (!Array.isArray(rpcEndpoints) || rpcEndpoints.length === 0) {
-            console.error(
-                `--> [ERROR] RPC endpoints are not defined for blockchain ${blockchain}. Skipping...`,
-            );
+            logger.error(`RPC endpoints are not defined for blockchain ${blockchain}. Skipping...`);
             continue;
         }
 
@@ -351,7 +348,7 @@ async function main() {
         }
 
         if (!blockchainName) {
-            console.log(`--> Blockchain ${blockchain} not found. Skipping...`);
+            logger.info(`Blockchain ${blockchain} not found. Skipping...`);
             continue;
         }
 
@@ -359,22 +356,22 @@ async function main() {
         // Check if blockchain csv exists and if it doesn't copy the csv to it
         const filePath = path.join(DATA_MIGRATION_DIR, `${blockchainName}.csv`);
         if (!fs.existsSync(filePath)) {
-            console.log(
-                `--> CSV file for blockchain ${blockchainName} does not exist in ${DATA_MIGRATION_DIR}. Creating it...`,
+            logger.info(
+                `CSV file for blockchain ${blockchainName} does not exist in ${DATA_MIGRATION_DIR}. Creating it...`,
             );
             const __dirname = path.dirname(new URL(import.meta.url).pathname);
             const csvFilePath = path.join(__dirname, `${blockchainName}.csv`);
             fs.copyFileSync(csvFilePath, filePath);
 
             if (!fs.existsSync(filePath)) {
-                console.error(
-                    `--> [ERROR] CSV file for blockchain ${blockchainName} could not be created. Continuing to the next blockchain...`,
+                logger.error(
+                    `CSV file for blockchain ${blockchainName} could not be created. Continuing to the next blockchain...`,
                 );
                 continue;
             }
         }
         // REMOTE END
-        console.log('GET CSV DATA');
+        logger.info('GET CSV DATA');
 
         // // LOCAL TESTING
         // const __dirname = path.dirname(new URL(import.meta.url).pathname);
@@ -384,13 +381,16 @@ async function main() {
         const csvDataStream = getCsvDataStream(filePath, BATCH_SIZE);
 
         const highestTokenId = await getHighestTokenId(filePath);
-        console.log(`--> Total tokenIds to process: ${highestTokenId}`);
+        logger.info(`Total amount of tokenIds: ${highestTokenId}`);
+
+        const tokenIdsToProcessCount = await getTokenIdsToProcessCount(filePath);
+        logger.info(`Amount of tokenIds left to process: ${tokenIdsToProcessCount}`);
 
         // Iterate through the csv data and push to triple store until all data is processed
         while (true) {
-            console.time('GETTING THE NEW CSV DATA BATCH');
+            logger.time('GETTING THE NEW CSV DATA BATCH');
             const next = await csvDataStream.next();
-            console.timeEnd('GETTING THE NEW CSV DATA BATCH');
+            logger.timeEnd('GETTING THE NEW CSV DATA BATCH');
 
             if (next.done) break; // No more unprocessed records
 
@@ -398,22 +398,22 @@ async function main() {
             const batchKeys = Object.keys(batchData);
 
             try {
-                console.time('FETCHING V6 ASSERTIONS');
+                logger.time('FETCHING V6 ASSERTIONS');
                 const v6Assertions = await getAssertionsInBatch(
                     batchKeys,
                     batchData,
                     tripleStoreRepositories,
                     tripleStoreImplementation,
                 );
-                console.timeEnd('FETCHING V6 ASSERTIONS');
+                logger.timeEnd('FETCHING V6 ASSERTIONS');
 
                 if (v6Assertions.length === 0) {
                     throw new Error(
-                        `--> Something went wrong. Could not get any V6 assertions in batch ${batchKeys}`,
+                        `Something went wrong. Could not get any V6 assertions in batch ${batchKeys}`,
                     );
                 }
 
-                console.log(`--> Number of V6 assertions to process: ${v6Assertions.length}`);
+                logger.info(`Number of V6 assertions to process: ${v6Assertions.length}`);
 
                 const successfullyProcessed = await processAndInsertAssertions(
                     v6Assertions,
@@ -423,33 +423,33 @@ async function main() {
 
                 if (successfullyProcessed.length === 0) {
                     throw new Error(
-                        `[ERROR] Could not insert any assertions out of ${v6Assertions.length}`,
+                        `Could not insert any assertions out of ${v6Assertions.length}`,
                     );
                 }
 
-                console.log(
-                    `--> Successfully processed/inserted assertions: ${successfullyProcessed.length}`,
+                logger.info(
+                    `Successfully processed/inserted assertions: ${successfullyProcessed.length}`,
                 );
 
                 // mark data as processed in csv file
                 await updateCsvFile(filePath, successfullyProcessed);
 
                 processed += successfullyProcessed.length;
-                console.log(
+                logger.info(
                     `[PROGRESS] for ${blockchainName}: ${(
-                        (processed / highestTokenId) *
+                        (processed / tokenIdsToProcessCount) *
                         100
-                    ).toFixed(2)}%. Total processed: ${processed}/${highestTokenId}`,
+                    ).toFixed(2)}%. Total processed: ${processed}/${tokenIdsToProcessCount}`,
                 );
             } catch (error) {
-                console.error(`Error processing batch: ${error}. Pausing for 5 second...`);
+                logger.error(`Error processing batch: ${error}. Pausing for 5 second...`);
                 await setTimeout(5000);
             }
         }
 
-        console.timeEnd(`CSV PROCESSING TIME FOR ${blockchain}`);
+        logger.timeEnd(`CSV PROCESSING TIME FOR ${blockchain}`);
 
-        console.time('BLOCKCHAIN ASSERRTION GET AND TRIPLE STORE INSERT');
+        logger.time('BLOCKCHAIN ASSERRTION GET AND TRIPLE STORE INSERT');
         // If newer (unprocessed) assertions exist on-chain, fetch them and insert them into the V8 triple store repository
         // eslint-disable-next-line no-await-in-loop
         await processAndInsertNewerAssertions(
@@ -460,12 +460,12 @@ async function main() {
             tripleStoreImplementation,
             rpcEndpoints,
         );
-        console.timeEnd('BLOCKCHAIN ASSERRTION GET AND TRIPLE STORE INSERT');
+        logger.timeEnd('BLOCKCHAIN ASSERRTION GET AND TRIPLE STORE INSERT');
     }
 
-    console.time('DELETE V6 TRIPLE STORE REPOSITORIES');
+    logger.time('DELETE V6 TRIPLE STORE REPOSITORIES');
     await deleteV6TripleStoreRepositories(tripleStoreConfig, tripleStoreImplementation);
-    console.timeEnd('DELETE V6 TRIPLE STORE REPOSITORIES');
+    logger.timeEnd('DELETE V6 TRIPLE STORE REPOSITORIES');
 
     // REMOTE
     markMigrationAsSuccessfull();

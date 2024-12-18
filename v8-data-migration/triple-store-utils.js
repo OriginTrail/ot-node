@@ -28,6 +28,7 @@ import {
     validateAssertion,
     validateUal,
 } from './validation.js';
+import logger from './logger.js';
 
 const { server, repository: repo, http } = graphdb;
 
@@ -111,7 +112,7 @@ export function initializeRepositories(tripleStoreRepositories, tripleStoreImple
 
     let updatedTripleStoreRepositories = tripleStoreRepositories;
     for (const repository in tripleStoreRepositories) {
-        console.log(`--> Initializing a triple store repository: ${repository}`);
+        logger.info(`Initializing a triple store repository: ${repository}`);
         updatedTripleStoreRepositories = initializeSparqlEndpoints(
             updatedTripleStoreRepositories,
             repository,
@@ -169,7 +170,7 @@ export async function healthCheck(tripleStoreRepositories, repository, tripleSto
                 }
                 return false;
             } catch (e) {
-                console.error(`--> [ERROR] Health check failed for repository ${repository}:`, e);
+                logger.error(`Health check failed for repository ${repository}:`, e);
                 return false;
             }
         }
@@ -184,7 +185,7 @@ export async function healthCheck(tripleStoreRepositories, repository, tripleSto
                 }
                 return false;
             } catch (e) {
-                console.error(`--> [ERROR] Health check failed for repository ${repository}:`, e);
+                logger.error(`Health check failed for repository ${repository}:`, e);
                 return false;
             }
         }
@@ -211,7 +212,7 @@ export async function healthCheck(tripleStoreRepositories, repository, tripleSto
                     // Ot-node will create repo in initialization
                     return true;
                 }
-                console.error(`--> [ERROR] Health check failed for repository ${repository}:`, e);
+                logger.error(`Health check failed for repository ${repository}:`, e);
                 return false;
             }
         }
@@ -235,8 +236,8 @@ export async function ensureConnections(tripleStoreRepositories, tripleStoreImpl
             let retries = 0;
             while (!ready && retries < TRIPLE_STORE_CONNECT_MAX_RETRIES) {
                 retries += 1;
-                console.log(
-                    `--> Cannot connect to Triple store repository: ${repository}, located at: ${tripleStoreRepositories[repository].url}  retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
+                logger.warn(
+                    `Cannot connect to Triple store repository: ${repository}, located at: ${tripleStoreRepositories[repository].url}  retry number: ${retries}/${TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds.`,
                 );
                 /* eslint-disable no-await-in-loop */
                 await setTimeout(TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000);
@@ -247,8 +248,8 @@ export async function ensureConnections(tripleStoreRepositories, tripleStoreImpl
                 );
             }
             if (retries === TRIPLE_STORE_CONNECT_MAX_RETRIES) {
-                console.log(
-                    `--> Triple Store repository: ${repository} not available, max retries reached.`,
+                logger.error(
+                    `Triple Store repository: ${repository} not available, max retries reached.`,
                 );
                 process.exit(1);
             }
@@ -287,8 +288,8 @@ export async function repositoryExists(
                     // Ot-node will create repo in initialization
                     return false;
                 }
-                console.error(
-                    `--> [ERROR] Error while getting ${repository} repositories. Error: ${error.message}`,
+                logger.error(
+                    `Error while getting ${repository} repositories. Error: ${error.message}`,
                 );
 
                 return false;
@@ -300,8 +301,8 @@ export async function repositoryExists(
                 return response.data.datasets.filter((dataset) => dataset['ds.name'] === `/${name}`)
                     .length;
             } catch (error) {
-                console.error(
-                    `--> [ERROR] Error while getting ${repository} repositories. Error: ${error.message}`,
+                logger.error(
+                    `Error while getting ${repository} repositories. Error: ${error.message}`,
                 );
 
                 return false;
@@ -589,8 +590,8 @@ export async function getAssertionFromV6TripleStore(
                 // Extract the private assertionId from the publicAssertion if it exists
                 const privateAssertionId = extractPrivateAssertionId(publicAssertion);
                 if (!privateAssertionId) {
-                    console.error(
-                        `--> [ERROR]There was a problem while extracting the private assertionId from public assertion: ${publicAssertion}. Extracted privateAssertionId: ${privateAssertionId}`,
+                    logger.error(
+                        `There was a problem while extracting the private assertionId from public assertion: ${publicAssertion}. Extracted privateAssertionId: ${privateAssertionId}`,
                     );
                     success = false;
                     return { tokenId, ual, publicAssertion, privateAssertion, success };
@@ -605,8 +606,8 @@ export async function getAssertionFromV6TripleStore(
 
                 // If private assertionId exists but assertion could not be fetched
                 if (!privateAssertion) {
-                    console.log(
-                        `--> [ERROR] Private assertion with id ${privateAssertionId} could not be fetched from ${PRIVATE_CURRENT} repository even though it should exist`,
+                    logger.warn(
+                        `Private assertion with id ${privateAssertionId} could not be fetched from ${PRIVATE_CURRENT} repository even though it should exist`,
                     );
                     success = false;
                 }
@@ -621,8 +622,8 @@ export async function getAssertionFromV6TripleStore(
             success = true;
         }
     } catch (e) {
-        console.error(
-            `--> [ERROR] Error fetching assertion from triple store for tokenId: ${tokenId}, assertionId: ${assertionId}, error: ${e}`,
+        logger.error(
+            `Error fetching assertion from triple store for tokenId: ${tokenId}, assertionId: ${assertionId}, error: ${e}`,
         );
         success = false;
     }
@@ -647,8 +648,8 @@ export async function deleteRepository(
     validateRepository(repository);
 
     const { url, name } = tripleStoreRepositories[repository];
-    console.log(
-        `--> Deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}`,
+    logger.info(
+        `Deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}`,
     );
 
     switch (tripleStoreImplementation) {
@@ -663,8 +664,8 @@ export async function deleteRepository(
                 await axios
                     .delete(`${url}/blazegraph/namespace/${name}`, {})
                     .catch((e) =>
-                        console.error(
-                            `--> [ERROR] Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
+                        logger.error(
+                            `Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
                         ),
                     );
             }
@@ -679,8 +680,8 @@ export async function deleteRepository(
                 .setKeepAlive(true);
             const s = new server.GraphDBServerClient(serverConfig);
             s.deleteRepository(name).catch((e) =>
-                console.error(
-                    `--> [ERROR] Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
+                logger.error(
+                    `Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
                 ),
             );
             break;
@@ -696,17 +697,15 @@ export async function deleteRepository(
                 await axios
                     .delete(`${url}/$/datasets/${name}`, {})
                     .catch((e) =>
-                        console.error(
-                            `--> [ERROR] Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
+                        logger.error(
+                            `Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
                         ),
                     );
             }
             break;
         }
         default:
-            console.error(
-                `--> [ERROR] Unknown triple store implementation: ${tripleStoreImplementation}`,
-            );
+            logger.error(`Unknown triple store implementation: ${tripleStoreImplementation}`);
     }
 }
 
@@ -737,8 +736,8 @@ async function ask(tripleStoreRepositories, repository, query) {
 
         return response.data.boolean;
     } catch (e) {
-        console.error(
-            `--> [ERROR] Error while doing ASK query: ${query} in repository: ${repository}. Error: ${e.message}`,
+        logger.error(
+            `Error while doing ASK query: ${query} in repository: ${repository}. Error: ${e.message}`,
         );
         return false;
     }
@@ -851,11 +850,11 @@ export async function insertAssertionsIntoV8UnifiedRepository(
                 }
             `;
 
-        console.time(
+        logger.time(
             `INSERTING ASSERTIONS INTO V8 TRIPLE STORE FOR ${v6Assertions.length} ASSERTIONS`,
         );
         await queryVoid(tripleStoreRepositories, DKG_REPOSITORY, combinedQuery);
-        console.timeEnd(
+        logger.timeEnd(
             `INSERTING ASSERTIONS INTO V8 TRIPLE STORE FOR ${v6Assertions.length} ASSERTIONS`,
         );
     }

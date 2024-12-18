@@ -5,6 +5,7 @@ import { parse as csvParse } from 'csv-parse';
 import readLastLines from 'read-last-lines';
 import { NODERC_CONFIG_PATH, MIGRATION_PROGRESS_FILE } from './constants.js';
 import { validateSuccessfulInserts, validateConfig } from './validation.js';
+import logger from './logger.js';
 
 export function initializeConfig() {
     const configPath = path.resolve(NODERC_CONFIG_PATH);
@@ -32,7 +33,7 @@ export async function getHighestTokenId(csvFilePath) {
 }
 
 export async function* getCsvDataStream(filePath, batchSize) {
-    console.log(`--> CSV FILE PATH: ${filePath}`);
+    logger.info(`CSV FILE PATH: ${filePath}`);
 
     // Keep yielding batches until all records are processed
     while (true) {
@@ -104,10 +105,10 @@ export async function updateCsvFile(filePath, successfulInserts) {
         // Replace original file with updated one
         await fs.promises.rename(tempPath, filePath);
 
-        console.log(`--> CSV file updated successfully with ${processedCount} successful inserts.`);
+        logger.info(`CSV file updated successfully with ${processedCount} successful inserts.`);
         if (remainingInserts.size > 0) {
-            console.log(
-                `--> [ERROR] Could not find ${
+            logger.warn(
+                `Could not find ${
                     remainingInserts.size
                 } successfully inserted tokenIds in the CSV file. TokenIds: ${[
                     ...remainingInserts,
@@ -126,28 +127,25 @@ export async function updateCsvFile(filePath, successfulInserts) {
 export function ensureDirectoryExists(dirPath) {
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
-        console.log(`Created directory: ${dirPath}`);
+        logger.info(`Created directory: ${dirPath}`);
     }
 }
 
 export function ensureMigrationProgressFileExists() {
     if (!fs.existsSync(MIGRATION_PROGRESS_FILE)) {
         fs.writeFileSync(MIGRATION_PROGRESS_FILE, '');
-
-        console.log(`Created migration progress file: ${MIGRATION_PROGRESS_FILE}`);
-
+        logger.info(`Created migration progress file: ${MIGRATION_PROGRESS_FILE}`);
         if (!fs.existsSync(MIGRATION_PROGRESS_FILE)) {
             throw new Error(
                 `Something went wrong. Progress file: ${MIGRATION_PROGRESS_FILE} does not exist after creation.`,
             );
         }
     } else {
-        console.log(`Migration progress file already exists: ${MIGRATION_PROGRESS_FILE}.`);
-        console.log('Checking if migration is already successful...');
-
+        logger.info(`Migration progress file already exists: ${MIGRATION_PROGRESS_FILE}.`);
+        logger.info('Checking if migration is already successful...');
         const fileContent = fs.readFileSync(MIGRATION_PROGRESS_FILE, 'utf8');
         if (fileContent === 'MIGRATED') {
-            console.log('Migration is already successful. Exiting...');
+            logger.info('Migration is already successful. Exiting...');
             process.exit(0);
         }
     }
@@ -162,4 +160,22 @@ export function markMigrationAsSuccessfull() {
 
     // close file
     fs.closeSync(file);
+}
+
+export async function getTokenIdsToProcessCount(filePath) {
+    // Read file again for unprocessed records
+    const batchParser = csvParse();
+    const batchStream = fs.createReadStream(filePath);
+
+    let count = 0;
+
+    // eslint-disable-next-line no-await-in-loop
+    for await (const row of batchStream.pipe(batchParser)) {
+        const [, , , processed = 'false'] = row;
+        if (processed === 'false') {
+            count += 1;
+        }
+    }
+
+    return count;
 }

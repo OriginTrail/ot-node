@@ -7,6 +7,7 @@ import {
     validateStorageContractAbi,
     validateBlockchainDetails,
 } from './validation.js';
+import logger from './logger.js';
 
 function maskRpcUrl(url) {
     // Validation
@@ -35,7 +36,7 @@ export async function initializeRpc(rpcEndpoint) {
         const provider = new Provider(rpcEndpoint);
         // eslint-disable-next-line no-await-in-loop
         await provider.getNetwork();
-        console.log(`Connected to the blockchain RPC: ${maskRpcUrl(rpcEndpoint)}.`);
+        logger.info(`Connected to the blockchain RPC: ${maskRpcUrl(rpcEndpoint)}.`);
         return provider;
     } catch (e) {
         throw new Error(`Unable to connect to the blockchain RPC: ${maskRpcUrl(rpcEndpoint)}.`);
@@ -54,7 +55,7 @@ export async function getStorageContractAndAddress(
     validateStorageContractName(storageContractName);
     validateStorageContractAbi(storageContractAbi);
 
-    console.log(
+    logger.info(
         `Initializing asset contract: ${storageContractName} with address: ${storageContractAddress}`,
     );
     // initialize asset contract
@@ -64,7 +65,7 @@ export async function getStorageContractAndAddress(
         provider,
     );
 
-    console.log(
+    logger.info(
         `Contract ${storageContractName} initialized with address: ${storageContractAddress}`,
     );
     return storageContract;
@@ -77,8 +78,7 @@ export async function getContentAssetStorageContract(provider, blockchainDetails
 
     const contentAssetStorageContarct =
         blockchainDetails.NAME === BLOCKCHAINS.NEUROWEB_TESTNET.NAME ||
-        blockchainDetails.NAME === BLOCKCHAINS.NEUROWEB_MAINNET.NAME ||
-        blockchainDetails.NAME === BLOCKCHAINS.HARDHAT.NAME
+        blockchainDetails.NAME === BLOCKCHAINS.NEUROWEB_MAINNET.NAME
             ? ABIs.ContentAssetStorage
             : ABIs.ContentAssetStorageV2;
     const storageContract = await getStorageContractAndAddress(

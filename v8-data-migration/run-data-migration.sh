@@ -1,1 +1,1 @@
-nohup node v8-data-migration.js >> log.txt 2>&1 &
+nohup node v8-data-migration.js &
