@@ -21,7 +21,6 @@ import {
 } from './v8-data-migration-utils.js';
 import {
     repositoryExists,
-    createDkgRepository,
     getAssertionFromV6TripleStore,
     insertAssertionsIntoV8UnifiedRepository,
     deleteRepository,
@@ -318,9 +317,6 @@ async function main() {
 
     // Ensure connections
     await ensureConnections(tripleStoreRepositories, tripleStoreImplementation);
-
-    // TODO: Is it necessary? Any other migration doing it?
-    await createDkgRepository(tripleStoreRepositories, DKG_REPOSITORY, tripleStoreImplementation);
 
     // Iterate through all chains
     for (const blockchain in blockchainConfig.implementation) {

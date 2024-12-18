@@ -13,7 +13,6 @@ import {
     DKG_REPOSITORY,
     VISIBILITY,
     METADATA_NAMED_GRAPH,
-    DKG_REPOSITORY_URL,
     TRIPLE_STORE_CONNECT_MAX_RETRIES,
     TRIPLE_STORE_CONNECT_RETRY_FREQUENCY,
 } from './constants.js';
@@ -30,7 +29,7 @@ import {
 } from './validation.js';
 import logger from './logger.js';
 
-const { server, repository: repo, http } = graphdb;
+const { server, http } = graphdb;
 
 export function getTripleStoreData(tripleStoreConfig) {
     // Validation
@@ -47,20 +46,17 @@ export function getTripleStoreData(tripleStoreConfig) {
             for (const [repository, repositoryDetails] of Object.entries(
                 implementationDetails.config.repositories,
             )) {
-                if (repository === PRIVATE_CURRENT || repository === PUBLIC_CURRENT) {
+                if (
+                    repository === PRIVATE_CURRENT ||
+                    repository === PUBLIC_CURRENT ||
+                    repository === DKG_REPOSITORY
+                ) {
                     tripleStoreRepositories[repository] = repositoryDetails;
                 }
             }
             break;
         }
     }
-    // Add new dkg repository
-    tripleStoreRepositories[DKG_REPOSITORY] = {
-        url: DKG_REPOSITORY_URL,
-        name: DKG_REPOSITORY,
-        username: 'admin',
-        password: '',
-    };
 
     return { tripleStoreImplementation, tripleStoreRepositories };
 }
@@ -307,113 +303,6 @@ export async function repositoryExists(
 
                 return false;
             }
-        default:
-            throw new Error(`Invalid triple store repository name: ${repository}`);
-    }
-}
-
-export async function createDkgRepository(
-    tripleStoreRepositories,
-    repository,
-    tripleStoreImplementation,
-) {
-    // Validation
-    validateTripleStoreRepositories(tripleStoreRepositories);
-    validateRepository(repository);
-    validateTripleStoreImplementation(tripleStoreImplementation);
-
-    const { url, name } = tripleStoreRepositories[repository];
-    switch (tripleStoreImplementation) {
-        case OT_BLAZEGRAPH: {
-            if (
-                !(await repositoryExists(
-                    tripleStoreRepositories,
-                    repository,
-                    tripleStoreImplementation,
-                ))
-            ) {
-                await axios.post(
-                    `${url}/blazegraph/namespace`,
-                    `com.bigdata.rdf.sail.truthMaintenance=false\n` +
-                        `com.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\n` +
-                        `com.bigdata.rdf.store.AbstractTripleStore.textIndex=false\n` +
-                        `com.bigdata.rdf.store.AbstractTripleStore.justify=false\n` +
-                        `com.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\n` +
-                        `com.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\n` +
-                        `com.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\n` +
-                        `com.bigdata.rdf.sail.namespace=${name}\n` +
-                        `com.bigdata.rdf.store.AbstractTripleStore.quads=true\n` +
-                        `com.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\n` +
-                        `com.bigdata.journal.Journal.groupCommit=false\n` +
-                        `com.bigdata.rdf.sail.isolatableIndices=false\n`,
-                    {
-                        headers: {
-                            'Content-Type': 'text/plain',
-                        },
-                    },
-                );
-            }
-            break;
-        }
-        case OT_GRAPHDB: {
-            const serverConfig = new server.ServerClientConfig(url)
-                .setTimeout(40000)
-                .setHeaders({
-                    Accept: http.RDFMimeType.N_QUADS,
-                })
-                .setKeepAlive(true);
-            const s = new server.GraphDBServerClient(serverConfig);
-            // eslint-disable-next-line no-await-in-loop
-            const exists = await s.hasRepository(name);
-            if (!exists) {
-                try {
-                    // eslint-disable-next-line no-await-in-loop
-                    await s.createRepository(
-                        new repo.RepositoryConfig(
-                            name,
-                            '',
-                            new Map(),
-                            '',
-                            'Repo title',
-                            repo.RepositoryType.FREE,
-                        ),
-                    );
-                } catch (e) {
-                    // eslint-disable-next-line no-await-in-loop
-                    await s.createRepository(
-                        new repo.RepositoryConfig(
-                            name,
-                            '',
-                            {},
-                            'graphdb:SailRepository',
-                            'Repo title',
-                            'graphdb',
-                        ),
-                    );
-                }
-            }
-            break;
-        }
-        case OT_FUSEKI: {
-            if (
-                !(await repositoryExists(
-                    tripleStoreRepositories,
-                    repository,
-                    tripleStoreImplementation,
-                ))
-            ) {
-                await axios.post(
-                    `${url}/$/datasets?dbName=${name}&dbType=tdb`,
-                    {},
-                    {
-                        headers: {
-                            'Content-Type': 'text/plain',
-                        },
-                    },
-                );
-            }
-            break;
-        }
         default:
             throw new Error(`Invalid triple store repository name: ${repository}`);
     }
