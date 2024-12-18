@@ -1145,6 +1145,14 @@ class Web3Service {
         const wallet = this.getRandomOperationalWallet();
         return wallet.signMessage(ethers.utils.arrayify(messageHash));
     }
+
+    async getStakeWeightedAverageAsk() {
+        return this.callContractFunction(
+            this.contracts.ShardingTableStorage,
+            'getStakeWeightedAverageAsk',
+            [],
+        );
+    }
 }
 
 export default Web3Service;

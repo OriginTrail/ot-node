@@ -267,6 +267,10 @@ class BlockchainModuleManager extends BaseModuleManager {
     async signMessage(blockchain, messageHash) {
         return this.callImplementationFunction(blockchain, 'signMessage', [messageHash]);
     }
+
+    async getStakeWeightedAverageAsk(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getStakeWeightedAverageAsk', []);
+    }
 }
 
 export default BlockchainModuleManager;
