@@ -255,8 +255,8 @@ export const ABIs = {
     ParametersStorage: require('dkg-evm-module/abi/ParametersStorage.json'),
     Profile: require('dkg-evm-module/abi/Profile.json'),
     ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
-    ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
-    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
+    ShardingTable: require('dkg-evm-module/abi/ShardingTable.json'),
+    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorage.json'),
     ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
     ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
 };

@@ -5,9 +5,6 @@ import { readFile } from 'fs/promises';
 import { exec, execSync } from 'child_process';
 
 const Hub = JSON.parse((await readFile('node_modules/dkg-evm-module/abi/Hub.json')).toString());
-const HubController = JSON.parse(
-    (await readFile('node_modules/dkg-evm-module/abi/HubController.json')).toString(),
-);
 const ParametersStorage = JSON.parse(
     (await readFile('node_modules/dkg-evm-module/abi/ParametersStorage.json')).toString(),
 );
@@ -79,22 +76,6 @@ class LocalBlockchain {
         this.hubContract = new ethers.Contract(hubContractAddress, Hub, wallet);
 
         await this.provider.ready;
-        const hubControllerAddress = await this.hubContract.owner();
-        this.HubControllerContract = new ethers.Contract(
-            hubControllerAddress,
-            HubController,
-            wallet,
-        );
-
-        const parametersStorageAddress = await this.hubContract.getContractAddress(
-            'ParametersStorage',
-        );
-        this.ParametersStorageInterface = new ethers.utils.Interface(ParametersStorage);
-
-        await this.setParametersStorageParams(
-            parametersStorageAddress,
-            testParametersStorageParams,
-        );
     }
 
     async stop() {
@@ -118,7 +99,7 @@ class LocalBlockchain {
                 [params[parameter]],
             );
             // eslint-disable-next-line no-await-in-loop
-            await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
+            await this.hubContract.forwardCall(parametersStorageAddress, encodedData);
         }
     }
 
@@ -128,7 +109,7 @@ class LocalBlockchain {
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );
-        await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
+        await this.hubContract.forwardCall(parametersStorageAddress, encodedData);
     }
 
     async setR1(r1) {
@@ -137,7 +118,7 @@ class LocalBlockchain {
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );
-        await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
+        await this.hubContract.forwardCall(parametersStorageAddress, encodedData);
     }
 
     async setFinalizationCommitsNumber(commitsNumber) {
@@ -149,7 +130,7 @@ class LocalBlockchain {
         const parametersStorageAddress = await this.hubContract.getContractAddress(
             'ParametersStorage',
         );
-        await this.HubControllerContract.forwardCall(parametersStorageAddress, encodedData);
+        await this.hubContract.forwardCall(parametersStorageAddress, encodedData);
     }
 }
 

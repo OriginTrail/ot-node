@@ -473,9 +473,9 @@ class Web3Service {
     }
 
     async createProfile(peerId) {
-        if (!this.config.sharesTokenName || !this.config.sharesTokenSymbol) {
+        if (!this.config.nodeName) {
             throw new Error(
-                'Missing sharesTokenName and sharesTokenSymbol in blockchain configuration. Please add it and start the node again.',
+                'Missing nodeName in blockchain configuration. Please add it and start the node again.',
             );
         }
 
@@ -492,18 +492,15 @@ class Web3Service {
                     [
                         this.getManagementKey(),
                         this.getPublicKeys().slice(1),
+                        this.config.nodeName,
                         ethers.utils.hexlify(ethers.utils.toUtf8Bytes(peerId)),
-                        this.config.sharesTokenName,
-                        this.config.sharesTokenSymbol,
                         this.config.operatorFee,
                     ],
                     null,
                     this.operationalWallets[0],
                 );
                 this.logger.info(
-                    `Profile created with name: ${this.config.sharesTokenName} and symbol: ${
-                        this.config.sharesTokenSymbol
-                    }, wallet: ${
+                    `Profile created with name: ${this.config.nodeName}, wallet: ${
                         this.operationalWallets[0].address
                     }, on blockchain ${this.getBlockchainId()}`,
                 );
@@ -925,7 +922,7 @@ class Web3Service {
     //     return this.callContractFunction(assetStorageContractInstance, 'ownerOf', [tokenId]);
     // }
 
-    async getKnowledgeCollectionPublisher(assetStorageContractAddress, knowledgeCollectionId) {
+    async getLatestMerkleRootPublisher(assetStorageContractAddress, knowledgeCollectionId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
         if (!assetStorageContractInstance)

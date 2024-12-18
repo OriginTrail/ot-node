@@ -15,7 +15,7 @@ class ValidationService {
 
         let isValid = true;
         try {
-            const result = await this.blockchainModuleManager.getKnowledgeCollectionPublisher(
+            const result = await this.blockchainModuleManager.getLatestMerkleRootPublisher(
                 blockchain,
                 contract,
                 tokenId,
