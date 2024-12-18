@@ -128,6 +128,12 @@ export function ensureDirectoryExists(dirPath) {
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
         logger.info(`Created directory: ${dirPath}`);
+
+        if (!fs.existsSync(dirPath)) {
+            throw new Error(
+                `Something went wrong. Directory: ${dirPath} does not exist after creation.`,
+            );
+        }
     }
 }
 
