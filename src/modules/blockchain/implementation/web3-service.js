@@ -951,19 +951,6 @@ class Web3Service {
         return Number(knowledgeCollectionSize);
     }
 
-    async getKnowledgeCollectionTriplesNumber(assetStorageContractAddress, knowledgeCollectionId) {
-        const assetStorageContractInstance =
-            this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
-        if (!assetStorageContractInstance)
-            throw new Error('Unknown asset storage contract address');
-        const knowledgeCollectionTriplesNumber = await this.callContractFunction(
-            assetStorageContractInstance,
-            'getTriplesAmount',
-            [knowledgeCollectionId],
-        );
-        return Number(knowledgeCollectionTriplesNumber);
-    }
-
     async getKnowledgeCollectionChunksAmount(assetStorageContractAddress, knowledgeCollectionId) {
         const assetStorageContractInstance =
             this.assetStorageContracts[assetStorageContractAddress.toString().toLowerCase()];
