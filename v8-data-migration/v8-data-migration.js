@@ -383,8 +383,24 @@ async function main() {
                 logger.time(`CSV FILE DOWNLOADED`);
                 // Wait for the file to finish downloading
                 await new Promise((resolve, reject) => {
+                    let downloadComplete = false;
+
+                    response.data.on('end', () => {
+                        downloadComplete = true;
+                    });
+
                     writer.on('finish', resolve);
-                    writer.on('error', reject);
+                    writer.on('error', (err) =>
+                        reject(new Error(`Write stream error: ${err.message}`)),
+                    );
+                    response.data.on('error', (err) =>
+                        reject(new Error(`Download stream error: ${err.message}`)),
+                    );
+                    response.data.on('close', () => {
+                        if (!downloadComplete) {
+                            reject(new Error('Download stream closed before completing'));
+                        }
+                    });
                 });
                 logger.timeEnd(`CSV FILE DOWNLOADED`);
             }
