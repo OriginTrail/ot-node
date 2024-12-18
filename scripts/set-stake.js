@@ -100,7 +100,7 @@ async function setStake(
         TRANSACTION_POLLING_TIMEOUT_MILLIS,
     );
     // TODO: Add ABI instead of hard-coded function definition
-    tx = await stakingContract['addStake(uint72,uint96)'](identityId, stakeWei, {
+    tx = await stakingContract['stake(uint72,uint96)'](identityId, stakeWei, {
         gasPrice: gasPrice ? gasPrice * 100 : undefined,
         gasLimit: 3_000_000,
     });

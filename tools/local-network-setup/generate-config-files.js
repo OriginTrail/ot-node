@@ -122,8 +122,7 @@ function generateBlockchainConfig(templateBlockchainConfig, nodeIndex) {
         ],
         evmManagementWalletPublicKey: publicKeysManagementWallet[nodeIndex + 1],
         evmManagementWalletPrivateKey: privateKeysManagementWallet[nodeIndex + 1],
-        sharesTokenName: `LocalNode${nodeIndex + 1}`,
-        sharesTokenSymbol: `LN${nodeIndex + 1}`,
+        nodeName: `LocalNode${nodeIndex + 1}`,
     };
 
     // TODO: Don't use string

@@ -269,6 +269,17 @@ class TripleStoreModuleManager extends BaseModuleManager {
     getName() {
         return 'tripleStore';
     }
+
+    // OLD REPOSITORIES SUPPORT
+
+    async getV6Assertion(implementationName, repository, assertionId) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getV6Assertion(
+                repository,
+                assertionId,
+            );
+        }
+    }
 }
 
 export default TripleStoreModuleManager;

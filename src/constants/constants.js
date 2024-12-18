@@ -7,6 +7,20 @@ export const HTTP_RPC_PROVIDER_PRIORITY = 1;
 
 export const FALLBACK_PROVIDER_QUORUM = 1;
 
+export const PUBLISH_BATCH_SIZE = 20;
+
+export const PUBLISH_MIN_NUM_OF_NODE_REPLICATIONS = 3;
+
+export const GET_BATCH_SIZE = 2;
+
+export const GET_MIN_NUM_OF_NODE_REPLICATIONS = 1;
+
+export const FINALITY_BATCH_SIZE = 1;
+
+export const FINALITY_MIN_NUM_OF_NODE_REPLICATIONS = 1;
+
+export const ASK_BATCH_SIZE = 20;
+
 export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
 
 export const UINT256_MAX_BN = ethers.constants.MaxUint256;
@@ -97,7 +111,7 @@ export const TRANSACTION_QUEUE_CONCURRENCY = 1;
 
 export const TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10;
 
-export const MAX_FILE_SIZE = 524288000;
+export const MAX_FILE_SIZE = 10000000;
 
 export const GET_STATES = { LATEST: 'LATEST', FINALIZED: 'LATEST_FINALIZED' };
 
@@ -124,17 +138,14 @@ export const PARANET_ACCESS_POLICY = {
 
 export const TRIPLE_STORE_REPOSITORIES = {
     DKG: 'dkg',
+    PUBLIC_CURRENT: 'publicCurrent',
+    PRIVATE_CURRENT: 'privateCurrent',
 };
 
 export const BASE_NAMED_GRAPHS = {
     UNIFIED: 'unified:graph',
     HISTORICAL_UNIFIED: 'historical-unified:graph',
     METADATA: 'metadata:graph',
-};
-
-export const PENDING_STORAGE_REPOSITORIES = {
-    PUBLIC: 'public',
-    PRIVATE: 'private',
 };
 
 export const REQUIRED_MODULES = [
@@ -255,8 +266,8 @@ export const ABIs = {
     ParametersStorage: require('dkg-evm-module/abi/ParametersStorage.json'),
     Profile: require('dkg-evm-module/abi/Profile.json'),
     ProfileStorage: require('dkg-evm-module/abi/ProfileStorage.json'),
-    ShardingTable: require('dkg-evm-module/abi/ShardingTableV2.json'),
-    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorageV2.json'),
+    ShardingTable: require('dkg-evm-module/abi/ShardingTable.json'),
+    ShardingTableStorage: require('dkg-evm-module/abi/ShardingTableStorage.json'),
     ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
     ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
 };
@@ -775,7 +786,7 @@ export const OPERATION_ID_STATUS = {
 export const OPERATIONS = {
     PUBLISH: 'publish',
     FINALITY: 'finality',
-    UPDATE: 'update',
+    // UPDATE: 'update',
     GET: 'get',
     ASK: 'ask',
 };
@@ -919,11 +930,11 @@ export const HTTP_API_ROUTES = {
             path: '/publish',
             options: { rateLimit: true },
         },
-        update: {
-            method: 'post',
-            path: '/update',
-            options: { rateLimit: true },
-        },
+        // update: {
+        //     method: 'post',
+        //     path: '/update',
+        //     options: { rateLimit: true },
+        // },
         query: {
             method: 'post',
             path: '/query',
@@ -1005,7 +1016,7 @@ export const HTTP_API_ROUTES = {
  */
 export const NETWORK_PROTOCOLS = {
     STORE: ['/store/1.0.0'],
-    UPDATE: ['/update/1.0.0'],
+    // UPDATE: ['/update/1.0.0'],
     GET: ['/get/1.0.0'],
     ASK: ['/ask/1.0.0'],
     FINALITY: ['/finality/1.0.0'],
@@ -1156,6 +1167,9 @@ export const LOCAL_INSERT_FOR_ASSET_SYNC_RETRY_DELAY = 1000;
 export const LOCAL_INSERT_FOR_CURATED_PARANET_MAX_ATTEMPTS = 5;
 export const LOCAL_INSERT_FOR_CURATED_PARANET_RETRY_DELAY = 1000;
 
+export const MAX_RETRIES_READ_CACHED_PUBLISH_DATA = 5;
+export const RETRY_DELAY_READ_CACHED_PUBLISH_DATA = 10000;
+
 export const TRIPLE_STORE_REPOSITORY = {
     DKG: 'dkg',
     DKG_HISTORIC: 'dkg-historic',
@@ -1165,4 +1179,16 @@ export const TRIPLES_VISIBILITY = {
     PUBLIC: 'public',
     PRIVATE: 'private',
     ALL: 'all',
+};
+
+export const OLD_CONTENT_STORAGE_MAP = {
+    BASE_MAINNET: '0x3bdfA81079B2bA53a25a6641608E5E1E6c464597',
+    BASE_TESTNET: '0x9e3071Dc0730CB6dd0ce42969396D716Ea33E7e1',
+    BASE_DEVNET: '0xBe08A25dcF2B68af88501611e5456571f50327B4',
+    GNOSIS_MAINNET: '0xf81a8C0008DE2DCdb73366Cf78F2b178616d11DD',
+    GNOSIS_TESTNET: '0xeA3423e02c8d231532dab1BCE5D034f3737B3638',
+    GNOSIS_DEVNET: '0x3db64dD0Ac054610d1e2Af9Cca0fbCB1A7f4C2d8',
+    OTP_MAINNET: '0x5cAC41237127F94c2D21dAe0b14bFeFa99880630',
+    OTP_TESTNET: '0x1A061136Ed9f5eD69395f18961a0a535EF4B3E5f',
+    OTP_DEVNET: '0xABd59A9aa71847F499d624c492d3903dA953d67a',
 };

@@ -6,6 +6,8 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
+    GET_BATCH_SIZE,
+    GET_MIN_NUM_OF_NODE_REPLICATIONS,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -89,12 +91,12 @@ class GetService extends OperationService {
         }
     }
 
-    getBatchSize() {
-        return 2;
+    getBatchSize(batchSize = null) {
+        return batchSize ?? GET_BATCH_SIZE;
     }
 
-    getMinAckResponses() {
-        return 1;
+    getMinAckResponses(minimumNumberOfNodeReplications = null) {
+        return minimumNumberOfNodeReplications ?? GET_MIN_NUM_OF_NODE_REPLICATIONS;
     }
 }
 

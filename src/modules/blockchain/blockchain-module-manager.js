@@ -149,12 +149,12 @@ class BlockchainModuleManager extends BaseModuleManager {
     //     ]);
     // }
 
-    async getKnowledgeCollectionPublisher(
+    async getLatestMerkleRootPublisher(
         blockchain,
         assetStorageContractAddress,
         knowledgeCollectionId,
     ) {
-        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionPublisher', [
+        return this.callImplementationFunction(blockchain, 'getLatestMerkleRootPublisher', [
             assetStorageContractAddress,
             knowledgeCollectionId,
         ]);
@@ -177,12 +177,6 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async getKnowledgeCollectionSize(blockchain, knowledgeCollectionId) {
         return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionSize', [
-            knowledgeCollectionId,
-        ]);
-    }
-
-    async getKnowledgeCollectionTriplesNumber(blockchain, knowledgeCollectionId) {
-        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionTriplesNumber', [
             knowledgeCollectionId,
         ]);
     }
@@ -266,6 +260,18 @@ class BlockchainModuleManager extends BaseModuleManager {
 
     async signMessage(blockchain, messageHash) {
         return this.callImplementationFunction(blockchain, 'signMessage', [messageHash]);
+    }
+
+    async getStakeWeightedAverageAsk(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getStakeWeightedAverageAsk', []);
+    }
+  
+    // SUPPORT FOR OLD CONTRACTS
+    async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
+            assetContractAddress,
+            tokenId,
+        ]);
     }
 }
 
