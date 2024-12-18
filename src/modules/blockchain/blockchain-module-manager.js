@@ -262,8 +262,11 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'signMessage', [messageHash]);
     }
 
+    async getStakeWeightedAverageAsk(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getStakeWeightedAverageAsk', []);
+    }
+  
     // SUPPORT FOR OLD CONTRACTS
-
     async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
         return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
             assetContractAddress,
