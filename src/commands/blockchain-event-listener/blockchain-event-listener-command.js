@@ -50,7 +50,7 @@ class BlockchainEventListenerCommand extends Command {
     }
 
     async fetchAndHandleBlockchainEvents(blockchainId, repositoryTransaction) {
-        this.currentBlock = (await this.blockchainEventsService.getBlock(blockchainId)).number;
+        this.currentBlock = (await this.blockchainEventsService.getBlock(blockchainId)).number - 2;
         const lastCheckedBlockRecord = await this.repositoryModuleManager.getLastCheckedBlock(
             blockchainId,
             { transaction: repositoryTransaction },
