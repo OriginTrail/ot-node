@@ -483,15 +483,37 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
+                    "otp:20430": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
+                        "config": {
+                            "hubContractAddress": "0x881449B372eB0eA34d0bF450839182dcC15A1dcA",
+                            "rpcEndpoints": [
+                                "https://lofar-testnet.origin-trail.network",
+                                "https://lofar-testnet.origintrail.network"
+                            ],
+                            "operatorFee": 0
+                        }
+                    },
+                    "gnosis:10200": {
+                        "enabled": false,
+                        "package": "./blockchain/implementation/gnosis/gnosis-service.js",
+
+                        "config": {
+                            "hubContractAddress": "0xae1b378Ad5418ca437AceF78EDc8b40607eb5A1b",
+                            "gasPriceOracleLink": "https://blockscout.chiadochain.net/api/v1/gas-price-oracle",
+                            "rpcEndpoints": ["https://rpc.chiadochain.net"],
+                            "operatorFee": 0
+                        }
+                    },
                     "base:84532": {
                         "enabled": false,
                         "package": "./blockchain/implementation/base/base-service.js",
 
                         "config": {
-                            "hubContractAddress": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692",
+                            "hubContractAddress": "0xCdC3945ed33941e359391574aAB16F274D53e641",
                             "rpcEndpoints": ["https://sepolia.base.org"],
-                            "operatorFee": 0,
-                            "initialAskAmount": 0.1
+                            "operatorFee": 0
                         }
                     }
                 }
@@ -549,10 +571,17 @@
                         "config": {
                             "blockchains": ["base:84532"],
                             "rpcEndpoints": {
-                                "base:84532": ["https://sepolia.base.org"]
+                                "base:84532": ["https://sepolia.base.org"],
+                                "otp:20430": [
+                                    "https://lofar-testnet.origin-trail.network",
+                                    "https://lofar-testnet.origintrail.network"
+                                ],
+                                "gnosis:10200": ["https://rpc.chiadochain.net"]
                             },
                             "hubContractAddress": {
-                                "base:84532": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692"
+                                "base:84532": "0xCdC3945ed33941e359391574aAB16F274D53e641",
+                                "otp:20430": "0x881449B372eB0eA34d0bF450839182dcC15A1dcA",
+                                "gnosis:10200": "0xae1b378Ad5418ca437AceF78EDc8b40607eb5A1b"
                             }
                         }
                     }
