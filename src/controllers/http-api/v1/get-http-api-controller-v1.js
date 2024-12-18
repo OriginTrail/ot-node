@@ -40,10 +40,14 @@ class GetController extends BaseController {
             OPERATION_STATUS.IN_PROGRESS,
         );
 
-        const tripleStoreMigrationAlreadyExecuted =
-            this.fileService.readFile('/root/ot-node/data/migrations/v8DataMigration') ===
-            'MIGRATED';
-
+        let tripleStoreMigrationAlreadyExecuted = false;
+        try {
+            tripleStoreMigrationAlreadyExecuted =
+                this.fileService.readFile('/root/ot-node/data/migrations/v8DataMigration') ===
+                'MIGRATED';
+        } catch (e) {
+            this.logger.warn(`No triple store migration file error: ${e}`);
+        }
         let blockchain;
         let contract;
         let knowledgeCollectionId;

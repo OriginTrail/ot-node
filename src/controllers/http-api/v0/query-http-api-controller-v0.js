@@ -21,10 +21,14 @@ class QueryController extends BaseController {
             operationId,
         });
 
-        const tripleStoreMigrationAlreadyExecuted =
-            this.fileService.readFile('/root/ot-node/data/migrations/v8DataMigration') ===
-            'MIGRATED';
-
+        let tripleStoreMigrationAlreadyExecuted = false;
+        try {
+            tripleStoreMigrationAlreadyExecuted =
+                this.fileService.readFile('/root/ot-node/data/migrations/v8DataMigration') ===
+                'MIGRATED';
+        } catch (e) {
+            this.logger.warn(`No triple store migration file error: ${e}`);
+        }
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             null,
