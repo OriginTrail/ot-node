@@ -37,7 +37,6 @@ export const NEUROWEB_TESTNET_CSV_URL =
 const require = createRequire(import.meta.url);
 
 export const ABIs = {
-    Hub: require('./abi/Hub.json'),
     ContentAssetStorageV2: require('./abi/ContentAssetStorageV2.json'),
     ContentAssetStorage: require('./abi/ContentAssetStorage.json'),
 };
