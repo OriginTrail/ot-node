@@ -181,12 +181,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getKnowledgeCollectionTriplesNumber(blockchain, knowledgeCollectionId) {
-        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionTriplesNumber', [
-            knowledgeCollectionId,
-        ]);
-    }
-
     async getKnowledgeCollectionChunksAmount(blockchain, knowledgeCollectionId) {
         return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionChunksAmount', [
             knowledgeCollectionId,
