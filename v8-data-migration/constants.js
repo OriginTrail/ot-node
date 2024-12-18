@@ -21,7 +21,7 @@ export const VISIBILITY = {
 export const BATCH_SIZE = 50;
 // // LOCAL TESTING
 // export const NODERC_CONFIG_PATH =
-//     '/Users/zvonimir/projects/ot-node/v8-data-migration/noderc_config.json';
+//     '/Users/zvonimir/projects/ot-node/v8-data-migration/.origintrail_noderc';
 // export const ENV_PATH = '/Users/zvonimir/projects/ot-node/data-migration/.env';
 // // LOCAL TESTING END
 
@@ -29,12 +29,10 @@ export const BATCH_SIZE = 50;
 export const NODERC_CONFIG_PATH = '/root/ot-node/.origintrail_noderc';
 export const DATA_MIGRATION_DIR = '/root/ot-node/data/data-migration';
 export const ENV_PATH = '/root/ot-node/current/.env';
-// TODO: Change file name if necessary
 export const MIGRATION_PROGRESS_FILE = '/root/ot-node/data/migrations/v8DataMigration';
+export const NEUROWEB_TESTNET_CSV_URL =
+    'https://hosting.origin-trail.network/csv/neuroweb_testnet.csv';
 // REMOTE END
-
-// TODO: Change url to be read from noderc?
-export const DKG_REPOSITORY_URL = 'http://localhost:9999';
 
 const require = createRequire(import.meta.url);
 

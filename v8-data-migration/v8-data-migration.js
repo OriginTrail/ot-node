@@ -2,12 +2,14 @@ import path from 'path';
 import fs from 'fs';
 import { createRequire } from 'module';
 import dotenv from 'dotenv';
+import axios from 'axios';
 import {
     DKG_REPOSITORY,
     BATCH_SIZE,
     ENV_PATH,
     BLOCKCHAINS,
     DATA_MIGRATION_DIR,
+    NEUROWEB_TESTNET_CSV_URL,
 } from './constants.js';
 import {
     updateCsvFile,
@@ -306,6 +308,14 @@ async function main() {
     // eslint-disable-next-line prefer-destructuring
     let tripleStoreRepositories = tripleStoreData.tripleStoreRepositories;
 
+    if (Object.keys(tripleStoreRepositories).length !== 3) {
+        throw new Error(
+            `Triple store repositories are not initialized correctly. Expected 3 repositories, got: ${
+                Object.keys(tripleStoreRepositories).length
+            }`,
+        );
+    }
+
     // Initialize repositories
     tripleStoreRepositories = initializeRepositories(
         tripleStoreRepositories,
@@ -329,8 +339,7 @@ async function main() {
         }
         const rpcEndpoints = blockchainImplementation?.config?.rpcEndpoints;
         if (!Array.isArray(rpcEndpoints) || rpcEndpoints.length === 0) {
-            logger.error(`RPC endpoints are not defined for blockchain ${blockchain}. Skipping...`);
-            continue;
+            throw new Error(`RPC endpoints are not defined for blockchain ${blockchain}.`);
         }
 
         let blockchainName;
@@ -350,20 +359,41 @@ async function main() {
 
         // REMOTE
         // Check if blockchain csv exists and if it doesn't copy the csv to it
-        const filePath = path.join(DATA_MIGRATION_DIR, `${blockchainName}.csv`);
-        if (!fs.existsSync(filePath)) {
+        const __dirname = path.dirname(new URL(import.meta.url).pathname);
+        const csvFilePath = path.join(__dirname, `${blockchainName}.csv`);
+        const csvMigrationDirFilePath = path.join(DATA_MIGRATION_DIR, `${blockchainName}.csv`);
+        if (!fs.existsSync(csvMigrationDirFilePath)) {
             logger.info(
                 `CSV file for blockchain ${blockchainName} does not exist in ${DATA_MIGRATION_DIR}. Creating it...`,
             );
-            const __dirname = path.dirname(new URL(import.meta.url).pathname);
-            const csvFilePath = path.join(__dirname, `${blockchainName}.csv`);
-            fs.copyFileSync(csvFilePath, filePath);
-
-            if (!fs.existsSync(filePath)) {
-                logger.error(
-                    `CSV file for blockchain ${blockchainName} could not be created. Continuing to the next blockchain...`,
+            if (blockchainName === BLOCKCHAINS.NEUROWEB_TESTNET.NAME) {
+                // Fetch the csv file from the remote server
+                logger.info(
+                    `Fetching ${blockchainName}.csv file from ${NEUROWEB_TESTNET_CSV_URL}. This may take a while...`,
                 );
-                continue;
+                const writer = fs.createWriteStream(csvFilePath);
+                const response = await axios({
+                    url: NEUROWEB_TESTNET_CSV_URL,
+                    method: 'GET',
+                    responseType: 'stream',
+                });
+
+                // Pipe the response stream to the file
+                response.data.pipe(writer);
+                logger.time(`CSV FILE DOWNLOADED`);
+                // Wait for the file to finish downloading
+                await new Promise((resolve, reject) => {
+                    writer.on('finish', resolve);
+                    writer.on('error', reject);
+                });
+                logger.timeEnd(`CSV FILE DOWNLOADED`);
+            }
+
+            // Copy the csv file to the data/data-migration directory
+            fs.copyFileSync(csvFilePath, csvMigrationDirFilePath);
+
+            if (!fs.existsSync(csvMigrationDirFilePath)) {
+                throw new Error(`CSV file for blockchain ${blockchainName} could not be created.`);
             }
         }
         // REMOTE END
@@ -371,15 +401,15 @@ async function main() {
 
         // // LOCAL TESTING
         // const __dirname = path.dirname(new URL(import.meta.url).pathname);
-        // const filePath = path.join(__dirname, `${blockchainName}.csv`);
+        // const csvMigrationDirFilePath = path.join(__dirname, `${blockchainName}.csv`);
         // // LOCAL TESTING END
 
-        const csvDataStream = getCsvDataStream(filePath, BATCH_SIZE);
+        const csvDataStream = getCsvDataStream(csvMigrationDirFilePath, BATCH_SIZE);
 
-        const highestTokenId = await getHighestTokenId(filePath);
+        const highestTokenId = await getHighestTokenId(csvMigrationDirFilePath);
         logger.info(`Total amount of tokenIds: ${highestTokenId}`);
 
-        const tokenIdsToProcessCount = await getTokenIdsToProcessCount(filePath);
+        const tokenIdsToProcessCount = await getTokenIdsToProcessCount(csvMigrationDirFilePath);
         logger.info(`Amount of tokenIds left to process: ${tokenIdsToProcessCount}`);
 
         // Iterate through the csv data and push to triple store until all data is processed
@@ -428,7 +458,7 @@ async function main() {
                 );
 
                 // mark data as processed in csv file
-                await updateCsvFile(filePath, successfullyProcessed);
+                await updateCsvFile(csvMigrationDirFilePath, successfullyProcessed);
 
                 processed += successfullyProcessed.length;
                 logger.info(
