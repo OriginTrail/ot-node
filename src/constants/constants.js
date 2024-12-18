@@ -7,6 +7,20 @@ export const HTTP_RPC_PROVIDER_PRIORITY = 1;
 
 export const FALLBACK_PROVIDER_QUORUM = 1;
 
+export const PUBLISH_BATCH_SIZE = 20;
+
+export const PUBLISH_MIN_NUM_OF_NODE_REPLICATIONS = 3;
+
+export const GET_BATCH_SIZE = 2;
+
+export const GET_MIN_NUM_OF_NODE_REPLICATIONS = 1;
+
+export const FINALITY_BATCH_SIZE = 1;
+
+export const FINALITY_MIN_NUM_OF_NODE_REPLICATIONS = 1;
+
+export const ASK_BATCH_SIZE = 20;
+
 export const RPC_PROVIDER_STALL_TIMEOUT = 60 * 1000;
 
 export const UINT256_MAX_BN = ethers.constants.MaxUint256;
