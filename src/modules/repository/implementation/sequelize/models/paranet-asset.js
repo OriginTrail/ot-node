@@ -1,9 +1,6 @@
-import { PARANET_SYNC_SOURCES } from '../../../../../constants/constants.js';
-
-// NOT USED ANYMORE
 export default (sequelize, DataTypes) => {
-    const blockchain = sequelize.define(
-        'paranet_synced_asset',
+    const paranetAsset = sequelize.define(
+        'paranet_asset',
         {
             id: {
                 autoIncrement: true,
@@ -38,9 +35,19 @@ export default (sequelize, DataTypes) => {
                 allowNull: true,
                 type: DataTypes.STRING,
             },
-            dataSource: {
+            errorMessage: {
                 allowNull: true,
-                type: DataTypes.ENUM(...Object.values(PARANET_SYNC_SOURCES)),
+                type: DataTypes.TEXT,
+            },
+            isSynced: {
+                allowNull: false,
+                type: DataTypes.BOOLEAN,
+                defaultValue: false,
+            },
+            retries: {
+                allowNull: false,
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
             },
             createdAt: {
                 type: DataTypes.DATE,
@@ -49,10 +56,29 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.DATE,
             },
         },
-        { underscored: true },
+        {
+            underscored: true,
+            indexes: [
+                {
+                    unique: true,
+                    fields: ['ual', 'paranetUal'], // Composite unique constraint on `ual` and `paranetUal`
+                },
+                {
+                    fields: ['updatedAt', 'retries', 'isSynced'],
+                },
+                {
+                    fields: ['ual', 'paranetUal'],
+                },
+                {
+                    fields: ['isSynced', 'paranetUal'],
+                },
+            ],
+        },
     );
-    blockchain.associate = () => {
-        // associations can be defined here
+
+    paranetAsset.associate = () => {
+        // Define associations here if needed
     };
-    return blockchain;
+
+    return paranetAsset;
 };
