@@ -22,7 +22,10 @@ class GetFindShardCommand extends FindShardCommand {
     getOperationCommandSequence(nodePartOfShard, commandData) {
         const sequence = [];
         if (nodePartOfShard) {
-            sequence.push('localGetCommand');
+            // If operationV0 and no assertionId found go directly to networkGet
+            if (!commandData.isOperationV0 || commandData.assertionId) {
+                sequence.push('localGetCommand');
+            }
         }
         sequence.push('networkGetCommand');
 

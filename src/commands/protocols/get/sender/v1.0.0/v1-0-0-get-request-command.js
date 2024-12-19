@@ -47,6 +47,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
             ual,
             paranetUAL,
             paranetId,
+            isOperationV0,
+            assertionId,
         } = command.data;
 
         return {
@@ -58,6 +60,8 @@ class GetRequestCommand extends ProtocolRequestCommand {
             ual,
             paranetUAL,
             paranetId,
+            isOperationV0,
+            assertionId,
         };
     }
 

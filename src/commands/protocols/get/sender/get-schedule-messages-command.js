@@ -26,6 +26,8 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
             paranetUAL: command.data.paranetUAL,
             paranetId: command.data.paranetId,
             paranetMetadata: command.data.paranetMetadata,
+            assertionId: command.data.isOperationV0,
+            isOperationV0: command.data.assertionId,
         };
     }
 

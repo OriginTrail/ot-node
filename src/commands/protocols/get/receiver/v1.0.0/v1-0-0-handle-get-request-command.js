@@ -38,6 +38,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             ual,
             includeMetadata,
             assertionId,
+            isOperationV0,
         } = commandData;
 
         // if (paranetUAL) {
@@ -109,17 +110,21 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         let assertionPromise;
 
-        if (assertionId) {
-            assertionPromise = this.tripleStoreService
-                .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
-                .then((result) => {
-                    this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
-                        operationId,
-                        blockchain,
-                    );
-                    return result;
-                });
+        if (isOperationV0) {
+            if (!assertionId) {
+                // Find assertion id
+            } else {
+                assertionPromise = this.tripleStoreService
+                    .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
+                    .then((result) => {
+                        this.operationIdService.emitChangeEvent(
+                            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                            operationId,
+                            blockchain,
+                        );
+                        return result;
+                    });
+            }
         } else {
             assertionPromise = this.tripleStoreService
                 .getAssertion(
