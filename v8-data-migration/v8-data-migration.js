@@ -4,7 +4,6 @@ import { createRequire } from 'module';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import {
-    DKG_REPOSITORY,
     BATCH_SIZE,
     ENV_PATH,
     BLOCKCHAINS,
@@ -22,10 +21,8 @@ import {
     getTokenIdsToProcessCount,
 } from './v8-data-migration-utils.js';
 import {
-    repositoryExists,
     getAssertionFromV6TripleStore,
     insertAssertionsIntoV8UnifiedRepository,
-    deleteRepository,
     getTripleStoreData,
     initializeRepositories,
     initializeContexts,
@@ -39,7 +36,6 @@ import {
     validateTokenId,
     validateTripleStoreRepositories,
     validateTripleStoreImplementation,
-    validateTripleStoreConfig,
     validateBatchData,
 } from './validation.js';
 import logger from './logger.js';
@@ -146,48 +142,6 @@ async function processAndInsertNewerAssertions(
         logger.info(
             `Successfully inserted public/private assertions into V8 triple store for tokenId: ${newTokenId}`,
         );
-    }
-}
-
-async function deleteV6TripleStoreRepositories(tripleStoreConfig, tripleStoreImplementation) {
-    // Validation
-    validateTripleStoreConfig(tripleStoreConfig);
-    validateTripleStoreImplementation(tripleStoreImplementation);
-
-    // Delete old repositories
-    const oldTripleStoreRepositories =
-        tripleStoreConfig.implementation[tripleStoreImplementation].config.repositories;
-    for (const repository in oldTripleStoreRepositories) {
-        if (repository === DKG_REPOSITORY) {
-            continue;
-        }
-
-        logger.info(`Deleting repository: ${repository}`);
-
-        let deleted = false;
-        while (!deleted) {
-            // eslint-disable-next-line no-await-in-loop
-            await deleteRepository(
-                oldTripleStoreRepositories,
-                tripleStoreImplementation,
-                repository,
-            );
-            // eslint-disable-next-line no-await-in-loop
-            if (
-                await repositoryExists(
-                    oldTripleStoreRepositories,
-                    repository,
-                    tripleStoreImplementation,
-                )
-            ) {
-                logger.error(
-                    `Something went wrong. Repository ${repository} still exists after deletion. Retrying deletion...`,
-                );
-            } else {
-                deleted = true;
-            }
-        }
-        logger.info(`Repository ${repository} deleted successfully`);
     }
 }
 
@@ -353,8 +307,9 @@ async function main() {
         }
 
         if (!blockchainName) {
-            logger.info(`Blockchain ${blockchain} not found. Skipping...`);
-            continue;
+            throw new Error(
+                `Blockchain ${blockchain} not found. Make sure you have the correct blockchain ID and correct NODE_ENV in .env file.`,
+            );
         }
 
         // REMOTE
@@ -504,10 +459,6 @@ async function main() {
         );
         logger.timeEnd('BLOCKCHAIN ASSERRTION GET AND TRIPLE STORE INSERT');
     }
-
-    logger.time('DELETE V6 TRIPLE STORE REPOSITORIES');
-    await deleteV6TripleStoreRepositories(tripleStoreConfig, tripleStoreImplementation);
-    logger.timeEnd('DELETE V6 TRIPLE STORE REPOSITORIES');
 
     // REMOTE
     markMigrationAsSuccessfull();

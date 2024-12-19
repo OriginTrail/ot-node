@@ -1,6 +1,5 @@
 import { setTimeout } from 'timers/promises';
 import axios from 'axios';
-import graphdb from 'graphdb';
 import {
     OT_BLAZEGRAPH,
     OT_FUSEKI,
@@ -28,8 +27,6 @@ import {
     validateUal,
 } from './validation.js';
 import logger from './logger.js';
-
-const { server, http } = graphdb;
 
 export function getTripleStoreData(tripleStoreConfig) {
     // Validation
@@ -255,59 +252,6 @@ export async function ensureConnections(tripleStoreRepositories, tripleStoreImpl
     await Promise.all(ensureConnectionPromises);
 }
 
-export async function repositoryExists(
-    tripleStoreRepositories,
-    repository,
-    tripleStoreImplementation,
-) {
-    // Validation
-    validateTripleStoreRepositories(tripleStoreRepositories);
-    validateRepository(repository);
-    validateTripleStoreImplementation(tripleStoreImplementation);
-
-    const { url, name } = tripleStoreRepositories[repository];
-    switch (tripleStoreImplementation) {
-        case OT_BLAZEGRAPH:
-            try {
-                await axios.get(`${url}/blazegraph/namespace/${name}/properties`, {
-                    params: {
-                        'describe-each-named-graph': 'false',
-                    },
-                    headers: {
-                        Accept: 'application/ld+json',
-                    },
-                });
-                return true;
-            } catch (error) {
-                if (error.response && error.response.status === 404) {
-                    // Expected error: GraphDB is up but has not created node0 repository
-                    // Ot-node will create repo in initialization
-                    return false;
-                }
-                logger.error(
-                    `Error while getting ${repository} repositories. Error: ${error.message}`,
-                );
-
-                return false;
-            }
-        case OT_FUSEKI:
-            try {
-                const response = await axios.get(`${url}/$/datasets`);
-
-                return response.data.datasets.filter((dataset) => dataset['ds.name'] === `/${name}`)
-                    .length;
-            } catch (error) {
-                logger.error(
-                    `Error while getting ${repository} repositories. Error: ${error.message}`,
-                );
-
-                return false;
-            }
-        default:
-            throw new Error(`Invalid triple store repository name: ${repository}`);
-    }
-}
-
 // blazegraph only
 function hasUnicodeCodePoints(input) {
     const unicodeRegex = /(?<!\\)\\U([a-fA-F0-9]{8})/g;
@@ -524,78 +468,6 @@ export async function getAssertionFromV6TripleStore(
         privateAssertion,
         success,
     };
-}
-
-export async function deleteRepository(
-    tripleStoreRepositories,
-    tripleStoreImplementation,
-    repository,
-) {
-    // Validation
-    validateTripleStoreRepositories(tripleStoreRepositories);
-    validateTripleStoreImplementation(tripleStoreImplementation);
-    validateRepository(repository);
-
-    const { url, name } = tripleStoreRepositories[repository];
-    logger.info(
-        `Deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}`,
-    );
-
-    switch (tripleStoreImplementation) {
-        case OT_BLAZEGRAPH: {
-            if (
-                await repositoryExists(
-                    tripleStoreRepositories,
-                    repository,
-                    tripleStoreImplementation,
-                )
-            ) {
-                await axios
-                    .delete(`${url}/blazegraph/namespace/${name}`, {})
-                    .catch((e) =>
-                        logger.error(
-                            `Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
-                        ),
-                    );
-            }
-            break;
-        }
-        case OT_GRAPHDB: {
-            const serverConfig = new server.ServerClientConfig(url)
-                .setTimeout(40000)
-                .setHeaders({
-                    Accept: http.RDFMimeType.N_QUADS,
-                })
-                .setKeepAlive(true);
-            const s = new server.GraphDBServerClient(serverConfig);
-            s.deleteRepository(name).catch((e) =>
-                logger.error(
-                    `Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
-                ),
-            );
-            break;
-        }
-        case OT_FUSEKI: {
-            if (
-                await repositoryExists(
-                    tripleStoreRepositories,
-                    repository,
-                    tripleStoreImplementation,
-                )
-            ) {
-                await axios
-                    .delete(`${url}/$/datasets/${name}`, {})
-                    .catch((e) =>
-                        logger.error(
-                            `Error while deleting ${tripleStoreImplementation} triple store repository: ${repository} with name: ${name}. Error: ${e.message}`,
-                        ),
-                    );
-            }
-            break;
-        }
-        default:
-            logger.error(`Unknown triple store implementation: ${tripleStoreImplementation}`);
-    }
 }
 
 export function processContent(str) {

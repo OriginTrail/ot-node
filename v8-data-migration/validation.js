@@ -15,7 +15,14 @@ export function validateBlockchainName(blockchainName) {
 }
 
 export function validateBlockchainDetails(blockchainDetails) {
-    if (!blockchainDetails || typeof blockchainDetails !== 'object') {
+    if (
+        !blockchainDetails ||
+        typeof blockchainDetails !== 'object' ||
+        !Object.keys(blockchainDetails).includes('ID') ||
+        !Object.keys(blockchainDetails).includes('ENV') ||
+        !Object.keys(blockchainDetails).includes('NAME') ||
+        !Object.keys(blockchainDetails).includes('CONTENT_ASSET_STORAGE_CONTRACT_ADDRESS')
+    ) {
         throw new Error(
             `[VALIDATION ERROR] Blockchain details is defined or it is not an object. Blockchain details: ${blockchainDetails}`,
         );
