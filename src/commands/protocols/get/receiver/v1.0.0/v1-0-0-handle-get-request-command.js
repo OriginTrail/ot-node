@@ -126,6 +126,13 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                     );
                 }
 
+                if (!assertionId) {
+                    return {
+                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                        messageData: { errorMessage: `Unable to find assertion ${ual}` },
+                    };
+                }
+
                 this.logger.info(
                     `Found assertion id: ${assertionId}, operation id ${operationId}, ual: ${ual}`,
                 );
