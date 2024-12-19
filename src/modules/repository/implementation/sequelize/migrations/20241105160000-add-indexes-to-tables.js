@@ -1,6 +1,6 @@
 export async function up({ context: { queryInterface } }) {
     await queryInterface.addIndex('shard', ['blockchain_id'], {
-        name: 'blockchain_id_index',
+        name: 'shard_blockchain_id_index',
     });
 
     await queryInterface.addIndex('shard', ['last_dialed'], {
@@ -8,7 +8,7 @@ export async function up({ context: { queryInterface } }) {
     });
 
     await queryInterface.addIndex('service_agreement', ['blockchain_id'], {
-        name: 'blockchain_id_index',
+        name: 'service_agreement_blockchain_id_index',
     });
 
     await queryInterface.addIndex('service_agreement', ['blockchain_id', 'token_id'], {
@@ -125,11 +125,11 @@ export async function up({ context: { queryInterface } }) {
 }
 
 export async function down({ context: { queryInterface } }) {
-    await queryInterface.removeIndex('shard', 'blockchain_id_index');
+    await queryInterface.removeIndex('shard', 'shard_blockchain_id_index');
 
     await queryInterface.removeIndex('shard', 'last_dialed_index');
 
-    await queryInterface.removeIndex('service_agreement', 'blockchain_id_index');
+    await queryInterface.removeIndex('service_agreement', 'service_agreement_blockchain_id_index');
 
     await queryInterface.removeIndex('service_agreement', 'blockchain_id_token_id_index');
 
