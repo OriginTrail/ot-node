@@ -47,6 +47,7 @@ class QueryCommand extends Command {
         //         query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
         //     }
         // }
+
         try {
             switch (queryType) {
                 case QUERY_TYPES.CONSTRUCT: {
@@ -66,7 +67,19 @@ class QueryCommand extends Command {
                         OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_START,
                         operationId,
                     );
-                    data = await this.tripleStoreService.select(query, repository);
+
+                    if (Array.isArray(repository)) {
+                        const dataV6 = await this.tripleStoreService.select(query, repository[0]);
+                        const dataV8 = await this.tripleStoreService.select(query, repository[1]);
+
+                        data = this.dataService.removeDuplicateObjectsFromArray([
+                            ...dataV6,
+                            ...dataV8,
+                        ]);
+                    } else {
+                        data = await this.tripleStoreService.select(query, repository);
+                    }
+
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_END,
                         operationId,
