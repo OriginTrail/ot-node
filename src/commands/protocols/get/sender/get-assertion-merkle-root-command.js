@@ -1,11 +1,12 @@
 import Command from '../../../command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import { ERROR_TYPE, TRIPLE_STORE_REPOSITORIES } from '../../../../constants/constants.js';
 
 class GetAssertionMerkleRootCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.getService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.tripleStoreService = ctx.tripleStoreService;
 
         this.errorType = ERROR_TYPE.GET.GET_ASSERTION_ID_ERROR;
     }
@@ -15,19 +16,26 @@ class GetAssertionMerkleRootCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, contract, knowledgeCollectionId } = command.data;
-        this.logger.info(
-            `Getting assertion id for token id: ${knowledgeCollectionId}, contract: ${contract}, operation id: ${operationId} on blockchain: ${blockchain}`,
+        const { operationId, ual } = command.data;
+        this.logger.info(`Getting assertion id and operation id ${operationId} for ual: ${ual}`);
+
+        let assertionId = await this.tripleStoreService.getLatestAssertionId(
+            TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+            ual,
         );
 
-        const assertionId = await this.blockchainModuleManager.getLatestAssertionId(
-            blockchain,
-            contract,
-            knowledgeCollectionId,
-        );
+        if (!assertionId) {
+            assertionId = await this.tripleStoreService.getLatestAssertionId(
+                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                ual,
+            );
+        }
 
+        if (!assertionId) {
+            throw new Error(`No assertionId found for UAL: ${ual} in either repository.`);
+        }
         this.logger.info(
-            `Found assertion id: ${assertionId} for token id: ${knowledgeCollectionId}, contract: ${contract} on blockchain: ${blockchain} for operation id: ${operationId}`,
+            `Found assertion id: ${assertionId} and operation id ${operationId} ual: ${ual}`,
         );
         return this.continueSequence({ ...command.data, assertionId }, command.sequence);
     }
