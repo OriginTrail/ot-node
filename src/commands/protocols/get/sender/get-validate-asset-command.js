@@ -50,11 +50,7 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
         );
         // TODO: Update to validate knowledge asset index
         const isValidUal = isOperationV0
-            ? await this.validationService.validateUalV6(
-                  blockchain,
-                  contract,
-                  knowledgeCollectionId,
-              )
+            ? true
             : await this.validationService.validateUal(blockchain, contract, knowledgeCollectionId);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.GET.GET_VALIDATE_UAL_END,
