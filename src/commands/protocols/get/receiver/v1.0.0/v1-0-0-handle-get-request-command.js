@@ -37,8 +37,10 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             knowledgeAssetId,
             ual,
             includeMetadata,
-            assertionId,
+            isOperationV0,
         } = commandData;
+
+        let { assertionId } = commandData;
 
         // if (paranetUAL) {
         //     const paranetNodeAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
@@ -109,7 +111,31 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         let assertionPromise;
 
-        if (assertionId) {
+        if (isOperationV0) {
+            if (!assertionId) {
+                assertionId = await this.tripleStoreService.getLatestAssertionId(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    ual,
+                );
+
+                if (!assertionId) {
+                    assertionId = await this.tripleStoreService.getLatestAssertionId(
+                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                        ual,
+                    );
+                }
+
+                if (!assertionId) {
+                    return {
+                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+                        messageData: { errorMessage: `Unable to find assertion ${ual}` },
+                    };
+                }
+
+                this.logger.info(
+                    `Found assertion id: ${assertionId}, operation id ${operationId}, ual: ${ual}`,
+                );
+            }
             assertionPromise = this.tripleStoreService
                 .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
                 .then((result) => {
