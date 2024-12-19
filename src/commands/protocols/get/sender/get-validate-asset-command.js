@@ -23,7 +23,8 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, contract, knowledgeCollectionId, ual } = command.data;
+        const { operationId, blockchain, contract, knowledgeCollectionId, ual, isOperationV0 } =
+            command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
@@ -48,11 +49,13 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
         );
         // TODO: Update to validate knowledge asset index
-        const isValidUal = await this.validationService.validateUal(
-            blockchain,
-            contract,
-            knowledgeCollectionId,
-        );
+        const isValidUal = isOperationV0
+            ? await this.validationService.validateUalV6(
+                  blockchain,
+                  contract,
+                  knowledgeCollectionId,
+              )
+            : await this.validationService.validateUal(blockchain, contract, knowledgeCollectionId);
         this.operationIdService.emitChangeEvent(
             OPERATION_ID_STATUS.GET.GET_VALIDATE_UAL_END,
             operationId,
