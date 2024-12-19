@@ -929,7 +929,7 @@ class Web3Service {
             throw new Error('Unknown asset storage contract address');
         const knowledgeCollectionPublisher = await this.callContractFunction(
             assetStorageContractInstance,
-            'getPublisher',
+            'getLatestMerkleRootPublisher',
             [knowledgeCollectionId],
         );
         return knowledgeCollectionPublisher;
@@ -1129,7 +1129,6 @@ class Web3Service {
         const wallet = this.getRandomOperationalWallet();
         return wallet.signMessage(ethers.utils.arrayify(messageHash));
     }
-
 
     async getStakeWeightedAverageAsk() {
         return this.callContractFunction(
