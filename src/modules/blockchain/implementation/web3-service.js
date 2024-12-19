@@ -146,28 +146,12 @@ class Web3Service {
                 // eslint-disable-next-line no-await-in-loop
                 await provider.getNetwork();
 
-                let isArchiveNode = false;
-                try {
-                    const block = await provider.getBlock(1);
-
-                    if (block) {
-                        isArchiveNode = true;
-                    }
-                } catch (error) {
-                    /* empty */
-                }
-
-                if (isArchiveNode) {
-                    providers.push({
-                        provider,
-                        priority,
-                        weight: 1,
-                        stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
-                    });
-                } else {
-                    this.logger.warn(`${rpcEndpoint} RPC is not an Archive Node, skipping...`);
-                    continue;
-                }
+                providers.push({
+                    provider,
+                    priority,
+                    weight: 1,
+                    stallTimeout: RPC_PROVIDER_STALL_TIMEOUT,
+                });
 
                 this.logger.debug(
                     `Connected to the blockchain RPC: ${this.maskRpcUrl(rpcEndpoint)}.`,
