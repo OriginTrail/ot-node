@@ -119,13 +119,6 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                 );
 
                 if (!assertionId) {
-                    assertionId = await this.tripleStoreService.getLatestAssertionId(
-                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                        ual,
-                    );
-                }
-
-                if (!assertionId) {
                     return {
                         messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
                         messageData: { errorMessage: `Unable to find assertion ${ual}` },
@@ -144,7 +137,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                         operationId,
                         blockchain,
                     );
-                    return result;
+                    return result.split('\n').filter((res) => res.length > 0);
                 });
         } else {
             assertionPromise = this.tripleStoreService
