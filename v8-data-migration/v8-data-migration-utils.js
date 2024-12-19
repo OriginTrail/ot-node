@@ -3,12 +3,19 @@ import path from 'path';
 import { stringify } from 'csv-stringify';
 import { parse as csvParse } from 'csv-parse';
 import readLastLines from 'read-last-lines';
-import { NODERC_CONFIG_PATH, MIGRATION_PROGRESS_FILE } from './constants.js';
+import { NODERC_CONFIG_PATH, MIGRATION_PROGRESS_FILE, DEFAULT_CONFIG_PATH } from './constants.js';
 import { validateSuccessfulInserts, validateConfig } from './validation.js';
 import logger from './logger.js';
 
 export function initializeConfig() {
     const configPath = path.resolve(NODERC_CONFIG_PATH);
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    validateConfig(config);
+    return config;
+}
+
+export function initializeDefaultConfig() {
+    const configPath = path.resolve(DEFAULT_CONFIG_PATH);
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     validateConfig(config);
     return config;
