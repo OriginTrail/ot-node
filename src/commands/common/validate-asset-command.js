@@ -3,7 +3,6 @@ import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
-    ZERO_BYTES32,
     PARANET_ACCESS_POLICY,
 } from '../../constants/constants.js';
 
@@ -39,15 +38,6 @@ class ValidateAssetCommand extends Command {
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
-        const blockchainAssertionId =
-            await this.blockchainModuleManager.getKnowledgeCollectionLatestMerkleRoot(
-                blockchain,
-                contract,
-                tokenId,
-            );
-        if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
-            return Command.retry();
-        }
         // TODO: Validate number of triplets and other stuff we did before so it matches like we did it in v6
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
@@ -55,19 +45,6 @@ class ValidateAssetCommand extends Command {
         // backwards compatibility
         const cachedAssertion = cachedData.datasetRoot || cachedData.public.assertionId;
         const cachedDataset = cachedData.dataset || cachedData.public.assertion;
-        this.logger.info(
-            `Validating asset's public assertion with id: ${cachedAssertion} ual: ${ual}`,
-        );
-        if (blockchainAssertionId !== cachedAssertion) {
-            await this.handleError(
-                operationId,
-                blockchain,
-                `Invalid assertion id for asset ${ual}. Received value from blockchain: ${blockchainAssertionId}, received value from request: ${cachedData.public.assertionId}`,
-                this.errorType,
-                true,
-            );
-            return Command.empty();
-        }
 
         // V0 backwards compatibility
         if (cachedData.private?.assertionId && cachedData.private?.assertion) {
