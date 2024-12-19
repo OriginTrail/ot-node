@@ -522,7 +522,9 @@ class OtTripleStore {
 
         const data = await this.select(repository, query);
 
-        const latestAssertionId = data?.replace('assertion:', '');
+        const fullAssertionId = data?.[0]?.assertionId;
+
+        const latestAssertionId = fullAssertionId?.replace('assertion:', '');
 
         return latestAssertionId;
     }
