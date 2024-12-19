@@ -149,6 +149,18 @@ class DataService {
         array.splice(left, 0, str);
         return left;
     }
+
+    removeDuplicateObjectsFromArray(array) {
+        const seen = new Set();
+        return array.filter((item) => {
+            const key = Object.values(item).join('_');
+            if (seen.has(key)) {
+                return false;
+            }
+            seen.add(key);
+            return true;
+        });
+    }
 }
 
 export default DataService;

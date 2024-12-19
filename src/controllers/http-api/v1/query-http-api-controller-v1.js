@@ -45,7 +45,7 @@ class QueryController extends BaseController {
                 queryType,
                 repository:
                     !tripleStoreMigrationAlreadyExecuted && repository
-                        ? repository
+                        ? [repository, TRIPLE_STORE_REPOSITORIES.DKG]
                         : TRIPLE_STORE_REPOSITORIES.DKG,
                 operationId,
             },
