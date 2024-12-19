@@ -117,6 +117,10 @@ class OTNode {
     async initializeModules() {
         const initializationPromises = [];
         for (const moduleName in this.config.modules) {
+            if (!this.config.modules[moduleName].enabled) {
+                continue;
+            }
+
             const moduleManagerName = `${moduleName}ModuleManager`;
 
             const moduleManager = this.container.resolve(moduleManagerName);

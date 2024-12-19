@@ -13,21 +13,23 @@ class TelemetryModuleManager extends BaseModuleManager {
     async initialize() {
         await super.initialize();
 
-        this.listenOnEvents((eventData) => {
-            this.sendTelemetryData(
-                eventData.operationId,
-                eventData.timestamp,
-                eventData.blockchainId,
-                eventData.lastEvent,
-                eventData.value1,
-                eventData.value2,
-                eventData.value3,
-            );
-        });
+        if (this.initialized) {
+            this.listenOnEvents((eventData) => {
+                this.sendTelemetryData(
+                    eventData.operationId,
+                    eventData.timestamp,
+                    eventData.blockchainId,
+                    eventData.lastEvent,
+                    eventData.value1,
+                    eventData.value2,
+                    eventData.value3,
+                );
+            });
+        }
     }
 
     listenOnEvents(onEventReceived) {
-        if (this.config.modules.telemetry.enabled && this.initialized) {
+        if (this.initialized) {
             return this.getImplementation().module.listenOnEvents(
                 this.eventEmitter,
                 onEventReceived,
@@ -36,7 +38,7 @@ class TelemetryModuleManager extends BaseModuleManager {
     }
 
     async sendTelemetryData(operationId, timestamp, blockchainId, name, value1, value2, value3) {
-        if (this.config.modules.telemetry.enabled && this.initialized) {
+        if (this.initialized) {
             return this.getImplementation().module.sendTelemetryData(
                 operationId,
                 timestamp,
