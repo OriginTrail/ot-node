@@ -460,6 +460,16 @@ class TripleStoreService {
         return nquads;
     }
 
+    async getLatestAssertionId(repository, ual) {
+        const nquads = await this.tripleStoreModuleManager.getLatestAssertionId(
+            this.repositoryImplementations[repository],
+            repository,
+            ual,
+        );
+
+        return nquads;
+    }
+
     async construct(query, repository = TRIPLE_STORE_REPOSITORY.DKG) {
         return this.tripleStoreModuleManager.construct(
             this.repositoryImplementations[repository] ??
