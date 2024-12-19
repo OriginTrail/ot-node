@@ -8,7 +8,7 @@ export async function down({ context: { queryInterface, Sequelize } }) {
         type: Sequelize.STRING,
         allowNull: false,
     });
-    await queryInterface.addColumn('publish_response', 'dataset_root', {
+    await queryInterface.addColumn('get_response', 'dataset_root', {
         type: Sequelize.STRING,
         allowNull: false,
     });

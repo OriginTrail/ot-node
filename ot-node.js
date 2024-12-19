@@ -331,7 +331,8 @@ class OTNode {
                 continue;
             }
 
-            const { blockchain, contract, tokenId } = ualService.resolveUAL(paranetUAL);
+            const { blockchain, contract, knowledgeCollectionId } =
+                ualService.resolveUAL(paranetUAL);
             if (!blockchainModuleManager.getImplementationNames().includes(blockchain)) {
                 this.logger.warn(
                     `Unable to initialize Paranet with id ${paranetUAL} because of unsupported blockchain implementation`,
@@ -339,7 +340,7 @@ class OTNode {
                 continue;
             }
 
-            const paranetId = paranetService.constructParanetId(contract, tokenId);
+            const paranetId = paranetService.constructParanetId(contract, knowledgeCollectionId);
             // eslint-disable-next-line no-await-in-loop
             const paranetExists = await blockchainModuleManager.paranetExists(
                 blockchain,
