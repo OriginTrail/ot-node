@@ -13,6 +13,7 @@ import {
 import {
     updateCsvFile,
     initializeConfig,
+    initializeDefaultConfig,
     getCsvDataStream,
     getHighestTokenId,
     ensureDirectoryExists,
@@ -239,8 +240,11 @@ async function main() {
     ensureDirectoryExists(DATA_MIGRATION_DIR);
     // REMOTE END
 
-    // initialize node config
+    // initialize noderc config
     const config = initializeConfig();
+
+    // initialize default config
+    const defaultConfig = initializeDefaultConfig();
 
     // Initialize blockchain config
     const blockchainConfig = config.modules.blockchain;
@@ -291,7 +295,10 @@ async function main() {
             logger.info(`Blockchain ${blockchain} is not enabled. Skipping...`);
             continue;
         }
-        const rpcEndpoints = blockchainImplementation?.config?.rpcEndpoints;
+        const rpcEndpoints = blockchainImplementation?.config?.rpcEndpoints
+            ? blockchainImplementation.config.rpcEndpoints
+            : defaultConfig[process.env.NODE_ENV].modules.blockchain.implementation[blockchain]
+                  .config.rpcEndpoints;
         if (!Array.isArray(rpcEndpoints) || rpcEndpoints.length === 0) {
             throw new Error(`RPC endpoints are not defined for blockchain ${blockchain}.`);
         }
