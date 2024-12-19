@@ -8,12 +8,14 @@ class BidSuggestionController extends BaseController {
 
     async handleRequest(req, res) {
         try {
-            const { blockchain, epochsNumber, assertionSize } = req.body;
-            const bidSuggestion =
-                (await this.blockchainModuleManager.getStakeWeightedAverageAsk(blockchain)) *
-                epochsNumber *
-                assertionSize;
-            this.returnResponse(res, 200, { bidSuggestion });
+            const { blockchain, epochsNumber, assertionSize } = req.query;
+            const bidSuggestion = (
+                await this.blockchainModuleManager.getStakeWeightedAverageAsk(blockchain)
+            )
+                .mul(epochsNumber)
+                .mul(assertionSize);
+            const bidSuggestionString = bidSuggestion.toString();
+            this.returnResponse(res, 200, { bidSuggestion: bidSuggestionString });
         } catch (error) {
             this.logger.error(`Unable to get bid suggestion. Error: ${error}`);
             this.returnResponse(res, 500, {
