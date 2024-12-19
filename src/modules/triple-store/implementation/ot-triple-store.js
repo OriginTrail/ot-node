@@ -512,6 +512,21 @@ class OtTripleStore {
         this.select(repository, query);
     }
 
+    async getLatestAssertionId(repository, ual) {
+        const query = `SELECT ?assertionId
+        WHERE {
+          GRAPH <assets:graph> {
+            <${ual}> ?p ?assertionId
+          }
+        }`;
+
+        const data = await this.select(repository, query);
+
+        const latestAssertionId = data?.[0]?.assertionId;
+
+        return latestAssertionId;
+    }
+
     async construct(repository, query) {
         return this._executeQuery(repository, query, MEDIA_TYPES.N_QUADS);
     }

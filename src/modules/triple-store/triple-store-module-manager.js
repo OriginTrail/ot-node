@@ -223,6 +223,15 @@ class TripleStoreModuleManager extends BaseModuleManager {
         }
     }
 
+    async getLatestAssertionId(implementationName, repository, ual) {
+        if (this.getImplementation(implementationName)) {
+            return this.getImplementation(implementationName).module.getLatestAssertionId(
+                repository,
+                ual,
+            );
+        }
+    }
+
     async construct(implementationName, repository, query) {
         if (this.getImplementation(implementationName)) {
             return this.getImplementation(implementationName).module.construct(repository, query);

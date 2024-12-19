@@ -64,7 +64,6 @@ class GetController extends BaseController {
             //
 
             const commandSequence = [];
-            commandSequence.push('getValidateAssetCommand');
 
             if (
                 !tripleStoreMigrationAlreadyExecuted &&
