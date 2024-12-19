@@ -1,7 +1,7 @@
 import path from 'path';
 
 import { NODE_ENVIRONMENTS } from '../constants/constants.js';
-import TripleStoreUserConfigurationMigration from './TripleStoreUserConfigurationMigration.js';
+import TripleStoreUserConfigurationMigration from './triple-store-user-configuratio-migration.js';
 
 class MigrationExecutor {
     static async executeTripleStoreUserConfigurationMigration(container, logger, config) {
@@ -13,7 +13,7 @@ class MigrationExecutor {
             return;
 
         const migration = new TripleStoreUserConfigurationMigration(
-            'tripleStoreUserConfigurationMigration',
+            'tripleStoreUserConfigurationMigrationV8',
             logger,
             config,
         );
