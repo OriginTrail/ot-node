@@ -1,37 +1,19 @@
 import NetworkProtocolCommand from '../../common/network-protocol-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class NetworkUpdateCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.updateService;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.ualService = ctx.ualService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // can we remove this
+        this.ualService = ctx.ualService; // can we remove this
 
-        this.errorType = ERROR_TYPE.UPDATE.UPDATE_START_ERROR;
-    }
-
-    async getKeywords(command) {
-        const { blockchain, contract, tokenId } = command.data;
-        const locationKeyword = await this.ualService.calculateLocationKeyword(
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return [locationKeyword];
-    }
-
-    async getBatchSize(blockchainId) {
-        return this.blockchainModuleManager.getR2(blockchainId);
-    }
-
-    async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getFinalizationCommitsNumber(blockchainId);
+        this.errorType = ERROR_TYPE.UPDATE.UPDATE_NETWORK_START_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_NETWORK_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_NETWORK_END;
     }
 
     /**
-     * Builds default NetworkUpdateCommand
+     * Builds default networkUpdateCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

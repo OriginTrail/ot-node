@@ -19,7 +19,18 @@ class OtBlazegraph extends OtTripleStore {
         if (!(await this.repositoryExists(repository))) {
             await axios.post(
                 `${url}/blazegraph/namespace`,
-                `com.bigdata.rdf.sail.truthMaintenance=false\ncom.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\ncom.bigdata.rdf.store.AbstractTripleStore.textIndex=false\ncom.bigdata.rdf.store.AbstractTripleStore.justify=false\ncom.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\ncom.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\ncom.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\ncom.bigdata.rdf.sail.namespace=${name}\ncom.bigdata.rdf.store.AbstractTripleStore.quads=true\ncom.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\ncom.bigdata.journal.Journal.groupCommit=false\ncom.bigdata.rdf.sail.isolatableIndices=false\n`,
+                `com.bigdata.rdf.sail.truthMaintenance=false\n` +
+                    `com.bigdata.namespace.${name}.lex.com.bigdata.btree.BTree.branchingFactor=400\n` +
+                    `com.bigdata.rdf.store.AbstractTripleStore.textIndex=false\n` +
+                    `com.bigdata.rdf.store.AbstractTripleStore.justify=false\n` +
+                    `com.bigdata.namespace.${name}.spo.com.bigdata.btree.BTree.branchingFactor=1024\n` +
+                    `com.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers=false\n` +
+                    `com.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms\n` +
+                    `com.bigdata.rdf.sail.namespace=${name}\n` +
+                    `com.bigdata.rdf.store.AbstractTripleStore.quads=true\n` +
+                    `com.bigdata.rdf.store.AbstractTripleStore.geoSpatial=false\n` +
+                    `com.bigdata.journal.Journal.groupCommit=false\n` +
+                    `com.bigdata.rdf.sail.isolatableIndices=false\n`,
                 {
                     headers: {
                         'Content-Type': 'text/plain',
@@ -35,21 +46,6 @@ class OtBlazegraph extends OtTripleStore {
         this.repositories[
             repository
         ].sparqlEndpointUpdate = `${url}/blazegraph/namespace/${name}/sparql`;
-    }
-
-    async insertAssertion(repository, assertionId, assertionNquads) {
-        const exists = await this.assertionExists(repository, assertionId);
-
-        if (!exists) {
-            return axios({
-                method: 'post',
-                url: `${this.repositories[repository].sparqlEndpointUpdate}?context-uri=assertion:${assertionId}`,
-                headers: {
-                    'Content-Type': 'text/x-nquads',
-                },
-                data: assertionNquads,
-            });
-        }
     }
 
     hasUnicodeCodePoints(input) {

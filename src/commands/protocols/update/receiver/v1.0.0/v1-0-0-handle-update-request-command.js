@@ -4,201 +4,106 @@ import {
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    COMMAND_RETRIES,
-    PENDING_STORAGE_REPOSITORIES,
-    COMMIT_BLOCK_DURATION_IN_BLOCKS,
-    COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS,
 } from '../../../../../constants/constants.js';
 
 class HandleUpdateRequestCommand extends HandleProtocolMessageCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.updateService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
-        this.commandExecutor = ctx.commandExecutor;
-        this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.tripleStoreService = ctx.tripleStoreService;
-        this.ualService = ctx.ualService;
         this.pendingStorageService = ctx.pendingStorageService;
-        this.shardingTableService = ctx.shardingTableService;
-        this.hashingService = ctx.hashingService;
-        this.proximityScoringService = ctx.proximityScoringService;
+        this.operationIdService = ctx.operationIdService;
+        this.pendingStorageService = ctx.pendingStorageService;
+        this.signatureService = ctx.signatureService;
 
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_LOCAL_STORE_REMOTE_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_END;
+        this.prepareMessageStartEvent =
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent =
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_PREPARE_MESSAGE_END;
+        this.sendMessageResponseStartEvent =
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_START;
+        this.sendMessageResponseEndEvent =
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_SEND_RESPONSE_END;
+        this.removeCachedSessionStartEvent =
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_START;
+        this.removeCachedSessionEndEvent =
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_REMOVE_CACHED_SESSION_END;
     }
 
     async prepareMessage(commandData) {
-        const {
-            blockchain,
-            contract,
-            tokenId,
-            operationId,
-            agreementId,
-            keyword,
-            hashFunctionId,
-            agreementData,
-        } = commandData;
+        const { blockchain, operationId, datasetRoot } = commandData;
 
-        const proximityScoreFunctionsPairId = commandData.proximityScoreFunctionsPairId ?? 1;
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.UPDATE.UPDATE_GET_CACHED_OPERATION_ID_DATA_START,
+            operationId,
+            blockchain,
+        );
+        const { dataset } = await this.operationIdService.getCachedOperationIdData(operationId);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.UPDATE.UPDATE_GET_CACHED_OPERATION_ID_DATA_END,
+            operationId,
+            blockchain,
+        );
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_START,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_ASSET_REMOTE_START,
         );
 
-        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
-        await this.pendingStorageService.cacheAssertion(
-            PENDING_STORAGE_REPOSITORIES.PUBLIC,
-            blockchain,
-            contract,
-            tokenId,
-            cachedData.assertionId,
-            {
-                public: {
-                    assertion: cachedData.assertion,
-                },
-                agreementId,
-                agreementData,
-            },
+        const validationResult = await this.validateReceivedData(
             operationId,
-        );
-
-        const updateCommitWindowDuration =
-            await this.blockchainModuleManager.getUpdateCommitWindowDuration(blockchain);
-        const r0 = await this.blockchainModuleManager.getR0(blockchain);
-        const r2 = await this.blockchainModuleManager.getR2(blockchain);
-        const scheduleCommandsPromises = [];
-
-        const neighbourhood = await this.shardingTableService.findNeighbourhood(
+            datasetRoot,
+            dataset,
             blockchain,
-            keyword,
-            r2,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
         );
 
-        const closestNode = neighbourhood[0];
-
-        let neighbourhoodEdges = null;
-        if (proximityScoreFunctionsPairId === 2) {
-            neighbourhoodEdges = await this.shardingTableService.getNeighboorhoodEdgeNodes(
-                neighbourhood,
-                blockchain,
-                hashFunctionId,
-                proximityScoreFunctionsPairId,
-                keyword,
-            );
-        }
-
-        if (!neighbourhoodEdges && proximityScoreFunctionsPairId === 2) {
-            throw Error('Unable to find neighbourhood edges for asset');
-        }
-
-        const totalNodesNumber = await this.repositoryModuleManager.getPeersCount(blockchain);
-        const minStake = await this.blockchainModuleManager.getMinimumStake(blockchain);
-        const maxStake = await this.blockchainModuleManager.getMaximumStake(blockchain);
-
-        const rank = await this.serviceAgreementService.calculateRank(
+        this.operationIdService.updateOperationIdStatus(
+            operationId,
             blockchain,
-            keyword,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
-            r2,
-            neighbourhood,
-            neighbourhoodEdges,
-            totalNodesNumber,
-            minStake,
-            maxStake,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_ASSET_REMOTE_END,
         );
-        if (rank != null) {
-            this.logger.trace(`Calculated rank: ${rank + 1} for agreement id:  ${agreementId}`);
-            const finalizationCommitsNumber =
-                await this.blockchainModuleManager.getFinalizationCommitsNumber(blockchain);
 
-            const updateCommitDelay = await this.calculateUpdateCommitDelay(
-                blockchain,
-                updateCommitWindowDuration,
-                finalizationCommitsNumber,
-                r0,
-                rank,
-            );
-            scheduleCommandsPromises.push(
-                this.commandExecutor.add({
-                    name: 'submitUpdateCommitCommand',
-                    delay: updateCommitDelay,
-                    retries: COMMAND_RETRIES.SUBMIT_UPDATE_COMMIT,
-                    data: {
-                        ...commandData,
-                        agreementData,
-                        agreementId,
-                        r0,
-                        r2,
-                        updateCommitWindowDuration,
-                        proximityScoreFunctionsPairId,
-                        closestNode: closestNode?.index,
-                        leftNeighborhoodEdge: neighbourhoodEdges?.leftEdge?.index,
-                        rightNeighborhoodEdge: neighbourhoodEdges?.rightEdge?.index,
-                    },
-                    transactional: false,
-                }),
-            );
+        if (validationResult.messageType === NETWORK_MESSAGE_TYPES.RESPONSES.NACK) {
+            return validationResult;
         }
 
-        scheduleCommandsPromises.push(
-            this.commandExecutor.add({
-                name: 'deletePendingStateCommand',
-                sequence: [],
-                delay: (updateCommitWindowDuration + 60) * 1000,
-                data: {
-                    ...commandData,
-                    assertionId: cachedData.assertionId,
-                },
-                transactional: false,
-            }),
-        );
-
-        await Promise.all(scheduleCommandsPromises);
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.UPDATE.VALIDATING_UPDATE_ASSERTION_REMOTE_END,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_START,
         );
-        return { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: {} };
-    }
-
-    async calculateUpdateCommitDelay(
-        blockchain,
-        updateCommitWindowDuration,
-        finalizationCommitsNumber,
-        r0,
-        rank,
-    ) {
-        const r0OffsetPeriod = 0;
-        const blockTime = this.blockchainModuleManager.getBlockTimeMillis(blockchain);
-        // wait for 5 blocks for first batch to send commits
-        const commitsBlockDuration = blockTime * COMMIT_BLOCK_DURATION_IN_BLOCKS;
-        const commitBlock = Math.floor(rank / finalizationCommitsNumber);
-        // put 5 blocks delay between nodes if they are not in first batch
-        const nextNodeDelay =
-            commitBlock === 0
-                ? 0
-                : (rank % finalizationCommitsNumber) *
-                  COMMITS_DELAY_BETWEEN_NODES_IN_BLOCKS *
-                  blockTime;
-        const delay = commitsBlockDuration * commitBlock + r0OffsetPeriod + nextNodeDelay;
-        this.logger.info(
-            `Calculated update commit delay: ${Math.floor(
-                delay / 1000,
-            )}s, commitsBlockDuration: ${commitsBlockDuration}, commitBlock: ${commitBlock}, r0OffsetPeriod:${r0OffsetPeriod}, updateCommitWindowDuration ${updateCommitWindowDuration}s, finalizationCommitsNumber: ${finalizationCommitsNumber}, r0: ${r0}, rank: ${rank}`,
+        await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_CACHE_DATASET_END,
         );
 
-        return delay;
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_SIGN_START,
+            operationId,
+            blockchain,
+        );
+        const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+        const { v, r, s, vs } = await this.signatureService.signMessage(blockchain, datasetRoot);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.UPDATE.UPDATE_LOCAL_STORE_REMOTE_SIGN_END,
+            operationId,
+            blockchain,
+        );
+
+        return {
+            messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+            messageData: { identityId, v, r, s, vs },
+        };
     }
 
     /**
-     * Builds default HandleUpdateRequestCommand
+     * Builds default handleUpdateRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

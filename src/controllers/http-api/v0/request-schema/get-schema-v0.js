@@ -1,5 +1,3 @@
-import { GET_STATES } from '../../../../constants/constants.js';
-
 export default () => ({
     type: 'object',
     required: ['id'],
@@ -7,18 +5,18 @@ export default () => ({
         id: {
             type: 'string',
         },
-        state: {
-            oneOf: [
-                { enum: [GET_STATES.LATEST, GET_STATES.FINALIZED] },
-                {
-                    type: 'string',
-                    pattern: '^0x[A-Fa-f0-9]{64}$',
-                },
-            ],
+        contentType: {
+            type: 'string',
+        },
+        includeMetadata: {
+            type: 'boolean',
         },
         hashFunctionId: {
             type: 'number',
             minimum: 1,
+        },
+        paranetUAL: {
+            type: ['string', 'null'],
         },
     },
 });

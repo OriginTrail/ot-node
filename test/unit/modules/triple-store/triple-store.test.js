@@ -20,14 +20,14 @@ async function _insertAndGet(content) {
     const assertion = await formatAssertion(content);
     const assertionId = calculateRoot(assertion);
 
-    await tripleStoreModuleManager.insertAssertion(
+    await tripleStoreModuleManager.insertKnowledgeAssets(
         implementationName,
         TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
         assertionId,
         assertion.join('\n'),
     );
 
-    const nquads = await tripleStoreModuleManager.getAssertion(
+    const nquads = await tripleStoreModuleManager.getKnowledgeCollection(
         implementationName,
         TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
         assertionId,

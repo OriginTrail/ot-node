@@ -1,5 +1,4 @@
-import { assertionMetadata } from 'assertion-tools';
-import { BYTES_IN_KILOBYTE, ZERO_ADDRESS } from '../constants/constants.js';
+import { ZERO_ADDRESS, PRIVATE_ASSERTION_PREDICATE } from '../constants/constants.js';
 
 class ValidationService {
     constructor(ctx) {
@@ -16,7 +15,7 @@ class ValidationService {
 
         let isValid = true;
         try {
-            const result = await this.blockchainModuleManager.getKnowledgeAssetOwner(
+            const result = await this.blockchainModuleManager.getLatestMerkleRootPublisher(
                 blockchain,
                 contract,
                 tokenId,
@@ -34,59 +33,72 @@ class ValidationService {
     async validateAssertion(assertionId, blockchain, assertion) {
         this.logger.info(`Validating assertionId: ${assertionId}`);
 
-        this.validateAssertionId(assertion, assertionId);
-        const blockchainAssertionData = await this.blockchainModuleManager.getAssertionData(
-            blockchain,
-            assertionId,
-        );
-        this.validateAssertionSize(blockchainAssertionData.size, assertion);
-        this.validateTriplesNumber(blockchainAssertionData.triplesNumber, assertion);
-        this.validateChunkSize(blockchainAssertionData.chunksNumber, assertion);
+        await this.validateDatasetRoot(assertion, assertionId);
 
         this.logger.info(`Assertion integrity validated! AssertionId: ${assertionId}`);
     }
 
-    validateAssertionSize(blockchainAssertionSize, assertion) {
-        const blockchainAssertionSizeInKb = blockchainAssertionSize / BYTES_IN_KILOBYTE;
-        if (blockchainAssertionSizeInKb > this.config.maximumAssertionSizeInKb) {
-            throw Error(
-                `The size of the received assertion exceeds the maximum limit allowed.. Maximum allowed assertion size in kb: ${this.config.maximumAssertionSizeInKb}, assertion size read from blockchain in kb: ${blockchainAssertionSizeInKb}`,
+    async validateDatasetRootOnBlockchain(
+        knowledgeCollectionMerkleRoot,
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        const blockchainAssertionRoot =
+            await this.blockchainModuleManager.getKnowledgeCollectionLatestMerkleRoot(
+                blockchain,
+                assetStorageContractAddress,
+                knowledgeCollectionId,
             );
-        }
-        const assertionSize = assertionMetadata.getAssertionSizeInBytes(assertion);
-        if (blockchainAssertionSize !== assertionSize) {
-            // todo after corrective component is implemented, update this logic
-            this.logger.warn(
-                `Invalid assertion size, value read from blockchain: ${blockchainAssertionSize}, calculated: ${assertionSize}`,
-            );
-        }
-    }
 
-    validateTriplesNumber(blockchainTriplesNumber, assertion) {
-        const triplesNumber = assertionMetadata.getAssertionTriplesNumber(assertion);
-        if (blockchainTriplesNumber !== triplesNumber) {
-            throw Error(
-                `Invalid triples number, value read from blockchain: ${blockchainTriplesNumber}, calculated: ${triplesNumber}`,
+        if (knowledgeCollectionMerkleRoot !== blockchainAssertionRoot) {
+            throw new Error(
+                `Merkle Root validation failed. Merkle Root on chain: ${blockchainAssertionRoot}; Calculated Merkle Root: ${knowledgeCollectionMerkleRoot}`,
             );
         }
     }
 
-    validateChunkSize(blockchainChunksNumber, assertion) {
-        const chunksNumber = assertionMetadata.getAssertionChunksNumber(assertion);
-        if (blockchainChunksNumber !== chunksNumber) {
-            throw Error(
-                `Invalid chunks number, value read from blockchain: ${blockchainChunksNumber}, calculated size: ${chunksNumber}`,
+    // Used to validate assertion node received through network get
+    async validateDatasetOnBlockchain(
+        assertion,
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        const knowledgeCollectionMerkleRoot = await this.validationModuleManager.calculateRoot(
+            assertion,
+        );
+
+        await this.validateDatasetRootOnBlockchain(
+            knowledgeCollectionMerkleRoot,
+            blockchain,
+            assetStorageContractAddress,
+            knowledgeCollectionId,
+        );
+    }
+
+    async validateDatasetRoot(dataset, datasetRoot) {
+        const calculatedDatasetRoot = await this.validationModuleManager.calculateRoot(dataset);
+
+        if (datasetRoot !== calculatedDatasetRoot) {
+            throw new Error(
+                `Merkle Root validation failed. Received Merkle Root: ${datasetRoot}; Calculated Merkle Root: ${calculatedDatasetRoot}`,
             );
         }
     }
 
-    validateAssertionId(assertion, assertionId) {
-        const calculatedAssertionId = this.validationModuleManager.calculateRoot(assertion);
+    async validatePrivateMerkleRoot(publicAssertion, privateAssertion) {
+        const privateAssertionTriple = publicAssertion.find((triple) =>
+            triple.includes(PRIVATE_ASSERTION_PREDICATE),
+        );
 
-        if (assertionId !== calculatedAssertionId) {
-            // todo after corrective component is implemented, update this logic
-            this.logger.warn(
-                `Invalid assertion id. Received value: ${assertionId}, calculated: ${calculatedAssertionId}`,
+        if (privateAssertionTriple) {
+            const privateAssertionRoot = privateAssertionTriple.split(' ')[2].slice(1, -1);
+
+            await this.validateDatasetRoot(privateAssertion, privateAssertionRoot);
+        } else {
+            throw new Error(
+                `Merkle Root validation failed. Private Merkle Root not present in public assertion.`,
             );
         }
     }

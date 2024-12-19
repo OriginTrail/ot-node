@@ -1,9 +1,11 @@
 import ValidateAssetCommand from '../../../common/validate-asset-command.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
 
 class UpdateValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
         this.operationService = ctx.updateService;
+        this.errorType = ERROR_TYPE.UPDATE.UPDATE_VALIDATE_ASSET_ERROR;
     }
 
     async handleError(operationId, blockchain, errorMessage, errorType) {
@@ -12,6 +14,54 @@ class UpdateValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
             errorMessage,
             errorType,
+        );
+    }
+
+    /**
+     * Executes command and produces one or more events
+     * @param command
+     */
+    async execute(command) {
+        const { operationId, blockchain, datasetRoot } = command.data;
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_ASSET_START,
+        );
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.UPDATE.UPDATE_GET_CACHED_OPERATION_ID_DATA_START,
+            operationId,
+            blockchain,
+        );
+        const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.UPDATE.UPDATE_GET_CACHED_OPERATION_ID_DATA_END,
+            operationId,
+            blockchain,
+        );
+
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_DATASET_ROOT_START,
+            operationId,
+            blockchain,
+        );
+        await this.validationService.validateDatasetRoot(cachedData.dataset, datasetRoot);
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_DATASET_ROOT_END,
+            operationId,
+            blockchain,
+        );
+
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            OPERATION_ID_STATUS.UPDATE.UPDATE_VALIDATE_ASSET_END,
+        );
+        return this.continueSequence(
+            { ...command.data, retry: undefined, period: undefined },
+            command.sequence,
         );
     }
 

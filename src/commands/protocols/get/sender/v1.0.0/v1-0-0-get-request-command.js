@@ -4,6 +4,7 @@ import {
     ERROR_TYPE,
     OPERATION_REQUEST_STATUS,
     OPERATION_STATUS,
+    OPERATION_ID_STATUS,
 } from '../../../../../constants/constants.js';
 
 class GetRequestCommand extends ProtocolRequestCommand {
@@ -13,6 +14,12 @@ class GetRequestCommand extends ProtocolRequestCommand {
         this.validationService = ctx.validationService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_END;
+        this.prepareMessageStartEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_PREPARE_MESSAGE_END;
+        this.sendMessageStartEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_SEND_MESSAGE_START;
+        this.sendMessageEndEvent = OPERATION_ID_STATUS.GET.GET_REQUEST_SEND_MESSAGE_END;
     }
 
     async shouldSendMessage(command) {
@@ -31,37 +38,54 @@ class GetRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { contract, tokenId, assertionId, state, hashFunctionId } = command.data;
-        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
-
-        // TODO: Backwards compatibility, send blockchain without chainId
-        const blockchain = command.data.blockchain.split(':')[0];
+        const {
+            blockchain,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            includeMetadata,
+            ual,
+            paranetUAL,
+            paranetId,
+        } = command.data;
 
         return {
             blockchain,
             contract,
-            tokenId,
-            assertionId,
-            state,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            includeMetadata,
+            ual,
+            paranetUAL,
+            paranetId,
         };
     }
 
     async handleAck(command, responseData) {
-        if (responseData?.nquads) {
-            try {
-                await this.validationService.validateAssertion(
-                    command.data.assertionId,
-                    command.data.blockchain,
-                    responseData.nquads,
-                );
-            } catch (e) {
-                return this.handleNack(command, {
-                    errorMessage: e.message,
-                });
-            }
+        const { blockchain, contract, knowledgeCollectionId, knowledgeAssetId } = command.data;
+        if (responseData?.assertion?.public) {
+            // Only whole collection can be validated not particular KA
+            if (!knowledgeAssetId) {
+                try {
+                    await this.validationService.validateDatasetOnBlockchain(
+                        responseData.assertion.public,
+                        blockchain,
+                        contract,
+                        knowledgeCollectionId,
+                    );
 
+                    // This is added as support when get starts supporting private for curated paranet
+                    if (responseData.assertion?.private?.length)
+                        await this.validationService.validatePrivateMerkleRoot(
+                            responseData.assertion.public,
+                            responseData.assertion.private,
+                        );
+                } catch (e) {
+                    return this.handleNack(command, {
+                        errorMessage: e.message,
+                    });
+                }
+            }
             await this.operationService.processResponse(
                 command,
                 OPERATION_REQUEST_STATUS.COMPLETED,

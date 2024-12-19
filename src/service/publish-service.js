@@ -6,12 +6,14 @@ import {
     NETWORK_PROTOCOLS,
     ERROR_TYPE,
     OPERATIONS,
-    OPERATION_REQUEST_STATUS,
+    PUBLISH_BATCH_SIZE,
+    PUBLISH_MIN_NUM_OF_NODE_REPLICATIONS,
 } from '../constants/constants.js';
 
 class PublishService extends OperationService {
     constructor(ctx) {
         super(ctx);
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.operationName = OPERATIONS.PUBLISH;
         this.networkProtocols = NETWORK_PROTOCOLS.STORE;
@@ -30,77 +32,82 @@ class PublishService extends OperationService {
             blockchain,
             numberOfFoundNodes,
             leftoverNodes,
-            keyword,
             batchSize,
             minAckResponses,
+            datasetRoot,
         } = command.data;
 
-        const keywordsStatuses = await this.getResponsesStatuses(
+        const datasetRootStatus = await this.getResponsesStatuses(
             responseStatus,
             errorMessage,
             operationId,
-            keyword,
         );
 
-        const { completedNumber, failedNumber } = keywordsStatuses[keyword];
-        const numberOfResponses = completedNumber + failedNumber;
+        const { completedNumber, failedNumber } = datasetRootStatus[operationId];
+
+        const totalResponses = completedNumber + failedNumber;
+
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response with status: ${responseStatus} for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+            } response with status: ${responseStatus} for operationId: ${operationId}, dataset root: ${datasetRoot}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
                 numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
                 leftoverNodes.length
-            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${minAckResponses}`,
+            }, number of responses: ${totalResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}, minimum replication factor: ${minAckResponses}`,
         );
         if (responseData.errorMessage) {
             this.logger.trace(
-                `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
+                `Error message for operation id: ${operationId}, dataset root: ${datasetRoot} : ${responseData.errorMessage}`,
             );
         }
 
-        if (
-            responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
-            completedNumber === minAckResponses
-        ) {
-            let allCompleted = true;
-            for (const key in keywordsStatuses) {
-                if (keywordsStatuses[key].completedNumber < minAckResponses) {
-                    allCompleted = false;
-                    break;
-                }
-            }
-            if (allCompleted) {
-                await this.markOperationAsCompleted(
-                    operationId,
-                    blockchain,
-                    null,
-                    this.completedStatuses,
-                );
-                this.logResponsesSummary(completedNumber, failedNumber);
-                this.logger.info(
-                    `${this.operationName} with operation id: ${operationId} with status: ${
-                        this.completedStatuses[this.completedStatuses.length - 1]
-                    }`,
-                );
-            }
-        } else if (
-            completedNumber < minAckResponses &&
-            (numberOfFoundNodes === numberOfResponses || numberOfResponses % batchSize === 0)
-        ) {
-            if (leftoverNodes.length === 0) {
-                await this.markOperationAsFailed(
-                    operationId,
-                    blockchain,
-                    'Not replicated to enough nodes!',
-                    this.errorType,
-                );
-                this.logResponsesSummary(completedNumber, failedNumber);
-            } else {
-                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
-            }
+        // Minimum replication reached, mark in the operational DB
+        if (completedNumber === minAckResponses) {
+            this.logger.debug(
+                `Minimum replication ${minAckResponses} reached for operationId: ${operationId}, dataset root: ${datasetRoot}`,
+            );
+
+            await this.repositoryModuleManager.updateMinAcksReached(operationId, true);
         }
+
+        // All requests sent, minimum replication reached, mark as completed
+        if (leftoverNodes.length === 0 && completedNumber >= minAckResponses) {
+            await this.markOperationAsCompleted(
+                operationId,
+                blockchain,
+                null,
+                this.completedStatuses,
+            );
+            this.logResponsesSummary(completedNumber, failedNumber);
+        }
+
+        // All requests sent, minimum replication not reached, mark as failed
+        if (leftoverNodes.length === 0 && completedNumber < minAckResponses) {
+            this.markOperationAsFailed(
+                operationId,
+                blockchain,
+                'Not replicated to enough nodes!',
+                this.errorType,
+            );
+            this.logResponsesSummary(completedNumber, failedNumber);
+        }
+
+        // Not all requests sent, still possible to reach minimum replication,
+        // schedule requests for leftover nodes
+        const potentialCompletedNumber = completedNumber + leftoverNodes.length;
+        if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
+            await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
+        }
+    }
+
+    getBatchSize(batchSize = null) {
+        return batchSize ?? PUBLISH_BATCH_SIZE;
+    }
+
+    getMinAckResponses(minimumNumberOfNodeReplications = null) {
+        return minimumNumberOfNodeReplications ?? PUBLISH_MIN_NUM_OF_NODE_REPLICATIONS;
     }
 }
 

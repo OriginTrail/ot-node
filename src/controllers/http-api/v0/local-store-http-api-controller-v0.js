@@ -7,6 +7,7 @@ class LocalStoreController extends BaseController {
         this.commandExecutor = ctx.commandExecutor;
         this.operationIdService = ctx.operationIdService;
         this.dataService = ctx.dataService;
+        this.fileService = ctx.fileService;
     }
 
     async handleRequest(req, res) {
@@ -23,8 +24,13 @@ class LocalStoreController extends BaseController {
             null,
             OPERATION_ID_STATUS.LOCAL_STORE.LOCAL_STORE_INIT_END,
         );
-
-        const assertions = req.body;
+        let assertions;
+        const { filePath } = req.body;
+        if (filePath) {
+            assertions = JSON.parse(await this.fileService.readFile(filePath));
+        } else {
+            assertions = req.body;
+        }
 
         const cachedAssertions = {
             public: {},
@@ -65,7 +71,9 @@ class LocalStoreController extends BaseController {
             )}. Operation id: ${operationId}`,
         );
 
-        await this.operationIdService.cacheOperationIdData(operationId, cachedAssertions);
+        await this.operationIdService.cacheOperationIdDataToMemory(operationId, cachedAssertions);
+
+        await this.operationIdService.cacheOperationIdDataToFile(operationId, cachedAssertions);
 
         const commandSequence = ['validateAssetCommand', 'localStoreCommand'];
 
@@ -79,6 +87,8 @@ class LocalStoreController extends BaseController {
                 contract: assertions[0].contract,
                 tokenId: assertions[0].tokenId,
                 storeType: assertions[0].storeType,
+                paranetUAL: assertions[0].paranetUAL,
+                isOperationV0: true,
             },
             transactional: false,
         });

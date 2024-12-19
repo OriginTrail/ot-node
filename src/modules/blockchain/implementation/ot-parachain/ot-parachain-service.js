@@ -1,10 +1,6 @@
 import { ApiPromise, WsProvider, HttpProvider } from '@polkadot/api';
 import { ethers } from 'ethers';
-import {
-    BLOCK_TIME_MILLIS,
-    NEURO_DEFAULT_GAS_PRICE,
-    NODE_ENVIRONMENTS,
-} from '../../../../constants/constants.js';
+import { NEURO_DEFAULT_GAS_PRICE, NODE_ENVIRONMENTS } from '../../../../constants/constants.js';
 import Web3Service from '../web3-service.js';
 
 const NATIVE_TOKEN_DECIMALS = 12;
@@ -135,7 +131,8 @@ class OtParachainService extends Web3Service {
                 process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
                     ? NEURO_DEFAULT_GAS_PRICE.MAINNET
                     : NEURO_DEFAULT_GAS_PRICE.TESTNET;
-            return this.convertToWei(defaultGasPrice, 'wei');
+
+            return ethers.utils.parseUnits(defaultGasPrice.toString(), 'wei');
         }
     }
 
@@ -172,10 +169,6 @@ class OtParachainService extends Web3Service {
     async getNativeTokenBalance(wallet) {
         const nativeBalance = await wallet.getBalance();
         return nativeBalance / 10 ** NATIVE_TOKEN_DECIMALS;
-    }
-
-    getBlockTimeMillis() {
-        return BLOCK_TIME_MILLIS.OTP;
     }
 
     getValidOperationalWallets() {

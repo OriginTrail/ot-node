@@ -3,6 +3,7 @@ class ParanetService {
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.ualService = ctx.ualService;
+        this.cryptoService = ctx.cryptoService;
     }
 
     async initializeParanetRecord(blockchain, paranetId) {
@@ -24,34 +25,33 @@ class ParanetService {
         }
     }
 
-    constructParanetId(blockchain, contract, tokenId) {
-        const keyword = this.blockchainModuleManager.encodePacked(
-            blockchain,
+    constructParanetId(contract, tokenId) {
+        return this.cryptoService.keccak256EncodePacked(
             ['address', 'uint256'],
             [contract, tokenId],
         );
-
-        return this.blockchainModuleManager.keccak256(blockchain, keyword);
     }
 
-    constructKnowledgeAssetId(blockchain, contract, tokenId) {
-        const keyword = this.blockchainModuleManager.encodePacked(
-            blockchain,
+    constructKnowledgeAssetId(contract, tokenId) {
+        return this.cryptoService.keccak256EncodePacked(
             ['address', 'uint256'],
             [contract, tokenId],
         );
-
-        return this.blockchainModuleManager.keccak256(blockchain, keyword);
     }
 
-    getParanetRepositoryName(paranetId) {
-        if (this.ualService.isUAL(paranetId)) {
+    getParanetRepositoryName(paranetUAL) {
+        if (this.ualService.isUAL(paranetUAL)) {
             // Replace : and / with -
-            return paranetId.replace(/[/:]/g, '-').toLowerCase();
+            return paranetUAL.replace(/[/:]/g, '-').toLowerCase();
         }
         throw new Error(
-            `Unable to get Paranet repository name. Paranet id doesn't have UAL format: ${paranetId}`,
+            `Unable to get Paranet repository name. Paranet id doesn't have UAL format: ${paranetUAL}`,
         );
+    }
+
+    getParanetIdFromUAL(paranetUAL) {
+        const { contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
+        return this.constructParanetId(contract, tokenId);
     }
 }
 

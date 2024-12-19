@@ -4,9 +4,11 @@ import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants
 class UpdateScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.updateService;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // can this be removed
+        this.repositoryModuleManager = ctx.repositoryModuleManager; // can this be removed
 
-        this.startEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_REPLICATE_START;
+        this.operationStartEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_REPLICATE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.UPDATE.UPDATE_REPLICATE_END;
         this.errorType = ERROR_TYPE.UPDATE.UPDATE_START_ERROR;
     }
 

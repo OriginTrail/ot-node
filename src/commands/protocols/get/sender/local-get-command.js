@@ -2,20 +2,20 @@ import Command from '../../../command.js';
 import {
     OPERATION_ID_STATUS,
     ERROR_TYPE,
-    GET_STATES,
     TRIPLE_STORE_REPOSITORIES,
-    PENDING_STORAGE_REPOSITORIES,
 } from '../../../../constants/constants.js';
 
 class LocalGetCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.config = ctx.config;
         this.operationService = ctx.getService;
         this.operationIdService = ctx.operationIdService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.paranetService = ctx.paranetService;
+        this.ualService = ctx.ualService;
+        this.repositoryModuleManager = ctx.repositoryModuleManager;
 
         this.errorType = ERROR_TYPE.GET.GET_LOCAL_ERROR;
     }
@@ -25,76 +25,158 @@ class LocalGetCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { operationId, blockchain, contract, tokenId, assertionId, state } = command.data;
+        const {
+            operationId,
+            blockchain,
+            includeMetadata,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            contentType,
+            assertionId,
+        } = command.data;
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
             OPERATION_ID_STATUS.GET.GET_LOCAL_START,
         );
 
-        const response = {};
-        if (
-            state !== GET_STATES.FINALIZED &&
-            blockchain != null &&
-            contract != null &&
-            tokenId != null
-        ) {
-            for (const repository of [
-                PENDING_STORAGE_REPOSITORIES.PRIVATE,
-                PENDING_STORAGE_REPOSITORIES.PUBLIC,
-            ]) {
-                // eslint-disable-next-line no-await-in-loop
-                const stateIsPending = await this.pendingStorageService.assetHasPendingState(
-                    repository,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    assertionId,
-                );
+        // const response = {};
 
-                if (stateIsPending) {
+        // if (paranetUAL) {
+        //     const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+
+        //     const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        //     const syncedAssetRecord =
+        //         await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+
+        //     const nquads = await this.tripleStoreService.getAssertion(
+        //         paranetRepository,
+        //         syncedAssetRecord.publicAssertionId,
+        //     );
+
+        //     let privateNquads;
+        //     if (syncedAssetRecord.privateAssertionId) {
+        //         privateNquads = await this.tripleStoreService.getAssertion(
+        //             paranetRepository,
+        //             syncedAssetRecord.privateAssertionId,
+        //         );
+        //     }
+
+        //     if (nquads?.length) {
+        //         response.assertion = nquads;
+        //         if (privateNquads?.length) {
+        //             response.privateAssertion = privateNquads;
+        //         }
+        //     } else {
+        //         this.handleError(
+        //             operationId,
+        //             blockchain,
+        //             `Couldn't find locally asset with ${ual} in paranet ${paranetUAL}`,
+        //             this.errorType,
+        //         );
+        //     }
+
+        //     await this.operationService.markOperationAsCompleted(
+        //         operationId,
+        //         blockchain,
+        //         response,
+        //         [
+        //             OPERATION_ID_STATUS.GET.GET_LOCAL_END,
+        //             OPERATION_ID_STATUS.GET.GET_END,
+        //             OPERATION_ID_STATUS.COMPLETED,
+        //         ],
+        //     );
+
+        //     return Command.empty();
+        // }
+
+        // else {
+
+        const promises = [];
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_START,
+            operationId,
+            blockchain,
+        );
+
+        let assertionPromise;
+
+        if (assertionId) {
+            assertionPromise = (async () => {
+                let result = null;
+                for (const repository of [
+                    TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                ]) {
                     // eslint-disable-next-line no-await-in-loop
-                    const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
-                        repository,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        assertionId,
-                        operationId,
-                    );
-
-                    if (cachedAssertion?.public?.assertion?.length) {
-                        response.assertion = cachedAssertion.public.assertion;
-                        if (cachedAssertion?.private?.assertion?.length) {
-                            response.privateAssertion = cachedAssertion.private.assertion;
-                        }
+                    result = await this.tripleStoreService.getV6Assertion(repository, assertionId);
+                    if (result?.length) {
                         break;
                     }
                 }
-            }
+
+                if (result?.length) {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
+                        operationId,
+                        blockchain,
+                    );
+                }
+
+                return result;
+            })();
+        } else {
+            assertionPromise = this.tripleStoreService
+                .getAssertion(
+                    blockchain,
+                    contract,
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
+                    contentType,
+                )
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
         }
 
-        if (!response?.assertion?.length) {
-            for (const repository of [
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PRIVATE_HISTORY,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-            ]) {
-                // eslint-disable-next-line no-await-in-loop
-                response.assertion = await this.tripleStoreService.getAssertion(
-                    repository,
-                    assertionId,
-                );
-                if (response?.assertion?.length) break;
-            }
+        promises.push(assertionPromise);
+
+        if (includeMetadata) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_START,
+                operationId,
+                blockchain,
+            );
+            const metadataPromise = this.tripleStoreService
+                .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_METADATA_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+            promises.push(metadataPromise);
         }
 
-        if (response?.assertion?.length) {
+        const [assertion, metadata] = await Promise.all(promises);
+
+        const responseData = {
+            assertion,
+            ...(includeMetadata && metadata && { metadata }),
+        };
+        if (assertion?.public?.length || assertion?.private?.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,
-                response,
+                responseData,
                 [
                     OPERATION_ID_STATUS.GET.GET_LOCAL_END,
                     OPERATION_ID_STATUS.GET.GET_END,
@@ -104,6 +186,7 @@ class LocalGetCommand extends Command {
 
             return Command.empty();
         }
+        // }
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,

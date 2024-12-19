@@ -8,7 +8,7 @@
                         "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/develop"
+                            "branch": "v8/develop"
                         }
                     }
                 }
@@ -149,20 +149,41 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": false,
-                            "signalingServerUrl": "null"
+                            "blockchains": ["hardhat1:31337", "hardhat2:31337"],
+                            "rpcEndpoints": {
+                                "hardhat1:31337": ["http://localhost:8545"],
+                                "hardhat2:31337": ["http://localhost:9545"]
+                            },
+                            "hubContractAddress": {
+                                "hardhat1:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                                "hardhat2:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+                            }
                         }
                     }
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "info",
@@ -187,7 +208,7 @@
                         "enabled": false,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/develop"
+                            "branch": "v8/develop"
                         }
                     }
                 }
@@ -317,20 +338,41 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": false,
-                            "signalingServerUrl": "null"
+                            "blockchains": ["hardhat1:31337", "hardhat2:31337"],
+                            "rpcEndpoints": {
+                                "hardhat1:31337": ["http://localhost:8545"],
+                                "hardhat2:31337": ["http://localhost:9545"]
+                            },
+                            "hubContractAddress": {
+                                "hardhat1:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                                "hardhat2:31337": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+                            }
                         }
                     }
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -355,7 +397,7 @@
                         "enabled": true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/release/testnet"
+                            "branch": "v8/release/testnet"
                         }
                     }
                 }
@@ -388,8 +430,7 @@
                             },
                             "port": 9000,
                             "bootstrap": [
-                                "/ip4/164.92.138.30/tcp/9000/p2p/QmbiZQm18JefDizrQwbRhPgkaLykTLyrUEpeMWuKJHXuUM",
-                                "/ip4/139.59.145.152/tcp/9000/p2p/Qme2oF6afixBjLYjF5CYeC73d5dygsTq8P7BPQp31NVkye"
+                                "/ip4/167.172.162.235/tcp/9000/p2p/QmNcjL4P5Dzq5hn6fkncYEsTcRU2g7g4N5rE2KCvHSPDav"
                             ]
                         }
                     }
@@ -446,7 +487,7 @@
                         "enabled": false,
                         "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
                         "config": {
-                            "hubContractAddress": "0xBbfF7Ea6b2Addc1f38A0798329e12C08f03750A6",
+                            "hubContractAddress": "0x881449B372eB0eA34d0bF450839182dcC15A1dcA",
                             "rpcEndpoints": [
                                 "https://lofar-testnet.origin-trail.network",
                                 "https://lofar-testnet.origintrail.network"
@@ -459,7 +500,7 @@
                         "package": "./blockchain/implementation/gnosis/gnosis-service.js",
 
                         "config": {
-                            "hubContractAddress": "0xC06210312C9217A0EdF67453618F5eB96668679A",
+                            "hubContractAddress": "0xae1b378Ad5418ca437AceF78EDc8b40607eb5A1b",
                             "gasPriceOracleLink": "https://blockscout.chiadochain.net/api/v1/gas-price-oracle",
                             "rpcEndpoints": ["https://rpc.chiadochain.net"],
                             "operatorFee": 0
@@ -470,7 +511,7 @@
                         "package": "./blockchain/implementation/base/base-service.js",
 
                         "config": {
-                            "hubContractAddress": "0x144eDa5cbf8926327cb2cceef168A121F0E4A299",
+                            "hubContractAddress": "0xCdC3945ed33941e359391574aAB16F274D53e641",
                             "rpcEndpoints": ["https://sepolia.base.org"],
                             "operatorFee": 0
                         }
@@ -508,20 +549,46 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://testnet-signaling.origin-trail.network/signal"
+                            "blockchains": ["otp:20430", "gnosis:10200", "base:84532"],
+                            "rpcEndpoints": {
+                                "base:84532": ["https://sepolia.base.org"],
+                                "otp:20430": [
+                                    "https://lofar-testnet.origin-trail.network",
+                                    "https://lofar-testnet.origintrail.network"
+                                ],
+                                "gnosis:10200": ["https://rpc.chiadochain.net"]
+                            },
+                            "hubContractAddress": {
+                                "base:84532": "0xCdC3945ed33941e359391574aAB16F274D53e641",
+                                "otp:20430": "0x881449B372eB0eA34d0bF450839182dcC15A1dcA",
+                                "gnosis:10200": "0xae1b378Ad5418ca437AceF78EDc8b40607eb5A1b"
+                            }
                         }
                     }
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -546,7 +613,7 @@
                         "enabled": true,
                         "package": "./auto-updater/implementation/ot-auto-updater.js",
                         "config": {
-                            "branch": "v6/release/testnet"
+                            "branch": "v8/develop"
                         }
                     }
                 }
@@ -579,8 +646,7 @@
                             },
                             "port": 9000,
                             "bootstrap": [
-                                "/ip4/64.225.99.151/tcp/9000/p2p/QmawsTRqaLPyLQ5PfStpFcpQW4bvNQ59zV1by2G5aJHuVn",
-                                "/ip4/18.157.122.121/tcp/9000/p2p/QmfDebvsKNwCggBBmEWB43cAZtTa2umMsnRvBnMV4sY5th"
+                                "/ip4/64.225.99.151/tcp/9000/p2p/QmawsTRqaLPyLQ5PfStpFcpQW4bvNQ59zV1by2G5aJHuVn"
                             ]
                         }
                     }
@@ -633,35 +699,12 @@
             "blockchain": {
                 "enabled": true,
                 "implementation": {
-                    "otp:2160": {
-                        "enabled": false,
-                        "package": "./blockchain/implementation/ot-parachain/ot-parachain-service.js",
-                        "config": {
-                            "hubContractAddress": "0x0425d8717a9c63345a26C7885CF8c0fEAbcE7bC9",
-                            "rpcEndpoints": [
-                                "https://lofar-tm-rpc.origin-trail.network",
-                                "https://lofar.origintrail.network"
-                            ],
-                            "operatorFee": 0
-                        }
-                    },
-                    "gnosis:10200": {
-                        "enabled": false,
-                        "package": "./blockchain/implementation/gnosis/gnosis-service.js",
-
-                        "config": {
-                            "hubContractAddress": "0xD2bA102A0b11944d00180eE8136208ccF87bC39A",
-                            "gasPriceOracleLink": "https://blockscout.chiadochain.net/api/v1/gas-price-oracle",
-                            "rpcEndpoints": ["https://rpc.chiadochain.net"],
-                            "operatorFee": 0
-                        }
-                    },
                     "base:84532": {
                         "enabled": false,
                         "package": "./blockchain/implementation/base/base-service.js",
 
                         "config": {
-                            "hubContractAddress": "0x6C861Cb69300C34DfeF674F7C00E734e840C29C0",
+                            "hubContractAddress": "0xE043daF4cC8ae2c720ef95fc82574a37a429c40A",
                             "rpcEndpoints": ["https://sepolia.base.org"],
                             "operatorFee": 0
                         }
@@ -699,20 +742,39 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://devnet-signaling.origin-trail.network/signal"
+                            "blockchains": ["base:84532"],
+                            "rpcEndpoints": {
+                                "base:84532": ["https://sepolia.base.org"]
+                            },
+                            "hubContractAddress": {
+                                "base:84532": "0xE043daF4cC8ae2c720ef95fc82574a37a429c40A"
+                            }
                         }
                     }
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",
@@ -889,20 +951,43 @@
                 }
             },
             "telemetry": {
+                "enabled": false,
+                "implementation": {
+                    "quest-telemetry": {
+                        "enabled": true,
+                        "package": "./telemetry/implementation/quest-telemetry.js",
+                        "config": {
+                            "localEndpoint": "http::addr=localhost:10000",
+                            "signalingServiceEndpoint": "",
+                            "sendToSignalingService": false
+                        }
+                    }
+                }
+            },
+            "blockchainEvents": {
                 "enabled": true,
                 "implementation": {
-                    "ot-telemetry": {
+                    "ot-ethers": {
                         "enabled": true,
-                        "package": "./telemetry/implementation/ot-telemetry.js",
+                        "package": "./blockchain-events/implementation/ot-ethers/ot-ethers.js",
                         "config": {
-                            "sendTelemetryData": true,
-                            "signalingServerUrl": "https://mainnet-signaling.origin-trail.network/signal"
+                            "blockchains": ["otp:2043"],
+                            "rpcEndpoints": {
+                                "otp:2043": [
+                                    "https://astrosat-parachain-rpc.origin-trail.network",
+                                    "https://astrosat.origintrail.network/",
+                                    "https://astrosat-2.origintrail.network/"
+                                ]
+                            },
+                            "hubContractAddress": {
+                                "otp:2043": "0x5fA7916c48Fe6D5F1738d12Ad234b78c90B4cAdA"
+                            }
                         }
                     }
                 }
             }
         },
-        "maximumAssertionSizeInKb": 10000,
+        "maximumAssertionSizeInKb": 500000,
         "commandExecutorVerboseLoggingEnabled": false,
         "appDataPath": "data",
         "logLevel": "trace",

@@ -1,10 +1,7 @@
 import axios from 'axios';
+import ethers from 'ethers';
 import Web3Service from '../web3-service.js';
-import {
-    BLOCK_TIME_MILLIS,
-    GNOSIS_DEFAULT_GAS_PRICE,
-    NODE_ENVIRONMENTS,
-} from '../../../../constants/constants.js';
+import { GNOSIS_DEFAULT_GAS_PRICE, NODE_ENVIRONMENTS } from '../../../../constants/constants.js';
 
 class GnosisService extends Web3Service {
     constructor(ctx) {
@@ -13,16 +10,12 @@ class GnosisService extends Web3Service {
         this.baseTokenTicker = 'GNO';
         this.tracTicker = 'TRAC';
 
-        this.defaultGasPrice = this.convertToWei(
+        this.defaultGasPrice = ethers.utils.parseUnits(
             process.env.NODE_ENV === NODE_ENVIRONMENTS.MAINNET
-                ? GNOSIS_DEFAULT_GAS_PRICE.MAINNET
-                : GNOSIS_DEFAULT_GAS_PRICE.TESTNET,
+                ? GNOSIS_DEFAULT_GAS_PRICE.MAINNET.toString()
+                : GNOSIS_DEFAULT_GAS_PRICE.TESTNET.toString(),
             'gwei',
         );
-    }
-
-    getBlockTimeMillis() {
-        return BLOCK_TIME_MILLIS.GNOSIS;
     }
 
     async getGasPrice() {
@@ -34,7 +27,7 @@ class GnosisService extends Web3Service {
                 // returns gwei
                 gasPrice = Number(response.data.average);
                 this.logger.debug(`Gas price from Gnosis oracle link: ${gasPrice} gwei`);
-                gasPrice = this.convertToWei(gasPrice, 'gwei');
+                gasPrice = ethers.utils.parseUnits(gasPrice.toString(), 'gwei');
             } else if (response?.data?.result) {
                 // returns wei
                 gasPrice = Number(response.data.result, 10);
@@ -64,10 +57,6 @@ class GnosisService extends Web3Service {
             return false;
         }
         return false;
-    }
-
-    async getAgreementScoreFunctionId() {
-        return 2;
     }
 }
 

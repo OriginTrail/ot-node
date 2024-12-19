@@ -1,8 +1,5 @@
 import BaseController from './base-rpc-controller.js';
-import {
-    CONTENT_ASSET_HASH_FUNCTION_ID,
-    NETWORK_MESSAGE_TYPES,
-} from '../../constants/constants.js';
+import { NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
 
 class UpdateController extends BaseController {
     constructor(ctx) {
@@ -13,7 +10,7 @@ class UpdateController extends BaseController {
     }
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
-        const { operationId, keywordUuid, messageType } = message.header;
+        const { operationId, messageType } = message.header;
 
         const command = { sequence: [], delay: 0, transactional: false, data: {} };
         let dataSource;
@@ -24,8 +21,6 @@ class UpdateController extends BaseController {
                 command.name = handleInitCommand;
                 command.period = 5000;
                 command.retries = 3;
-                command.data.proximityScoreFunctionsPairId =
-                    dataSource.proximityScoreFunctionsPairId ?? 1;
                 break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 // eslint-disable-next-line no-case-declarations
@@ -35,11 +30,6 @@ class UpdateController extends BaseController {
                     assertion: message.data.assertion,
                 });
                 command.name = handleRequestCommand;
-                command.data.keyword = message.data.keyword;
-                command.data.agreementId = dataSource.agreementId;
-                command.data.agreementData = dataSource.agreementData;
-                command.data.proximityScoreFunctionsPairId =
-                    dataSource.agreementData.scoreFunctionId ?? 1;
                 break;
             default:
                 throw Error('unknown message type');
@@ -49,14 +39,11 @@ class UpdateController extends BaseController {
             ...command.data,
             remotePeerId,
             operationId,
-            keywordUuid,
             protocol,
             assertionId: dataSource.assertionId,
             blockchain: dataSource.blockchain,
             contract: dataSource.contract,
             tokenId: dataSource.tokenId,
-            keyword: dataSource.keyword,
-            hashFunctionId: dataSource.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
         };
 
         await this.commandExecutor.add(command);

@@ -1,11 +1,15 @@
 import Command from '../../command.js';
+import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../constants/constants.js';
 
 class NetworkProtocolCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.serviceAgreementService = ctx.serviceAgreementService;
+
+        this.errorType = ERROR_TYPE.NETWORK_PROTOCOL_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.NETWORK_PROTOCOL_END;
     }
 
     /**
@@ -13,62 +17,43 @@ class NetworkProtocolCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { blockchain, contract, tokenId, hashFunctionId } = command.data;
+        const { blockchain, operationId, minimumNumberOfNodeReplications, batchSize } =
+            command.data;
 
-        const keywords = await this.getKeywords(command);
-        const batchSize = await this.getBatchSize(blockchain);
-        const minAckResponses = await this.getMinAckResponses(blockchain);
+        this.operationIdService.emitChangeEvent(this.operationStartEvent, operationId, blockchain);
 
-        const serviceAgreementId = this.serviceAgreementService.generateId(
-            blockchain,
-            contract,
-            tokenId,
-            keywords[0],
-            hashFunctionId,
+        const batchSizePar = this.operationService.getBatchSize(batchSize);
+        const minAckResponses = this.operationService.getMinAckResponses(
+            minimumNumberOfNodeReplications,
         );
-        const proximityScoreFunctionsPairId =
-            await this.blockchainModuleManager.getAgreementScoreFunctionId(
-                blockchain,
-                serviceAgreementId,
-            );
 
         const commandSequence = [
-            'findNodesCommand',
             `${this.operationService.getOperationName()}ScheduleMessagesCommand`,
         ];
 
-        const addCommandPromises = keywords.map((keyword) =>
-            this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
-                delay: 0,
-                data: {
-                    ...command.data,
-                    keyword,
-                    batchSize,
-                    minAckResponses,
-                    errorType: this.errorType,
-                    networkProtocols: this.operationService.getNetworkProtocols(),
-                    proximityScoreFunctionsPairId,
-                },
-                transactional: false,
-            }),
-        );
+        await this.commandExecutor.add({
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
+            delay: 0,
+            data: {
+                ...command.data,
+                batchSize: batchSizePar,
+                minAckResponses,
+                errorType: this.errorType,
+            },
+            transactional: false,
+        });
 
-        await Promise.all(addCommandPromises);
+        this.operationIdService.emitChangeEvent(this.operationEndEvent, operationId, blockchain);
 
         return Command.empty();
     }
 
-    async getKeywords() {
-        throw Error('getKeywords not implemented');
-    }
-
-    async getBatchSize() {
+    getBatchSize() {
         throw Error('getBatchSize not implemented');
     }
 
-    async getMinAckResponses() {
+    getMinAckResponses() {
         throw Error('getMinAckResponses not implemented');
     }
 

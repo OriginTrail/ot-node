@@ -18,44 +18,71 @@ class QueryCommand extends Command {
     }
 
     async execute(command) {
-        const { queryType, operationId } = command.data;
-
-        let { query, repository = TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT } = command.data;
-
-        let data;
+        const { operationId, query, queryType, repository } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             null,
             OPERATION_ID_STATUS.QUERY.QUERY_START,
         );
-        repository = this.validateRepositoryName(repository);
+
+        let data;
+
+        // TODO: Review federated query logic for V8
+
         // check if it's federated query
-        const pattern = /SERVICE\s+<([^>]+)>/g;
-        const matches = [];
-        let match;
-        // eslint-disable-next-line no-cond-assign
-        while ((match = pattern.exec(query)) !== null) {
-            matches.push(match[1]);
-        }
-        if (matches.length > 0) {
-            for (const repositoryInOriginalQuery of matches) {
-                const federatedQueryRepositoryName = `http://localhost:9999/blazegraph/namespace/${this.paranetService.getParanetRepositoryName(
-                    repositoryInOriginalQuery,
-                )}/sparql`;
-                this.validateRepositoryName(repositoryInOriginalQuery);
-                query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
-            }
-        }
+        // const pattern = /SERVICE\s+<([^>]+)>/g;
+        // const matches = [];
+        // let match;
+        // // eslint-disable-next-line no-cond-assign
+        // while ((match = pattern.exec(query)) !== null) {
+        //     matches.push(match[1]);
+        // }
+        // if (matches.length > 0) {
+        //     for (const repositoryInOriginalQuery of matches) {
+        //         const federatedQueryRepositoryName = `http://localhost:9999/blazegraph/namespace/${this.paranetService.getParanetRepositoryName(
+        //             repositoryInOriginalQuery,
+        //         )}/sparql`;
+        //         this.validateRepositoryName(repositoryInOriginalQuery);
+        //         query = query.replace(repositoryInOriginalQuery, federatedQueryRepositoryName);
+        //     }
+        // }
+
         try {
             switch (queryType) {
                 case QUERY_TYPES.CONSTRUCT: {
-                    data = await this.tripleStoreService.construct(repository, query);
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_START,
+                        operationId,
+                    );
+                    data = await this.tripleStoreService.construct(query, repository);
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_END,
+                        operationId,
+                    );
                     break;
                 }
                 case QUERY_TYPES.SELECT: {
-                    data = await this.dataService.parseBindings(
-                        await this.tripleStoreService.select(repository, query),
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_START,
+                        operationId,
+                    );
+
+                    if (Array.isArray(repository)) {
+                        const dataV6 = await this.tripleStoreService.select(query, repository[0]);
+                        const dataV8 = await this.tripleStoreService.select(query, repository[1]);
+
+                        data = this.dataService.removeDuplicateObjectsFromArray([
+                            ...dataV6,
+                            ...dataV8,
+                        ]);
+                    } else {
+                        data = await this.tripleStoreService.select(query, repository);
+                    }
+
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.QUERY.QUERY_SELECT_QUERY_END,
+                        operationId,
                     );
                     break;
                 }
@@ -63,13 +90,31 @@ class QueryCommand extends Command {
                     throw new Error(`Unknown query type ${queryType}`);
             }
 
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_CACHE_OPERATION_ID_DATA_TO_MEMORY_START,
+                operationId,
+            );
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, data);
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_CACHE_OPERATION_ID_DATA_TO_MEMORY_END,
+                operationId,
+            );
+
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_CACHE_OPERATION_ID_DATA_TO_FILE_START,
+                operationId,
+            );
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, data);
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.QUERY.QUERY_CACHE_OPERATION_ID_DATA_TO_FILE_END,
+                operationId,
+            );
+
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 null,
                 OPERATION_ID_STATUS.QUERY.QUERY_END,
             );
-
-            await this.operationIdService.cacheOperationIdData(operationId, data);
 
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
@@ -104,7 +149,7 @@ class QueryCommand extends Command {
     }
 
     /**
-     * Builds default getInitCommand
+     * Builds default queryCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

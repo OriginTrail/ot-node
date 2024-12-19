@@ -4,6 +4,7 @@ class UALService {
         this.logger = ctx.logger;
 
         this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.cryptoService = ctx.cryptoService;
     }
 
     deriveUAL(blockchain, contract, tokenId) {
@@ -14,6 +15,14 @@ class UALService {
     isUAL(ual) {
         if (!ual.startsWith('did:dkg:')) return false;
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
+        parts.push(...parts.pop().split(':'));
+        if (parts.length === 4) {
+            return (
+                this.isContract(parts[1]) &&
+                !Number.isNaN(Number(parts[2])) &&
+                !Number.isNaN(Number(parts[3]))
+            );
+        }
         if (parts.length === 3) {
             // eslint-disable-next-line no-restricted-globals
             return this.isContract(parts[1]) && !Number.isNaN(Number(parts[2]));
@@ -36,6 +45,29 @@ class UALService {
 
     resolveUAL(ual) {
         const parts = ual.replace('did:', '').replace('dkg:', '').split('/');
+        // TODO: Resolve UAL with state
+        // parts.push(...parts.pop().split(':'));
+        if (parts.length === 4) {
+            const contract = parts[1];
+            if (!this.isContract(contract)) {
+                throw new Error(`Invalid contract format: ${contract}`);
+            }
+            let blockchainName = parts[0];
+            if (blockchainName.split(':').length === 1) {
+                for (const implementation of this.blockchainModuleManager.getImplementationNames()) {
+                    if (implementation.split(':')[0] === blockchainName) {
+                        blockchainName = implementation;
+                        break;
+                    }
+                }
+            }
+            return {
+                blockchain: blockchainName,
+                contract,
+                knowledgeCollectionId: Number(parts[2]),
+                knowledgeAssetId: Number(parts[3]),
+            };
+        }
         if (parts.length === 3) {
             const contract = parts[1];
             if (!this.isContract(contract)) {
@@ -50,7 +82,11 @@ class UALService {
                     }
                 }
             }
-            return { blockchain: blockchainName, contract, tokenId: Number(parts[2]) };
+            return {
+                blockchain: blockchainName,
+                contract,
+                knowledgeCollectionId: Number(parts[2]),
+            };
         }
         if (parts.length === 2) {
             const parts2 = parts[0].split(':');
@@ -85,17 +121,22 @@ class UALService {
         return contractRegex.test(contract);
     }
 
-    async calculateLocationKeyword(blockchain, contract, tokenId, assertionId = null) {
+    // TODO: Do we need still need this
+    async calculateLocationKeyword(
+        blockchain,
+        contract,
+        knowledgeCollectionId,
+        assertionId = null,
+    ) {
         const firstAssertionId =
             assertionId ??
-            (await this.blockchainModuleManager.getAssertionIdByIndex(
+            (await this.blockchainModuleManager.getKnowledgeCollectionMerkleRootByIndex(
                 blockchain,
                 contract,
-                tokenId,
+                knowledgeCollectionId,
                 0,
             ));
-        return this.blockchainModuleManager.encodePacked(
-            blockchain,
+        return this.cryptoService.encodePacked(
             ['address', 'bytes32'],
             [contract, firstAssertionId],
         );

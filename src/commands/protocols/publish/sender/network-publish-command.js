@@ -1,33 +1,16 @@
 import NetworkProtocolCommand from '../../common/network-protocol-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class NetworkPublishCommand extends NetworkProtocolCommand {
     constructor(ctx) {
         super(ctx);
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // this should be removed (???)
+        this.ualService = ctx.ualService; // this should be removed (???)
         this.operationService = ctx.publishService;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.ualService = ctx.ualService;
 
-        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
-    }
-
-    async getKeywords(command) {
-        const { blockchain, contract, tokenId } = command.data;
-        const locationKeyword = await this.ualService.calculateLocationKeyword(
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return [locationKeyword];
-    }
-
-    async getBatchSize(blockchainId) {
-        return this.blockchainModuleManager.getR2(blockchainId);
-    }
-
-    async getMinAckResponses(blockchainId) {
-        return this.blockchainModuleManager.getR1(blockchainId);
+        this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_NETWORK_START_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_NETWORK_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.PUBLISH.PUBLISH_NETWORK_END;
     }
 
     /**

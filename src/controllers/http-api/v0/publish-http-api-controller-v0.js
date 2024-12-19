@@ -3,28 +3,31 @@ import {
     ERROR_TYPE,
     OPERATION_ID_STATUS,
     OPERATION_STATUS,
-    CONTENT_ASSET_HASH_FUNCTION_ID,
     LOCAL_STORE_TYPES,
 } from '../../../constants/constants.js';
 
 class PublishController extends BaseController {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
         this.commandExecutor = ctx.commandExecutor;
+        this.operationService = ctx.publishService;
         this.operationIdService = ctx.operationIdService;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
-        this.ualService = ctx.ualService;
-        this.serviceAgreementService = ctx.serviceAgreementService;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
+        this.blockchainModuleManager = ctx.blockchainModuleManager; // this is not used
+        this.pendingStorageService = ctx.pendingStorageService;
     }
 
     async handleRequest(req, res) {
-        const { assertion, assertionId, blockchain, contract, tokenId } = req.body;
-        const hashFunctionId = req.body.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID;
+        const {
+            assertion: dataset,
+            assertionId: datasetRoot,
+            blockchain,
+            contract,
+            tokenId,
+        } = req.body;
 
         this.logger.info(
-            `Received asset with assertion id: ${assertionId}, blockchain: ${blockchain}, hub contract: ${contract}, token id: ${tokenId}`,
+            `Received asset with dataset root: ${datasetRoot}, blockchain: ${blockchain}`,
         );
 
         const operationId = await this.operationIdService.generateOperationId(
@@ -53,24 +56,49 @@ class PublishController extends BaseController {
         );
 
         try {
-            await this.operationIdService.cacheOperationIdData(operationId, {
-                public: {
-                    assertion,
-                    assertionId,
-                },
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_OPERATION_ID_DATA_TO_MEMORY_START,
+                operationId,
                 blockchain,
-                contract,
-                tokenId,
+            );
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, {
+                dataset,
+                datasetRoot,
             });
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_OPERATION_ID_DATA_TO_MEMORY_END,
+                operationId,
+                blockchain,
+            );
 
-            const commandSequence = ['publishValidateAssetCommand'];
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_OPERATION_ID_DATA_TO_FILE_START,
+                operationId,
+                blockchain,
+            );
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, {
+                dataset,
+                datasetRoot,
+            });
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_OPERATION_ID_DATA_TO_FILE_END,
+                operationId,
+                blockchain,
+            );
 
-            // Backwards compatibility check - true for older clients
-            if (req.body.localStore) {
-                commandSequence.push('localStoreCommand');
-            }
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_DATASET_START,
+                operationId,
+                blockchain,
+            );
+            await this.pendingStorageService.cacheDataset(operationId, datasetRoot, dataset);
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.PUBLISH.PUBLISH_CACHE_DATASET_END,
+                operationId,
+                blockchain,
+            );
 
-            commandSequence.push('networkPublishCommand');
+            const commandSequence = ['publishFindShardCommand'];
 
             await this.commandExecutor.add({
                 name: commandSequence[0],
@@ -79,12 +107,12 @@ class PublishController extends BaseController {
                 period: 5000,
                 retries: 3,
                 data: {
-                    assertionId,
+                    datasetRoot,
                     blockchain,
+                    operationId,
                     contract,
                     tokenId,
-                    hashFunctionId,
-                    operationId,
+                    isOperationV0: true,
                     storeType: LOCAL_STORE_TYPES.TRIPLE,
                 },
                 transactional: false,

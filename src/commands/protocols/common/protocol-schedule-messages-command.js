@@ -1,10 +1,14 @@
 import Command from '../../command.js';
+import { OPERATION_ID_STATUS } from '../../../constants/constants.js';
 
 class ProtocolScheduleMessagesCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.commandExecutor = ctx.commandExecutor;
         this.protocolService = ctx.protocolService;
+
+        this.operationStartEvent = OPERATION_ID_STATUS.PROTOCOL_SCHEDULE_MESSAGE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.PROTOCOL_SCHEDULE_MESSAGE_END;
     }
 
     /**
@@ -14,7 +18,6 @@ class ProtocolScheduleMessagesCommand extends Command {
     async execute(command) {
         const {
             operationId,
-            keyword,
             batchSize,
             leftoverNodes,
             numberOfFoundNodes,
@@ -29,15 +32,13 @@ class ProtocolScheduleMessagesCommand extends Command {
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,
-            this.startEvent,
+            this.operationStartEvent,
         );
 
         this.logger.debug(
             `Trying to ${this.operationService.getOperationName()} to batch of ${
                 currentBatchNodes.length
-            } nodes for keyword : ${keyword}, leftover for retry: ${
-                currentBatchLeftoverNodes.length
-            }`,
+            }, leftover for retry: ${currentBatchLeftoverNodes.length}`,
         );
 
         const addCommandPromises = currentBatchNodes.map(async (node) => {
@@ -50,12 +51,12 @@ class ProtocolScheduleMessagesCommand extends Command {
                     ...this.getNextCommandData(command),
                     blockchain,
                     operationId,
-                    keyword,
                     node,
                     numberOfFoundNodes,
                     batchSize,
                     minAckResponses,
                     leftoverNodes: currentBatchLeftoverNodes,
+                    isOperationV0: command.data.isOperationV0,
                 },
                 period: 5000,
                 retries: 3,
@@ -65,19 +66,20 @@ class ProtocolScheduleMessagesCommand extends Command {
 
         await Promise.all(addCommandPromises);
 
+        await this.operationIdService.updateOperationIdStatus(
+            operationId,
+            blockchain,
+            this.operationEndEvent,
+        );
+
         return Command.empty();
     }
 
     getNextCommandData(command) {
-        const { assertionId, blockchain, contract, tokenId, hashFunctionId } = command.data;
-        const proximityScoreFunctionsPairId = command.data.proximityScoreFunctionsPairId ?? 1;
+        const { datasetRoot, blockchain } = command.data;
         return {
-            assertionId,
             blockchain,
-            contract,
-            tokenId,
-            hashFunctionId,
-            proximityScoreFunctionsPairId,
+            datasetRoot,
         };
     }
 

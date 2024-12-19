@@ -4,6 +4,7 @@ import {
     OPERATION_ID_STATUS,
     LOCAL_STORE_TYPES,
     ZERO_BYTES32,
+    PARANET_ACCESS_POLICY,
 } from '../../constants/constants.js';
 
 class ValidateAssetCommand extends Command {
@@ -13,6 +14,7 @@ class ValidateAssetCommand extends Command {
         this.ualService = ctx.ualService;
         this.dataService = ctx.dataService;
         this.validationService = ctx.validationService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.VALIDATE_ASSET_ERROR;
     }
@@ -28,6 +30,7 @@ class ValidateAssetCommand extends Command {
             contract,
             tokenId,
             storeType = LOCAL_STORE_TYPES.TRIPLE,
+            paranetUAL,
         } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
@@ -36,28 +39,26 @@ class ValidateAssetCommand extends Command {
             OPERATION_ID_STATUS.VALIDATE_ASSET_START,
         );
 
-        let blockchainAssertionId;
-        if (storeType === LOCAL_STORE_TYPES.TRIPLE) {
-            blockchainAssertionId = await this.blockchainModuleManager.getLatestAssertionId(
+        const blockchainAssertionId =
+            await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkelRoot(
                 blockchain,
                 contract,
                 tokenId,
             );
-        } else {
-            blockchainAssertionId = await this.blockchainModuleManager.getUnfinalizedAssertionId(
-                blockchain,
-                tokenId,
-            );
-        }
         if (!blockchainAssertionId || blockchainAssertionId === ZERO_BYTES32) {
             return Command.retry();
         }
+        // TODO: Validate number of triplets and other stuff we did before so it matches like we did it in v6
         const cachedData = await this.operationIdService.getCachedOperationIdData(operationId);
         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+
+        // backwards compatibility
+        const cachedAssertion = cachedData.datasetRoot || cachedData.public.assertionId;
+        const cachedDataset = cachedData.dataset || cachedData.public.assertion;
         this.logger.info(
-            `Validating asset's public assertion with id: ${cachedData.public.assertionId} ual: ${ual}`,
+            `Validating asset's public assertion with id: ${cachedAssertion} ual: ${ual}`,
         );
-        if (blockchainAssertionId !== cachedData.public.assertionId) {
+        if (blockchainAssertionId !== cachedAssertion) {
             await this.handleError(
                 operationId,
                 blockchain,
@@ -68,22 +69,87 @@ class ValidateAssetCommand extends Command {
             return Command.empty();
         }
 
-        await this.validationService.validateAssertion(
-            cachedData.public.assertionId,
-            blockchain,
-            cachedData.public.assertion,
-        );
-
+        // V0 backwards compatibility
         if (cachedData.private?.assertionId && cachedData.private?.assertion) {
             this.logger.info(
                 `Validating asset's private assertion with id: ${cachedData.private.assertionId} ual: ${ual}`,
             );
 
             try {
-                this.validationService.validateAssertionId(
+                await this.validationService.validateDatasetRoot(
                     cachedData.private.assertion,
                     cachedData.private.assertionId,
                 );
+            } catch (error) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    error.message,
+                    this.errorType,
+                    true,
+                );
+                return Command.empty();
+            }
+        }
+
+        await this.validationService.validateDatasetRoot(cachedDataset, cachedAssertion);
+
+        let paranetId;
+        if (storeType === LOCAL_STORE_TYPES.TRIPLE_PARANET) {
+            try {
+                const {
+                    blockchain: paranetBlockchain,
+                    contract: paranetContract,
+                    tokenId: paranetTokenId,
+                } = this.ualService.resolveUAL(paranetUAL);
+
+                paranetId = this.paranetService.constructParanetId(paranetContract, paranetTokenId);
+                const paranetExists = await this.blockchainModuleManager.paranetExists(
+                    paranetBlockchain,
+                    paranetId,
+                );
+                if (!paranetExists) {
+                    await this.handleError(
+                        operationId,
+                        blockchain,
+                        `Paranet: ${paranetId} doesn't exist.`,
+                        this.errorType,
+                        true,
+                    );
+                    return Command.empty();
+                }
+
+                const nodesAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
+                    blockchain,
+                    paranetId,
+                );
+                if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+                    const identityId = await this.blockchainModuleManager.getIdentityId(blockchain);
+                    const isCuratedNode = await this.blockchainModuleManager.isCuratedNode(
+                        blockchain,
+                        paranetId,
+                        identityId,
+                    );
+                    if (!isCuratedNode) {
+                        await this.handleError(
+                            operationId,
+                            blockchain,
+                            `Node is not part of curated paranet ${paranetId}  because node with id ${identityId} is not a curated node.`,
+                            this.errorType,
+                            true,
+                        );
+                        return Command.empty();
+                    }
+                } else {
+                    await this.handleError(
+                        operationId,
+                        blockchain,
+                        `Paranet ${paranetId} is not curated paranet.`,
+                        this.errorType,
+                        true,
+                    );
+                    return Command.empty();
+                }
             } catch (error) {
                 await this.handleError(
                     operationId,
@@ -102,7 +168,7 @@ class ValidateAssetCommand extends Command {
             OPERATION_ID_STATUS.VALIDATE_ASSET_END,
         );
         return this.continueSequence(
-            { ...command.data, retry: undefined, period: undefined },
+            { ...command.data, paranetId, retry: undefined, period: undefined },
             command.sequence,
         );
     }

@@ -27,15 +27,14 @@ class OperationService {
         );
     }
 
-    async getResponsesStatuses(responseStatus, errorMessage, operationId, keyword) {
-        const self = this;
+    async getResponsesStatuses(responseStatus, errorMessage, operationId) {
         let responses = 0;
+        const self = this;
         await this.operationMutex.runExclusive(async () => {
             await self.repositoryModuleManager.createOperationResponseRecord(
                 responseStatus,
                 this.operationName,
                 operationId,
-                keyword,
                 errorMessage,
             );
             responses = await self.repositoryModuleManager.getOperationResponsesStatuses(
@@ -44,33 +43,36 @@ class OperationService {
             );
         });
 
-        const keywordsStatuses = {};
-        responses.forEach((response) => {
-            if (!keywordsStatuses[response.keyword])
-                keywordsStatuses[response.keyword] = { failedNumber: 0, completedNumber: 0 };
+        const operationIdStatuses = {};
+        for (const response of responses) {
+            if (!operationIdStatuses[operationId])
+                operationIdStatuses[operationId] = { failedNumber: 0, completedNumber: 0 };
 
             if (response.status === OPERATION_REQUEST_STATUS.FAILED) {
-                keywordsStatuses[response.keyword].failedNumber += 1;
+                operationIdStatuses[operationId].failedNumber += 1;
             } else {
-                keywordsStatuses[response.keyword].completedNumber += 1;
+                operationIdStatuses[operationId].completedNumber += 1;
             }
-        });
+        }
 
-        return keywordsStatuses;
+        return operationIdStatuses;
     }
 
     async markOperationAsCompleted(operationId, blockchain, responseData, endStatuses) {
         this.logger.info(`Finalizing ${this.operationName} for operationId: ${operationId}`);
+
+        if (responseData === null) {
+            await this.operationIdService.removeOperationIdCache(operationId);
+        } else {
+            await this.operationIdService.cacheOperationIdDataToMemory(operationId, responseData);
+            await this.operationIdService.cacheOperationIdDataToFile(operationId, responseData);
+        }
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
             operationId,
             OPERATION_STATUS.COMPLETED,
         );
-
-        if (responseData != null) {
-            await this.operationIdService.cacheOperationIdData(operationId, responseData);
-        }
 
         for (const status of endStatuses) {
             // eslint-disable-next-line no-await-in-loop
@@ -80,6 +82,8 @@ class OperationService {
 
     async markOperationAsFailed(operationId, blockchain, message, errorType) {
         this.logger.info(`${this.operationName} for operationId: ${operationId} failed.`);
+
+        await this.operationIdService.removeOperationIdCache(operationId);
 
         await this.repositoryModuleManager.updateOperationStatus(
             this.operationName,
@@ -111,6 +115,14 @@ class OperationService {
                 failedNumber + completedNumber
             }, failed: ${failedNumber}, completed: ${completedNumber}`,
         );
+    }
+
+    getBatchSize() {
+        throw Error('getBatchSize not implemented');
+    }
+
+    getMinAckResponses() {
+        throw Error('getMinAckResponses not implemented');
     }
 }
 

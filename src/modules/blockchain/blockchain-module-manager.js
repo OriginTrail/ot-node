@@ -5,6 +5,16 @@ class BlockchainModuleManager extends BaseModuleManager {
         return 'blockchain';
     }
 
+    callImplementationFunction(blockchain, functionName, args = []) {
+        if (blockchain) {
+            if (this.getImplementation(blockchain)) {
+                return this.getImplementation(blockchain).module[functionName](...args);
+            }
+        } else {
+            return this.getImplementation().module[functionName](...args);
+        }
+    }
+
     initializeTransactionQueues(blockchain, concurrency) {
         return this.callImplementationFunction(blockchain, 'getTotalTransactionQueueLength', [
             concurrency,
@@ -30,6 +40,10 @@ class BlockchainModuleManager extends BaseModuleManager {
             contractName,
             contractAddress,
         ]);
+    }
+
+    getContractAddress(blockchain, contractName) {
+        return this.callImplementationFunction(blockchain, 'getContractAddress', [contractName]);
     }
 
     setContractCallCache(blockchain, contractName, functionName, value) {
@@ -82,41 +96,34 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'restartService');
     }
 
-    async getMinProofWindowOffsetPerc(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getMinProofWindowOffsetPerc');
-    }
-
-    async getMaxProofWindowOffsetPerc(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getMaxProofWindowOffsetPerc');
-    }
-
-    async generatePseudorandomUint8(blockchain, assetCreator, blockNumber, blockTimestamp, limit) {
-        return this.callImplementationFunction(blockchain, 'generatePseudorandomUint8', [
-            assetCreator,
-            blockNumber,
-            blockTimestamp,
-            limit,
-        ]);
-    }
-
-    async getAssertionIdByIndex(blockchain, assetContractAddress, tokenId, index) {
-        return this.callImplementationFunction(blockchain, 'getAssertionIdByIndex', [
-            assetContractAddress,
-            tokenId,
+    async getKnowledgeCollectionMerkleRootByIndex(
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+        index,
+    ) {
+        return this.callImplementationFunction(blockchain, 'getCollectionMerkleRootByIndex', [
+            assetStorageContractAddress,
+            knowledgeCollectionId,
             index,
         ]);
     }
 
-    async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
-        return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
-            assetContractAddress,
-            tokenId,
-        ]);
+    async getKnowledgeCollectionLatestMerkleRoot(
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        return this.callImplementationFunction(
+            blockchain,
+            'getKnowledgeCollectionLatestMerkleRoot',
+            [assetStorageContractAddress, knowledgeCollectionId],
+        );
     }
 
-    async getLatestTokenId(blockchain, assetContractAddress) {
-        return this.callImplementationFunction(blockchain, 'getLatestTokenId', [
-            assetContractAddress,
+    async getLatestKnowledgeCollectionId(blockchain, assetStorageContractAddress) {
+        return this.callImplementationFunction(blockchain, 'getLatestKnowledgeCollectionId', [
+            assetStorageContractAddress,
         ]);
     }
 
@@ -124,22 +131,33 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getAssetStorageContractAddresses');
     }
 
-    async getAssertionIds(blockchain, assetContractAddress, tokenId) {
-        return this.callImplementationFunction(blockchain, 'getAssertionIds', [
-            assetContractAddress,
-            tokenId,
+    async getKnowledgeCollectionMerkleRoots(
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionMerkleRoots', [
+            assetStorageContractAddress,
+            knowledgeCollectionId,
         ]);
     }
 
-    async getKnowledgeAssetOwner(blockchain, assetContractAddress, tokenId) {
-        return this.callImplementationFunction(blockchain, 'getKnowledgeAssetOwner', [
-            assetContractAddress,
-            tokenId,
-        ]);
-    }
+    // async getKnowledgeAssetOwner(blockchain, assetContractAddress, tokenId) {
+    //     return this.callImplementationFunction(blockchain, 'getKnowledgeAssetOwner', [
+    //         assetContractAddress,
+    //         tokenId,
+    //     ]);
+    // }
 
-    async getUnfinalizedAssertionId(blockchain, tokenId) {
-        return this.callImplementationFunction(blockchain, 'getUnfinalizedState', [tokenId]);
+    async getLatestMerkleRootPublisher(
+        blockchain,
+        assetStorageContractAddress,
+        knowledgeCollectionId,
+    ) {
+        return this.callImplementationFunction(blockchain, 'getLatestMerkleRootPublisher', [
+            assetStorageContractAddress,
+            knowledgeCollectionId,
+        ]);
     }
 
     async getShardingTableHead(blockchain) {
@@ -157,107 +175,15 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getTransaction(blockchain, transactionHash) {
-        return this.callImplementationFunction(blockchain, 'getTransaction', [transactionHash]);
-    }
-
-    async getAllPastEvents(
-        blockchain,
-        contractName,
-        eventsToFilter,
-        lastCheckedBlock,
-        lastCheckedTimestamp,
-        currentBlock,
-    ) {
-        return this.callImplementationFunction(blockchain, 'getAllPastEvents', [
-            blockchain,
-            contractName,
-            eventsToFilter,
-            lastCheckedBlock,
-            lastCheckedTimestamp,
-            currentBlock,
+    async getKnowledgeCollectionSize(blockchain, knowledgeCollectionId) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionSize', [
+            knowledgeCollectionId,
         ]);
     }
 
-    toBigNumber(blockchain, value) {
-        return this.callImplementationFunction(blockchain, 'toBigNumber', [value]);
-    }
-
-    keccak256(blockchain, bytesLikeData) {
-        return this.callImplementationFunction(blockchain, 'keccak256', [bytesLikeData]);
-    }
-
-    sha256(blockchain, bytesLikeData) {
-        return this.callImplementationFunction(blockchain, 'sha256', [bytesLikeData]);
-    }
-
-    encodePacked(blockchain, types, values) {
-        return this.callImplementationFunction(blockchain, 'encodePacked', [types, values]);
-    }
-
-    convertAsciiToHex(blockchain, string) {
-        return this.callImplementationFunction(blockchain, 'convertAsciiToHex', [string]);
-    }
-
-    convertHexToAscii(blockchain, hexString) {
-        return this.callImplementationFunction(blockchain, 'convertHexToAscii', [hexString]);
-    }
-
-    convertBytesToUint8Array(blockchain, bytesLikeData) {
-        return this.callImplementationFunction(blockchain, 'convertBytesToUint8Array', [
-            bytesLikeData,
-        ]);
-    }
-
-    convertToWei(blockchain, value, fromUnit) {
-        return this.callImplementationFunction(blockchain, 'convertToWei', [value, fromUnit]);
-    }
-
-    convertFromWei(blockchain, value, toUnit) {
-        return this.callImplementationFunction(blockchain, 'convertFromWei', [value, toUnit]);
-    }
-
-    async isCommitWindowOpen(blockchain, agreementId, epoch, stateIndex) {
-        return this.callImplementationFunction(blockchain, 'isCommitWindowOpen', [
-            agreementId,
-            epoch,
-            stateIndex,
-        ]);
-    }
-
-    async isUpdateCommitWindowOpen(blockchain, agreementId, epoch, latestStateIndex) {
-        return this.callImplementationFunction(blockchain, 'isUpdateCommitWindowOpen', [
-            agreementId,
-            epoch,
-            latestStateIndex,
-        ]);
-    }
-
-    async getTopCommitSubmissions(blockchain, agreementId, epoch, latestStateIndex) {
-        return this.callImplementationFunction(blockchain, 'getTopCommitSubmissions', [
-            agreementId,
-            epoch,
-            latestStateIndex,
-        ]);
-    }
-
-    async getAgreementData(blockchain, agreementId) {
-        return this.callImplementationFunction(blockchain, 'getAgreementData', [agreementId]);
-    }
-
-    async getAssertionSize(blockchain, assertionid) {
-        return this.callImplementationFunction(blockchain, 'getAssertionSize', [assertionid]);
-    }
-
-    async getAssertionTriplesNumber(blockchain, assertionid) {
-        return this.callImplementationFunction(blockchain, 'getAssertionTriplesNumber', [
-            assertionid,
-        ]);
-    }
-
-    async getAssertionChunksNumber(blockchain, assertionid) {
-        return this.callImplementationFunction(blockchain, 'getAssertionChunksNumber', [
-            assertionid,
+    async getKnowledgeCollectionChunksAmount(blockchain, knowledgeCollectionId) {
+        return this.callImplementationFunction(blockchain, 'getKnowledgeCollectionChunksAmount', [
+            knowledgeCollectionId,
         ]);
     }
 
@@ -275,110 +201,6 @@ class BlockchainModuleManager extends BaseModuleManager {
         );
     }
 
-    async getAssertionData(blockchain, assertionid) {
-        return this.callImplementationFunction(blockchain, 'getAssertionData', [assertionid]);
-    }
-
-    submitCommit(
-        blockchain,
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        closestNode,
-        leftNeighborhoodEdge,
-        rightNeighborhoodEdge,
-        epoch,
-        latestStateIndex,
-        callback,
-        gasPrice,
-    ) {
-        return this.callImplementationFunction(blockchain, 'submitCommit', [
-            assetContractAddress,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            closestNode,
-            leftNeighborhoodEdge,
-            rightNeighborhoodEdge,
-            epoch,
-            latestStateIndex,
-            callback,
-            gasPrice,
-        ]);
-    }
-
-    submitUpdateCommit(
-        blockchain,
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        closestNode,
-        leftNeighborhoodEdge,
-        rightNeighborhoodEdge,
-        epoch,
-        callback,
-        gasPrice,
-    ) {
-        return this.callImplementationFunction(blockchain, 'submitUpdateCommit', [
-            assetContractAddress,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            closestNode,
-            leftNeighborhoodEdge,
-            rightNeighborhoodEdge,
-            epoch,
-            callback,
-            gasPrice,
-        ]);
-    }
-
-    async isProofWindowOpen(blockchain, agreementId, epoch, latestStateIndex) {
-        return this.callImplementationFunction(blockchain, 'isProofWindowOpen', [
-            agreementId,
-            epoch,
-            latestStateIndex,
-        ]);
-    }
-
-    async getChallenge(blockchain, assetContractAddress, tokenId, epoch, latestStateIndex) {
-        return this.callImplementationFunction(blockchain, 'getChallenge', [
-            assetContractAddress,
-            tokenId,
-            epoch,
-            latestStateIndex,
-        ]);
-    }
-
-    sendProof(
-        blockchain,
-        assetContractAddress,
-        tokenId,
-        keyword,
-        hashFunctionId,
-        epoch,
-        proof,
-        chunkHash,
-        latestStateIndex,
-        callback,
-        gasPrice,
-    ) {
-        return this.callImplementationFunction(blockchain, 'sendProof', [
-            assetContractAddress,
-            tokenId,
-            keyword,
-            hashFunctionId,
-            epoch,
-            proof,
-            chunkHash,
-            latestStateIndex,
-            callback,
-            gasPrice,
-        ]);
-    }
-
     async getMinimumStake(blockchain) {
         return this.callImplementationFunction(blockchain, 'getMinimumStake');
     }
@@ -387,88 +209,12 @@ class BlockchainModuleManager extends BaseModuleManager {
         return this.callImplementationFunction(blockchain, 'getMaximumStake');
     }
 
-    async getR2(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getR2');
-    }
-
-    async getR1(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getR1');
-    }
-
-    async getR0(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getR0');
-    }
-
-    async getFinalizationCommitsNumber(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getFinalizationCommitsNumber');
-    }
-
-    async getUpdateCommitWindowDuration(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getUpdateCommitWindowDuration');
-    }
-
-    async getCommitWindowDurationPerc(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getCommitWindowDurationPerc');
-    }
-
-    async getEpochLength(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getEpochLength');
-    }
-
-    async getProofWindowDurationPerc(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getProofWindowDurationPerc');
-    }
-
-    async isHashFunction(blockchain, hashFunctionId) {
-        return this.callImplementationFunction(blockchain, 'isHashFunction', [hashFunctionId]);
-    }
-
-    getScoreFunctionIds(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getScoreFunctionIds');
-    }
-
-    async getLog2PLDSFParams(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getLog2PLDSFParams');
-    }
-
-    callImplementationFunction(blockchain, functionName, args = []) {
-        if (blockchain) {
-            if (this.getImplementation(blockchain)) {
-                return this.getImplementation(blockchain).module[functionName](...args);
-            }
-        } else {
-            return this.getImplementation().module[functionName](...args);
-        }
-    }
-
     async getLatestBlock(blockchain) {
         return this.callImplementationFunction(blockchain, 'getLatestBlock');
     }
 
     async getBlockchainTimestamp(blockchain) {
         return this.callImplementationFunction(blockchain, 'getBlockchainTimestamp');
-    }
-
-    getBlockTimeMillis(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getBlockTimeMillis');
-    }
-
-    async hasPendingUpdate(blockchain, tokenId) {
-        return this.callImplementationFunction(blockchain, 'hasPendingUpdate', [tokenId]);
-    }
-
-    async getAgreementScoreFunctionId(blockchain, agreementId) {
-        return this.callImplementationFunction(blockchain, 'getAgreementScoreFunctionId', [
-            agreementId,
-        ]);
-    }
-
-    convertUint8ArrayToHex(blockchain, uint8Array) {
-        return this.callImplementationFunction(blockchain, 'convertUint8ArrayToHex', [uint8Array]);
-    }
-
-    async getLinearSumParams(blockchain) {
-        return this.callImplementationFunction(blockchain, 'getLinearSumParams');
     }
 
     async getParanetMetadata(blockchain, paranetId) {
@@ -489,26 +235,43 @@ class BlockchainModuleManager extends BaseModuleManager {
         ]);
     }
 
-    async getKnowledgeAssetLocatorFromParanetId(blockchain, paranetId) {
-        return this.callImplementationFunction(
-            blockchain,
-            'getKnowledgeAssetLocatorFromParanetId',
-            [paranetId],
-        );
-    }
-
     async paranetExists(blockchain, paranetId) {
         return this.callImplementationFunction(blockchain, 'paranetExists', [paranetId]);
     }
 
-    async isParanetKnowledgeAsset(blockchain, knowledgeAssetId) {
-        return this.callImplementationFunction(blockchain, 'isParanetKnowledgeAsset', [
-            knowledgeAssetId,
+    async isCuratedNode(blockchain, paranetId, identityId) {
+        return this.callImplementationFunction(blockchain, 'isCuratedNode', [
+            paranetId,
+            identityId,
         ]);
     }
 
-    async getParanetId(blockchain, knowledgeAssetId) {
-        return this.callImplementationFunction(blockchain, 'getParanetId', [knowledgeAssetId]);
+    async getNodesAccessPolicy(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'getNodesAccessPolicy', [paranetId]);
+    }
+
+    async getParanetCuratedNodes(blockchain, paranetId) {
+        return this.callImplementationFunction(blockchain, 'getParanetCuratedNodes', [paranetId]);
+    }
+
+    async getNodeId(blockchain, identityId) {
+        return this.callImplementationFunction(blockchain, 'getNodeId', [identityId]);
+    }
+
+    async signMessage(blockchain, messageHash) {
+        return this.callImplementationFunction(blockchain, 'signMessage', [messageHash]);
+    }
+
+    async getStakeWeightedAverageAsk(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getStakeWeightedAverageAsk', []);
+    }
+  
+    // SUPPORT FOR OLD CONTRACTS
+    async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
+        return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
+            assetContractAddress,
+            tokenId,
+        ]);
     }
 }
 

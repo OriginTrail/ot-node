@@ -1,49 +1,39 @@
-import jsonld from 'jsonld';
+import { kcTools } from 'assertion-tools';
 import {
-    SCHEMA_CONTEXT,
-    MEDIA_TYPES,
     XML_DATA_TYPES,
-    PRIVATE_ASSERTION_PREDICATE,
+    PRIVATE_HASH_SUBJECT_PREFIX,
+    V0_PRIVATE_ASSERTION_PREDICATE,
 } from '../constants/constants.js';
-
-const ALGORITHM = 'URDNA2015';
 
 class DataService {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
+
+        this.cryptoService = ctx.cryptoService;
     }
 
-    async toNQuads(content, inputFormat) {
-        const options = {
-            algorithm: ALGORITHM,
-            format: MEDIA_TYPES.N_QUADS,
-        };
-
-        if (inputFormat) {
-            options.inputFormat = inputFormat;
-        }
-
-        const canonized = await jsonld.canonize(content, options);
-
-        return canonized.split('\n').filter((x) => x !== '');
+    calculateChunksAmount(assertion) {
+        return kcTools.calculateNumberOfChunks(assertion);
     }
 
-    async compact(content) {
-        const result = await jsonld.compact(content, {
-            '@context': SCHEMA_CONTEXT,
-        });
-
-        return result;
+    createTripleAnnotations(groupedTriples, annotationPredicate, annotations) {
+        return groupedTriples.flatMap((knowledgeAssetTriples, index) =>
+            knowledgeAssetTriples.map(
+                (triple) =>
+                    `<< ${triple.replace(' .', '')} >> ${annotationPredicate} ${
+                        annotations[index]
+                    } .`,
+            ),
+        );
     }
 
-    async canonize(content) {
-        const nquads = await this.toNQuads(content);
-        if (nquads && nquads.length === 0) {
-            throw new Error('File format is corrupted, no n-quads extracted.');
-        }
+    countDistinctSubjects(triples) {
+        return kcTools.countDistinctSubjects(triples);
+    }
 
-        return nquads;
+    groupTriplesBySubject(triples, sort = true) {
+        return kcTools.groupNquadsBySubject(triples, sort);
     }
 
     /**
@@ -90,11 +80,86 @@ class DataService {
 
     getPrivateAssertionId(publicAssertion) {
         const privateAssertionLinkTriple = publicAssertion.filter((triple) =>
-            triple.includes(PRIVATE_ASSERTION_PREDICATE),
+            triple.includes(V0_PRIVATE_ASSERTION_PREDICATE),
         )[0];
         if (!privateAssertionLinkTriple) return;
 
         return privateAssertionLinkTriple.match(/"(.*?)"/)[1];
+    }
+
+    // Asumes nobody is using PRIVATE_HASH_SUBJECT_PREFIX subject in assertion
+    quadsContainsPrivateRepresentations(quads) {
+        return (
+            quads[0].split(' ')[0].startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`) ||
+            quads[quads.length - 1].split(' ')[0].startsWith(`<${PRIVATE_HASH_SUBJECT_PREFIX}`)
+        );
+    }
+
+    generateHashFromString(string) {
+        return this.cryptoService.sha256EncodePacked(['string'], [string]);
+    }
+
+    splitConnectedArrays(publicTriples) {
+        const groupedPublic = [];
+        let currentSubject = publicTriples[0].split(' ')[0];
+        let currentSubjectHash = currentSubject.startsWith('<private-hash:0x')
+            ? currentSubject
+            : `<private-hash:${this.generateHashFromString(currentSubject.slice(1, -1))}>`;
+        let currentKA = [publicTriples[0]];
+
+        for (let i = 1; i < publicTriples.length; i += 1) {
+            const [subject] = publicTriples[i].split(' ');
+
+            const subjectHash = subject.startsWith('<private-hash:0x')
+                ? subject
+                : `<private-hash:${this.generateHashFromString(subject.slice(1, -1))}>`;
+
+            if (
+                currentSubject === subject ||
+                currentSubjectHash === subject ||
+                subjectHash === currentSubject
+            ) {
+                currentKA.push(publicTriples[i]);
+            } else {
+                groupedPublic.push(currentKA);
+                currentSubject = subject;
+                currentSubjectHash = subjectHash;
+                currentKA = [publicTriples[i]];
+            }
+        }
+
+        // Push the last group
+        groupedPublic.push(currentKA);
+
+        return groupedPublic;
+    }
+
+    insertStringInSortedArray(array, str) {
+        // Assuming triplesArray is already sorted
+        let left = 0;
+        let right = array.length;
+        while (left < right) {
+            const mid = Math.floor((left + right) / 2);
+            if (array[mid].localeCompare(str) < 0) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        array.splice(left, 0, str);
+        return left;
+    }
+
+    removeDuplicateObjectsFromArray(array) {
+        const seen = new Set();
+        return array.filter((item) => {
+            const key = Object.values(item).join('_');
+            if (seen.has(key)) {
+                return false;
+            }
+            seen.add(key);
+            return true;
+        });
     }
 }
 

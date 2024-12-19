@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import DependencyInjection from './src/service/dependency-injection.js';
 import Logger from './src/logger/logger.js';
-import { MIN_NODE_VERSION } from './src/constants/constants.js';
+import { MIN_NODE_VERSION, PARANET_ACCESS_POLICY } from './src/constants/constants.js';
 import FileService from './src/service/file-service.js';
 import OtnodeUpdateCommand from './src/commands/common/otnode-update-command.js';
 import OtAutoUpdater from './src/modules/auto-updater/implementation/ot-auto-updater.js';
@@ -29,18 +29,18 @@ class OTNode {
         await this.checkForUpdate();
         await this.removeUpdateFile();
 
-        await MigrationExecutor.executeMultipleOpWalletsUserConfigurationMigration(
+        await MigrationExecutor.executeTripleStoreUserConfigurationMigration(
             this.container,
             this.logger,
             this.config,
         );
 
-        this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
-        this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
-        this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
-        this.logger.info('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
-        this.logger.info('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
-        this.logger.info(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
+        this.logger.info('██████╗ ██╗  ██╗ ██████╗     ██╗   ██╗ █████╗ ');
+        this.logger.info('██╔══██╗██║ ██╔╝██╔════╝     ██║   ██║██╔══██╗');
+        this.logger.info('██║  ██║█████╔╝ ██║  ███╗    ██║   ██║╚█████╔╝');
+        this.logger.info('██║  ██║██╔═██╗ ██║   ██║    ╚██╗ ██╔╝██╔══██╗');
+        this.logger.info('██████╔╝██║  ██╗╚██████╔╝     ╚████╔╝ ╚█████╔╝');
+        this.logger.info('╚═════╝ ╚═╝  ╚═╝ ╚═════╝       ╚═══╝   ╚════╝ ');
 
         this.logger.info('======================================================');
         this.logger.info(`             OriginTrail Node v${pjson.version}`);
@@ -49,70 +49,19 @@ class OTNode {
 
         await this.initializeDependencyContainer();
         this.initializeEventEmitter();
-
         await this.initializeModules();
+        this.initializeBlockchainEventsService();
+        await this.initializeShardingTableService();
         await this.initializeParanets();
-
-        await MigrationExecutor.executeRemoveServiceAgreementsForChiadoMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
 
         await this.createProfiles();
 
         await this.initializeCommandExecutor();
-        await this.initializeShardingTableService();
-
-        await MigrationExecutor.executeMarkStakingEventsAsProcessedMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await this.initializeBlockchainEventListenerService();
-
-        await MigrationExecutor.executePullShardingTableMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeServiceAgreementPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        await MigrationExecutor.executeDevnetNeuroPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
 
         await this.initializeRouters();
         await this.startNetworkModule();
-        this.startTelemetryModule();
         this.resumeCommandExecutor();
         this.logger.info('Node is up and running!');
-
-        MigrationExecutor.executeGetOldServiceAgreementsMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        MigrationExecutor.executeServiceAgreementPruningMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
-
-        MigrationExecutor.executeRemoveDuplicateServiceAgreementMigration(
-            this.container,
-            this.logger,
-            this.config,
-        );
     }
 
     checkNodeVersion() {
@@ -189,20 +138,6 @@ class OTNode {
         this.logger.info('Event emitter initialized');
     }
 
-    async initializeBlockchainEventListenerService() {
-        try {
-            const eventListenerService = this.container.resolve('blockchainEventListenerService');
-            await eventListenerService.initialize();
-            eventListenerService.startListeningOnEvents();
-            this.logger.info('Event Listener Service initialized successfully');
-        } catch (error) {
-            this.logger.error(
-                `Unable to initialize event listener service. Error message: ${error.message} OT-node shutting down...`,
-            );
-            this.stop(1);
-        }
-    }
-
     async initializeRouters() {
         try {
             this.logger.info('Initializing http api and rpc router');
@@ -231,15 +166,19 @@ class OTNode {
     }
 
     async createProfiles() {
+        const cryptoService = this.container.resolve('cryptoService');
         const blockchainModuleManager = this.container.resolve('blockchainModuleManager');
+        const networkModuleManager = this.container.resolve('networkModuleManager');
+        const peerId = networkModuleManager.getPeerId().toB58String();
         const createProfilesPromises = blockchainModuleManager
             .getImplementationNames()
             .map(async (blockchain) => {
                 try {
-                    if (!(await blockchainModuleManager.identityIdExists(blockchain))) {
+                    const identityExists = await blockchainModuleManager.identityIdExists(
+                        blockchain,
+                    );
+                    if (!identityExists) {
                         this.logger.info(`Creating profile on network: ${blockchain}`);
-                        const networkModuleManager = this.container.resolve('networkModuleManager');
-                        const peerId = networkModuleManager.getPeerId().toB58String();
                         await blockchainModuleManager.createProfile(blockchain, peerId);
 
                         if (
@@ -254,21 +193,30 @@ class OTNode {
                             );
                             await setTimeout(10000);
                             execSync(
-                                `npm run set-ask -- --rpcEndpoint=${
-                                    blockchainConfig.rpcEndpoints[0]
-                                } --ask=${
-                                    blockchainConfig.initialAskAmount +
-                                    (Math.random() - 0.5) * blockchainConfig.initialAskAmount
-                                } --privateKey=${
-                                    blockchainConfig.operationalWallets[0].privateKey
-                                } --hubContractAddress=${blockchainConfig.hubContractAddress}`,
+                                `npm run set-ask -- --rpcEndpoint=${blockchainConfig.rpcEndpoints[0]} --ask=${blockchainConfig.initialAskAmount} --privateKey=${blockchainConfig.operationalWallets[0].privateKey} --hubContractAddress=${blockchainConfig.hubContractAddress}`,
                                 { stdio: 'inherit' },
                             );
                         }
                     }
+
                     const identityId = await blockchainModuleManager.getIdentityId(blockchain);
 
                     this.logger.info(`Identity ID: ${identityId}`);
+
+                    if (identityExists) {
+                        const onChainNodeId = await blockchainModuleManager.getNodeId(
+                            blockchain,
+                            identityId,
+                        );
+                        const onChainPeerId = cryptoService.convertHexToAscii(onChainNodeId);
+
+                        if (peerId !== onChainPeerId) {
+                            this.logger.warn(
+                                `Local peer id: ${peerId} doesn't match on chain peer id: ${onChainPeerId} for blockchain: ${blockchain}, identity id: ${identityId}.`,
+                            );
+                            blockchainModuleManager.removeImplementation(blockchain);
+                        }
+                    }
                 } catch (error) {
                     this.logger.warn(
                         `Unable to create ${blockchain} blockchain profile. Removing implementation. Error: ${error.message}`,
@@ -318,22 +266,6 @@ class OTNode {
         await networkModuleManager.start();
     }
 
-    startTelemetryModule() {
-        const telemetryModuleManager = this.container.resolve('telemetryModuleManager');
-        const repositoryModuleManager = this.container.resolve('repositoryModuleManager');
-        telemetryModuleManager.listenOnEvents((eventData) => {
-            repositoryModuleManager.createEventRecord(
-                eventData.operationId,
-                eventData.blockchainId,
-                eventData.lastEvent,
-                eventData.timestamp,
-                eventData.value1,
-                eventData.value2,
-                eventData.value3,
-            );
-        });
-    }
-
     async initializeShardingTableService() {
         try {
             const shardingTableService = this.container.resolve('shardingTableService');
@@ -342,6 +274,19 @@ class OTNode {
         } catch (error) {
             this.logger.error(
                 `Unable to initialize sharding table service. Error message: ${error.message} OT-node shutting down...`,
+            );
+            this.stop(1);
+        }
+    }
+
+    initializeBlockchainEventsService() {
+        try {
+            const blockchainEventsService = this.container.resolve('blockchainEventsService');
+            blockchainEventsService.initializeBlockchainEventsServices();
+            this.logger.info('Blockchain Events Service initialized successfully');
+        } catch (error) {
+            this.logger.error(
+                `Unable to initialize Blockchain Events Service. Error message: ${error.message} OT-node shutting down...`,
             );
             this.stop(1);
         }
@@ -374,45 +319,68 @@ class OTNode {
         const ualService = this.container.resolve('ualService');
         const validParanets = [];
 
-        // eslint-disable-next-line no-unsafe-optional-chaining
-        for (const paranetUAL of this.config.assetSync?.syncParanets) {
+        const syncParanets =
+            this.config.assetSync && this.config.assetSync.syncParanets
+                ? this.config.assetSync.syncParanets
+                : [];
+        for (const paranetUAL of syncParanets) {
             if (!ualService.isUAL(paranetUAL)) {
                 this.logger.warn(
                     `Unable to initialize Paranet with id ${paranetUAL} because of invalid UAL format`,
                 );
-            } else {
-                const { blockchain, contract, tokenId } = ualService.resolveUAL(paranetUAL);
-                if (!blockchainModuleManager.getImplementationNames().includes(blockchain)) {
+                continue;
+            }
+
+            const { blockchain, contract, tokenId } = ualService.resolveUAL(paranetUAL);
+            if (!blockchainModuleManager.getImplementationNames().includes(blockchain)) {
+                this.logger.warn(
+                    `Unable to initialize Paranet with id ${paranetUAL} because of unsupported blockchain implementation`,
+                );
+                continue;
+            }
+
+            const paranetId = paranetService.constructParanetId(contract, tokenId);
+            // eslint-disable-next-line no-await-in-loop
+            const paranetExists = await blockchainModuleManager.paranetExists(
+                blockchain,
+                paranetId,
+            );
+            if (!paranetExists) {
+                this.logger.warn(
+                    `Unable to initialize Paranet with id ${paranetUAL} because it doesn't exist`,
+                );
+                continue;
+            }
+
+            // eslint-disable-next-line no-await-in-loop
+            const nodesAccessPolicy = await blockchainModuleManager.getNodesAccessPolicy(
+                blockchain,
+                paranetId,
+            );
+            if (nodesAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+                // eslint-disable-next-line no-await-in-loop
+                const identityId = await blockchainModuleManager.getIdentityId(blockchain);
+                // eslint-disable-next-line no-await-in-loop
+                const isCuratedNode = await blockchainModuleManager.isCuratedNode(
+                    blockchain,
+                    paranetId,
+                    identityId,
+                );
+                if (!isCuratedNode) {
                     this.logger.warn(
-                        `Unable to initialize Paranet with id ${paranetUAL} because of unsupported blockchain implementation`,
+                        `Unable to initialize Paranet with id ${paranetUAL} because node with id ${identityId} is not a curated node`,
                     );
-                } else {
-                    const paranetId = paranetService.constructParanetId(
-                        blockchain,
-                        contract,
-                        tokenId,
-                    );
-                    // eslint-disable-next-line no-await-in-loop
-                    const paranetExists = await blockchainModuleManager.paranetExists(
-                        blockchain,
-                        paranetId,
-                    );
-                    if (!paranetExists) {
-                        this.logger.warn(
-                            `Unable to initialize Paranet with id ${paranetUAL} because it doesn't exist`,
-                        );
-                    } else {
-                        validParanets.push(paranetUAL);
-                        const repository = paranetService.getParanetRepositoryName(paranetUAL);
-                        // eslint-disable-next-line no-await-in-loop
-                        await tripleStoreModuleManager.initializeParanetRepository(repository);
-                        // eslint-disable-next-line no-await-in-loop
-                        await paranetService.initializeParanetRecord(blockchain, paranetId);
-                    }
+                    continue;
                 }
             }
-        }
 
+            validParanets.push(paranetUAL);
+            const repository = paranetService.getParanetRepositoryName(paranetUAL);
+            // eslint-disable-next-line no-await-in-loop
+            await tripleStoreModuleManager.initializeParanetRepository(repository);
+            // eslint-disable-next-line no-await-in-loop
+            await paranetService.initializeParanetRecord(blockchain, paranetId);
+        }
         this.config.assetSync.syncParanets = validParanets;
         tripleStoreService.initializeRepositories();
     }

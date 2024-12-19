@@ -1,12 +1,10 @@
 import HandleProtocolMessageCommand from '../../../common/handle-protocol-message-command.js';
-
 import {
     ERROR_TYPE,
     NETWORK_MESSAGE_TYPES,
     OPERATION_ID_STATUS,
-    GET_STATES,
+    TRIPLES_VISIBILITY,
     TRIPLE_STORE_REPOSITORIES,
-    PENDING_STORAGE_REPOSITORIES,
 } from '../../../../../constants/constants.js';
 
 class HandleGetRequestCommand extends HandleProtocolMessageCommand {
@@ -15,62 +13,172 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
         this.operationService = ctx.getService;
         this.tripleStoreService = ctx.tripleStoreService;
         this.pendingStorageService = ctx.pendingStorageService;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.GET.GET_REQUEST_REMOTE_ERROR;
+        this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_END;
+        this.prepareMessageStartEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_PREPARE_MESSAGE_START;
+        this.prepareMessageEndEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_PREPARE_MESSAGE_END;
+        this.sendMessageResponseStartEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_SEND_MESSAGE_START;
+        this.sendMessageResponseEndEvent = OPERATION_ID_STATUS.GET.GET_REMOTE_SEND_MESSAGE_END;
+        this.removeCachedSessionStartEvent =
+            OPERATION_ID_STATUS.GET.GET_REMOTE_REMOVE_CACHED_SESSION_START;
+        this.removeCachedSessionEndEvent =
+            OPERATION_ID_STATUS.GET.GET_REMOTE_REMOVE_CACHED_SESSION_END;
     }
 
     async prepareMessage(commandData) {
-        const { operationId, blockchain, contract, tokenId, assertionId, state } = commandData;
-        await this.operationIdService.updateOperationIdStatus(
+        const {
             operationId,
             blockchain,
-            OPERATION_ID_STATUS.GET.GET_REMOTE_START,
+            contract,
+            knowledgeCollectionId,
+            knowledgeAssetId,
+            ual,
+            includeMetadata,
+            assertionId,
+        } = commandData;
+
+        // if (paranetUAL) {
+        //     const paranetNodeAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
+        //         blockchain,
+        //         paranetId,
+        //     );
+        //     if (paranetNodeAccessPolicy === PARANET_ACCESS_POLICY.CURATED) {
+        //         const paranetCuratedNodes =
+        //             await this.blockchainModuleManager.getParanetCuratedNodes(
+        //                 blockchain,
+        //                 paranetId,
+        //             );
+        //         const paranetCuratedPeerIds = paranetCuratedNodes.map((node) =>
+        //             this.blockchainModuleManager.convertHexToAscii(blockchain, node.nodeId),
+        //         );
+
+        //         if (!paranetCuratedPeerIds.includes(remotePeerId)) {
+        //             return {
+        //                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+        //                 messageData: {
+        //                     errorMessage: `Remote peer ${remotePeerId} is not a part of the Paranet (${paranetId}) with UAL: ${paranetUAL}`,
+        //                 },
+        //             };
+        //         }
+        //         const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+        //         const paranetRepository = this.paranetService.getParanetRepositoryName(paranetUAL);
+        //         const syncedAssetRecord =
+        //             await this.repositoryModuleManager.getParanetSyncedAssetRecordByUAL(ual);
+
+        //         nquads = await this.tripleStoreService.getAssertion(paranetRepository, assertionId);
+
+        //         let privateNquads;
+        //         if (syncedAssetRecord.privateAssertionId) {
+        //             privateNquads = await this.tripleStoreService.getAssertion(
+        //                 paranetRepository,
+        //                 syncedAssetRecord.privateAssertionId,
+        //             );
+        //         }
+
+        //         if (nquads?.length) {
+        //             const response = {
+        //                 messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK,
+        //                 messageData: { nquads, syncedAssetRecord },
+        //             };
+
+        //             if (privateNquads?.length) {
+        //                 response.messageData.privateNquads = privateNquads;
+        //             }
+
+        //             return response;
+        //         }
+
+        //         return {
+        //             messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
+        //             messageData: {
+        //                 errorMessage: `Unable to find assertion ${assertionId} for Paranet ${paranetId} with UAL: ${paranetUAL}`,
+        //             },
+        //         };
+        //     }
+        // }
+
+        const promises = [];
+        this.operationIdService.emitChangeEvent(
+            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_START,
+            operationId,
+            blockchain,
         );
 
-        let nquads;
-        if (
-            state !== GET_STATES.FINALIZED &&
-            blockchain != null &&
-            contract != null &&
-            tokenId != null
-        ) {
-            const cachedAssertion = await this.pendingStorageService.getCachedAssertion(
-                PENDING_STORAGE_REPOSITORIES.PUBLIC,
-                blockchain,
-                contract,
-                tokenId,
-                assertionId,
+        let assertionPromise;
+
+        if (assertionId) {
+            assertionPromise = this.tripleStoreService
+                .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+        } else {
+            assertionPromise = this.tripleStoreService
+                .getAssertion(
+                    blockchain,
+                    contract,
+                    knowledgeCollectionId,
+                    knowledgeAssetId,
+                    TRIPLES_VISIBILITY.PUBLIC,
+                )
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+        }
+        promises.push(assertionPromise);
+
+        if (includeMetadata) {
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_METADATA_START,
                 operationId,
+                blockchain,
             );
-            if (cachedAssertion?.public?.assertion?.length) {
-                nquads = cachedAssertion.public.assertion;
-            }
+            const metadataPromise = this.tripleStoreService
+                .getAssertionMetadata(blockchain, contract, knowledgeCollectionId, knowledgeAssetId)
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_METADATA_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
+            promises.push(metadataPromise);
         }
 
-        if (!nquads?.length) {
-            for (const repository of [
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-            ]) {
-                // eslint-disable-next-line no-await-in-loop
-                nquads = await this.tripleStoreService.getAssertion(repository, assertionId);
-                if (nquads.length) {
-                    break;
-                }
-            }
+        const [assertion, metadata] = await Promise.all(promises);
+
+        const responseData = {
+            assertion,
+            ...(includeMetadata && metadata && { metadata }),
+        };
+
+        if (assertion?.public?.length) {
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                blockchain,
+                OPERATION_ID_STATUS.GET.GET_REMOTE_END,
+            );
         }
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.GET.GET_REMOTE_END,
-        );
-
-        return nquads.length
-            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: { nquads } }
+        return assertion?.public?.length
+            ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                  messageData: { errorMessage: `Invalid number of nquads: ${nquads.length}` },
+                  messageData: { errorMessage: `Unable to find assertion ${ual}` },
               };
     }
 

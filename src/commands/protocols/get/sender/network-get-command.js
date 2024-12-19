@@ -1,5 +1,5 @@
 import NetworkProtocolCommand from '../../common/network-protocol-command.js';
-import { ERROR_TYPE } from '../../../../constants/constants.js';
+import { ERROR_TYPE, OPERATION_ID_STATUS } from '../../../../constants/constants.js';
 
 class NetworkGetCommand extends NetworkProtocolCommand {
     constructor(ctx) {
@@ -8,25 +8,8 @@ class NetworkGetCommand extends NetworkProtocolCommand {
         this.ualService = ctx.ualService;
 
         this.errorType = ERROR_TYPE.GET.GET_NETWORK_ERROR;
-    }
-
-    async getKeywords(command) {
-        const { blockchain, contract, tokenId } = command.data;
-        const locationKeyword = await this.ualService.calculateLocationKeyword(
-            blockchain,
-            contract,
-            tokenId,
-        );
-
-        return [locationKeyword];
-    }
-
-    async getBatchSize() {
-        return 2;
-    }
-
-    async getMinAckResponses() {
-        return 1;
+        this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_NETWORK_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_NETWORK_END;
     }
 
     /**

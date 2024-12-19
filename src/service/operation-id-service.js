@@ -15,12 +15,12 @@ class OperationIdService {
         return uuidv4();
     }
 
-    async generateOperationId(status) {
+    async generateOperationId(status, previousOperationId = null) {
         const operationIdObject = await this.repositoryModuleManager.createOperationIdRecord({
             status,
         });
         const { operationId } = operationIdObject;
-        this.emitChangeEvent(status, operationId);
+        this.emitChangeEvent(status, operationId, null, previousOperationId);
         this.logger.debug(`Generated operation id for request ${operationId}`);
         return operationId;
     }
@@ -72,8 +72,11 @@ class OperationIdService {
             await this.removeOperationIdCache(operationId);
         }
 
-        this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
-
+        if (errorType) {
+            this.emitChangeEvent(errorType, operationId, blockchain, errorMessage, errorType);
+        } else {
+            this.emitChangeEvent(status, operationId, blockchain, errorMessage, errorType);
+        }
         await this.repositoryModuleManager.updateOperationIdRecord(response, operationId);
     }
 
@@ -101,7 +104,13 @@ class OperationIdService {
         this.eventEmitter.emit(eventName, eventData);
     }
 
-    async cacheOperationIdData(operationId, data) {
+    async cacheOperationIdDataToMemory(operationId, data) {
+        this.logger.debug(`Caching data for operation id: ${operationId} in memory`);
+
+        this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };
+    }
+
+    async cacheOperationIdDataToFile(operationId, data) {
         this.logger.debug(`Caching data for operation id: ${operationId} in file`);
         const operationIdCachePath = this.fileService.getOperationIdCachePath();
 
@@ -110,8 +119,6 @@ class OperationIdService {
             operationId,
             JSON.stringify(data),
         );
-
-        this.memoryCachedHandlersData[operationId] = { data, timestamp: Date.now() };
     }
 
     async getCachedOperationIdData(operationId) {
@@ -120,7 +127,9 @@ class OperationIdService {
             return this.memoryCachedHandlersData[operationId].data;
         }
 
-        this.logger.debug(`Reading operation id: ${operationId} cached data from file`);
+        this.logger.debug(
+            `Didn't manage to get cached ${operationId} data from memory, trying file`,
+        );
         const documentPath = this.fileService.getOperationIdDocumentPath(operationId);
         let data;
         if (await this.fileService.pathExists(documentPath)) {

@@ -7,17 +7,25 @@ class GetScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.operationService = ctx.getService;
 
         this.errorType = ERROR_TYPE.GET.GET_START_ERROR;
-        this.startEvent = OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
+        this.operationStartEvent = OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_START;
+        this.operationEndEvent = OPERATION_ID_STATUS.GET.GET_FETCH_FROM_NODES_END;
     }
 
     getNextCommandData(command) {
         return {
             ...super.getNextCommandData(command),
-            state: command.data.state,
+            contract: command.data.contract,
+            knowledgeCollectionId: command.data.knowledgeCollectionId,
+            knowledgeAssetId: command.data.knowledgeAssetId,
+            includeMetadata: command.data.includeMetadata,
+            ual: command.data.ual,
             assetSync: command.data.assetSync,
             paranetSync: command.data.paranetSync,
             paranetTokenId: command.data.paranetTokenId,
             paranetLatestAsset: command.data.paranetLatestAsset,
+            paranetUAL: command.data.paranetUAL,
+            paranetId: command.data.paranetId,
+            paranetMetadata: command.data.paranetMetadata,
         };
     }
 

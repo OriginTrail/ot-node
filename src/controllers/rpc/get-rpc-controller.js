@@ -1,4 +1,4 @@
-import { CONTENT_ASSET_HASH_FUNCTION_ID, DEFAULT_GET_STATE, NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
+import { DEFAULT_GET_STATE, NETWORK_MESSAGE_TYPES } from '../../constants/constants.js';
 import BaseController from './base-rpc-controller.js';
 
 class GetController extends BaseController {
@@ -9,13 +9,10 @@ class GetController extends BaseController {
     }
 
     async v1_0_0HandleRequest(message, remotePeerId, protocol) {
-        const { operationId, keywordUuid, messageType } = message.header;
-        const [handleInitCommand, handleRequestCommand] = this.getCommandSequence(protocol);
+        const { operationId, messageType } = message.header;
+        const [handleRequestCommand] = this.getCommandSequence(protocol);
         let commandName;
         switch (messageType) {
-            case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_INIT:
-                commandName = handleInitCommand;
-                break;
             case NETWORK_MESSAGE_TYPES.REQUESTS.PROTOCOL_REQUEST:
                 commandName = handleRequestCommand;
                 break;
@@ -30,15 +27,16 @@ class GetController extends BaseController {
             data: {
                 remotePeerId,
                 operationId,
-                keywordUuid,
                 protocol,
-                assertionId: message.data.assertionId,
+                ual: message.data.ual,
                 blockchain: message.data.blockchain,
                 contract: message.data.contract,
-                tokenId: message.data.tokenId,
-                keyword: message.data.keyword,
-                hashFunctionId: message.data.hashFunctionId ?? CONTENT_ASSET_HASH_FUNCTION_ID,
-                state: message.data.state ?? DEFAULT_GET_STATE
+                knowledgeCollectionId: message.data.knowledgeCollectionId,
+                knowledgeAssetId: message.data.knowledgeAssetId,
+                includeMetadata: message.data.includeMetadata,
+                state: message.data.state ?? DEFAULT_GET_STATE,
+                paranetUAL: message.data.paranetUAL,
+                paranetId: message.data.paranetId,
             },
             transactional: false,
         });

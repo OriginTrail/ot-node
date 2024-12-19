@@ -7,6 +7,7 @@ import {
     COMMAND_STATUS,
     DEFAULT_COMMAND_DELAY_IN_MILLS,
     COMMAND_QUEUE_PARALLELISM,
+    DEFAULT_COMMAND_PRIORITY,
 } from '../constants/constants.js';
 
 /**
@@ -20,7 +21,7 @@ class CommandExecutor {
         this.repositoryModuleManager = ctx.repositoryModuleManager;
         this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
 
-        this.queue = async.queue((command, callback = () => {}) => {
+        this.queue = async.priorityQueue((command, callback = () => {}) => {
             this._execute(command)
                 .then((result) => {
                     callback(result);
@@ -73,24 +74,42 @@ class CommandExecutor {
     async _execute(executeCommand) {
         const command = executeCommand;
         const now = Date.now();
+
         await this._update(command, {
             startedAt: now,
         });
 
+        const commandContext = {
+            commandId: command.id,
+            commandName: command.name,
+        };
+        if (command.data?.operationId) {
+            commandContext.operationId = command.data.operationId;
+        }
+        const loggerWithContext = this.logger.child(commandContext);
+
         if (this.verboseLoggingEnabled) {
-            this.logger.trace(`Command ${command.name} and ID ${command.id} started.`);
+            loggerWithContext.trace('Command started.');
         }
 
         const handler = this.commandResolver.resolve(command.name);
+        handler.logger = loggerWithContext;
+
+        for (const key in handler) {
+            if (key.endsWith('Service') || key.endsWith('ModuleManager')) {
+                handler[key].logger = loggerWithContext;
+            }
+        }
+
         if (!handler) {
-            this.logger.warn(`Command '${command.name}' will not be executed.`);
+            loggerWithContext.warn('Command will not be executed.');
             await this._update(command, {
                 status: COMMAND_STATUS.UNKNOWN,
             });
             return;
         }
         if (command.deadlineAt && now > command.deadlineAt) {
-            this.logger.warn(`Command ${command.name} and ID ${command.id} is too late...`);
+            loggerWithContext.warn('Command is too late...');
             await this._update(command, {
                 status: COMMAND_STATUS.EXPIRED,
             });
@@ -100,9 +119,7 @@ class CommandExecutor {
                     await Promise.all(result.commands.map((c) => this.add(c, c.delay, true)));
                 }
             } catch (e) {
-                this.logger.warn(
-                    `Failed to handle expired callback for command ${command.name} and ID ${command.id}`,
-                );
+                loggerWithContext.warn('Failed to handle expired callback');
             }
             return;
         }
@@ -110,9 +127,7 @@ class CommandExecutor {
         const waitMs = command.readyAt + command.delay - now;
         if (waitMs > 0) {
             if (this.verboseLoggingEnabled) {
-                this.logger.trace(
-                    `Command ${command.name} with ID ${command.id} should be delayed`,
-                );
+                loggerWithContext.trace('Command should be delayed');
             }
             await this.add(command, Math.min(waitMs, MAX_COMMAND_DELAY_IN_MILLS), false);
             return;
@@ -129,6 +144,7 @@ class CommandExecutor {
                 );
 
                 command.data = handler.unpack(command.data);
+
                 let result = await handler.execute(command, transaction);
                 if (result.repeat) {
                     await this._update(
@@ -174,7 +190,7 @@ class CommandExecutor {
 
             if (!processResult.repeat && !processResult.retry) {
                 if (this.verboseLoggingEnabled) {
-                    this.logger.trace(`Command ${command.name} and ID ${command.id} processed.`);
+                    loggerWithContext.trace(`Command processed.`);
                 }
                 const addPromises = [];
                 processResult.children.forEach((e) =>
@@ -184,9 +200,7 @@ class CommandExecutor {
             }
         } catch (e) {
             if (this.verboseLoggingEnabled) {
-                this.logger.trace(
-                    `Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`,
-                );
+                loggerWithContext.trace(`Failed to process command. ${e}.\n${e.stack}`);
             }
 
             try {
@@ -205,9 +219,7 @@ class CommandExecutor {
                     return Command.repeat();
                 }
             } catch (error) {
-                this.logger.warn(
-                    `Failed to handle error callback for command ${command.name} and ID ${command.id}, error: ${error.message}`,
-                );
+                loggerWithContext.warn(`Failed to handle error callback, error: ${error.message}`);
             }
         }
     }
@@ -234,14 +246,34 @@ class CommandExecutor {
      */
     async _addDefaultCommand(name) {
         await this.delete(name);
+
+        const commandContext = {
+            commandName: name,
+        };
+        const loggerWithContext = this.logger.child(commandContext);
+
         const handler = this.commandResolver.resolve(name);
+        handler.logger = loggerWithContext;
+
+        for (const key in handler) {
+            if (key.endsWith('Service') || key.endsWith('ModuleManager')) {
+                handler[key].logger = loggerWithContext;
+            }
+        }
+
         if (!handler) {
-            this.logger.warn(`Command '${name}' will not be executed.`);
+            handler.logger.warn(`Command will not be executed.`);
             return;
         }
-        await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+
+        if (['eventListenerCommand', 'shardingTableCheckCommand'].includes(name)) {
+            await this.add(handler.default(), 0, true);
+        } else {
+            await this.add(handler.default(), DEFAULT_COMMAND_DELAY_IN_MILLS, true);
+        }
+
         if (this.verboseLoggingEnabled) {
-            this.logger.trace(`Permanent command ${name} created.`);
+            handler.logger.trace(`Permanent command created.`);
         }
     }
 
@@ -253,10 +285,33 @@ class CommandExecutor {
      */
     async add(addCommand, addDelay, insert = true) {
         let command = addCommand;
+
+        if (command.isBlocking) {
+            // Check the db to see if there are unfinalized instances of the same command
+            const unfinalizedBlockingCommands =
+                await this.repositoryModuleManager.findUnfinalizedCommandsByName(command.name);
+
+            for (const unfinalizedCommand of unfinalizedBlockingCommands) {
+                if (command.id && command.id === unfinalizedCommand.id) {
+                    if (insert) {
+                        this.logger.warn(`Inserting duplicate of command ${command.id}!`);
+                    }
+                    continue;
+                }
+
+                if (JSON.stringify(unfinalizedCommand.data) === JSON.stringify(command.data)) {
+                    this.logger.info(
+                        `Skipping blocking command: ${command.name} because of unfinalized instance of this command with id: ${unfinalizedCommand.id}`,
+                    );
+                    return;
+                }
+            }
+        }
+
         let delay = addDelay ?? 0;
 
         if (delay > MAX_COMMAND_DELAY_IN_MILLS) {
-            if (command.readyAt == null) {
+            if (!command.readyAt) {
                 command.readyAt = Date.now();
             }
             command.readyAt += delay;
@@ -266,16 +321,19 @@ class CommandExecutor {
         if (insert) {
             command = await this._insert(command);
         }
+
+        const commandPriority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+
         if (delay) {
             setTimeout(
                 (timeoutCommand) => {
-                    this.queue.push(timeoutCommand);
+                    this.queue.push(timeoutCommand, commandPriority);
                 },
                 delay,
                 command,
             );
         } else {
-            this.queue.push(command);
+            this.queue.push(command, commandPriority);
         }
     }
 
@@ -287,7 +345,7 @@ class CommandExecutor {
      */
     async _handleRetry(retryCommand, handler) {
         const command = retryCommand;
-        if (command.retries > 1) {
+        if (command.retries && command.retries > 1) {
             command.data = handler.pack(command.data);
             await this._update(command, {
                 status: COMMAND_STATUS.PENDING,
@@ -313,7 +371,7 @@ class CommandExecutor {
      * @private
      */
     async _handleError(command, handler, error) {
-        if (command.retries > 0) {
+        if (command.retries && command.retries > 0) {
             await this._update(command, {
                 retries: command.retries - 1,
             });
@@ -326,10 +384,12 @@ class CommandExecutor {
                     status: COMMAND_STATUS.FAILED,
                     message: error.message,
                 });
-                this.logger.warn(`Error in command: ${command.name}, error: ${error.message}`);
+                handler.logger.warn(`Error in command: ${command.name}, error: ${error.message}`);
                 return await handler.recover(command);
             } catch (e) {
-                this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
+                handler.logger.warn(
+                    `Failed to recover command ${command.name} and ID ${command.id}`,
+                );
             }
         }
     }
@@ -347,28 +407,27 @@ class CommandExecutor {
             [command.name] = command.sequence;
             command.sequence = command.sequence.slice(1);
         }
-        if (!command.readyAt) {
-            command.readyAt = Date.now(); // take current time
-        }
-        if (command.delay == null) {
-            command.delay = 0;
-        }
-        if (!command.transactional) {
-            command.transactional = 0;
-        }
+
+        command.readyAt = command.readyAt || Date.now();
+        command.delay = command.delay ?? 0;
+        command.transactional = command.transactional ?? 0;
+        command.priority = command.priority ?? DEFAULT_COMMAND_PRIORITY;
+        command.isBlocking = command.isBlocking ?? false;
+        command.status = COMMAND_STATUS.PENDING;
+
         if (!command.data) {
             const commandInstance = this.commandResolver.resolve(command.name);
             if (commandInstance) {
                 command.data = commandInstance.pack(command.data);
             }
         }
-        command.status = COMMAND_STATUS.PENDING;
-        const opts = {};
-        if (transaction != null) {
-            opts.transaction = transaction;
-        }
+
+        const opts = transaction ? { transaction } : {};
+
         const model = await this.repositoryModuleManager.createCommand(command, opts);
+
         command.id = model.id;
+
         return command;
     }
 
@@ -416,6 +475,11 @@ class CommandExecutor {
 
         const commands = [];
         for (const command of pendingCommands) {
+            if (command?.isBlocking) {
+                commands.push(command);
+                continue;
+            }
+
             if (!command?.parentId) {
                 continue;
             }
@@ -436,6 +500,8 @@ class CommandExecutor {
                     id: commandModel.id,
                     name: commandModel.name,
                     data: commandModel.data,
+                    priority: commandModel.priority ?? DEFAULT_COMMAND_PRIORITY,
+                    isBlocking: commandModel.isBlocking ?? false,
                     readyAt: commandModel.readyAt,
                     delay: commandModel.delay,
                     startedAt: commandModel.startedAt,

@@ -1,5 +1,9 @@
 import Command from '../command.js';
-import { ERROR_TYPE, PARANET_SYNC_FREQUENCY_MILLS } from '../../constants/constants.js';
+import {
+    ERROR_TYPE,
+    PARANET_SYNC_FREQUENCY_MILLS,
+    OPERATION_ID_STATUS,
+} from '../../constants/constants.js';
 
 class StartParanetSyncCommands extends Command {
     constructor(ctx) {
@@ -8,23 +12,35 @@ class StartParanetSyncCommands extends Command {
         this.ualService = ctx.ualService;
         this.blockchainModuleManager = ctx.blockchainModuleManager;
         this.repositoryModuleManager = ctx.repositoryModuleManager;
+        this.paranetService = ctx.paranetService;
 
         this.errorType = ERROR_TYPE.PARANET.START_PARANET_SYNC_ERROR;
     }
 
     async execute() {
-        const operationId = this.operationIdService.generateId();
-
-        this.logger.info(
-            `Paranet sync: Starting Paranet sync command for operation id: ${operationId}`,
-        );
-
         await this.commandExecutor.delete('paranetSyncCommand');
 
         const promises = [];
         this.config.assetSync?.syncParanets.forEach(async (paranetUAL) => {
+            const operationId = this.operationIdService.generateId(
+                OPERATION_ID_STATUS.PARANET.PARANET_SYNC_START,
+            );
+
+            const { blockchain, contract, tokenId } = this.ualService.resolveUAL(paranetUAL);
+            const paranetId = this.paranetService.constructParanetId(contract, tokenId);
+
+            const paranetMetadata = await this.blockchainModuleManager.getParanetMetadata(
+                blockchain,
+                paranetId,
+            );
+
             const commandData = {
+                blockchain,
+                contract,
+                tokenId,
                 paranetUAL,
+                paranetId,
+                paranetMetadata,
                 operationId,
             };
 

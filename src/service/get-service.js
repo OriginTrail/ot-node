@@ -6,7 +6,8 @@ import {
     ERROR_TYPE,
     OPERATIONS,
     OPERATION_REQUEST_STATUS,
-    TRIPLE_STORE_REPOSITORIES,
+    GET_BATCH_SIZE,
+    GET_MIN_NUM_OF_NODE_REPLICATIONS,
 } from '../constants/constants.js';
 
 class GetService extends OperationService {
@@ -21,10 +22,6 @@ class GetService extends OperationService {
             OPERATION_ID_STATUS.GET.GET_END,
             OPERATION_ID_STATUS.COMPLETED,
         ];
-        this.ualService = ctx.ualService;
-        this.tripleStoreService = ctx.tripleStoreService;
-        this.blockchainModuleManager = ctx.blockchainModuleManager;
-        this.paranetService = ctx.paranetService;
         this.operationMutex = new Mutex();
     }
 
@@ -34,41 +31,36 @@ class GetService extends OperationService {
             blockchain,
             numberOfFoundNodes,
             leftoverNodes,
-            keyword,
             batchSize,
             minAckResponses,
-            contract,
-            tokenId,
             assertionId,
-            assetSync,
-            stateIndex,
-            paranetSync,
-            paranetTokenId,
-            paranetLatestAsset,
         } = command.data;
 
-        const keywordsStatuses = await this.getResponsesStatuses(
+        const responseStatusesFromDB = await this.getResponsesStatuses(
             responseStatus,
             responseData.errorMessage,
             operationId,
-            keyword,
         );
 
-        const { completedNumber, failedNumber } = keywordsStatuses[keyword];
-        const numberOfResponses = completedNumber + failedNumber;
+        const { completedNumber, failedNumber } = responseStatusesFromDB[operationId];
+
+        const totalResponses = completedNumber + failedNumber;
+        const isAllNodesResponded = numberOfFoundNodes === totalResponses;
+        const isBatchCompleted = totalResponses % batchSize === 0;
+
         this.logger.debug(
             `Processing ${
                 this.operationName
-            } response with status: ${responseStatus} for operationId: ${operationId}, keyword: ${keyword}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
+            } response with status: ${responseStatus} for operationId: ${operationId}. Total number of nodes: ${numberOfFoundNodes}, number of nodes in batch: ${Math.min(
                 numberOfFoundNodes,
                 batchSize,
             )} number of leftover nodes: ${
                 leftoverNodes.length
-            }, number of responses: ${numberOfResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
+            }, number of responses: ${totalResponses}, Completed: ${completedNumber}, Failed: ${failedNumber}`,
         );
         if (responseData.errorMessage) {
             this.logger.trace(
-                `Error message for operation id: ${operationId}, keyword: ${keyword} : ${responseData.errorMessage}`,
+                `Error message for operation id: ${operationId} : ${responseData.errorMessage}`,
             );
         }
 
@@ -76,97 +68,35 @@ class GetService extends OperationService {
             responseStatus === OPERATION_REQUEST_STATUS.COMPLETED &&
             completedNumber === minAckResponses
         ) {
-            await this.markOperationAsCompleted(
-                operationId,
-                blockchain,
-                { assertion: responseData.nquads },
-                this.completedStatuses,
-            );
+            await this.markOperationAsCompleted(operationId, blockchain, responseData, [
+                ...this.completedStatuses,
+            ]);
             this.logResponsesSummary(completedNumber, failedNumber);
+        } else if (completedNumber < minAckResponses && (isAllNodesResponded || isBatchCompleted)) {
+            const potentialCompletedNumber = completedNumber + leftoverNodes.length;
 
-            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-            // Fetched old state - store it in public history repo
-            if (paranetSync && !paranetLatestAsset) {
-                this.logger.debug(
-                    `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                );
-                await this.tripleStoreService.localStoreAsset(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_HISTORY,
-                    assertionId,
-                    responseData.nquads,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                );
-            } else if (assetSync) {
-                this.logger.debug(
-                    `Asset sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                );
-
-                await this.tripleStoreService.localStoreAsset(
-                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
-                    assertionId,
-                    responseData.nquads,
-                    blockchain,
-                    contract,
-                    tokenId,
-                    keyword,
-                );
-
-                // Paranet sync for latest state
-                if (paranetSync) {
-                    this.logger.debug(
-                        `Paranet sync: ${responseData.nquads.length} nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                    );
-                    const paranetUAL = this.ualService.deriveUAL(
-                        blockchain,
-                        contract,
-                        paranetTokenId,
-                    );
-                    const paranetRepository =
-                        this.paranetService.getParanetRepositoryName(paranetUAL);
-                    await this.tripleStoreService.localStoreAsset(
-                        paranetRepository,
-                        assertionId,
-                        responseData.nquads,
-                        blockchain,
-                        contract,
-                        tokenId,
-                        keyword,
-                    );
-                }
-            }
-        }
-
-        if (
-            completedNumber < minAckResponses &&
-            (numberOfFoundNodes === failedNumber || failedNumber % batchSize === 0)
-        ) {
-            if (leftoverNodes.length === 0) {
-                this.logger.info(
-                    `Unable to find assertion on the network for operation id: ${operationId}`,
-                );
-                await this.markOperationAsCompleted(
+            // Still possible to meet minAckResponses, schedule leftover nodes
+            if (leftoverNodes.length > 0 && potentialCompletedNumber >= minAckResponses) {
+                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
+            } else {
+                // Not enough potential responses to meet minAckResponses, or no leftover nodes
+                this.markOperationAsFailed(
                     operationId,
                     blockchain,
-                    {
-                        message: 'Unable to find assertion on the network!',
-                    },
-                    this.completedStatuses,
+                    `Unable to find assertion ${assertionId} on the network!`,
+                    this.errorType,
                 );
                 this.logResponsesSummary(completedNumber, failedNumber);
-                if (assetSync) {
-                    const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-                    this.logger.debug(
-                        `ASSET_SYNC: No nquads found for asset with ual: ${ual}, state index: ${stateIndex}, assertionId: ${assertionId}`,
-                    );
-                }
-            } else {
-                await this.scheduleOperationForLeftoverNodes(command.data, leftoverNodes);
             }
         }
+    }
+
+    getBatchSize(batchSize = null) {
+        return batchSize ?? GET_BATCH_SIZE;
+    }
+
+    getMinAckResponses(minimumNumberOfNodeReplications = null) {
+        return minimumNumberOfNodeReplications ?? GET_MIN_NUM_OF_NODE_REPLICATIONS;
     }
 }
 
