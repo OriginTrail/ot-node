@@ -5,7 +5,7 @@ import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants
 class GetValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
         super(ctx);
-        this.operationService = ctx.publishService;
+        this.operationService = ctx.getService;
         this.errorType = ERROR_TYPE.GET.GET_VALIDATE_ASSET_ERROR;
     }
 
