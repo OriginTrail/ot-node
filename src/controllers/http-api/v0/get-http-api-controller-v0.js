@@ -91,6 +91,7 @@ class GetController extends BaseController {
                     operationId,
                     paranetUAL,
                     contentType: contentType ?? TRIPLES_VISIBILITY.ALL,
+                    isOperationV0: true,
                 },
                 transactional: false,
             });

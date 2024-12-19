@@ -1,4 +1,4 @@
-import { ZERO_ADDRESS, PRIVATE_ASSERTION_PREDICATE } from '../constants/constants.js';
+import { ZERO_ADDRESS, PRIVATE_ASSERTION_PREDICATE, ZERO_BYTES32 } from '../constants/constants.js';
 
 class ValidationService {
     constructor(ctx) {
@@ -21,6 +21,28 @@ class ValidationService {
                 tokenId,
             );
             if (!result || result === ZERO_ADDRESS) {
+                isValid = false;
+            }
+        } catch (err) {
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    async validateUalV6(blockchain, contract, tokenId) {
+        this.logger.info(
+            `Validating UAL: did:dkg:${blockchain.toLowerCase()}/${contract.toLowerCase()}/${tokenId}`,
+        );
+
+        let isValid = true;
+        try {
+            const result = await this.blockchainModuleManager.getLatestAssertionId(
+                blockchain,
+                contract,
+                tokenId,
+            );
+            if (!result || result === ZERO_BYTES32) {
                 isValid = false;
             }
         } catch (err) {

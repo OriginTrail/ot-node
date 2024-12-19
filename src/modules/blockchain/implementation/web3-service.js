@@ -1115,11 +1115,7 @@ class Web3Service {
     }
 
     async getStakeWeightedAverageAsk() {
-        return this.callContractFunction(
-            this.contracts.ShardingTableStorage,
-            'getStakeWeightedAverageAsk',
-            [],
-        );
+        return this.callContractFunction(this.contracts.Ask, 'getStakeWeightedAverageAsk', []);
     }
     // SUPPORT FOR OLD CONTRACTS
 
