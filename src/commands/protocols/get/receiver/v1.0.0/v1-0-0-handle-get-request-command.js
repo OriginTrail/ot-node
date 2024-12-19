@@ -37,9 +37,11 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             knowledgeAssetId,
             ual,
             includeMetadata,
-            assertionId,
+
             isOperationV0,
         } = commandData;
+
+        let { assertionId } = commandData;
 
         // if (paranetUAL) {
         //     const paranetNodeAccessPolicy = await this.blockchainModuleManager.getNodesAccessPolicy(
@@ -112,19 +114,32 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
 
         if (isOperationV0) {
             if (!assertionId) {
-                // Find assertion id
-            } else {
-                assertionPromise = this.tripleStoreService
-                    .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
-                    .then((result) => {
-                        this.operationIdService.emitChangeEvent(
-                            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
-                            operationId,
-                            blockchain,
-                        );
-                        return result;
-                    });
+                assertionId = await this.tripleStoreService.getLatestAssertionId(
+                    TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
+                    ual,
+                );
+
+                if (!assertionId) {
+                    assertionId = await this.tripleStoreService.getLatestAssertionId(
+                        TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                        ual,
+                    );
+                }
+
+                this.logger.info(
+                    `Found assertion id: ${assertionId}, operation id ${operationId}, ual: ${ual}`,
+                );
             }
+            assertionPromise = this.tripleStoreService
+                .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
+                .then((result) => {
+                    this.operationIdService.emitChangeEvent(
+                        OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                        operationId,
+                        blockchain,
+                    );
+                    return result;
+                });
         } else {
             assertionPromise = this.tripleStoreService
                 .getAssertion(

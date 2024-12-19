@@ -31,9 +31,6 @@ class GetAssertionMerkleRootCommand extends Command {
             );
         }
 
-        if (!assertionId) {
-            throw new Error(`No assertionId found for UAL: ${ual} in either repository.`);
-        }
         this.logger.info(
             `Found assertion id: ${assertionId}, operation id ${operationId}, ual: ${ual}`,
         );
