@@ -40,7 +40,7 @@ class ValidateAssetCommand extends Command {
         );
 
         const blockchainAssertionId =
-            await this.blockchainModuleManager.getLatestKnowledgeCollectionMerkleRoot(
+            await this.blockchainModuleManager.getKnowledgeCollectionLatestMerkleRoot(
                 blockchain,
                 contract,
                 tokenId,
