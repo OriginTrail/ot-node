@@ -26,6 +26,7 @@ export const BATCH_SIZE = 50;
 // // LOCAL TESTING END
 
 // REMOTE
+export const DEFAULT_CONFIG_PATH = '/root/ot-node/current/config/config.json';
 export const NODERC_CONFIG_PATH = '/root/ot-node/.origintrail_noderc';
 export const DATA_MIGRATION_DIR = '/root/ot-node/data/data-migration';
 export const ENV_PATH = '/root/ot-node/current/.env';
