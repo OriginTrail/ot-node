@@ -37,7 +37,6 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             knowledgeAssetId,
             ual,
             includeMetadata,
-
             isOperationV0,
         } = commandData;
 
