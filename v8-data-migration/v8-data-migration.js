@@ -353,8 +353,9 @@ async function main() {
         }
 
         if (!blockchainName) {
-            logger.info(`Blockchain ${blockchain} not found. Skipping...`);
-            continue;
+            throw new Error(
+                `Blockchain ${blockchain} not found. Make sure you have the correct blockchain data and .env file.`,
+            );
         }
 
         // REMOTE
