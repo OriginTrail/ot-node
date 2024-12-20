@@ -104,7 +104,8 @@ class LocalGetCommand extends Command {
 
         if (assertionId) {
             assertionPromise = (async () => {
-                let result = {};
+                let result = null;
+
                 for (const repository of [
                     TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
@@ -116,15 +117,24 @@ class LocalGetCommand extends Command {
                     }
                 }
 
-                if (result?.length) {
-                    this.operationIdService.emitChangeEvent(
-                        OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
-                        operationId,
+                if (!result?.length) {
+                    result = await this.tripleStoreService.getAssertion(
                         blockchain,
+                        contract,
+                        knowledgeCollectionId,
+                        knowledgeAssetId,
+                        contentType,
                     );
                 }
+                this.operationIdService.emitChangeEvent(
+                    OPERATION_ID_STATUS.GET.GET_LOCAL_GET_ASSERTION_END,
+                    operationId,
+                    blockchain,
+                );
 
-                return result.split('\n').filter((res) => res.length > 0);
+                return typeof result === 'string'
+                    ? result.split('\n').filter((res) => res.length > 0)
+                    : result;
             })();
         } else {
             assertionPromise = this.tripleStoreService
@@ -172,7 +182,7 @@ class LocalGetCommand extends Command {
             assertion,
             ...(includeMetadata && metadata && { metadata }),
         };
-        if (assertion?.public?.length || assertion?.private?.length) {
+        if (assertion?.public?.length || assertion?.private?.length || assertion?.length) {
             await this.operationService.markOperationAsCompleted(
                 operationId,
                 blockchain,

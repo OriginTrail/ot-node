@@ -98,6 +98,17 @@ class GetRequestCommand extends ProtocolRequestCommand {
 
             return ProtocolRequestCommand.empty();
         }
+        if (responseData?.assertion?.length) {
+            // V6 assertion
+
+            await this.operationService.processResponse(
+                command,
+                OPERATION_REQUEST_STATUS.COMPLETED,
+                responseData,
+            );
+
+            return ProtocolRequestCommand.empty();
+        }
 
         return this.handleNack(command, responseData);
     }
