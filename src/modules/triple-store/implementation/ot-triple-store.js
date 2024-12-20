@@ -587,6 +587,8 @@ class OtTripleStore {
     }
 
     async getV6Assertion(repository, assertionId) {
+        if (!assertionId) return '';
+
         const escapedGraphName = this.cleanEscapeCharacter(assertionId);
 
         const query = `PREFIX schema: <${SCHEMA_CONTEXT}>

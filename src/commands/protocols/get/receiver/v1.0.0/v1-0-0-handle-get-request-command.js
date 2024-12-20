@@ -118,25 +118,46 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
                     ual,
                 );
 
-                if (!assertionId) {
-                    return {
-                        messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
-                        messageData: { errorMessage: `Unable to find assertion ${ual}` },
-                    };
-                }
-
                 this.logger.info(
                     `Found assertion id: ${assertionId}, operation id ${operationId}, ual: ${ual}`,
                 );
             }
+
+            // DO NOT RUN THIS IF !assertionId
             assertionPromise = this.tripleStoreService
                 .getV6Assertion(TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT, assertionId)
-                .then((result) => {
+                .then(async (result) => {
+                    if (!result?.length) {
+                        this.logger.info(
+                            `No V6 assertion found for assertionId: ${assertionId}, falling back to V8 getAssertion`,
+                        );
+
+                        const fallbackResult = await this.tripleStoreService.getAssertion(
+                            blockchain,
+                            contract,
+                            knowledgeCollectionId,
+                            knowledgeAssetId,
+                            TRIPLES_VISIBILITY.PUBLIC,
+                        );
+
+                        this.operationIdService.emitChangeEvent(
+                            OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
+                            operationId,
+                            blockchain,
+                        );
+
+                        return [
+                            ...(fallbackResult.public ?? []),
+                            ...(fallbackResult.private ?? []),
+                        ];
+                    }
+
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.GET.GET_REMOTE_GET_ASSERTION_END,
                         operationId,
                         blockchain,
                     );
+
                     return result.split('\n').filter((res) => res.length > 0);
                 });
         } else {
@@ -185,7 +206,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             ...(includeMetadata && metadata && { metadata }),
         };
 
-        if (assertion?.public?.length) {
+        if (assertion?.public?.length || assertion?.length) {
             await this.operationIdService.updateOperationIdStatus(
                 operationId,
                 blockchain,
@@ -193,7 +214,7 @@ class HandleGetRequestCommand extends HandleProtocolMessageCommand {
             );
         }
 
-        return assertion?.public?.length
+        return assertion?.public?.length || assertion?.length
             ? { messageType: NETWORK_MESSAGE_TYPES.RESPONSES.ACK, messageData: responseData }
             : {
                   messageType: NETWORK_MESSAGE_TYPES.RESPONSES.NACK,
