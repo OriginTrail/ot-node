@@ -3,23 +3,13 @@ import fs from 'fs';
 import { createRequire } from 'module';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { BATCH_SIZE, ENV_PATH, BLOCKCHAINS, DATA_MIGRATION_DIR, DB_URLS } from './constants.js';
 import {
-    BATCH_SIZE,
-    ENV_PATH,
-    BLOCKCHAINS,
-    DATA_MIGRATION_DIR,
-    NEUROWEB_TESTNET_CSV_URL,
-} from './constants.js';
-import {
-    updateCsvFile,
     initializeConfig,
     initializeDefaultConfig,
-    getCsvDataStream,
-    getHighestTokenId,
     ensureDirectoryExists,
     ensureMigrationProgressFileExists,
     markMigrationAsSuccessfull,
-    getTokenIdsToProcessCount,
 } from './v8-data-migration-utils.js';
 import {
     getAssertionFromV6TripleStore,
@@ -39,9 +29,10 @@ import {
     validateTripleStoreImplementation,
     validateBatchData,
 } from './validation.js';
+import sqliteDb from './sqlite-utils.js';
 import logger from './logger.js';
 
-dotenv.config({ ENV_PATH, override: true });
+dotenv.config({ path: ENV_PATH, override: true });
 
 const require = createRequire(import.meta.url);
 const { setTimeout } = require('timers/promises');
@@ -77,7 +68,9 @@ async function processAndInsertNewerAssertions(
 
         const assertionIds = await storageContract.getAssertionIds(newTokenId);
         if (assertionIds.length === 0) {
-            logger.info(`You have processed all assertions on ${blockchainName}. Skipping...`);
+            logger.info(
+                `You have processed all assertions on ${blockchainName}. Moving to the next blockchain...`,
+            );
             assertionExists = false;
             break;
         }
@@ -103,19 +96,13 @@ async function processAndInsertNewerAssertions(
             continue;
         }
 
-        logger.info(
-            `Found assertion with assertionId ${assertionId} for tokenId ${newTokenId} in V6 triple store`,
-        );
-
         const { successfullyProcessed, assertionsToCheck } =
             await insertAssertionsIntoV8UnifiedRepository([assertion], tripleStoreRepositories);
 
-        if (successfullyProcessed.length === 0) {
-            logger.error(
-                `Assertion with assertionId ${assertionId} could not be inserted. Retrying...`,
+        if (successfullyProcessed.length > 0) {
+            logger.info(
+                `Assertion with assertionId ${assertionId} does not exist in V6 triple store.`,
             );
-            newTokenId -= 1;
-            continue;
         }
 
         if (assertionsToCheck.length > 0) {
@@ -138,10 +125,27 @@ async function processAndInsertNewerAssertions(
                 newTokenId -= 1;
                 continue;
             }
+
+            logger.info(
+                `Successfully inserted public/private assertions into V8 triple store for tokenId: ${newTokenId}`,
+            );
         }
 
+        const inserted = await sqliteDb.insertAssertion(
+            blockchainName,
+            newTokenId,
+            newUal,
+            assertionId,
+        );
+        if (!inserted) {
+            logger.error(
+                `Assertion with assertionId ${assertionId} could not be inserted. Retrying...`,
+            );
+            newTokenId -= 1;
+            continue;
+        }
         logger.info(
-            `Successfully inserted public/private assertions into V8 triple store for tokenId: ${newTokenId}`,
+            `Assertion with tokenId ${newTokenId} inserted into db and marked as processed.`,
         );
     }
 }
@@ -162,6 +166,12 @@ async function processAndInsertAssertions(
 
     const { successfullyProcessed, assertionsToCheck } =
         await insertAssertionsIntoV8UnifiedRepository(v6Assertions, tripleStoreRepositories);
+
+    logger.info(
+        `Number of assertions that do not exist in V6 triple store: ${successfullyProcessed.length}`,
+    );
+
+    logger.info(`Verifying V8 triple store insertions for ${assertionsToCheck.length} assertions`);
 
     const promises = [];
     for (const assertion of assertionsToCheck) {
@@ -189,6 +199,8 @@ async function processAndInsertAssertions(
     const successfulInserts = results
         .filter((result) => result.exists)
         .map((result) => result.tokenId);
+
+    logger.info(`Number of successfully inserted assertions: ${successfulInserts.length}`);
 
     successfullyProcessed.push(...successfulInserts);
     logger.info(`Successfully processed assertions: ${successfullyProcessed.length}`);
@@ -233,12 +245,10 @@ async function getAssertionsInBatch(
 }
 
 async function main() {
-    // REMOTE
     ensureMigrationProgressFileExists();
 
-    // Make sure data/data-migration directory exists (for csv files)
+    // Make sure data/data-migration directory exists
     ensureDirectoryExists(DATA_MIGRATION_DIR);
-    // REMOTE END
 
     // initialize noderc config
     const config = initializeConfig();
@@ -286,190 +296,199 @@ async function main() {
     // Ensure connections
     await ensureConnections(tripleStoreRepositories, tripleStoreImplementation);
 
-    // Iterate through all chains
-    for (const blockchain in blockchainConfig.implementation) {
-        logger.time(`CSV PROCESSING TIME FOR ${blockchain}`);
-        let processed = 0;
-        const blockchainImplementation = blockchainConfig.implementation[blockchain];
-        if (!blockchainImplementation.enabled) {
-            logger.info(`Blockchain ${blockchain} is not enabled. Skipping...`);
-            continue;
-        }
-        const rpcEndpoints = blockchainImplementation?.config?.rpcEndpoints
-            ? blockchainImplementation.config.rpcEndpoints
-            : defaultConfig[process.env.NODE_ENV].modules.blockchain.implementation[blockchain]
-                  .config.rpcEndpoints;
-        if (!Array.isArray(rpcEndpoints) || rpcEndpoints.length === 0) {
-            throw new Error(`RPC endpoints are not defined for blockchain ${blockchain}.`);
-        }
-
-        let blockchainName;
-        let blockchainDetails;
-        for (const [, details] of Object.entries(BLOCKCHAINS)) {
-            if (details.ID === blockchain && details.ENV === process.env.NODE_ENV) {
-                blockchainName = details.NAME;
-                blockchainDetails = details;
-                break;
-            }
-        }
-
-        if (!blockchainName) {
-            throw new Error(
-                `Blockchain ${blockchain} not found. Make sure you have the correct blockchain ID and correct NODE_ENV in .env file.`,
-            );
-        }
-
-        // REMOTE
-        // Check if blockchain csv exists and if it doesn't copy the csv to it
-        const __dirname = path.dirname(new URL(import.meta.url).pathname);
-        const csvFilePath = path.join(__dirname, `${blockchainName}.csv`);
-        const csvMigrationDirFilePath = path.join(DATA_MIGRATION_DIR, `${blockchainName}.csv`);
-        if (!fs.existsSync(csvMigrationDirFilePath)) {
-            logger.info(
-                `CSV file for blockchain ${blockchainName} does not exist in ${DATA_MIGRATION_DIR}. Creating it...`,
-            );
-            if (blockchainName === BLOCKCHAINS.NEUROWEB_TESTNET.NAME) {
-                // Fetch the csv file from the remote server
-                logger.info(
-                    `Fetching ${blockchainName}.csv file from ${NEUROWEB_TESTNET_CSV_URL}. This may take a while...`,
-                );
-                const writer = fs.createWriteStream(csvFilePath);
-                const response = await axios({
-                    url: NEUROWEB_TESTNET_CSV_URL,
-                    method: 'GET',
-                    responseType: 'stream',
-                });
-
-                // Pipe the response stream to the file
-                response.data.pipe(writer);
-                logger.time(`CSV FILE DOWNLOADED`);
-                // Wait for the file to finish downloading
-                await new Promise((resolve, reject) => {
-                    let downloadComplete = false;
-
-                    response.data.on('end', () => {
-                        downloadComplete = true;
-                    });
-
-                    writer.on('finish', resolve);
-                    writer.on('error', (err) =>
-                        reject(new Error(`Write stream error: ${err.message}`)),
-                    );
-                    response.data.on('error', (err) =>
-                        reject(new Error(`Download stream error: ${err.message}`)),
-                    );
-                    response.data.on('close', () => {
-                        if (!downloadComplete) {
-                            reject(new Error('Download stream closed before completing'));
-                        }
-                    });
-                });
-                logger.timeEnd(`CSV FILE DOWNLOADED`);
-            }
-
-            // Copy the csv file to the data/data-migration directory
-            fs.copyFileSync(csvFilePath, csvMigrationDirFilePath);
-
-            if (!fs.existsSync(csvMigrationDirFilePath)) {
-                throw new Error(`CSV file for blockchain ${blockchainName} could not be created.`);
-            }
-        }
-        // REMOTE END
-        logger.info('GET CSV DATA');
-
-        // // LOCAL TESTING
-        // const __dirname = path.dirname(new URL(import.meta.url).pathname);
-        // const csvMigrationDirFilePath = path.join(__dirname, `${blockchainName}.csv`);
-        // // LOCAL TESTING END
-
-        const csvDataStream = getCsvDataStream(csvMigrationDirFilePath, BATCH_SIZE);
-
-        const highestTokenId = await getHighestTokenId(csvMigrationDirFilePath);
-        logger.info(`Total amount of tokenIds: ${highestTokenId}`);
-
-        const tokenIdsToProcessCount = await getTokenIdsToProcessCount(csvMigrationDirFilePath);
-        logger.info(`Amount of tokenIds left to process: ${tokenIdsToProcessCount}`);
-
-        // Iterate through the csv data and push to triple store until all data is processed
-        while (true) {
-            logger.time('GETTING THE NEW CSV DATA BATCH');
-            const next = await csvDataStream.next();
-            logger.timeEnd('GETTING THE NEW CSV DATA BATCH');
-
-            if (next.done) break; // No more unprocessed records
-
-            const batchData = next.value;
-            const batchKeys = Object.keys(batchData);
-
-            try {
-                logger.time('FETCHING V6 ASSERTIONS');
-                const v6Assertions = await getAssertionsInBatch(
-                    batchKeys,
-                    batchData,
-                    tripleStoreRepositories,
-                    tripleStoreImplementation,
-                );
-                logger.timeEnd('FETCHING V6 ASSERTIONS');
-
-                if (v6Assertions.length === 0) {
-                    throw new Error(
-                        `Something went wrong. Could not get any V6 assertions in batch ${batchKeys}`,
-                    );
-                }
-
-                logger.info(`Number of V6 assertions to process: ${v6Assertions.length}`);
-
-                const successfullyProcessed = await processAndInsertAssertions(
-                    v6Assertions,
-                    tripleStoreRepositories,
-                    tripleStoreImplementation,
-                );
-
-                if (successfullyProcessed.length === 0) {
-                    throw new Error(
-                        `Could not insert any assertions out of ${v6Assertions.length}`,
-                    );
-                }
-
-                logger.info(
-                    `Successfully processed/inserted assertions: ${successfullyProcessed.length}`,
-                );
-
-                // mark data as processed in csv file
-                await updateCsvFile(csvMigrationDirFilePath, successfullyProcessed);
-
-                processed += successfullyProcessed.length;
-                logger.info(
-                    `[PROGRESS] for ${blockchainName}: ${(
-                        (processed / tokenIdsToProcessCount) *
-                        100
-                    ).toFixed(2)}%. Total processed: ${processed}/${tokenIdsToProcessCount}`,
-                );
-            } catch (error) {
-                logger.error(`Error processing batch: ${error}. Pausing for 5 second...`);
-                await setTimeout(5000);
-            }
-        }
-
-        logger.timeEnd(`CSV PROCESSING TIME FOR ${blockchain}`);
-
-        logger.time('BLOCKCHAIN ASSERRTION GET AND TRIPLE STORE INSERT');
-        // If newer (unprocessed) assertions exist on-chain, fetch them and insert them into the V8 triple store repository
-        // eslint-disable-next-line no-await-in-loop
-        await processAndInsertNewerAssertions(
-            blockchainDetails,
-            blockchainName,
-            highestTokenId,
-            tripleStoreRepositories,
-            tripleStoreImplementation,
-            rpcEndpoints,
+    // Check if db exists and if it doesn't download it to the relevant directory
+    const dbFilePath = path.join(DATA_MIGRATION_DIR, `${process.env.NODE_ENV}.db`);
+    if (!fs.existsSync(dbFilePath)) {
+        logger.info(
+            `DB file for ${process.env.NODE_ENV} does not exist in ${DATA_MIGRATION_DIR}. Downloading it...`,
         );
-        logger.timeEnd('BLOCKCHAIN ASSERRTION GET AND TRIPLE STORE INSERT');
+        // Fetch the db file from the remote server
+        logger.info(
+            `Fetching ${process.env.NODE_ENV}.db file from ${
+                DB_URLS[process.env.NODE_ENV]
+            }. This may take a while...`,
+        );
+        logger.time(`Database file downloading time`);
+        const writer = fs.createWriteStream(dbFilePath);
+        const response = await axios({
+            url: DB_URLS[process.env.NODE_ENV],
+            method: 'GET',
+            responseType: 'stream',
+        });
+
+        // Pipe the response stream to the file
+        response.data.pipe(writer);
+        // Wait for the file to finish downloading
+        await new Promise((resolve, reject) => {
+            let downloadComplete = false;
+
+            response.data.on('end', () => {
+                downloadComplete = true;
+            });
+
+            writer.on('finish', resolve);
+            writer.on('error', (err) => reject(new Error(`Write stream error: ${err.message}`)));
+            response.data.on('error', (err) =>
+                reject(new Error(`Download stream error: ${err.message}`)),
+            );
+            response.data.on('close', () => {
+                if (!downloadComplete) {
+                    reject(new Error('Download stream closed before completing'));
+                }
+            });
+        });
+        logger.timeEnd(`Database file downloading time`);
+
+        if (!fs.existsSync(dbFilePath)) {
+            throw new Error(`DB file for ${process.env.NODE_ENV} could not be created.`);
+        }
     }
 
-    // REMOTE
+    // Initialize SQLite database once before processing blockchains
+    logger.info('Initializing SQLite database');
+    await sqliteDb.initialize();
+
+    try {
+        // Iterate through all chains
+        for (const blockchain in blockchainConfig.implementation) {
+            logger.time(`PROCESSING TIME FOR ${blockchain}`);
+            let processed = 0;
+            const blockchainImplementation = blockchainConfig.implementation[blockchain];
+            if (!blockchainImplementation.enabled) {
+                logger.info(`Blockchain ${blockchain} is not enabled. Skipping...`);
+                continue;
+            }
+            const rpcEndpoints = blockchainImplementation?.config?.rpcEndpoints
+                ? blockchainImplementation.config.rpcEndpoints
+                : defaultConfig[process.env.NODE_ENV].modules.blockchain.implementation[blockchain]
+                      .config.rpcEndpoints;
+            if (!Array.isArray(rpcEndpoints) || rpcEndpoints.length === 0) {
+                throw new Error(`RPC endpoints are not defined for blockchain ${blockchain}.`);
+            }
+
+            let blockchainName;
+            let blockchainDetails;
+            for (const [, details] of Object.entries(BLOCKCHAINS)) {
+                if (details.ID === blockchain && details.ENV === process.env.NODE_ENV) {
+                    blockchainName = details.NAME;
+                    blockchainDetails = details;
+                    break;
+                }
+            }
+
+            if (!blockchainName) {
+                throw new Error(
+                    `Blockchain ${blockchain} not found. Make sure you have the correct blockchain ID and correct NODE_ENV in .env file.`,
+                );
+            }
+
+            const tableExists = await sqliteDb.getTableExists(blockchainName);
+
+            if (!tableExists) {
+                throw new Error(
+                    `Required table "${blockchainName}" does not exist in the database`,
+                );
+            }
+
+            const highestTokenId = await sqliteDb.getHighestTokenId(blockchainName);
+            if (!highestTokenId) {
+                throw new Error(
+                    `Something went wrong. Could not fetch highest tokenId for ${blockchainName}.`,
+                );
+            }
+            logger.info(`Total amount of tokenIds: ${highestTokenId}`);
+
+            const tokenIdsToProcessCount = await sqliteDb.getUnprocessedCount(blockchainName);
+            logger.info(`Amount of tokenIds left to process: ${tokenIdsToProcessCount}`);
+
+            // Process tokens in batches
+            while (true) {
+                logger.time('BATCH PROCESSING TIME');
+
+                const batchData = await sqliteDb.getBatchOfUnprocessedTokenIds(
+                    blockchainName,
+                    BATCH_SIZE,
+                );
+                const batchKeys = Object.keys(batchData);
+
+                if (batchKeys.length === 0) {
+                    logger.info('No more unprocessed tokenIds found. Moving on...');
+                    logger.timeEnd('BATCH PROCESSING TIME');
+                    break;
+                }
+
+                logger.info(`Processing batch: ${batchKeys}`);
+
+                try {
+                    logger.time('FETCHING V6 ASSERTIONS');
+                    const v6Assertions = await getAssertionsInBatch(
+                        batchKeys,
+                        batchData,
+                        tripleStoreRepositories,
+                        tripleStoreImplementation,
+                    );
+                    logger.timeEnd('FETCHING V6 ASSERTIONS');
+
+                    if (v6Assertions.length === 0) {
+                        throw new Error(
+                            `Something went wrong. Could not get any V6 assertions in batch ${batchKeys}`,
+                        );
+                    }
+
+                    logger.info(`Number of V6 assertions to process: ${v6Assertions.length}`);
+
+                    const successfullyProcessed = await processAndInsertAssertions(
+                        v6Assertions,
+                        tripleStoreRepositories,
+                        tripleStoreImplementation,
+                    );
+
+                    if (successfullyProcessed.length === 0) {
+                        throw new Error(
+                            `Could not insert any assertions out of ${v6Assertions.length}`,
+                        );
+                    }
+
+                    logger.info(
+                        `Successfully processed/inserted assertions: ${successfullyProcessed.length}. Marking rows as processed in db...`,
+                    );
+
+                    await sqliteDb.markRowsAsProcessed(blockchainName, successfullyProcessed);
+                    processed += successfullyProcessed.length;
+
+                    logger.info(
+                        `[PROGRESS] for ${blockchainName}: ${(
+                            (processed / tokenIdsToProcessCount) *
+                            100
+                        ).toFixed(2)}%. Total processed: ${processed}/${tokenIdsToProcessCount}`,
+                    );
+                } catch (error) {
+                    logger.error(`Error processing batch: ${error}. Pausing for 5 seconds...`);
+                    await setTimeout(5000);
+                }
+            }
+
+            logger.timeEnd(`PROCESSING TIME FOR ${blockchain}`);
+
+            logger.time(`PROCESS AND INSERT NEWER ASSERTIONS FOR ${blockchainName}`);
+            // If newer (unprocessed) assertions exist on-chain, fetch them and insert them into the V8 triple store repository
+            // eslint-disable-next-line no-await-in-loop
+            await processAndInsertNewerAssertions(
+                blockchainDetails,
+                blockchainName,
+                highestTokenId,
+                tripleStoreRepositories,
+                tripleStoreImplementation,
+                rpcEndpoints,
+            );
+            logger.timeEnd(`PROCESS AND INSERT NEWER ASSERTIONS FOR ${blockchainName}`);
+        }
+    } finally {
+        // Close database connection after all blockchains are processed
+        await sqliteDb.close();
+    }
+
     markMigrationAsSuccessfull();
-    // REMOTE END
 }
 
 main();
