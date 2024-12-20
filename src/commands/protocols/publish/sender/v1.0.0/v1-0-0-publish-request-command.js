@@ -43,7 +43,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
         );
 
         return {
-            dataset: dataset.public,
+            dataset: isOperationV0 ? dataset : dataset.public,
             datasetRoot,
             blockchain,
             isOperationV0,
