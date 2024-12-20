@@ -55,7 +55,25 @@ class QueryCommand extends Command {
                         OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_START,
                         operationId,
                     );
-                    data = await this.tripleStoreService.construct(query, repository);
+
+                    if (Array.isArray(repository)) {
+                        const dataV6 = await this.tripleStoreService.construct(
+                            query,
+                            repository[0],
+                        );
+                        const dataV8 = await this.tripleStoreService.construct(
+                            query,
+                            repository[1],
+                        );
+
+                        data = this.dataService.removeDuplicateObjectsFromArray([
+                            ...dataV6,
+                            ...dataV8,
+                        ]);
+                    } else {
+                        data = await this.tripleStoreService.construct(query, repository);
+                    }
+
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_END,
                         operationId,

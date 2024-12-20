@@ -104,7 +104,7 @@ class LocalGetCommand extends Command {
 
         if (assertionId) {
             assertionPromise = (async () => {
-                let result = null;
+                let result = {};
                 for (const repository of [
                     TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
                     TRIPLE_STORE_REPOSITORIES.PUBLIC_CURRENT,
@@ -124,7 +124,7 @@ class LocalGetCommand extends Command {
                     );
                 }
 
-                return result;
+                return result.split('\n').filter((res) => res.length > 0);
             })();
         } else {
             assertionPromise = this.tripleStoreService

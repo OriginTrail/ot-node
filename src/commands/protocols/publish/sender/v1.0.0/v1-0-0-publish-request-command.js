@@ -25,7 +25,7 @@ class PublishRequestCommand extends ProtocolRequestCommand {
     }
 
     async prepareMessage(command) {
-        const { datasetRoot, operationId, isOperationV0 } = command.data;
+        const { datasetRoot, operationId, isOperationV0, contract, tokenId } = command.data;
 
         // TODO: Backwards compatibility, send blockchain without chainId
         const { blockchain } = command.data;
@@ -47,6 +47,19 @@ class PublishRequestCommand extends ProtocolRequestCommand {
             datasetRoot,
             blockchain,
             isOperationV0,
+            contract,
+            tokenId,
+        };
+    }
+
+    getNextCommandData(command) {
+        const { datasetRoot, blockchain, isOperationV0, contract, tokenId } = command.data;
+        return {
+            blockchain,
+            datasetRoot,
+            isOperationV0,
+            contract,
+            tokenId,
         };
     }
 

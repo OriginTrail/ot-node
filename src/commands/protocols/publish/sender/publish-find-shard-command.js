@@ -20,9 +20,10 @@ class PublishFindShardCommand extends FindShardCommand {
 
     getOperationCommandSequence(nodePartOfShard, commandData) {
         const sequence = [];
-        sequence.push(
-            commandData.isOperationV0 ? 'validateAssetCommand' : 'publishValidateAssetCommand',
-        );
+        if (!commandData.isOperationV0) {
+            sequence.push('publishValidateAssetCommand');
+        }
+
         if (nodePartOfShard && !commandData.isOperationV0) {
             sequence.push('localStoreCommand');
         } else {
