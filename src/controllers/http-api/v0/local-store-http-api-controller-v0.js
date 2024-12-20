@@ -75,7 +75,7 @@ class LocalStoreController extends BaseController {
 
         await this.operationIdService.cacheOperationIdDataToFile(operationId, cachedAssertions);
 
-        const commandSequence = ['validateAssetCommand', 'localStoreCommand'];
+        const commandSequence = ['localStoreCommand'];
 
         await this.commandExecutor.add({
             name: commandSequence[0],

@@ -1,6 +1,10 @@
 import ValidateAssetCommand from '../../../common/validate-asset-command.js';
 import Command from '../../../command.js';
-import { OPERATION_ID_STATUS, ERROR_TYPE } from '../../../../constants/constants.js';
+import {
+    OPERATION_ID_STATUS,
+    ERROR_TYPE,
+    OLD_CONTENT_STORAGE_MAP,
+} from '../../../../constants/constants.js';
 
 class GetValidateAssetCommand extends ValidateAssetCommand {
     constructor(ctx) {
@@ -49,30 +53,41 @@ class GetValidateAssetCommand extends ValidateAssetCommand {
             blockchain,
         );
         // TODO: Update to validate knowledge asset index
-        const isValidUal = isOperationV0
-            ? true
-            : await this.validationService.validateUal(blockchain, contract, knowledgeCollectionId);
-        this.operationIdService.emitChangeEvent(
-            OPERATION_ID_STATUS.GET.GET_VALIDATE_UAL_END,
-            operationId,
-            blockchain,
-        );
+        if (
+            !isOperationV0 &&
+            Object.values(OLD_CONTENT_STORAGE_MAP).every(
+                (ca) => !ca.toLowerCase().includes(contract.toLowerCase()),
+            )
+        ) {
+            const isValidUal = await this.validationService.validateUal(
+                blockchain,
+                contract,
+                knowledgeCollectionId,
+            );
 
-        if (!isValidUal) {
-            await this.handleError(
+            this.operationIdService.emitChangeEvent(
+                OPERATION_ID_STATUS.GET.GET_VALIDATE_UAL_END,
                 operationId,
                 blockchain,
-                `Get for operation id: ${operationId}, UAL: ${ual}: there is no asset with this UAL.`,
-                this.errorType,
             );
-            return Command.empty();
+
+            if (!isValidUal) {
+                await this.handleError(
+                    operationId,
+                    blockchain,
+                    `Get for operation id: ${operationId}, UAL: ${ual}: there is no asset with this UAL.`,
+                    this.errorType,
+                );
+                return Command.empty();
+            }
+
+            await this.operationIdService.updateOperationIdStatus(
+                operationId,
+                blockchain,
+                OPERATION_ID_STATUS.GET.GET_VALIDATE_ASSET_END,
+            );
         }
 
-        await this.operationIdService.updateOperationIdStatus(
-            operationId,
-            blockchain,
-            OPERATION_ID_STATUS.GET.GET_VALIDATE_ASSET_END,
-        );
         return this.continueSequence(
             {
                 ...command.data,

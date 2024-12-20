@@ -13,6 +13,17 @@ class PublishScheduleMessagesCommand extends ProtocolScheduleMessagesCommand {
         this.errorType = ERROR_TYPE.PUBLISH.PUBLISH_START_ERROR;
     }
 
+    getNextCommandData(command) {
+        const { datasetRoot, blockchain, isOperationV0, contract, tokenId } = command.data;
+        return {
+            blockchain,
+            datasetRoot,
+            isOperationV0,
+            contract,
+            tokenId,
+        };
+    }
+
     /**
      * Builds default publishScheduleMessagesCommand
      * @param map

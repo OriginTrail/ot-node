@@ -56,7 +56,6 @@ class ProtocolScheduleMessagesCommand extends Command {
                     batchSize,
                     minAckResponses,
                     leftoverNodes: currentBatchLeftoverNodes,
-                    isOperationV0: command.data.isOperationV0,
                 },
                 period: 5000,
                 retries: 3,
