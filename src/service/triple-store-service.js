@@ -208,6 +208,40 @@ class TripleStoreService {
         }
     }
 
+    async createV6KnowledgeCollection(triplesPublic, ual, triplesPrivate = null) {
+        this.logger.info(
+            `Inserting Knowledge Collection with the UAL: ${ual} ` +
+                `to the Triple Store's ${TRIPLE_STORE_REPOSITORY.DKG} repository.`,
+        );
+        const publicKnowledgeAssetsTriplesGrouped = [triplesPublic];
+        const publicKnowledgeAssetsUALs = [`${ual}/1`];
+        await this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+            this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
+            TRIPLE_STORE_REPOSITORY.DKG,
+            publicKnowledgeAssetsUALs,
+            publicKnowledgeAssetsTriplesGrouped,
+            TRIPLES_VISIBILITY.PUBLIC,
+        );
+
+        if (triplesPrivate) {
+            const privateKnowledgeAssetsTriplesGrouped = [triplesPrivate];
+            await this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
+                TRIPLE_STORE_REPOSITORY.DKG,
+                publicKnowledgeAssetsUALs,
+                privateKnowledgeAssetsTriplesGrouped,
+                TRIPLES_VISIBILITY.PRIVATE,
+            );
+        }
+
+        const metadataTriples = [`<${ual}> <http://schema.org/states> "${ual}:0" .`];
+        await this.tripleStoreModuleManager.insertKnowledgeCollectionMetadata(
+            this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
+            TRIPLE_STORE_REPOSITORY.DKG,
+            metadataTriples,
+        );
+    }
+
     async insertUpdatedKnowledgeCollection(preUpdateUalNamedGraphs, ual, triples, firstNewKAIndex) {
         const preUpdateSubjectUalMap = new Map(
             preUpdateUalNamedGraphs.map((entry) => [
