@@ -214,7 +214,7 @@ class TripleStoreService {
                 `to the Triple Store's ${TRIPLE_STORE_REPOSITORY.DKG} repository.`,
         );
         const publicKnowledgeAssetsTriplesGrouped = [triplesPublic];
-        const publicKnowledgeAssetsUALs = [ual];
+        const publicKnowledgeAssetsUALs = [`${ual}/1`];
         await this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
             this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
             TRIPLE_STORE_REPOSITORY.DKG,
