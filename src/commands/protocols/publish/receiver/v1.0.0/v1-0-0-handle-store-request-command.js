@@ -81,13 +81,18 @@ class HandleStoreRequestCommand extends HandleProtocolMessageCommand {
             blockchain,
             OPERATION_ID_STATUS.PUBLISH.PUBLISH_LOCAL_STORE_REMOTE_CACHE_DATASET_START,
         );
-        await this.pendingStorageService.cacheDataset(
-            operationId,
-            datasetRoot,
-            dataset,
-            remotePeerId,
-        );
-
+        if (isOperationV0) {
+            const { contract, tokenId } = commandData;
+            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
+            await this.tripleStoreService.createV6KnowledgeCollection(dataset, ual);
+        } else {
+            await this.pendingStorageService.cacheDataset(
+                operationId,
+                datasetRoot,
+                dataset,
+                remotePeerId,
+            );
+        }
         await this.operationIdService.updateOperationIdStatus(
             operationId,
             blockchain,

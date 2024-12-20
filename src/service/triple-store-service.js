@@ -208,6 +208,29 @@ class TripleStoreService {
         }
     }
 
+    async createV6KnowledgeCollection(triples, ual) {
+        this.logger.info(
+            `Inserting Knowledge Collection with the UAL: ${ual} ` +
+                `to the Triple Store's ${TRIPLE_STORE_REPOSITORY.DKG} repository.`,
+        );
+        const publicKnowledgeAssetsTriplesGrouped = [triples];
+        const publicKnowledgeAssetsUALs = [ual];
+        await this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+            this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
+            TRIPLE_STORE_REPOSITORY.DKG,
+            publicKnowledgeAssetsUALs,
+            publicKnowledgeAssetsTriplesGrouped,
+            TRIPLES_VISIBILITY.PUBLIC,
+        );
+
+        const metadataTriples = [`<${ual}> <http://schema.org/states> "${ual}:0" .`];
+        await this.tripleStoreModuleManager.insertKnowledgeCollectionMetadata(
+            this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
+            TRIPLE_STORE_REPOSITORY.DKG,
+            metadataTriples,
+        );
+    }
+
     async insertUpdatedKnowledgeCollection(preUpdateUalNamedGraphs, ual, triples, firstNewKAIndex) {
         const preUpdateSubjectUalMap = new Map(
             preUpdateUalNamedGraphs.map((entry) => [
