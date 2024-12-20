@@ -74,7 +74,7 @@ class LocalStoreCommand extends Command {
 
                             storePromises.push(
                                 this.tripleStoreService.insertKnowledgeCollection(
-                                    TRIPLE_STORE_REPOSITORIES.PRIVATE_CURRENT,
+                                    TRIPLE_STORE_REPOSITORIES.DKG,
                                     ual,
                                     data.assertion,
                                 ),

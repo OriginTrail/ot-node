@@ -18,8 +18,7 @@ class QueryCommand extends Command {
     }
 
     async execute(command) {
-        const { operationId, query, queryType } = command.data;
-        let { repository } = command.data;
+        const { operationId, query, queryType, repository } = command.data;
 
         await this.operationIdService.updateOperationIdStatus(
             operationId,
@@ -57,9 +56,24 @@ class QueryCommand extends Command {
                         operationId,
                     );
 
-                    repository = Array.isArray(repository) ? repository[0] : repository;
+                    if (Array.isArray(repository)) {
+                        const dataV6 = await this.tripleStoreService.construct(
+                            query,
+                            repository[0],
+                        );
+                        const dataV8 = await this.tripleStoreService.construct(
+                            query,
+                            repository[1],
+                        );
 
-                    data = await this.tripleStoreService.construct(query, repository);
+                        data = this.dataService.removeDuplicateObjectsFromArray([
+                            ...dataV6,
+                            ...dataV8,
+                        ]);
+                    } else {
+                        data = await this.tripleStoreService.construct(query, repository);
+                    }
+
                     this.operationIdService.emitChangeEvent(
                         OPERATION_ID_STATUS.QUERY.QUERY_CONSTRUCT_QUERY_END,
                         operationId,
