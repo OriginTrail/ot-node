@@ -208,12 +208,12 @@ class TripleStoreService {
         }
     }
 
-    async createV6KnowledgeCollection(triples, ual) {
+    async createV6KnowledgeCollection(triplesPublic, ual, triplesPrivate = null) {
         this.logger.info(
             `Inserting Knowledge Collection with the UAL: ${ual} ` +
                 `to the Triple Store's ${TRIPLE_STORE_REPOSITORY.DKG} repository.`,
         );
-        const publicKnowledgeAssetsTriplesGrouped = [triples];
+        const publicKnowledgeAssetsTriplesGrouped = [triplesPublic];
         const publicKnowledgeAssetsUALs = [ual];
         await this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
             this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
@@ -222,6 +222,17 @@ class TripleStoreService {
             publicKnowledgeAssetsTriplesGrouped,
             TRIPLES_VISIBILITY.PUBLIC,
         );
+
+        if (triplesPrivate) {
+            const privateKnowledgeAssetsTriplesGrouped = [triplesPrivate];
+            await this.tripleStoreModuleManager.createKnowledgeCollectionNamedGraphs(
+                this.repositoryImplementations[TRIPLE_STORE_REPOSITORY.DKG],
+                TRIPLE_STORE_REPOSITORY.DKG,
+                publicKnowledgeAssetsUALs,
+                privateKnowledgeAssetsTriplesGrouped,
+                TRIPLES_VISIBILITY.PRIVATE,
+            );
+        }
 
         const metadataTriples = [`<${ual}> <http://schema.org/states> "${ual}:0" .`];
         await this.tripleStoreModuleManager.insertKnowledgeCollectionMetadata(

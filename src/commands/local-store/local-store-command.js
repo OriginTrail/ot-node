@@ -4,7 +4,6 @@ import {
     LOCAL_STORE_TYPES,
     OPERATION_REQUEST_STATUS,
     NETWORK_MESSAGE_TYPES,
-    TRIPLE_STORE_REPOSITORIES,
     NETWORK_SIGNATURES_FOLDER,
     PUBLISHER_NODE_SIGNATURES_FOLDER,
 } from '../../constants/constants.js';
@@ -66,20 +65,16 @@ class LocalStoreCommand extends Command {
                 const storePromises = [];
 
                 if (isOperationV0) {
-                    const assertions = [cachedData.public, cachedData.private];
+                    if (cachedData.public?.assertion && cachedData.public?.assertionId) {
+                        const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
 
-                    for (const data of assertions) {
-                        if (data?.assertion && data?.assertionId) {
-                            const ual = this.ualService.deriveUAL(blockchain, contract, tokenId);
-
-                            storePromises.push(
-                                this.tripleStoreService.insertKnowledgeCollection(
-                                    TRIPLE_STORE_REPOSITORIES.DKG,
-                                    ual,
-                                    data.assertion,
-                                ),
-                            );
-                        }
+                        storePromises.push(
+                            this.tripleStoreService.createV6KnowledgeCollection(
+                                cachedData.public.assertion,
+                                ual,
+                                cachedData.private.assertion,
+                            ),
+                        );
                     }
                 }
 
