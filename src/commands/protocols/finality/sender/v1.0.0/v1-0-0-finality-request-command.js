@@ -32,18 +32,20 @@ class FinalityRequestCommand extends ProtocolRequestCommand {
     }
 
     async handleAck(command) {
+        const { operationId, blockchain } = command.data;
         await this.operationIdService.updateOperationIdStatus(
-            command.operationId,
-            command.blockchain,
+            operationId,
+            blockchain,
             OPERATION_ID_STATUS.COMPLETED,
         );
         return ProtocolRequestCommand.empty();
     }
 
     async handleNack(command, responseData) {
+        const { operationId, blockchain } = command.data;
         await this.operationIdService.updateOperationIdStatus(
-            command.operationId,
-            command.blockchain,
+            operationId,
+            blockchain,
             OPERATION_ID_STATUS.COMPLETED,
         );
         await this.markResponseAsFailed(
