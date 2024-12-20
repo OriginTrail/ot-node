@@ -99,14 +99,6 @@ export function validateAssertion(assertion) {
     }
 }
 
-export function validateSuccessfulInserts(successfulInserts) {
-    if (!successfulInserts || !Array.isArray(successfulInserts)) {
-        throw new Error(
-            `[VALIDATION ERROR] Successful inserts is not defined or it is not an array. Successful inserts: ${successfulInserts}`,
-        );
-    }
-}
-
 // BLOCKCHAIN
 export function validateProvider(provider) {
     if (!provider || typeof provider !== 'object') {
