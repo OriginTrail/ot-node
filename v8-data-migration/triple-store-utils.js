@@ -565,6 +565,7 @@ export async function insertAssertionsIntoV8UnifiedRepository(
 ) {
     // Insert into new repository
     const successfullyProcessed = [];
+    const assertionsToCheck = [];
     const insertQueries = [];
     for (const assertion of v6Assertions) {
         const { tokenId, ual, publicAssertion, privateAssertion } = assertion;
@@ -572,8 +573,6 @@ export async function insertAssertionsIntoV8UnifiedRepository(
         // Assertion with assertionId does not exist in triple store. Continue
         if (!publicAssertion) {
             successfullyProcessed.push(tokenId);
-            // Remove assertion from v6Assertions array
-            v6Assertions.splice(v6Assertions.indexOf(assertion), 1);
             continue;
         }
 
@@ -601,6 +600,8 @@ export async function insertAssertionsIntoV8UnifiedRepository(
                 ${metadataNQuads}
             }
         `);
+
+        assertionsToCheck.push(assertion);
     }
 
     if (insertQueries.length > 0) {
@@ -611,16 +612,12 @@ export async function insertAssertionsIntoV8UnifiedRepository(
                 }
             `;
 
-        logger.time(
-            `INSERTING ASSERTIONS INTO V8 TRIPLE STORE FOR ${v6Assertions.length} ASSERTIONS`,
-        );
+        logger.time(`INSERTING ${assertionsToCheck.length} ASSERTIONS INTO V8 TRIPLE STORE`);
         await queryVoid(tripleStoreRepositories, DKG_REPOSITORY, combinedQuery);
-        logger.timeEnd(
-            `INSERTING ASSERTIONS INTO V8 TRIPLE STORE FOR ${v6Assertions.length} ASSERTIONS`,
-        );
+        logger.timeEnd(`INSERTING ${assertionsToCheck.length} ASSERTIONS INTO V8 TRIPLE STORE`);
     }
 
-    return { successfullyProcessed, assertionsToCheck: v6Assertions };
+    return { successfullyProcessed, assertionsToCheck };
 }
 
 export async function knowledgeCollectionNamedGraphExists(

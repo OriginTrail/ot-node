@@ -36,8 +36,11 @@ export const NODERC_CONFIG_PATH = '/root/ot-node/.origintrail_noderc';
 export const DATA_MIGRATION_DIR = '/root/ot-node/data/data-migration';
 export const ENV_PATH = '/root/ot-node/current/.env';
 export const MIGRATION_PROGRESS_FILE = '/root/ot-node/data/migrations/v8DataMigration';
-export const NEUROWEB_TESTNET_CSV_URL =
-    'https://hosting.origin-trail.network/csv/neuroweb_testnet.csv';
+// TODO: add urls
+export const DB_URLS = {
+    testnet: '',
+    mainnet: '',
+};
 // REMOTE END
 
 const require = createRequire(import.meta.url);
