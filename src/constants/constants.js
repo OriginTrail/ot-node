@@ -33,6 +33,8 @@ export const UINT40_MAX_BN = BigNumber.from(2).pow(40).sub(1);
 
 export const UINT32_MAX_BN = BigNumber.from(2).pow(32).sub(1);
 
+export const ONE_ETHER = BigNumber.from(1e18);
+
 export const HASH_RING_SIZE = ethers.constants.MaxUint256;
 
 export const STAKE_UINT256_MULTIPLIER_BN = UINT256_MAX_BN.div(500000000);
@@ -271,6 +273,7 @@ export const ABIs = {
     ParanetsRegistry: require('dkg-evm-module/abi/ParanetsRegistry.json'),
     ParanetKnowledgeAssetsRegistry: require('dkg-evm-module/abi/ParanetKnowledgeAssetsRegistry.json'),
     Ask: require('dkg-evm-module/abi/Ask.json'),
+    Chronos: require('dkg-evm-module/abi/Chronos.json'),
 };
 
 export const CONTRACT_FUNCTION_PRIORITY = {};

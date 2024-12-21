@@ -1117,6 +1117,14 @@ class Web3Service {
     async getStakeWeightedAverageAsk() {
         return this.callContractFunction(this.contracts.Ask, 'getStakeWeightedAverageAsk', []);
     }
+
+    async getTimeUntilNextEpoch() {
+        return this.callContractFunction(this.contracts.Chronos, 'timeUntilNextEpoch', []);
+    }
+
+    async getEpochLength() {
+        return this.callContractFunction(this.contracts.Chronos, 'epochLength', []);
+    }
     // SUPPORT FOR OLD CONTRACTS
 
     async getLatestAssertionId(assetContractAddress, tokenId) {
