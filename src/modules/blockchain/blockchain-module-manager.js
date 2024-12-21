@@ -265,7 +265,15 @@ class BlockchainModuleManager extends BaseModuleManager {
     async getStakeWeightedAverageAsk(blockchain) {
         return this.callImplementationFunction(blockchain, 'getStakeWeightedAverageAsk', []);
     }
-  
+
+    async getTimeUntilNextEpoch(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getTimeUntilNextEpoch', []);
+    }
+
+    async getEpochLength(blockchain) {
+        return this.callImplementationFunction(blockchain, 'getEpochLength', []);
+    }
+
     // SUPPORT FOR OLD CONTRACTS
     async getLatestAssertionId(blockchain, assetContractAddress, tokenId) {
         return this.callImplementationFunction(blockchain, 'getLatestAssertionId', [
